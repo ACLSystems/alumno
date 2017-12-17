@@ -1,0 +1,23 @@
+{
+  "name": "alumno",
+  "version": "1.0.0",
+  "description": "Proyecto alumno",
+  "main": "index.js",
+  "scripts": {
+    "test": "NODE_ENV=test nodemon --exec 'mocha --require babel-core/register --recursive -R min'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ACLSystems/alumno.git"
+  },
+  "keywords": [
+    "alumno",
+    "plataforma"
+  ],
+  "author": "Arturo Castro / Hector Ramirez",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ACLSystems/alumno/issues"
+  },
+  "homepage": "https://github.com/ACLSystems/alumno#readme"
+}
