@@ -19,5 +19,11 @@
   "bugs": {
     "url": "https://github.com/ACLSystems/alumno/issues"
   },
-  "homepage": "https://github.com/ACLSystems/alumno#readme"
+  "homepage": "https://github.com/ACLSystems/alumno#readme",
+  "dependencies": {
+    "bcrypt": "^1.0.3",
+    "mocha": "^4.0.1",
+    "mongoose": "^4.13.7",
+    "nodemon": "^1.13.3"
+  }
 }
