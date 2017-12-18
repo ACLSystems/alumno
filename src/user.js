@@ -5,13 +5,43 @@ const mongoose = require('mongoose'),
   bcrypt = require(bcrypt),
   SALT_WORK_FACTOR = 10;
 
+// Todos los atributos de cada esquema/modelo deben seguir estas reglas:
+// Siempre en idioma inglés
+// Siempre en minusculas, a menos que sea la conjunción de dos palabras
+//  donde ambas deben estar juntas y las subsecuentes palabras deberan
+//  comenzar con mayúscula. Por ejemplo: Apellido Paterno => fatherName
+// No iniciar con números, letras mayúsculas, ni caracteres especiales
+// No usar palabras reservadas.
+
 // Esquema para datos de la persona que posee un usuario
 const PersonSchema = new Schema ({
-
+  // User.person.name <-- nombre del usuario
+  name: {
+    type: String
+  },
+  // User.person.fatherName <-- Apellido paterno del usuario
+  fatherName: {
+    type: String
+  },
+  // User.person.motherName <-- Apellido materno del usuario
+  motherName: {
+    type: String
+  },
+  // User.person.email <-- Correo del usuario
+  email: {  // El correo deberá ser el mismo que el nombre del usuario User.name
+    type: String
+  },
+  // User.person.birthDate <-- Fecha de nacimiento
+  birthDate: {
+    type: Date
+  }
 });
+
+module.exports = PersonSchema;
 
 // Esquema para usuario
 const UserSchema = new Schema ({
+  // User.name <-- username
   name: {
     type: String,
     required: [true, 'nombre de usuario es requerido'],
@@ -19,13 +49,18 @@ const UserSchema = new Schema ({
       unique: true
     }
   },
+  // User.password <-- password del usuario
   password: {
     type: String,
     required: [true, 'password es requerido']
   },
+  // User.person <-- objeto persona (ver esquema person)
+  person: {PersonSchema},
+  // User.tenant <-- referencia a objeto Tenant (ver modelo Tenant)
   tenant: {
     type: Schema.Types.ObjectId,
     ref: 'tenant'
+  }
 });
 
 // Middlewares para UserSchema --------------------------------------------------------------
