@@ -1,3 +1,2 @@
 # alumno
-Plataforma de aprendizaje
-
+Servidor API para la plataforma "Alumno"
