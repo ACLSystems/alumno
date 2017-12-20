@@ -25,5 +25,9 @@
     "mocha": "^4.0.1",
     "mongoose": "^4.13.7",
     "nodemon": "^1.13.3"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.1"
   }
 }

@@ -1,5 +1,5 @@
 // Esquema para modelar Usuarios
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt');  // Encriptar el password del usuario
 const mongoose = require('mongoose'),
   Schema = mongoose.Schema,
   bcrypt = require(bcrypt),
@@ -61,6 +61,7 @@ const UserSchema = new Schema ({
     type: Schema.Types.ObjectId,
     ref: 'tenant'
   }
+  orgUnits: // revisar
 });
 
 // Middlewares para UserSchema --------------------------------------------------------------
