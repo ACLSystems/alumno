@@ -56,12 +56,27 @@ const UserSchema = new Schema ({
   },
   // User.person <-- objeto persona (ver esquema person)
   person: {PersonSchema},
-  // User.tenant <-- referencia a objeto Tenant (ver modelo Tenant)
-  tenant: {
+  // User.org <-- referencia a objeto org (ver modelo org)
+  org: {
     type: Schema.Types.ObjectId,
-    ref: 'tenant'
+    ref: 'org'
+  },
+  orgUnit: {
+    type: Schema.Types.ObjectId,
+    ref: 'orgUnit'
+  },
+  createDate: {
+    type: Date,
+    default: Date.now
+  },
+  modifiedDate: {
+    type: Date,
+    default: Date.now
+  },
+  modifiedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'user'
   }
-  orgUnits: // revisar
 });
 
 // Middlewares para UserSchema --------------------------------------------------------------
