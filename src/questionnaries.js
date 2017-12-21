@@ -49,7 +49,7 @@ const questionSchema = new Schema ({
   }
 });
 
-const questionarieSchema = new Schema ({
+const questionnarieSchema = new Schema ({
   type: {
     type: String,
     enum: ['Eval','Poll']
@@ -86,5 +86,5 @@ const questionarieSchema = new Schema ({
   }
 });
 
-const Questionaries = mongoose.model('questionaries', questionarieSchema);
-module.exports = Questionaries;
+const Questionnaries = mongoose.model('questionnaries', questionnarieSchema);
+module.exports = Questionnaries;

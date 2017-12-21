@@ -11,8 +11,8 @@ const OrgUnitSchema = new Schema ({
     validate: {
       validator: (name) => name.length > 2,
       message: '"Org name" debe tener más de dos caracteres'
-    },
-  }
+    }
+  },
   // longName --> Nombre largo de la unidad organizacional
   // orgUnits.logName
   longName: {
@@ -29,12 +29,12 @@ const OrgUnitSchema = new Schema ({
   // orgUnits.parent
   parent: {
     type: String
-  }
+  },
   // org --> Org a la que pertenece esta unidad
   // orgUnits.org
   org: {
     type: Schema.Types.ObjectId,
-    ref: 'org'
+    ref: 'orgs'
   },
   createDate: {
     type: Date,
@@ -50,5 +50,5 @@ const OrgUnitSchema = new Schema ({
   }
 });
 
-const OrgUnit = mongoose.model('orgUnit', OrgUnitSchema);
+const OrgUnit = mongoose.model('orgUnits', OrgUnitSchema);
 module.exports = OrgUnit;

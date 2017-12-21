@@ -1,9 +1,13 @@
 // Esquema para modelar Usuarios
-const bcrypt = require('bcrypt');  // Encriptar el password del usuario
-const mongoose = require('mongoose'),
+//const bcrypt = require('bcrypt');  // Encriptar el password del usuario
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+/*
   Schema = mongoose.Schema,
   bcrypt = require(bcrypt),
   SALT_WORK_FACTOR = 10;
+*/
 
 // Todos los atributos de cada esquema/modelo deben seguir estas reglas:
 // Siempre en idioma inglés
@@ -45,9 +49,8 @@ const UserSchema = new Schema ({
   name: {
     type: String,
     required: [true, 'nombre de usuario es requerido'],
-    index: {
-      unique: true
-    }
+    unique: true,
+    lowercase: true
   },
   // User.password <-- password del usuario
   password: {
@@ -81,6 +84,7 @@ const UserSchema = new Schema ({
 
 // Middlewares para UserSchema --------------------------------------------------------------
 // antes de guardar el password hay que encriptarlo
+/*
 UserSchema.pre('save', {
   var user = this;
   // only hash the password if it has been modified (or is new)
@@ -102,7 +106,8 @@ UserSchema.methods.comparePassword = function(candidatePassword, cb) {
     if (err) return cb(err);
     cb(null, isMatch);
   });
-}
+};
+*/
 
-const User = mongoose.model('user', UserSchema);
+const User = mongoose.model('users', UserSchema);
 module.exports = User;

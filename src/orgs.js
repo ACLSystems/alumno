@@ -30,5 +30,22 @@ const OrgSchema = new Schema ({
   }
 });
 
-const Org = mongoose.model('org', OrgSchema);
+/*
+OrgSchema.pre('save', function(next) {
+  console.log('Pre: test');
+  console.log(this.name);
+  Org.findOne({ name: this.name })
+    .then((myOrg) => {
+      console.log('Pre: find');
+      console.log(myOrg);
+      if(myOrg.name === this.name)  {
+        var err = new Error('Name existe');
+        next(err);
+      }
+      next();
+    });
+});
+*/
+
+const Org = mongoose.model('orgs', OrgSchema);
 module.exports = Org;
