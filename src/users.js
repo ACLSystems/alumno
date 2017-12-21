@@ -1,6 +1,7 @@
 // Esquema para modelar Usuarios
 //const bcrypt = require('bcrypt');  // Encriptar el password del usuario
 const mongoose = require('mongoose');
+const ModSchema = require('./modified');
 const Schema = mongoose.Schema;
 
 /*
@@ -68,18 +69,7 @@ const UserSchema = new Schema ({
     type: Schema.Types.ObjectId,
     ref: 'orgUnit'
   },
-  createDate: {
-    type: Date,
-    default: Date.now
-  },
-  modifiedDate: {
-    type: Date,
-    default: Date.now
-  },
-  modifiedBy: {
-    type: Schema.Types.ObjectId,
-    ref: 'user'
-  }
+  mod: [ModSchema]
 });
 
 // Middlewares para UserSchema --------------------------------------------------------------

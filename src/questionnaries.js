@@ -1,5 +1,8 @@
 // Esquema para modelar cuestionarios
 const mongoose = require('mongoose');
+const ModSchema = require('./modified');
+const OwnerSchema = require('./owner');
+const PermissionsSchema = require('./permission');
 const Schema = mongoose.Schema;
 
 const questionSchema = new Schema ({
@@ -13,40 +16,15 @@ const questionSchema = new Schema ({
     required: true
   }
   option: [String],
-  answer: String,
+  answer: [String],
   isVisible: Boolean,
   author: {
     type: Schema.Types.ObjectId,
     ref: 'user'
   },
-  authorOrg: {
-    type: Schema.Types.ObjectId,
-    ref: 'org'
-  },
-  authorOrgUnit: {
-    type: Schema.Types.ObjectId,
-    ref: 'orgUnit'
-  },
-  createDate: {
-    type: Date,
-    default: Date.now
-  }
-  modifiedDate: {
-    type: Date,
-    default: Date.now
-  },
-  modifiedBy: {
-    type: Schema.Types.ObjectId,
-    ref: 'user'
-  },
-  owner: {
-    type: Schema.Types.ObjectId,
-    ref: 'user'
-  },
-  perm: {
-    type: Schema.Types.ObjectId,
-    ref: 'permissions'
-  }
+  own: OwnerSchema,
+  mod: [ModSchema],
+  perm: PermissionsSchema
 });
 
 const questionnarieSchema = new Schema ({
@@ -62,28 +40,9 @@ const questionnarieSchema = new Schema ({
     type: Schema.Types.ObjectId,
     ref: 'user'
   },
-  authorOrg: {
-    type: Schema.Types.ObjectId,
-    ref: 'org'
-  },
-  authorOrgUnit: {
-    type: Schema.Types.ObjectId,
-    ref: 'orgUnit'
-  },
-  createDate: Date,
-  modifiedDate: Date,
-  modifiedBy: {
-    type: Schema.Types.ObjectId,
-    ref: 'user'
-  },
-  owner: {
-    type: Schema.Types.ObjectId,
-    ref: 'user'
-  },
-  perm: {
-    type: Schema.Types.ObjectId,
-    ref: 'permissions'
-  }
+  own: OwnerSchema,
+  mod: [ModSchema],
+  perm: PermissionsSchema
 });
 
 const Questionnaries = mongoose.model('questionnaries', questionnarieSchema);

@@ -40,36 +40,7 @@ const courseSchema = new Schema ({
     type: Number,
     default: 0
   },
-  author: {
-    type: Schema.Types.ObjectId,
-    ref: 'user'
-  },
-  authorOrg: {
-    type: Schema.Types.ObjectId,
-    ref: 'org'
-  },
-  authorOrgUnit: {
-    type: Schema.Types.ObjectId,
-    ref: 'orgUnit'
-  },
-  createDate: {
-    type: Date,
-    default: Date.now
-  },
-  modifiedDate: {
-    type: Date,
-    default: Date.now
-  },
-  modifiedBy: {
-    type: Schema.Types.ObjectId,
-    ref: 'user'
-  },
-  owner: {
-    type: Schema.Types.ObjectId,
-    ref: 'user'
-  },
-  perm: {
-    type: Schema.Types.ObjectId,
-    ref: 'permissions'
-  }
+  own: OwnerSchema,
+  mod: [ModSchema],
+  perm: PermissionsSchema
 });

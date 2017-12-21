@@ -27,5 +27,4 @@ const permissionsSchema = new Schema ({
   orgUnits: {permUnitSchema}
 });
 
-const Permissions = mongoose.model('permissions', permissionsSchema);
 module.exports = Permissions;
