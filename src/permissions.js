@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const permUnitSchema = new Schema ({
+const PermUnitSchema = new Schema ({
   // unidad de permiso
   // permUnit.canRead
   canRead: {
@@ -18,7 +18,7 @@ const permUnitSchema = new Schema ({
   }
 });
 
-const permissionsSchema = new Schema ({
+const PermissionsSchema = new Schema ({
   // matriz de permisos
   // permUnit.canRead
   users: {permUnitSchema},
@@ -27,4 +27,4 @@ const permissionsSchema = new Schema ({
   orgUnits: {permUnitSchema}
 });
 
-module.exports = Permissions;
+module.exports = PermissionsSchema;

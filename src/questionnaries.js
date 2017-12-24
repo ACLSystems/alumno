@@ -5,7 +5,7 @@ const OwnerSchema = require('./owner');
 const PermissionsSchema = require('./permission');
 const Schema = mongoose.Schema;
 
-const questionSchema = new Schema ({
+const QuestionSchema = new Schema ({
   text: {
     type: String,
     required: true
@@ -15,35 +15,37 @@ const questionSchema = new Schema ({
     enum: ['Open', 'Option'],
     required: true
   }
-  option: [String],
-  answer: [String],
+  options: [String],
+  answers: [String],
   isVisible: Boolean,
   author: {
     type: Schema.Types.ObjectId,
     ref: 'user'
   },
-  own: OwnerSchema,
-  mod: [ModSchema],
-  perm: PermissionsSchema
+  own: {OwnerSchema},
+  mod: [{ModSchema}],
+  perm: {PermissionsSchema}
 });
 
-const questionnarieSchema = new Schema ({
+module.exports = QuestionSchema;
+
+const QuestionnarieSchema = new Schema ({
   type: {
     type: String,
-    enum: ['Eval','Poll']
+    enum: ['Quiz','Poll'],
+    default: 'Quiz'
   },
   questions: [{questionSchema}],
-  version: String,
+  version: {
+    type: String,
+    min: [1, 'La version del cuestionario no puede ser menor a 1']
+  },
   keywords: [String],
   isVisible: Boolean,
-  author: {
-    type: Schema.Types.ObjectId,
-    ref: 'user'
-  },
-  own: OwnerSchema,
-  mod: [ModSchema],
-  perm: PermissionsSchema
+  own: {OwnerSchema},
+  mod: [{ModSchema}],
+  perm: {PermissionsSchema}
 });
 
-const Questionnaries = mongoose.model('questionnaries', questionnarieSchema);
+const Questionnaries = mongoose.model('questionnaries', QuestionnarieSchema);
 module.exports = Questionnaries;

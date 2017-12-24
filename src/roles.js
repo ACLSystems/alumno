@@ -6,9 +6,9 @@ const rolesSchema = new Schema ({
   role: [
     "Admin",
     "Business",
-    "Tenant",
-    "TenantContent",
-    "Autor",
+    "Org",
+    "OrgContent",
+    "Author",
     "Instructor",
     "Supervisor"
   ]

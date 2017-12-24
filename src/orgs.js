@@ -1,10 +1,10 @@
 // Esquema para modelar Unidades Organizacionales
 const mongoose = require('mongoose');
+const ModSchema = require('./modified');
+const PermissionsSchema = require('./permissions');
 const Schema = mongoose.Schema;
 
-const OrgSchema = new Schema ({
-  // name --> Nombre de la organizacion
-  // org.name
+const OrgsSchema = new Schema ({
   name: {
     type: String,
     validate: {
@@ -13,21 +13,27 @@ const OrgSchema = new Schema ({
     },
     required: [ true, '"name" es requerido']
   },
-  // alias --> arreglo de "alias" o nombres con los que se conoce al tenant
-  // Tenant.alias[]
-  alias: [String],
-  createDate: {
-    type: Date,
-    default: Date.now
-  },
-  modifiedDate: {
-    type: Date,
-    default: Date.now
-  },
-  modifiedBy: {
-    type: Schema.Types.ObjectId,
-    ref: 'user'
+  longName: {
+    type: String,
+    validate: {
+      validator: (longName) => longName.length > 2,
+      message: '"longName" debe tener más de 2 caracteres'
+    },
+    required: [ true, '"longName" es requerido']
   }
+  alias:{
+    type: [String],
+    validate: {
+      validator: (alias) => alias.length > 2,
+      message: '"alias" debe tener más de 2 caracteres'
+    }
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  }
+  mod: [{ModSchema}],
+  perm: {PermissionsSchema}
 });
 
 /*
@@ -47,5 +53,5 @@ OrgSchema.pre('save', function(next) {
 });
 */
 
-const Org = mongoose.model('orgs', OrgSchema);
-module.exports = Org;
+const Orgs = mongoose.model('orgs', OrgsSchema);
+module.exports = Orgs;

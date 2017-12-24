@@ -1,20 +1,17 @@
 // Esquema para modelar Unidades Organizacionales
 const mongoose = require('mongoose');
+const ModSchema = require('./modified');
+const PermissionsSchema = require('./permissions');
 const Schema = mongoose.Schema;
 
-const OrgUnitSchema = new Schema ({
-  // name --> Nombre de la unidad organizacional
-  // orgUnits.name
+const OrgUnitsSchema = new Schema ({
   name: {
     type: String,
-    unique: true,  // Hay que validarlo
     validate: {
       validator: (name) => name.length > 2,
       message: '"Org name" debe tener más de dos caracteres'
     }
   },
-  // longName --> Nombre largo de la unidad organizacional
-  // orgUnits.logName
   longName: {
     type: String,
     validate: {
@@ -22,33 +19,27 @@ const OrgUnitSchema = new Schema ({
       message: '"Org long name" debe tener más de dos caracteres'
     }
   },
-  // alias --> Alias de la unidad organizacional
-  // orgUnits.alias[]
-  alias: [String],
-  // parent --> OU al que pertenece esta unidad
-  // orgUnits.parent
+  alias:{
+    type: [String],
+    validate: {
+      validator: (alias) => alias.length > 2,
+      message: '"alias" debe tener más de 2 caracteres'
+    }
+  },
   parent: {
     type: String
   },
-  // org --> Org a la que pertenece esta unidad
-  // orgUnits.org
   org: {
     type: Schema.Types.ObjectId,
     ref: 'orgs'
   },
-  createDate: {
-    type: Date,
-    default: Date.now
-  },
-  modifiedDate: {
-    type: Date,
-    default: Date.now
-  },
-  modifiedBy: {
-    type: Schema.Types.ObjectId,
-    ref: 'user'
+  isActive: {
+    type: Boolean,
+    default: true
   }
+  mod: [{ModSchema}],
+  perm: {PermissionsSchema}
 });
 
-const OrgUnit = mongoose.model('orgUnits', OrgUnitSchema);
-module.exports = OrgUnit;
+const OrgUnits = mongoose.model('orgUnits', OrgUnitsSchema);
+module.exports = OrgUnits;
