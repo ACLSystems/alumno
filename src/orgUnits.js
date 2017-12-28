@@ -6,25 +6,13 @@ const Schema = mongoose.Schema;
 
 const OrgUnitsSchema = new Schema ({
   name: {
-    type: String,
-    validate: {
-      validator: (name) => name.length > 2,
-      message: '"Org name" debe tener más de dos caracteres'
-    }
+    type: String
   },
   longName: {
-    type: String,
-    validate: {
-      validator: (longName) => longName.length > 2,
-      message: '"Org long name" debe tener más de dos caracteres'
-    }
+    type: String
   },
   alias:{
-    type: [String],
-    validate: {
-      validator: (alias) => alias.length > 2,
-      message: '"alias" debe tener más de 2 caracteres'
-    }
+    type: [String]
   },
   parent: {
     type: String
@@ -36,9 +24,9 @@ const OrgUnitsSchema = new Schema ({
   isActive: {
     type: Boolean,
     default: true
-  }
-  mod: [{ModSchema}],
-  perm: {PermissionsSchema}
+  },
+  mod: [ModSchema],
+  perm: PermissionsSchema
 });
 
 const OrgUnits = mongoose.model('orgUnits', OrgUnitsSchema);

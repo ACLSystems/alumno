@@ -18,13 +18,15 @@ const PermUnitSchema = new Schema ({
   }
 });
 
+module.exports = PermUnitSchema;
+
 const PermissionsSchema = new Schema ({
   // matriz de permisos
   // permUnit.canRead
-  users: {permUnitSchema},
-  roles: {permUnitSchema},
-  orgs: {permUnitSchema},
-  orgUnits: {permUnitSchema}
+  users: {PermUnitSchema},
+  roles: {PermUnitSchema},
+  orgs: {PermUnitSchema},
+  orgUnits: {PermUnitSchema}
 });
 
 module.exports = PermissionsSchema;
