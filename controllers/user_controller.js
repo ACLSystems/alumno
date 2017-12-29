@@ -49,7 +49,7 @@ module.exports = {
                     userProps.mod.push(mod);
                     delete userProps.username;
                     User.create(userProps)
-                      .then(user => {
+                      .then((user) => {
                         const mess = {id: 201, message: 'Usuario -' + userProps.name + '- creado'};
                         logger.info(mess);
                         res.status(201).send(mess);
@@ -66,6 +66,36 @@ module.exports = {
                   logger.info(mess);
                   res.status(422).send(mess);
                 });
+            };
+          })
+          .catch((err) => {
+            logger.info(err);
+            res.send(err);
+          });
+      };
+    };
+  },
+
+  getDetails(req, res, next) {
+    if(!req.query) {
+      const mess = {id: 417, err: 'Por favor, proporcione los datos para procesar'};
+      res.status(417).send(mess);
+    } else {
+      const userProps = req.query;
+      if(!userProps.name) {
+        const mess = {id: 417, err: 'Por favor, proporcione nombre de usuario'};
+        res.status(417).send(mess);
+      } else {
+        User.findOne({ name: userProps.name }, {password: false, __v: false})
+          .populate('org','name')
+          .populate('orgUnit', 'name')
+          .then((user) => {
+            if (!user) {
+              const mess = {id: 422, message: 'Usuario -' + userProps.name + '- no existe'};
+              logger.info(mess);
+              res.status(422).send(mess);
+            } else {
+              res.status(200).send(user)
             };
           })
           .catch((err) => {

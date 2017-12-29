@@ -42,11 +42,11 @@ const UserSchema = new Schema ({
   person: PersonSchema,
   org: {
     type: Schema.Types.ObjectId,
-    ref: 'org'
+    ref: 'orgs'
   },
   orgUnit: {
     type: Schema.Types.ObjectId,
-    ref: 'orgUnit'
+    ref: 'orgUnits'
   },
   isActive: {
     type: Boolean,

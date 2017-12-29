@@ -7,6 +7,7 @@ module.exports = (app) => {
   app.get('/', GetNothing.greeting);
   app.get('/api', GetNothing.greeting);
   app.get('/api/user', GetNothing.greeting);
+  app.get('/api/user/getdetails', UserController.getDetails);
   app.get('/api/org', GetNothing.greeting);
   app.get('/api/orgunit', GetNothing.greeting);
   app.post('/api/user/register', UserController.register);
