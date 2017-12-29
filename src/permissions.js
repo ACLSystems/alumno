@@ -5,6 +5,9 @@ const Schema = mongoose.Schema;
 const PermUnitSchema = new Schema ({
   // unidad de permiso
   // permUnit.canRead
+  name: {
+    type: String
+  }
   canRead: {
     type: Boolean
   },
@@ -23,10 +26,10 @@ module.exports = PermUnitSchema;
 const PermissionsSchema = new Schema ({
   // matriz de permisos
   // permUnit.canRead
-  users: {PermUnitSchema},
-  roles: {PermUnitSchema},
-  orgs: {PermUnitSchema},
-  orgUnits: {PermUnitSchema}
+  users: [PermUnitSchema],
+  roles: [PermUnitSchema],
+  orgs: [PermUnitSchema],
+  orgUnits: [PermUnitSchema]
 });
 
 module.exports = PermissionsSchema;

@@ -20,11 +20,14 @@ var logger = new(winston.Logger) ({
 
 module.exports = {
   register(req, res, next) {
+    // Query vacio
     if(!req.query) {
       const mess = {id: 417, err: 'Por favor, proporcione los datos para procesar'};
       res.status(417).send(mess);
     } else {
+      // extraemos el query
       const userProps = req.query;
+      // No trae organizacion
       if(!userProps.org) {
         const mess = {id: 417, err: 'Por favor, proporcione la organizacion'};
         res.status(417).send(mess);
@@ -42,10 +45,24 @@ module.exports = {
                     res.status(422).send(mess);
                   } else {
                     const date = new Date();
-                    const mod = {by: userProps.username, when: date};
+                    const mod = { by: userProps.username, when: date };
+                    var permUsers = new Array();
+                    const permUser = { name: userProps.username, canRead: true, canModify: true, canSec: false };
+                    permUsers.push(permUser);
+                    var permRoles = new Array();
+                    var permRole = { name: 'Admin', canRead: true, canModify: true, canSec: true };
+                    permRoles.push(permRole);
+                    permRole = { name: 'Org', canRead: true, canModify: true, canSec: true };
+                    permRoles.push(permRole);
+                    var permOrgs = new Array();
+                    const permOrg = { name: userProps.org, canRead: true, canModify: true, canSec: false };
+                    permOrgs.push(permOrg);
+                    var permOrgUnits = new Array();
+                    const permOrgUnit = { name: userProps.orgUnit, canRead: true, canModify: false, canSec: false };
+                    userProps.perm = { users: permUsers, roles: permRoles, orgs: permOrgs, orgUnits: permOrgUnits };
                     userProps.org = org._id;
                     userProps.orgUnit = ou._id;
-                    userProps.mod = new Array();
+                    userProps.mod = new Array(); 
                     userProps.mod.push(mod);
                     delete userProps.username;
                     User.create(userProps)
