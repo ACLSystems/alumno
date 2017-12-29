@@ -7,7 +7,7 @@ const PermUnitSchema = new Schema ({
   // permUnit.canRead
   name: {
     type: String
-  }
+  },
   canRead: {
     type: Boolean
   },
