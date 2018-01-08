@@ -27,6 +27,49 @@ const PersonSchema = new Schema ({
 
 module.exports = PersonSchema;
 
+// Esquema para manejar roles
+
+const RolesSchema = new Schema ({
+  isAdmin: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  isBusiness: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  isOrg: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  isOrgContent: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  isAuthor: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  isInstructor: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  isSupervisor: {
+    type: Boolean,
+    required: true,
+    default: false
+  }
+
+});
+
+module.exports = RolesSchema;
+
 // Esquema para usuario
 const UserSchema = new Schema ({
   name: {
@@ -56,11 +99,16 @@ const UserSchema = new Schema ({
     type: Boolean,
     default: false
   },
+  roles: RolesSchema,
   mod: [ModSchema],
-  perm: PermissionsSchema
+  perm: PermissionsSchema,
+  recoverString: {
+    type: String
+  }
 });
 
-//middleware
+
+//Encriptar password antes de guardarlo en la base
 UserSchema.pre('save', function(next) {
   if(this.password) {
     var salt = bcrypt.genSaltSync(10);
@@ -68,6 +116,21 @@ UserSchema.pre('save', function(next) {
   };
   next();
 });
+
+UserSchema.pre('save', function(next) {
+  if(!this.roles) {
+    var roles = { isAdmin: false };
+    this.roles = roles;
+  };
+  next();
+});
+
+UserSchema.methods.validatePassword = function(password, cb) {
+  bcrypt.compare(password, this.password, function(err, isOk) {
+    if(err) return cb(err);
+    cb(null, isOk);
+  });
+}
 
 const User = mongoose.model('users', UserSchema);
 module.exports = User;

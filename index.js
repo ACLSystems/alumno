@@ -16,6 +16,9 @@ var logger = new(winston.Logger) ({
   ]
 });
 
-app.listen(3050,() => {
-  logger.info('Server ready and listenning on port 3050');
+app.set('port', process.env.PORT || 3050);
+
+var server = app.listen(app.get('port'),() => {
+  console.log('Listening on port ' + server.address().port);
+  logger.info('Listening on port ' + server.address().port);
 });

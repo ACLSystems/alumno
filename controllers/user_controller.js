@@ -21,7 +21,7 @@ var logger = new(winston.Logger) ({
 module.exports = {
   register(req, res, next) {
     // Query vacio
-    if(!req.query) {
+    if(!req.query ) {
       const mess = {id: 417, err: 'Por favor, proporcione los datos para procesar'};
       res.status(417).send(mess);
     } else {
@@ -44,25 +44,27 @@ module.exports = {
                     const mess = {id: 422, err: 'Unidad organizacional -' + userProps.orgUnit + '- no existe'};
                     res.status(422).send(mess);
                   } else {
-                    const date = new Date();
-                    const mod = { by: userProps.username, when: date };
                     var permUsers = new Array();
                     const permUser = { name: userProps.username, canRead: true, canModify: true, canSec: false };
                     permUsers.push(permUser);
                     var permRoles = new Array();
                     var permRole = { name: 'Admin', canRead: true, canModify: true, canSec: true };
                     permRoles.push(permRole);
-                    permRole = { name: 'Org', canRead: true, canModify: true, canSec: true };
-                    permRoles.push(permRole);
                     var permOrgs = new Array();
-                    const permOrg = { name: userProps.org, canRead: true, canModify: true, canSec: false };
-                    permOrgs.push(permOrg);
                     var permOrgUnits = new Array();
-                    const permOrgUnit = { name: userProps.orgUnit, canRead: true, canModify: false, canSec: false };
+                    if( org != 'public' ) {
+                      permRole = { name: 'Org', canRead: true, canModify: true, canSec: true };
+                      permRoles.push(permRole);
+                      const permOrg = { name: userProps.org, canRead: true, canModify: true, canSec: false };
+                      permOrgs.push(permOrg);
+                      const permOrgUnit = { name: userProps.orgUnit, canRead: true, canModify: false, canSec: false };
+                    };
                     userProps.perm = { users: permUsers, roles: permRoles, orgs: permOrgs, orgUnits: permOrgUnits };
                     userProps.org = org._id;
                     userProps.orgUnit = ou._id;
-                    userProps.mod = new Array(); 
+                    const date = new Date();
+                    const mod = { by: userProps.username, when: date };
+                    userProps.mod = new Array();
                     userProps.mod.push(mod);
                     delete userProps.username;
                     User.create(userProps)
@@ -72,16 +74,16 @@ module.exports = {
                         res.status(201).send(mess);
                       })
                       .catch((err) => {
-                        const mess = {id: 422, error: 'Error: Usuario -' + userProps.name + '- ya existe'};
+                        const mess = {id: 500, error: 'Error: ' + err};
                         logger.info(mess);
-                        res.status(422).send(mess);
+                        res.status(500).send(mess);
                       });
                   }
                 })
                 .catch((err) => {
-                  const mess = {id: 422, error: 'Error: Usuario -' + userProps.name + '- ya existe'};
+                  const mess = {id: 500, error: 'Error: ' + err};
                   logger.info(mess);
-                  res.status(422).send(mess);
+                  res.status(500).send(mess);
                 });
             };
           })
@@ -121,5 +123,43 @@ module.exports = {
           });
       };
     };
+  },
+
+  validateEmail(req, res, next) {
+      if(!req.query) {
+        const mess = {id: 417, err: 'Por favor, proporcione los datos para procesar'};
+        res.status(417).send(mess);
+      } else {
+        const userProps = req.query;
+        if(!userProps.email) {
+          const mess = {id: 417, err: 'Por favor, proporcione el correo elecronico'};
+          res.status(417).send(mess);
+        } else {
+          console.log(userProps.email);
+          User.findOne({ 'person.email': userProps.email})
+            .then((email) => {
+              if(email) {
+                res.status(200);
+                res.json({
+                  "status": 200,
+                  "message": "Email existe " + email
+                });
+              } else {
+                res.status(404);
+                res.json({
+                  "status": 404,
+                  "message": "Email no existe "
+                });
+              };
+            })
+            .catch((err) => {
+              res.status(500);
+              res.json({
+                "status": 500,
+                "message": "Error: " + err
+              })
+            });
+        };
+      };
   }
 };
