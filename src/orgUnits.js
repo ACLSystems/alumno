@@ -31,3 +31,8 @@ const OrgUnitsSchema = new Schema ({
 
 const OrgUnits = mongoose.model('orgUnits', OrgUnitsSchema);
 module.exports = OrgUnits;
+
+OrgUnitsSchema.pre('save', function(next) {
+  this.name = this.name.toLowerCase();
+  this.longName = properCase(this.longName);
+});

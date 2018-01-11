@@ -201,20 +201,27 @@ module.exports = {
       } else {
         User.findOne({ 'name': userProps.name })
           .then((user) => {
-            user.admin.passwordSaved = '';
-            const date = new Date();
-            var mod = {
-              by: user.name,
-              when: date,
-              what: 'Password modified'
+            if(user) {
+              user.admin.passwordSaved = '';
+              const date = new Date();
+              var mod = {
+                by: user.name,
+                when: date,
+                what: 'Password modified'
+              }
+              user.mod.push(mod);
+              user.save();
+              res.status(200);
+              res.json({
+                "status": 200,
+                "message": "Password modified"
+              });
+            } else {
+              res.json({
+                "status": 404,
+                "message": "User not found"
+              });
             }
-            user.mod.push(mod);
-            user.save();
-            res.status(200);
-            res.json({
-              "status": 200,
-              "message": "Password modified"
-            });
           })
           .catch((err) => {
             res.status(500);
@@ -225,5 +232,61 @@ module.exports = {
           });
       };
     };
+  },
+
+  modify(req, res, next) {
+    if(!req.body) {
+      const mess = {id: 417, err: 'Please, give data to process'};
+      res.status(417).send(mess);
+    } else {
+      var key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
+      const userProps = req.body;
+      userProps.person.name = properCase(userProps.person.name);
+      userProps.person.fatherName = properCase(userProps.person.fatherName);
+      userProps.person.motherName = properCase(userProps.person.motherName);
+      //var birthDate = moment.utc(userProps.person.birthDate);
+      //userProps.person.birthDate = birthDate.toDate();
+
+      User.findOneAndUpdate({ 'name': userProps.name }, {$set: userProps})
+        .then((user) => {
+          var author = user.name;
+          if (key) {
+            author = key;
+          };
+          const date = new Date();
+          const mod = {
+            by: author,
+            when: date,
+            what: 'User modification'
+          };
+          user.mod.push(mod);
+          user.save();
+          res.status(200);
+          res.json({
+            "status":200,
+            "message": "User properties modified"
+          });
+        })
+        .catch((err) => {
+          res.status(500);
+          res.json({
+            "status": 500,
+            "message": "Error: " + err
+          });
+        });
+    }
   }
+
+};
+
+function properCase(obj) {
+  var name = new String(obj);
+  var newName = new String();
+  var nameArray = name.split(" ");
+  var arrayLength = nameArray.length - 1;
+  nameArray.forEach(function(word,i) {
+    word = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    if(i === arrayLength) { newName += word } else { newName += word + ' '};
+  });
+  return newName;
 };

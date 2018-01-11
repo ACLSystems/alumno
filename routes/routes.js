@@ -42,6 +42,7 @@ app.put('/api/user/passwordChange', UserController.passwordChange);
 // Rutas que pueden acceder solo usuarios autenticados
 
 app.get('/api/v1/user/getdetails', UserController.getDetails);
+app.put('/api/v1/user/modify', UserController.modify);
 app.post('/api/v1/org/register', OrgController.register);
 app.post('/api/v1/orgunit/register', OrgUnitController.register);
 

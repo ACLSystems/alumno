@@ -24,7 +24,22 @@ const PersonSchema = new Schema ({
   },
   birthDate: {
     type: Date
+  },
+  mainPhone: {
+    type: String
+  },
+  celPhone: {
+    type: String
+  },
+  location: {
+    type: { type: String },
+    coordinates: []
+  },
+  genre: {
+    type: String,
+    enum: ['male', 'female']
   }
+
 });
 
 PersonSchema.pre('save', function(next) {
