@@ -28,15 +28,9 @@ const PersonSchema = new Schema ({
 });
 
 PersonSchema.pre('save', function(next) {
-  var name = new String(this.name);
-  name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-  this.name = name;
-  var fname = new String(this.fatherName);
-  fname = fname.charAt(0).toUpperCase() + fname.slice(1).toLowerCase();
-  this.fatherName = fname;
-  var mname = new String(this.motherName);
-  mname = mname.charAt(0).toUpperCase() + mname.slice(1).toLowerCase();
-  this.motherName = mname;
+  this.name = properCase(this.name);
+  this.fatherName = properCase(this.fatherName);
+  this.motherName = properCase(this.motherName);
   var birthDate = moment.utc(this.birthDate);
   this.birthDate = birthDate.toDate();
   next();
@@ -163,3 +157,15 @@ UserSchema.methods.validatePassword = function(password, cb) {
 
 const User = mongoose.model('users', UserSchema);
 module.exports = User;
+
+function properCase(obj) {
+  var name = new String(obj);
+  var newName = new String();
+  var nameArray = name.split(" ");
+  var arrayLength = nameArray.length - 1;
+  nameArray.forEach(function(word,i) {
+    word = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    if(i === arrayLength) { newName += word } else { newName += word + ' '};
+  });
+  return newName;
+};

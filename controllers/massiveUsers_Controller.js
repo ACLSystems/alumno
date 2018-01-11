@@ -4,6 +4,7 @@ const Org = require('../src/orgs');
 const OrgUnit = require('../src/orgUnits');
 const generate = require('nanoid/generate');
 const moment = require('moment');
+const bcrypt = require('bcrypt-nodejs');
 require('winston-daily-rotate-file');
 
 var transport = new(winston.transports.DailyRotateFile) ({
@@ -87,6 +88,7 @@ module.exports = {
                     val.mod.push(mod);
                     val.org = objOrg._id;
                     val.orgUnit = objOrgUnit._id;
+                    val.roles = addRoles();
                     var admin = {
                       isActive: true,
                       isVerified: false,
@@ -96,15 +98,20 @@ module.exports = {
                     val.admin = admin;
                     usersToInsert.push(val);
                     usersToInsertNames.push(val.name);
+                    if(val.person.name) { val.person.name = properCase(val.person.name) };
+                    if(val.person.fatherName) { val.person.fatherName = properCase(val.person.fatherName) };
+                    if(val.person.motherName) { val.person.motherName = properCase(val.person.motherName) };
                   };
                 });
-                User.find({name: {$in: usersToInsertNames}}, {name: true})
+                User.find({name: {$in: usersToInsertNames}})
                   .then((usersFound) => {
                     usersFound.forEach(function(val1,index1) {
                       usersToInsert.forEach(function(val2,index2) {
                         if(val2.name === val1.name) {
                           var user = usersToInsert.splice(index2,1);
                           user[0]._id = val1._id;
+                          user[0].mod = val1.mod;
+                          user[0].admin = val1.admin;
                           usersToUpdate.push(user[0]);
                           usersToUpdateNames.push(user[0].name);
                         }
@@ -120,13 +127,19 @@ module.exports = {
                     };
                     if(usersToUpdate) {
                       usersToUpdate.forEach(function(userToUpdate,index) {
+                        delete userToUpdate.roles;
+                        delete userToUpdate.perm;
                         const date = new Date();
                         const mod = {
                           by: key,
                           when: date,
-                          what: 'User Modification'
+                          what: 'Massive User Modification'
                         };
                         userToUpdate.mod.push(mod);
+                        if(userToUpdate.password) {
+                          userToUpdate.password = encryptPass(userToUpdate.password);
+                          userToUpdate.admin.passwordSaved = 'saved';
+                        };
                         User.update({_id: userToUpdate._id}, {$set: userToUpdate})
                         .catch((err) => {
                           const mess = {id: 500, error: 'Error: ' + err};
@@ -161,3 +174,42 @@ module.exports = {
     };
   }
 };
+
+// Private Functions
+
+function properCase(obj) {
+  var name = new String(obj);
+  var newName = new String();
+  var nameArray = name.split(" ");
+  var arrayLength = nameArray.length - 1;
+  nameArray.forEach(function(word,i) {
+    word = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    if(i === arrayLength) { newName += word } else { newName += word + ' '};
+  });
+  return newName;
+};
+
+function addRoles() {
+  return {
+    isAdmin: false,
+    isBusiness: false,
+    isOrg: false,
+    isOrgContent: false,
+    isAuthor: false,
+    isInstructor: false,
+    isSupervisor: false
+  };
+};
+
+function encryptPass(obj) {
+    var salt = bcrypt.genSaltSync(10);
+    obj = bcrypt.hashSync(obj, salt);
+    return obj;
+};
+
+function sendError(err) {
+    const mess = {id: 500, error: 'Error: ' + err};
+    logger.info(mess);
+    res.status(500).send(mess);
+    return;
+}
