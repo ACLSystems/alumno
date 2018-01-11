@@ -9,7 +9,7 @@ const OrgsSchema = new Schema ({
     type: String,
     validate: {
       validator: (name) => name.length > 2,
-      message: '"name" debe tener más de 2 caracteres'
+      message: '"name" must have more than 2 characters'
     },
     required: [ true, '"name" es requerido'],
     lowercase: true,
@@ -19,17 +19,12 @@ const OrgsSchema = new Schema ({
     type: String,
     validate: {
       validator: (longName) => longName.length > 2,
-      message: '"longName" debe tener más de 2 caracteres'
+      message: '"longName" must have more than 2 characters'
     },
-    required: [ true, '"longName" es requerido']
+    required: [ true, '"longName" es required']
   },
   alias:{
-    type: [String] /*,
-    validate: {
-      validator: (alias) => alias.length > 2,
-      message: '"alias" debe tener más de 2 caracteres'
-    }
-    */
+    type: [String]
   },
   isActive: {
     type: Boolean,

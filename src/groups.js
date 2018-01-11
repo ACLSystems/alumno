@@ -17,8 +17,8 @@ const ResultsSchema = new Schema ({
   },
   obtained: {
     type: Number,
-    min: [0,'La calificación no puede ser menor a 0'],
-    max: [100, 'La calificación no puede ser mayor a 100']
+    min: [0,'Grade cannot be less than 0'],
+    max: [100, 'Grade cannot be greater than 100']
   }
 });
 

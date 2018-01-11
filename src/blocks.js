@@ -47,7 +47,7 @@ const BlocksSchema = new Schema ({
   },
   version: {
     type: Number,
-    min: [1, 'La version del bloque no puede ser menor a 1']
+    min: [1, 'Block version cannot be less than 1']
   }
   isVisible: {
     type: Boolean,

@@ -9,8 +9,8 @@ const WquestSchema = new Schema ({
   },
   w: {
     type: Number,
-    min: [0,'El valor mínimo es 0'],
-    max: [100,'El valor máximo es 100']
+    min: [0,'Minimum value is 0'],
+    max: [100,'Maximum value is 100']
   }
 });
 

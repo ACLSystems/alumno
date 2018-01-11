@@ -11,9 +11,8 @@ routes(app);
 
 // If no route is matched by now, it must be a 404
 app.use(function(req, res, next) {
-  var err = new Error('API NOT FOUND');
-  err.status = 404;
-  next(err);
+  const mess = {id: 404, err: 'API not found'};
+  res.status(404).send(mess);
 });
 
 

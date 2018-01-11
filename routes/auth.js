@@ -13,7 +13,7 @@ var auth = {
       res.status(401);
       res.json({
         "status": 401,
-        "message": "Por favor, proporcione sus credenciales"
+        "message": "Please, give credentiales"
       });
       return;
     }
@@ -33,7 +33,7 @@ var auth = {
         })
       })
       .catch((err) => {
-        const mess = {id: 404, error: 'Error: password incorrecto'};
+        const mess = {id: 404, error: 'Error: password incorrect'};
         res.status(404).send(mess);
       });
 

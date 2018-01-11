@@ -6,18 +6,22 @@ const PermUnitSchema = new Schema ({
   // unidad de permiso
   // permUnit.canRead
   name: {
-    type: String
+    type: String,
+    required: [true, 'User name is required to create a permission']
   },
   canRead: {
-    type: Boolean
+    type: Boolean,
+    default: false
   },
   // permUnit.canModify
   canModify: {
-    type: Boolean
+    type: Boolean,
+    default: false
   },
   // permUnit.canSec
   canSec: {
-    type: Boolean
+    type: Boolean,
+    default: false
   }
 });
 

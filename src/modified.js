@@ -13,6 +13,11 @@ const ModSchema = new Schema ({
     type: Date,
     required: true,
     default: date
+  },
+  what: {
+    type: String,
+    required: true,
+    default: 'Modified'
   }
 });
 

@@ -50,12 +50,12 @@ const CoursesSchema = new Schema ({
   price: {
     type: Number,
     default: 0,
-    min: [0,'El precio del curso no puede ser menor a 0']
+    min: [0,'Course price cannot be less than 0']
   },
   cost: {
     type: Number,
     default: 0
-    min: [0,'El costo del curso no puede ser menor a 0']
+    min: [0,'Course cost cannot be less than 0']
   },
   own: {OwnerSchema},
   mod: [{ModSchema}],

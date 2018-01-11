@@ -38,7 +38,7 @@ const QuestionnarieSchema = new Schema ({
   questions: [{questionSchema}],
   version: {
     type: String,
-    min: [1, 'La version del cuestionario no puede ser menor a 1']
+    min: [1, 'Questionnarie version cannot be less than 1']
   },
   keywords: [String],
   isVisible: Boolean,

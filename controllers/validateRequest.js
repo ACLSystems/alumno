@@ -43,7 +43,7 @@ module.exports = function(req, res, next) {
               res.status(403);
               res.json({
                 "status": 403,
-                "message": "Usuario no autorizado"
+                "message": "User not authorized"
               });
             }
             return;
@@ -52,7 +52,7 @@ module.exports = function(req, res, next) {
             res.status(401);
             res.json({
               "status": 401,
-              "message": "Usuario no válido"
+              "message": "User not valid"
             });
             return;
           }
@@ -69,7 +69,7 @@ module.exports = function(req, res, next) {
     res.status(401);
     res.json({
       "status": 401,
-      "message": "Usuario no logueado, o token/key invalidos"
+      "message": "User needs to log in, or token/key invalid"
     });
     return;
   };

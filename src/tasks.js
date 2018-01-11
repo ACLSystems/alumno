@@ -26,7 +26,7 @@ const TasksSchema = new Schema ({
   },
   version: {
     type: Number
-    min: [1, 'La version de la tarea no puede ser menor a 1']
+    min: [1, 'Task version cannot be less than 1']
   },
   keywords: {
     type: [String]

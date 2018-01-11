@@ -3,6 +3,7 @@ const OrgController = require('../controllers/org_controller');
 const OrgUnitController = require('../controllers/orgUnit_controller');
 const GetNothing = require('../controllers/get_nothing');
 const auth = require('./auth');
+const MassUsersController = require('../controllers/massiveUsers_Controller');
 
 module.exports = (app) => {
 
@@ -36,6 +37,7 @@ app.get('/orgunit', GetNothing.greeting);
 app.post('/login', auth.login);
 app.post('/api/user/register', UserController.register);
 app.get('/api/user/validateEmail', UserController.validateEmail);
+app.put('/api/user/passwordChange', UserController.passwordChange);
 
 // Rutas que pueden acceder solo usuarios autenticados
 
@@ -44,5 +46,7 @@ app.post('/api/v1/org/register', OrgController.register);
 app.post('/api/v1/orgunit/register', OrgUnitController.register);
 
 // Rutas que pueden acceder solo usuarios autenticados y autorizados
+
+app.post('/api/user/massiveRegister', MassUsersController.massiveRegister);
 
 };

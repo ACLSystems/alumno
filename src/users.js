@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt-nodejs');
 const ModSchema = require('./modified');
 const PermissionsSchema = require('./permissions');
+const moment = require('moment');
 const Schema = mongoose.Schema;
 
 // Esquema para datos de la persona que posee un usuario
@@ -18,11 +19,27 @@ const PersonSchema = new Schema ({
   },
   email: {
     type: String,
+    unique: [true, 'Email already exists. Please verify'],
     match: /\S+@\S+\.\S+/
   },
   birthDate: {
     type: Date
   }
+});
+
+PersonSchema.pre('save', function(next) {
+  var name = new String(this.name);
+  name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  this.name = name;
+  var fname = new String(this.fatherName);
+  fname = fname.charAt(0).toUpperCase() + fname.slice(1).toLowerCase();
+  this.fatherName = fname;
+  var mname = new String(this.motherName);
+  mname = mname.charAt(0).toUpperCase() + mname.slice(1).toLowerCase();
+  this.motherName = mname;
+  var birthDate = moment.utc(this.birthDate);
+  this.birthDate = birthDate.toDate();
+  next();
 });
 
 module.exports = PersonSchema;
@@ -70,27 +87,7 @@ const RolesSchema = new Schema ({
 
 module.exports = RolesSchema;
 
-// Esquema para usuario
-const UserSchema = new Schema ({
-  name: {
-    type: String,
-    required: [true, 'nombre de usuario es requerido'],
-    unique: [true, 'usuario ya existe. Favor de verificar'],
-    lowercase: true
-  },
-  password: {
-    type: String,
-    required: [true, 'password es requerido']
-  },
-  person: PersonSchema,
-  org: {
-    type: Schema.Types.ObjectId,
-    ref: 'orgs'
-  },
-  orgUnit: {
-    type: Schema.Types.ObjectId,
-    ref: 'orgUnits'
-  },
+const AdmUsrSchema = new Schema({
   isActive: {
     type: Boolean,
     default: true
@@ -99,20 +96,52 @@ const UserSchema = new Schema ({
     type: Boolean,
     default: false
   },
+  recoverString: {
+    type: String,
+    default: ''
+  },
+  passwordSaved:{
+    type: String,
+    default: ''
+  }
+});
+
+module.exports = AdmUsrSchema;
+
+// Esquema para usuario
+const UserSchema = new Schema ({
+  name: {
+    type: String,
+    required: [true, 'User name is required'],
+    unique: [true, 'User name already exists. Please verify'],
+    lowercase: true
+  },
+  password: {
+    type: String,
+    required: [true, 'Password is required']
+  },
+  org: {
+    type: Schema.Types.ObjectId,
+    ref: 'orgs'
+  },
+  orgUnit: {
+    type: Schema.Types.ObjectId,
+    ref: 'orgUnits'
+  },
+  person: PersonSchema,
   roles: RolesSchema,
   mod: [ModSchema],
   perm: PermissionsSchema,
-  recoverString: {
-    type: String
-  }
+  admin: AdmUsrSchema
 });
 
 
 //Encriptar password antes de guardarlo en la base
 UserSchema.pre('save', function(next) {
-  if(this.password) {
+  if(this.password && this.admin.passwordSaved !== 'saved') {
     var salt = bcrypt.genSaltSync(10);
     this.password = bcrypt.hashSync(this.password, salt);
+    this.admin.passwordSaved = 'saved';
   };
   next();
 });
