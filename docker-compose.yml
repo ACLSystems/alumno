@@ -12,7 +12,7 @@ services:
     restart: always
     build: .
     environment:
-      - DOCKER=true
+      - MONGO_URI=mongodb://mongo/alumno
     depends_on:
       - "mongo"
     command: ["./wait-for-it.sh", "-t", "5", "mongo:27017", "--", "node", "index.js"]
