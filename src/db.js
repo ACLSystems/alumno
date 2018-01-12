@@ -22,11 +22,12 @@ var logger = new(winston.Logger) ({
 
 
 // Build the connection string
+var dbURI = '';
 if(process.env.MONGO_URI) {
-  let dbURI = process.env.MONGO_URI;
-} else {
-  let dbURI = 'mongodb://mongo/alumno';
+  var dbURI = process.env.MONGO_URI;
 }
+
+console.log('Using ' + dbURI);
 
 // Build connection options
 let options = {
@@ -46,7 +47,7 @@ var message = '';
 // CONNECTION EVENTS
 // When successfully connected
 mongoose.connection.on('connected', function () {
-  message = 'Mongoose default connection open to ' + dbURI;
+  message = 'Mongoose default connection open successfully to ' + dbURI;
   logger.info(message);
   console.log(message);
 });

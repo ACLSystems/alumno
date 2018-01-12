@@ -1,5 +1,6 @@
 module.exports = {
   greeting(req, res) {
-    res.send({ hi: 'greetings'});
+    res.status(200);
+    res.json({ hi: 'greetings'});
   }
 };
