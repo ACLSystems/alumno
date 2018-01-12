@@ -20,7 +20,7 @@ COPY . /usr/src/app
 EXPOSE 3050
 
 # Comando para arrancar nuestra aplicación
-CMD ["node", "index.js"]
+CMD ["npm", "start"]
 
 
 # Aplicación DOCKERIZADA!!!

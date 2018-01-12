@@ -22,7 +22,11 @@ var logger = new(winston.Logger) ({
 
 
 // Build the connection string
-let dbURI = 'mongodb://mongo/alumno';
+if(process.env.MONGO_URI) {
+  let dbURI = process.env.MONGO_URI;
+} else {
+  let dbURI = 'mongodb://mongo/alumno';
+}
 
 // Build connection options
 let options = {
