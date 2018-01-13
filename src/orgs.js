@@ -36,14 +36,8 @@ const OrgsSchema = new Schema ({
 
 OrgsSchema.pre('save', function(next) {
   this.name = this.name.toLowerCase();
-  this.longName = properCase(this.longName);
+  next();
 });
 
 const Orgs = mongoose.model('orgs', OrgsSchema);
 module.exports = Orgs;
-
-
-function properCase(obj) {
-  obj = obj.charAt(0).toUpperCase() + obj.slice(1).toLowerCase();
-  return obj;
-};

@@ -1,5 +1,6 @@
 // Bring Mongoose into the app
 const mongoose = require( 'mongoose' );
+const init = require('./init');
 mongoose.Promise = global.Promise;
 
 // Bring winston
@@ -22,10 +23,8 @@ var logger = new(winston.Logger) ({
 
 
 // Build the connection string
-var dbURI = '';
-if(process.env.MONGO_URI) {
-  var dbURI = process.env.MONGO_URI;
-}
+var dbURI = 'mongodb://mongo/alumno';
+if(process.env.MONGO_URI) { var dbURI = process.env.MONGO_URI };
 
 console.log('Using ' + dbURI);
 
@@ -50,6 +49,7 @@ mongoose.connection.on('connected', function () {
   message = 'Mongoose default connection open successfully to ' + dbURI;
   logger.info(message);
   console.log(message);
+  init.init('1.0');
 });
 
 // If the connection throws an error

@@ -2,23 +2,53 @@ module.exports = {
   help(req, res) {
     res.status(200);
     res.json({
-      "help": "/api/help",
-      "login": "/login",
+      "help": {
+          "access": "/api/help",
+          "description": "This help"
+      },
+      "login": {
+        "access": "/login",
+        "description": "Use login to get access to must APIs"
+      },
       "user": {
-        "register": "/api/user/register",
-        "validateEmail": "/api/user/validateEmail",
-        "passwordChange": "/api/user/passwordChange",
-        "getDetails": "/api/v1/user/getDetails",
-        "modify": "/api/v1/user/modify"
+        "register": {
+          "access": "/api/user/register",
+          "description": "to register an user"
+        },
+        "validateEmail": {
+          "access": "/api/user/validateEmail",
+          "description": "used to validate email user when he/she losts his/her password. This returns token to construct URL for password change"
+        },
+        "passwordChange": {
+          "access": "/api/user/passwordChange",
+          "description": "used to change password. It must have token previously granted by validateEmail"
+        },
+        "getDetails": {
+          "access": "/api/v1/user/getDetails",
+          "description": "get user details"
+        },
+        "modify": {
+          "access": "/api/v1/user/modify",
+          "description": "modify user details. This API is intended for user. Do not modify admin properties"
+        }
       },
       "massiveRegister": {
-        "massiveRegister": "/api/v1/user/massiveRegister"
+        "massiveRegister": {
+          "access": "/api/v1/user/massiveRegister",
+          "description": "register users in massive way"
+        }
       },
       "org": {
-        "register": "/api/v1/org/register"
+        "register": {
+          "access": "/api/v1/org/register",
+          "description": "register organization. Requires token obtained from login"
+        }
       },
       "orgunit": {
-        "register": "/api/v1/orgunit/register"
+        "register": {
+          "access": "/api/v1/orgunit/register",
+          "description": "register organizational unit. Requires token obtained from login"
+        }
       }
     });
   }

@@ -34,5 +34,5 @@ module.exports = OrgUnits;
 
 OrgUnitsSchema.pre('save', function(next) {
   this.name = this.name.toLowerCase();
-  this.longName = properCase(this.longName);
+  next();
 });
