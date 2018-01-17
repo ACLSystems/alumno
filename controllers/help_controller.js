@@ -34,20 +34,20 @@ module.exports = {
       },
       "massiveRegister": {
         "massiveRegister": {
-          "access": "/api/v1/user/massiveRegister",
+          "access": "/api/v1/orgadm/user/massiveRegister",
           "description": "register users in massive way"
         }
       },
       "org": {
         "register": {
-          "access": "/api/v1/org/register",
-          "description": "register organization. Requires token obtained from login"
+          "access": "/api/v1/admin/org/register",
+          "description": "register organization. Requires token obtained from login. Only Admin can create organizations"
         }
       },
       "orgunit": {
         "register": {
-          "access": "/api/v1/orgunit/register",
-          "description": "register organizational unit. Requires token obtained from login"
+          "access": "/api/v1/orgadm/orgunit/register",
+          "description": "register organizational unit. Requires token obtained from login. Only Org can create OUs"
         }
       }
     });

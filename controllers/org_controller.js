@@ -18,17 +18,20 @@ var logger = new(winston.Logger) ({
 
 module.exports = {
   register(req, res, next) {
-    if(!req.query) return res.sendStatus(400).res.send({id: 417, err: 'Please, give data to process'});
-    const orgProps = req.query;
+    var key = (req.body && req.body.x_key) || req.headers['x-key'];
+    if(!key) {
+      key = 'admin';
+    };
+    if(!req.body) return res.sendStatus(400).res.send({id: 417, err: 'Please, give data to process'});
+    const orgProps = req.body;
     var temp = orgProps.alias;
     if(temp.constructor !== Array) {
       orgProps.alias = [temp];
     };
     const date = new Date();
-    const mod = {by: orgProps.username, when: date};
+    const mod = {by: key, when: date};
     orgProps.mod = new Array();
     orgProps.mod.push(mod);
-    delete orgProps.username;
     Org.create(orgProps)
       .then(org => {
         logger.info('Org -' + orgProps.name + '- created');
@@ -37,7 +40,6 @@ module.exports = {
       })
       .catch((err) => {
           logger.info(err);
-          //logger.info('Error: Organizacion -' + orgProps.name + '- ya existe');
           const mess = {id: 422, error: 'Error: Org -' + orgProps.name + '- already exists'};
           res.status(422).send(mess);
       });

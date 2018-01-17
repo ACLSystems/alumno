@@ -28,7 +28,10 @@ module.exports = {
       res.status(417).send(mess);
     } else {
       usersReq = req.body;
-      var key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
+      var numUsers = {
+        requested: usersReq.length
+      };
+      var key = (req.body && req.body.x_key) || req.headers['x-key'];
       if(!key) {
         key = 'admin';
       }
@@ -39,7 +42,7 @@ module.exports = {
               .then((orgUnits) => {
                 var objOrg = '';
                 var objOrgUnit = '';
-                var result = new Array();
+                var failed = new Array();
                 var status = 'ok';
                 var admin = {
                   isActive: true,
@@ -66,7 +69,7 @@ module.exports = {
                     status = 'Some errors found';
                   }
                   if(status === 'Some errors found') {
-                    result.push({ name: val.name, nStat: 'ok', org: val.org, oStat: orgStatus, orgUnit: val.orgUnit, ouStat: orgUnitStatus });
+                    failed.push({ name: val.name, nStat: 'ok', org: val.org, oStat: orgStatus, orgUnit: val.orgUnit, ouStat: orgUnitStatus });
                     status = 'ok';
                   } else {
                     var permUsers = new Array();
@@ -124,6 +127,7 @@ module.exports = {
                           logger.info(mess);
                           res.status(500).send(mess);
                         });
+                      numUsers.inserted = usersToInsert.length;
                     };
                     if(usersToUpdate) {
                       usersToUpdate.forEach(function(userToUpdate,index) {
@@ -147,7 +151,11 @@ module.exports = {
                           res.status(500).send(mess);
                         });
                       });
+                      numUsers.updated = usersToUpdate.length;
                     };
+                    numUsers.failed = failed.length;
+                    var result = numUsers;
+                    result.details = failed;
                     res.status(200);
                     res.json({
                       "status": 200,

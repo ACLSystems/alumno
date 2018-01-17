@@ -22,15 +22,20 @@ var logger = new(winston.Logger) ({
 
 module.exports = {
   register(req, res, next) {
-    var key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
-    if(!req.query ) { // Query vacio
+    var key = (req.body && req.body.x_key) || req.headers['x-key'];
+    if(!req.body ) { // Body vacio
       const mess = {id: 417, err: 'Please, give data to process'};
       res.status(417).send(mess);
     } else {
-      // extraemos el query
-      const userProps = req.query;
-      // No trae organizacion
-      if(!userProps.org) {
+
+      // FALTA AGREGAR PERMISOS.
+      // quienes pueden crear usuarios?
+      // el mismo usuario que se registra solo (checar que el usuario no exista)
+      // un usuario con rol de isAdmin
+      // un usuario con rol de isOrg y que lo registre en su propia organizacion
+
+      const userProps = req.body;
+      if(!userProps.org) { // No trae organizacion
         const mess = {id: 417, err: 'Please, give org'};
         res.status(417).send(mess);
       } else {
@@ -118,26 +123,36 @@ module.exports = {
   },
 
   getDetails(req, res, next) {
-    if(!req.query) {
+    if(!req.body) {
       const mess = {id: 417, err: 'Please, give data to process'};
       res.status(417).send(mess);
     } else {
-      const userProps = req.query;
+      const userProps = req.body;
+      const key = (req.body && req.body.x_key) || req.headers['x-key'];
       if(!userProps.name) {
         const mess = {id: 417, err: 'Please, give username'};
         res.status(417).send(mess);
       } else {
-        User.findOne({ name: userProps.name }, {password: false, __v: false})
+        User.findOne({ name: key }, { roles: true, org: true, orgUnit: true })
           .populate('org','name')
-          .populate('orgUnit', 'name')
-          .then((user) => {
-            if (!user) {
-              const mess = {id: 422, message: 'User -' + userProps.name + '- does not exist'};
-              logger.info(mess);
-              res.status(422).send(mess);
-            } else {
-              res.status(200).send(user)
-            };
+          .populate('org','name')
+          .then((key_roles) => {
+            User.findOne({ name: userProps.name }, {password: false, __v: false})
+              .populate('org','name')
+              .populate('orgUnit', 'name')
+              .then((user) => {
+                if (!user) {
+                  const mess = {id: 422, message: 'User -' + userProps.name + '- does not exist'};
+                  logger.info(mess);
+                  res.status(422).send(mess);
+                } else {
+                    res.status(200).send(user)
+                };
+              })
+              .catch((err) => {
+                logger.info(err);
+                res.send(err);
+              });
           })
           .catch((err) => {
             logger.info(err);
@@ -148,11 +163,11 @@ module.exports = {
   },
 
   validateEmail(req, res, next) {
-      if(!req.query) {
+      if(!req.body) {
         const mess = {id: 417, err: 'Please, give data to process'};
         res.status(417).send(mess);
       } else {
-        const userProps = req.query;
+        const userProps = req.body;
         if(!userProps.email) {
           const mess = {id: 417, err: 'Please, give email'};
           res.status(417).send(mess);
@@ -190,11 +205,11 @@ module.exports = {
   },
 
   passwordChange(req, res, next) {
-    if(!req.query) {
+    if(!req.body) {
       const mess = {id: 417, err: 'Please, give data to process'};
       res.status(417).send(mess);
     } else {
-      const userProps = req.query;
+      const userProps = req.body;
       if(!userProps.name || !userProps.password) {
         const mess = {id: 417, err: 'Please, give username and/or password'};
         res.status(417).send(mess);
@@ -239,7 +254,7 @@ module.exports = {
       const mess = {id: 417, err: 'Please, give data to process'};
       res.status(417).send(mess);
     } else {
-      var key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
+      var key = (req.body && req.body.x_key) || req.headers['x-key'];
       const userProps = req.body;
       userProps.person.name = properCase(userProps.person.name);
       userProps.person.fatherName = properCase(userProps.person.fatherName);

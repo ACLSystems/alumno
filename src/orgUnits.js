@@ -6,7 +6,8 @@ const Schema = mongoose.Schema;
 
 const OrgUnitsSchema = new Schema ({
   name: {
-    type: String
+    type: String,
+    index: true
   },
   longName: {
     type: String
@@ -15,7 +16,8 @@ const OrgUnitsSchema = new Schema ({
     type: [String]
   },
   parent: {
-    type: String
+    type: String,
+    index: true
   },
   org: {
     type: Schema.Types.ObjectId,
@@ -28,6 +30,8 @@ const OrgUnitsSchema = new Schema ({
   mod: [ModSchema],
   perm: PermissionsSchema
 });
+
+OrgUnitsSchema.index( { name: 1, parent: 1}, { unique: true } );
 
 const OrgUnits = mongoose.model('orgUnits', OrgUnitsSchema);
 module.exports = OrgUnits;

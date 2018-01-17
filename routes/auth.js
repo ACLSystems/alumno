@@ -6,8 +6,8 @@ var auth = {
 
   login: function(req, res) {
 
-    var username = req.query.username || '';
-    var password = req.query.password || '';
+    var username = req.body.username || req.body.name || '';
+    var password = req.body.password || '';
 
     if (username == '' || password == '') {
       res.status(401);
@@ -28,7 +28,8 @@ var auth = {
               username: user.name
             };
             res.status(200);
-            res.json(genToken(dbUserObj));
+            //res.json(genToken(dbUserObj));
+            res.json(genToken());
           }
         })
       })

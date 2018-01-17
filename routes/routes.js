@@ -30,11 +30,6 @@ app.all('/api/v1/*', [require('../controllers/validateRequest')]);
 // Rutas que cualquiera puede acceder
 
 app.get('/', GetNothing.greeting);
-app.get('/api', GetNothing.greeting);
-app.get('/user', GetNothing.greeting);
-app.get('/org', GetNothing.greeting);
-app.get('/orgunit', GetNothing.greeting);
-
 app.post('/login', auth.login);
 app.post('/api/user/register', UserController.register);
 app.get('/api/user/validateEmail', UserController.validateEmail);
@@ -45,11 +40,17 @@ app.get('/api/help', HelpController.help);
 
 app.get('/api/v1/user/getdetails', UserController.getDetails);
 app.put('/api/v1/user/modify', UserController.modify);
-app.post('/api/v1/org/register', OrgController.register);
-app.post('/api/v1/orgunit/register', OrgUnitController.register);
+
 
 // Rutas que pueden acceder solo usuarios autenticados y autorizados
 
-app.post('/api/v1/user/massiveRegister', MassUsersController.massiveRegister);
+// Rutas para roles de "Admin"
+
+app.post('/api/v1/admin/org/register', OrgController.register);
+
+// Rutas para roles de organizacion
+
+app.post('/api/v1/orgadm/user/massiveRegister', MassUsersController.massiveRegister);
+app.post('/api/v1/orgadm/orgunit/register', OrgUnitController.register);
 
 };
