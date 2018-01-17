@@ -1,5 +1,6 @@
 const Org = require('../src/orgs');
 const winston = require('winston');
+const obj_type = 'org';
 require('winston-daily-rotate-file');
 
 var transport = new(winston.transports.DailyRotateFile) ({

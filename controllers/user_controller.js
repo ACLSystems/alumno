@@ -4,7 +4,10 @@ const Org = require('../src/orgs');
 const OrgUnit = require('../src/orgUnits');
 const generate = require('nanoid/generate');
 const moment = require('moment');
+const permissions = require('../shared/permissions');
+const obj_type = 'user';
 require('winston-daily-rotate-file');
+
 
 var transport = new(winston.transports.DailyRotateFile) ({
   filename: './logs/log',
@@ -24,8 +27,10 @@ module.exports = {
   register(req, res, next) {
     var key = (req.body && req.body.x_key) || req.headers['x-key'];
     if(!req.body ) { // Body vacio
-      const mess = {id: 417, err: 'Please, give data to process'};
-      res.status(417).send(mess);
+      res.status(406).json({
+          "status": 406,
+          "message": "Error: Please, give data to process"
+      });
     } else {
 
       // FALTA AGREGAR PERMISOS.
@@ -36,20 +41,26 @@ module.exports = {
 
       const userProps = req.body;
       if(!userProps.org) { // No trae organizacion
-        const mess = {id: 417, err: 'Please, give org'};
-        res.status(417).send(mess);
+        res.status(406).json({
+          "status": 406,
+          "message": "Error: Please give org"
+        });
       } else {
         Org.findOne({ name: userProps.org }, { name: true } )
           .then((org) => {
             if (!org) {
-              const mess = {id: 422, err: 'Org -' + userProps.org + '- does not exist'};
-              res.status(422).send(mess);
+              res.status(404).json({
+                "status": 404,
+                "message": "Error: Org -" + userProps.org + "- does not exist"
+              });
             } else {
               OrgUnit.findOne({ name: userProps.orgunit}, { name: true })
                 .then((ou) => {
                   if (!ou) {
-                    const mess = {id: 422, err: 'OU -' + userProps.orgUnit + '- does not exist'};
-                    res.status(422).send(mess);
+                    res.status(404).json({
+                      "status": 404,
+                      "message": "Error: OU -" + userProps.orgUnit + "- does not exist"
+                    });
                   } else {
                     var admin = {
                       isActive: true,
@@ -86,9 +97,11 @@ module.exports = {
                     userProps.mod.push(mod);
                     User.create(userProps)
                       .then((user) => {
-                        const mess = {id: 201, message: 'User -' + userProps.name + '- created'};
                         logger.info(mess);
-                        res.status(201).send(mess);
+                        res.status(201).json({
+                          "status": 201,
+                          "User - " + userProps.name + "- created"
+                        });
                       })
                       .catch((err) => {
                         var mess = {};
@@ -96,12 +109,18 @@ module.exports = {
                         var re = new RegExp("duplicate key error collection");
                         var found = errString.match(re);
                         if(found) {
-                          mess = {id: 422, message: 'Error: user -' + userProps.name + '- already exists'};
-                          res.status(422).send(mess);
+                          res.status(406).json({
+                            "status": 406,
+                            "message": "Error: user -" + userProps.name + "- already exists"
+                          });
                         } else {
                           mess = {id: 500, message: 'Error: ' + err};
                           logger.info(mess);
-                          res.status(500).send(mess);
+                          res.status(500).json({
+                            "status": 500,
+                            "message": "Error:"
+                            "Error": err
+                          });
                         }
 
                       });
@@ -110,13 +129,21 @@ module.exports = {
                 .catch((err) => {
                   const mess = {id: 500, error: 'Error: ' + err};
                   logger.info(mess);
-                  res.status(500).send(mess);
+                  res.status(500).json({
+                    "status": 500,
+                    "message": "Error:",
+                    "Error": err
+                  });
                 });
             };
           })
           .catch((err) => {
             logger.info(err);
-            res.send(err);
+            res.status(500).json({
+              "status": 500,
+              "message": "Error:",
+              "Error": err
+            });
           });
       };
     };
@@ -124,53 +151,78 @@ module.exports = {
 
   getDetails(req, res, next) {
     if(!req.body) {
-      const mess = {id: 417, err: 'Please, give data to process'};
-      res.status(417).send(mess);
-    } else {
+      res.status(406).json({
+        "status": 406,
+        "message": "Please, give data to process"
+      });
+    } else { // else1
       const userProps = req.body;
       const key = (req.body && req.body.x_key) || req.headers['x-key'];
       if(!userProps.name) {
-        const mess = {id: 417, err: 'Please, give username'};
-        res.status(417).send(mess);
-      } else {
-        User.findOne({ name: key }, { roles: true, org: true, orgUnit: true })
+        res.status(406).json({
+          "status": 406,
+          "message": "Please, give username"
+        });
+      } else { // else2
+        User.findOne({ name: key })
           .populate('org','name')
-          .populate('org','name')
-          .then((key_roles) => {
-            User.findOne({ name: userProps.name }, {password: false, __v: false})
+          .populate('orgUnit','name')
+          .then((key_user) => {
+            User.findOne({ name: userProps.name })
               .populate('org','name')
               .populate('orgUnit', 'name')
               .then((user) => {
                 if (!user) {
-                  const mess = {id: 422, message: 'User -' + userProps.name + '- does not exist'};
-                  logger.info(mess);
-                  res.status(422).send(mess);
+                  res.status(404).json({
+                    "status": 404,
+                    "message": "User -" + userProps.name "- does not exist"
+                  });
                 } else {
-                    res.status(200).send(user)
+                  const result = permissions.access(key_user,user,obj_type);
+                  if(result.canRead) {
+                    res.status(200).json(user)
+                  } else {
+                    res.status(403).json({
+                      "status": 403,
+                      "message": "User " + key + " not authorized"
+                    });
+                  };
                 };
               })
               .catch((err) => {
                 logger.info(err);
-                res.send(err);
+                res.status(500).json({
+                  "status": 500,
+                  "message": "Error:",
+                  "Error": err
+                });
               });
           })
           .catch((err) => {
             logger.info(err);
-            res.send(err);
+            res.status(500).json({
+              "status": 500,
+              "message": "Error:",
+              "Error": err
+            });
           });
-      };
-    };
+      }; // else2
+    }; // else1
   },
 
   validateEmail(req, res, next) {
       if(!req.body) {
-        const mess = {id: 417, err: 'Please, give data to process'};
-        res.status(417).send(mess);
+        res.status(406).json({
+          "status": 406,
+          "message": "Please, give data to process"
+        });
       } else {
         const userProps = req.body;
         if(!userProps.email) {
-          const mess = {id: 417, err: 'Please, give email'};
-          res.status(417).send(mess);
+          res.status(406).json({
+            "status": 406,
+            "message": "Please, give email"
+          });
         } else {
           User.findOne({ 'person.email': userProps.email})
             .then((email) => {
@@ -206,54 +258,75 @@ module.exports = {
 
   passwordChange(req, res, next) {
     if(!req.body) {
-      const mess = {id: 417, err: 'Please, give data to process'};
-      res.status(417).send(mess);
+      res.status(406).json({
+        "status": 406,
+        "message": "Please, give data to process"
+      });
     } else {
+      const key = (req.body && req.body.x_key) || req.headers['x-key'];
       const userProps = req.body;
       if(!userProps.name || !userProps.password) {
-        const mess = {id: 417, err: 'Please, give username and/or password'};
-        res.status(417).send(mess);
-      } else {
-        User.findOne({ 'name': userProps.name })
-          .then((user) => {
-            if(user) {
-              user.admin.passwordSaved = '';
-              const date = new Date();
-              var mod = {
-                by: user.name,
-                when: date,
-                what: 'Password modified'
-              }
-              user.mod.push(mod);
-              user.save();
-              res.status(200);
-              res.json({
-                "status": 200,
-                "message": "Password modified"
+        res.status(406).json({
+          "status": 406,
+          "message": "Please, give username and/or password"
+        });
+      } else { // else2
+        User.findOne({ name: key })
+          .populate('org','name')
+          .populate('org','name')
+          .then((key_user) => {
+            User.findOne({ 'name': userProps.name })
+              .then((user) => {
+                if(user) {
+                  user.admin.passwordSaved = '';
+                  const date = new Date();
+                  var mod = {
+                    by: user.name,
+                    when: date,
+                    what: 'Password modified'
+                  }
+                  user.mod.push(mod);
+                  const result = permissions.access(key_user,user,obj_type);
+                  if(result.canModify) {
+                    user.save();
+                    res.status(200);
+                    res.json({
+                      "status": 200,
+                      "message": "Password modified"
+                    });
+                  } else {
+                    res.status(403).json({
+                      "status": 403,
+                      "message": "User " + key + " not authorized"
+                    });
+                  }
+                } else {
+                  res.status(404).json({
+                    "status": 404,
+                    "message": "User not found"
+                  });
+                }
+              })
+              .catch((err) => {
+                res.status(500);
+                res.json({
+                  "status": 500,
+                  "message": "Error: ",
+                  "Error": err
+                });
               });
-            } else {
-              res.json({
-                "status": 404,
-                "message": "User not found"
-              });
-            }
-          })
-          .catch((err) => {
-            res.status(500);
-            res.json({
-              "status": 500,
-              "message": "Error: " + err
-            });
-          });
-      };
+            };
+      }; // else2
     };
   },
 
   modify(req, res, next) {
     if(!req.body) {
-      const mess = {id: 417, err: 'Please, give data to process'};
-      res.status(417).send(mess);
-    } else {
+      res.status(406).json({
+        "status": 406,
+        "Please, give data to process"
+      });
+    } else { // else1
       var key = (req.body && req.body.x_key) || req.headers['x-key'];
       const userProps = req.body;
       userProps.person.name = properCase(userProps.person.name);
@@ -262,6 +335,45 @@ module.exports = {
       //var birthDate = moment.utc(userProps.person.birthDate);
       //userProps.person.birthDate = birthDate.toDate();
 
+      User.findOne({ name: key })
+        .populate('org','name')
+        .populate('org','name')
+        .then((key_user) => {
+          User.findOne({ 'name': userProps.name })
+            .then((user) => {
+              const result = permissions.access(key_user,user,obj_type);
+              if(result.canModify) {
+                const date = new Date();
+                const mod = {
+                  by: author,
+                  when: date,
+                  what: 'User modification'
+                };
+                user.mod.push(mod);
+                user.save();
+                res.status(200);
+                res.json({
+                  "status":200,
+                  "message": "User properties modified"
+                });
+              } else {
+                res.status(403);
+                res.json({
+                  "status": 403,
+                  "message": "User " + key + " not authorized"
+                });
+              }
+            })
+            .catch((err) => {
+              res.status(500);
+              res.json({
+                "status": 500,
+                "message": "Error:",
+                "Error": err
+              });
+            });
+        })
+            /*
       User.findOneAndUpdate({ 'name': userProps.name }, {$set: userProps})
         .then((user) => {
           var author = user.name;
@@ -282,14 +394,16 @@ module.exports = {
             "message": "User properties modified"
           });
         })
+        */
         .catch((err) => {
           res.status(500);
           res.json({
             "status": 500,
-            "message": "Error: " + err
+            "message": "Error:",
+            "Error": err
           });
         });
-    }
+    } // else1
   }
 
 };
