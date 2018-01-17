@@ -8,55 +8,55 @@ const WquestSchema = require('./wquestionnaries');
 const Schema = mongoose.Schema;
 
 const BlocksSchema = new Schema ({
-  code: {
-    type: String,
-    required: true
-  },
-  type: {
-    type: String
-    enum: ['text','textVideo','video','task','questionnarie']
-  }
-  title: {
-    type: String,
-    required: true
-  },
-  section: {
-    type: String
-  },
-  number: {
-    type: Number
-  },
-  order: {
-    type: Number
-  },
-  content: {
-    type: String
-  },
-  media: {
-    type: String
-  },
-  rules: {
-    type: String
-  },
-  questionnaries: [{WquestSchema}],
-  tasks: [{WtaskSchema}],
-  status: {
-    type: String,
-    enum: ['Draft','Published'],
-    default: 'Draft'
-  },
-  version: {
-    type: Number,
-    min: [1, 'Block version cannot be less than 1']
-  }
-  isVisible: {
-    type: Boolean,
-    default: false
-  },
-  keywords: [String],
-  own: {OwnerSchema},
-  mod: [{ModSchema}],
-  perm: {PermissionsSchema}
+	code: {
+		type: String,
+		required: true
+	},
+	type: {
+		type: String,
+		enum: ['text','textVideo','video','task','questionnarie']
+	},
+	title: {
+		type: String,
+		required: true
+	},
+	section: {
+		type: String
+	},
+	number: {
+		type: Number
+	},
+	order: {
+		type: Number
+	},
+	content: {
+		type: String
+	},
+	media: {
+		type: String
+	},
+	rules: {
+		type: String
+	},
+	questionnaries: [{WquestSchema}],
+	tasks: [{WtaskSchema}],
+	status: {
+		type: String,
+		enum: ['Draft','Published'],
+		default: 'Draft'
+	},
+	version: {
+		type: Number,
+		min: [1, 'Block version cannot be less than 1']
+	},
+	isVisible: {
+		type: Boolean,
+		default: false
+	},
+	keywords: [String],
+	own: {OwnerSchema},
+	mod: [{ModSchema}],
+	perm: {PermissionsSchema}
 });
 
 const Blocks = mongoose.model('blocks', BlocksSchema);
