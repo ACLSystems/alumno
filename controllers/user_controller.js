@@ -161,7 +161,7 @@ module.exports = {
 			});
 		} else { // else1
 			const key = req.headers['x-key'];
-			const username = req.headers['name'];
+			const username = req.headers['name'] || (req.body && req.body.name);
 			if(!username) {
 				res.status(406).json({
 					'status': 406,
