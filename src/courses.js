@@ -68,5 +68,7 @@ const CoursesSchema = new Schema ({
 	}
 });
 
+CoursesSchema.index( { code: 1, title: 1}, { unique: true } );
+
 const Courses = mongoose.model('courses', CoursesSchema);
 module.exports = Courses;

@@ -5,6 +5,7 @@ const GetNothing = require('../controllers/get_nothing');
 const auth = require('./auth');
 const MassUsersController = require('../controllers/massiveUsers_Controller');
 const HelpController = require('../controllers/help_controller');
+const CourseController = require('../controllers/course_controller');
 
 module.exports = (app) => {
 
@@ -44,13 +45,17 @@ module.exports = (app) => {
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados
 
-	// Rutas para roles de 'Admin'
+	// Rutas para roles de 'isAdmin'
 
 	app.post('/api/v1/admin/org/register', OrgController.register);
 
-	// Rutas para roles de organizacion
+	// Rutas para roles de 'isOrg'
 
 	app.post('/api/v1/orgadm/user/massiveRegister', MassUsersController.massiveRegister);
 	app.post('/api/v1/orgadm/orgunit/register', OrgUnitController.register);
+
+	// Rutas para roles de 'isAuthor'
+
+	app.post('/api/v1/author/course/create', CourseController.create);
 
 };
