@@ -1,5 +1,21 @@
 const jwt = require('jwt-simple');
 const Users = require('../src/users');
+const winston = require('winston');
+require('winston-daily-rotate-file');
+
+var transport = new(winston.transports.DailyRotateFile) ({
+	filename: './logs/log',
+	datePattern: 'yyyy-MM-dd.',
+	prepend: true,
+	localTime: true,
+	level: process.env.ENV === 'development' ? 'debug' : 'info'
+});
+
+var logger = new(winston.Logger) ({
+	transports: [
+		transport
+	]
+});
 
 //const validateUser = require('../routes/auth').validateUser;
 
@@ -28,13 +44,13 @@ module.exports = function(req, res, next) {
 		}
 
 		// Authorize the user to see if s/he can access our resources
-
-		Users.findOne({ name: key})
+		Users.findOne({ name: key })
 			.then((user) => {
+				//console.log(user); // eslint-disable-line
 				if (user) {
 					var dbUserObj = {
 						name: user.name,
-						role: user.roles,
+						roles: user.roles,
 						username: user.name
 					};
 					if (  (req.url.indexOf('admin') >= 0 && dbUserObj.roles.isAdmin) ||
@@ -73,6 +89,8 @@ module.exports = function(req, res, next) {
 				}
 			})
 			.catch((err) => {
+				logger.info('Validate Request ------');
+				logger.info(err);
 				res.status(500);
 				res.json({
 					'status': 500,

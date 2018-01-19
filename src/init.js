@@ -5,6 +5,8 @@ const OrgUnits = require('./orgUnits');
 const winston = require('winston');
 const bcrypt = require('bcrypt-nodejs');
 
+/* eslint-disable no-console */
+
 var transport = new(winston.transports.DailyRotateFile) ({
 	filename: './logs/log',
 	datePattern: 'yyyy-MM-dd.',
@@ -56,23 +58,6 @@ module.exports = {
 								canRead: true,
 								canModify: true,
 								canSec: true
-							},{
-								name: 'isOrg',
-								canRead: true,
-								canModify: true,
-								canSec: true
-							}],
-							orgs: [{
-								name: 'acl',
-								canRead: true,
-								canModify: true,
-								canSec: true
-							}],
-							orgUnits: [{
-								name: 'acl',
-								canRead: true,
-								canModify: true,
-								canSec: true
 							}]
 						}
 					});
@@ -107,18 +92,17 @@ module.exports = {
 								canSec: true
 							}],
 							roles: [{
-								name: 'admin',
+								name: 'isAdmin',
 								canRead: true,
 								canModify: true,
 								canSec: true
+							},{
+								name: 'isOrg',
+								canRead: true,
+								canModify: true,
+								canSec: false
 							}],
 							orgs: [{
-								name: 'acl',
-								canRead: true,
-								canModify: true,
-								canSec: true
-							}],
-							orgUnits: [{
 								name: 'acl',
 								canRead: true,
 								canModify: true,
@@ -159,19 +143,7 @@ module.exports = {
 								canSec: true
 							}],
 							roles: [{
-								name: 'admin',
-								canRead: true,
-								canModify: true,
-								canSec: true
-							}],
-							orgs: [{
-								name: 'acl',
-								canRead: true,
-								canModify: true,
-								canSec: true
-							}],
-							orgUnits: [{
-								name: 'acl',
+								name: 'isAdmin',
 								canRead: true,
 								canModify: true,
 								canSec: true
@@ -210,18 +182,19 @@ module.exports = {
 								canSec: true
 							}],
 							roles: [{
-								name: 'admin',
+								name: 'isAdmin',
 								canRead: true,
 								canModify: true,
 								canSec: true
-							}],
+							},
+							{
+								name: 'isOrg',
+								canRead: true,
+								canModify: true,
+								canSec: true
+							}
+							],
 							orgs: [{
-								name: 'acl',
-								canRead: true,
-								canModify: true,
-								canSec: true
-							}],
-							orgUnits: [{
 								name: 'acl',
 								canRead: true,
 								canModify: true,
@@ -266,18 +239,12 @@ module.exports = {
 								canSec: true
 							}],
 							roles: [{
-								name: 'admin',
+								name: 'isAdmin',
 								canRead: true,
 								canModify: true,
 								canSec: true
 							}],
 							orgs: [{
-								name: 'acl',
-								canRead: true,
-								canModify: true,
-								canSec: true
-							}],
-							orgUnits: [{
 								name: 'acl',
 								canRead: true,
 								canModify: true,

@@ -78,9 +78,9 @@ module.exports = {
 										const permUser = { name: author, canRead: true, canModify: true, canSec: false };
 										permUsers.push(permUser);
 										var permRoles = new Array();
-										var permRole = { name: 'Admin', canRead: true, canModify: true, canSec: true };
+										var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
 										permRoles.push(permRole);
-										permRole = { name: 'Org', canRead: true, canModify: true, canSec: true };
+										permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
 										permRoles.push(permRole);
 										var permOrgs = new Array();
 										const permOrg = { name: userProps.org, canRead: true, canModify: true, canSec: false };
@@ -115,6 +115,7 @@ module.exports = {
 													});
 												} else {
 													mess = {id: 500, message: 'Error: ' + err};
+													logger.info('User controller Register ----');
 													logger.info(mess);
 													res.status(500).json({
 														'status': 500,
@@ -128,6 +129,7 @@ module.exports = {
 								})
 								.catch((err) => {
 									const mess = {id: 500, error: 'Error: ' + err};
+									logger.info('User controller Register ----');
 									logger.info(mess);
 									res.status(500).json({
 										'status': 500,
@@ -138,6 +140,7 @@ module.exports = {
 						}
 					})
 					.catch((err) => {
+						logger.info('User controller Register ----');
 						logger.info(err);
 						res.status(500).json({
 							'status': 500,
@@ -157,9 +160,9 @@ module.exports = {
 				'message': 'Please, give data to process'
 			});
 		} else { // else1
-			const userProps = req.body;
-			const key = (req.body && req.body.x_key) || req.headers['x-key'];
-			if(!userProps.name) {
+			const key = req.headers['x-key'];
+			const username = req.headers['name'];
+			if(!username) {
 				res.status(406).json({
 					'status': 406,
 					'message': 'Please, give username'
@@ -169,19 +172,33 @@ module.exports = {
 					.populate('org','name')
 					.populate('orgUnit','name')
 					.then((key_user) => {
-						User.findOne({ name: userProps.name })
+						User.findOne({ name: username })
 							.populate('org','name')
 							.populate('orgUnit', 'name')
 							.then((user) => {
 								if (!user) {
 									res.status(404).json({
 										'status': 404,
-										'message': 'User -' + userProps.name + '- does not exist'
+										'message': 'User -' + username + '- does not exist'
 									});
 								} else {
+									//console.log(key_user); // eslint-disable-line
+									//console.log(user); // eslint-disable-line
 									const result = permissions.access(key_user,user,obj_type);
 									if(result.canRead) {
-										res.status(200).json(user);
+										const send_user = {
+											name: user.name,
+											org: user.org.name,
+											orgUnit: user.orgUnit.name,
+											person: {
+												name: user.person.name,
+												fatherName: user.person.father,
+												motherName: user.person.motherName,
+												email: user.person.email,
+												birthDate: user.person.birthDate
+											}
+										};
+										res.status(200).json(send_user);
 									} else {
 										res.status(403).json({
 											'status': 403,
@@ -191,6 +208,7 @@ module.exports = {
 								}
 							})
 							.catch((err) => {
+								logger.info('User controller getDetails ----');
 								logger.info(err);
 								res.status(500).json({
 									'status': 500,
@@ -200,6 +218,7 @@ module.exports = {
 							});
 					})
 					.catch((err) => {
+						logger.info('User controller getDetails ----');
 						logger.info(err);
 						res.status(500).json({
 							'status': 500,
@@ -213,48 +232,42 @@ module.exports = {
 
 	//validateEmail(req, res, next) {
 	validateEmail(req, res) {
-		if(!req.body) {
+		const email = req.headers['email'] || (req.body && req.body.email);
+		if(!email) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Please, give data to process'
+				'message': 'Please, give email'
 			});
 		} else {
-			const userProps = req.body;
-			if(!userProps.email) {
-				res.status(406).json({
-					'status': 406,
-					'message': 'Please, give email'
-				});
-			} else {
-				User.findOne({ 'person.email': userProps.email})
-					.then((email) => {
-						if(email) {
-							var emailID = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
-							//console.log(email);
-							email.admin.recoverString = emailID;
-							email.save();
-							res.status(200);
-							res.json({
-								'status': 200,
-								'message': 'Email found',
-								'id': emailID
-							});
-						} else {
-							res.status(404);
-							res.json({
-								'status': 404,
-								'message': 'Email does not exist '
-							});
-						}
-					})
-					.catch((err) => {
-						res.status(500);
+			User.findOne({ 'person.email': email})
+				.then((user) => {
+					if(user) {
+						var emailID = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
+						user.admin.recoverString = emailID;
+						user.save();
+						res.status(200);
 						res.json({
-							'status': 500,
-							'message': 'Error: ' + err
+							'status': 200,
+							'message': 'Email found',
+							'id': emailID
 						});
+					} else {
+						res.status(404);
+						res.json({
+							'status': 404,
+							'message': 'Email ' + email + 'does not exist'
+						});
+					}
+				})
+				.catch((err) => {
+					logger.info('User controller validateEmail ----');
+					logger.info(err);
+					res.status(500);
+					res.json({
+						'status': 500,
+						'message': 'Error: ' + err
 					});
-			}
+				});
 		}
 	},
 
@@ -311,6 +324,8 @@ module.exports = {
 								}
 							})
 							.catch((err) => {
+								logger.info('User controller passwordChange ----');
+								logger.info(err);
 								res.status(500);
 								res.json({
 									'status': 500,
@@ -320,6 +335,8 @@ module.exports = {
 							});
 					})
 					.catch((err) => {
+						logger.info('User controller passwordChange ----');
+						logger.info(err);
 						res.status(500);
 						res.json({
 							'status': 500,
@@ -377,6 +394,8 @@ module.exports = {
 							}
 						})
 						.catch((err) => {
+							logger.info('User controller modify ----');
+							logger.info(err);
 							res.status(500);
 							res.json({
 								'status': 500,
@@ -385,29 +404,9 @@ module.exports = {
 							});
 						});
 				})
-			/*
-			User.findOneAndUpdate({ 'name': userProps.name }, {$set: userProps})
-				.then((user) => {
-					var author = user.name;
-					if (key) {
-						author = key;
-					};
-					const date = new Date();
-					const mod = {
-						by: author,
-						when: date,
-						what: 'User modification'
-					};
-					user.mod.push(mod);
-					user.save();
-					res.status(200);
-					res.json({
-						'status':200,
-						'message': 'User properties modified'
-					});
-				})
-				*/
 				.catch((err) => {
+					logger.info('User controller passwordChange ----');
+					logger.info(err);
 					res.status(500);
 					res.json({
 						'status': 500,

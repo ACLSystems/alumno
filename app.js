@@ -1,7 +1,8 @@
+/* eslint no-unused-vars: "error" */
 const express = require('express');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
-//const db = require('./src/db');
+const db = require('./src/db'); // eslint-disable-line no-unused-vars
 const routes = require('./routes/routes');
 const app = express();
 

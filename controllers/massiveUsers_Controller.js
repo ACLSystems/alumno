@@ -36,40 +36,61 @@ module.exports = {
 			};
 			var key = (req.body && req.body.x_key) || req.headers['x-key'];
 			User.findOne({ name: key })
-				.populate('org','name')
+				.populate('org')
 				.then((key_user) => {
+					//console.log(key_user); // eslint-disable-line
+					var searchO = {};
+					var searchOU = {};
+					if(key_user.roles.isOrg && !key_user.roles.isAdmin) {
+						searchO = { name: key_user.org.name };
+					}
+					//console.log(searchO); // eslint-disable-line
 					if(key_user.roles.isAdmin || key_user.roles.isOrg) {
-						Org.find({}, {name: true})
+						Org.find(searchO, {name: true})
 							.then((orgs) => {
-								OrgUnit.find({})
+								if(key_user.roles.isOrg && !key_user.roles.isAdmin) {
+									searchOU = { org: orgs[0]._id };
+								}
+								//console.log(searchOU); // eslint-disable-line
+								OrgUnit.find(searchOU)
 									.populate('org')
 									.then((orgUnits) => {
+										//console.log(orgs); // eslint-disable-line
+										//console.log(orgUnits); // eslint-disable-line
 										var objOrg = '';
 										var objOrgUnit = '';
 										var failed = new Array();
 										var status = 'ok';
 										var permRoles = new Array();
-										var permRole = { name: 'Admin', canRead: true, canModify: true, canSec: true };
+										var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
+										permRoles.push(permRole);
+										permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
 										permRoles.push(permRole);
 										var usersToInsert = new Array();
 										var usersToInsertNames = new Array();
 										var usersToUpdate = new Array();
 										var usersToUpdateNames = new Array();
+										/*
+										console.log('ORGS ----------'); // eslint-disable-line
+										console.log(orgs); // eslint-disable-line
+										console.log('ORG UNITS -----'); // eslint-disable-line
+										console.log(orgUnits); // eslint-disable-line
+										*/
 										usersReq.forEach(function(val) {
+											//console.log(val); // eslint-disable-line
 											objOrg = orgs.find(function(objOrg) {return objOrg.name === val.org; });
-											objOrgUnit = orgUnits.find(function(objOrgUnit) {return (objOrgUnit.parent === val.parent || !objOrgUnit.parent) && objOrgUnit.name === val.orgUnit && objOrgUnit.org.name === val.org; });
+											objOrgUnit = orgUnits.find(function(objOrgUnit) {return  objOrgUnit.name === val.orgUnit && objOrgUnit.org.name === val.org; });
+											//console.log(objOrg); // eslint-disable-line
+											//console.log(objOrgUnit); // eslint-disable-line
 											var orgStatus = 'ok';
 											var orgUnitStatus = 'ok';
 											if(!objOrg) {
-												orgStatus = 'Not found';
+												orgStatus = 'Not found or not available';
 												status = 'Some errors found';
 											}
 											if(!objOrgUnit) {
 												orgUnitStatus = 'Not found';
 												status = 'Some errors found';
-											}
-											if(!key_user.roles.isAdmin && val.org !== key_user.org ) {
-												status = 'Invalid Org';
 											}
 											if(status === 'Some errors found') {
 												failed.push({ name: val.name, nStat: 'ok', org: val.org, oStat: orgStatus, orgUnit: val.orgUnit, ouStat: orgUnitStatus });
@@ -126,20 +147,8 @@ module.exports = {
 												if(usersToInsert) {
 													User.insertMany(usersToInsert)
 														.catch((err) => {
-															sendError(res,err);
+															sendError(res,err,'Insert Many');
 														});
-													/*
-														.catch((err) => {
-															const mess = {id: 500, error: 'Error: ' + err};
-															logger.info(mess);
-															res.status(500);
-															res.json({
-																'status': 500,
-																'message': 'Error',
-																'Error': err
-															});
-														});
-														*/
 													numUsers.inserted = usersToInsert.length;
 												}
 												if(usersToUpdate) {
@@ -159,20 +168,8 @@ module.exports = {
 														}
 														User.update({_id: userToUpdate._id}, {$set: userToUpdate})
 															.catch((err) => {
-																sendError(res,err);
+																sendError(res,err,'User update');
 															});
-														/*
-															.catch((err) => {
-																const mess = {id: 500, error: 'Error: ' + err};
-																logger.info(mess);
-																res.status(500);
-																res.json({
-																	'status': 500,
-																	'message': 'Error',
-																	'Error': err
-																});
-															});
-															*/
 													});
 													numUsers.updated = usersToUpdate.length;
 												}
@@ -186,50 +183,16 @@ module.exports = {
 												});
 											})
 											.catch((err) => {
-												sendError(res,err);
+												sendError(res,err,'Users found');
 											});
-										/*
-											.catch((err) => {
-												res.status(500);
-												res.json({
-													'status': 500,
-													'message': 'Error',
-													'Error': err
-												});
-											});
-											*/
 									})
 									.catch((err) => {
-										sendError(res,err);
+										sendError(res,err,'orgUnits');
 									});
-								/*
-									.catch((err) => {
-										const mess = {id: 500, error: 'Error: ' + err};
-										logger.info(mess);
-										res.status(500);
-										res.json({
-											'status': 500,
-											'message': 'Error',
-											'Error': err
-										});
-									});
-									*/
 							})
 							.catch((err) => {
-								sendError(res,err);
+								sendError(res,err,'orgs');
 							});
-						/*
-							.catch((err) => {
-								const mess = {id: 500, error: 'Error: ' + err};
-								logger.info(mess);
-								res.status(500);
-								res.json({
-									'status': 500,
-									'message': 'Error',
-									'Error': err
-								});
-							});
-							*/
 					} else {
 						res.status(403);
 						res.json({
@@ -274,9 +237,9 @@ function encryptPass(obj) {
 	return obj;
 }
 
-function sendError(res, err) {
-	const mess = {id: 500, error: 'Error: ' + err};
-	logger.info(mess);
+function sendError(res, err, section) {
+	logger.info('MassiveUsers Controller -- Section: ' + section + '----');
+	logger.info(err);
 	res.status(500).json({
 		'status': 500,
 		'message': 'Error',

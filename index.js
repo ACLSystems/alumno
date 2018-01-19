@@ -19,6 +19,6 @@ var logger = new(winston.Logger) ({
 app.set('port', process.env.PORT || 3050);
 
 var server = app.listen(app.get('port'),() => {
-	console.log('Listening on port ' + server.address().port);
+	console.log('Listening on port ' + server.address().port); // eslint-disable-line 
 	logger.info('Listening on port ' + server.address().port);
 });

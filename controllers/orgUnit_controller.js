@@ -30,10 +30,10 @@ module.exports = {
 		} else {  //else1
 			const ouProps = req.body;
 			var key = (req.body && req.body.x_key) || req.headers['x-key'];
-			Users.findOne({ name: key }, { name: true, org: true })
+			Users.findOne({ name: key }, { name: true, org: true, roles: true })
 				.populate('org')
 				.then((key_user) => {
-					if( key_user.org !== ouProps.org ) { // Validamos si el usuario tiene permisos para crear  unidades en su organizacion
+					if( key_user.org !== ouProps.org && !key_user.roles.isAdmin) { // Validamos si el usuario tiene permisos para crear  unidades en su organizacion
 						res.status(403).json({
 							'status': 403,
 							'message': 'User ' + key + ' does not have permissions for Org -' + ouProps.org + '-'
@@ -55,7 +55,49 @@ module.exports = {
 											});
 										} else {
 											// ------------
-											if(ouProps.parent) {
+											if(!ouProps.parent) {
+												ouProps.parent = ouProps.org;
+												var temp = ouProps.alias;
+												if(temp.constructor !== Array) {
+													ouProps.alias = [temp];
+												}
+												var permUsers = new Array();
+												var permUser = { name: key_user.name, canRead: true, canModify: true, canSec: true };
+												permUsers.push(permUser);
+												permUser = { name: 'admin', canRead: true, canModify: true, canSec: true };
+												permUsers.push(permUser);
+												var permRoles = new Array();
+												var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
+												permRoles.push(permRole);
+												permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
+												permRoles.push(permRole);
+												var permOrgs = new Array();
+												const permOrg = { name: ouProps.org, canRead: true, canModify: true, canSec: true };
+												permOrgs.push(permOrg);
+												ouProps.perm = { users: permUser, roles: permRoles, orgs: permOrgs };
+												const date = new Date();
+												const mod = {by: key, when: date, what: 'OU creation'};
+												ouProps.org = org._id;
+												ouProps.mod = new Array();
+												ouProps.mod.push(mod);
+												OrgUnit.create(ouProps)
+													.then(() => {
+														logger.info('OU -' + ouProps.name + '- created under -' + org.name + '- org');
+														res.status(201).json({
+															'status': 201,
+															'message': 'OU -' + ouProps.name + '- created under -' + org.name + '- org'
+														});
+													})
+													.catch((err) => {
+														logger.info(err);
+														const mess = {id: 409, error: 'Error: OU -' + ouProps.name + '- already exists'};
+														logger.info(mess);
+														res.status(409).json({
+															'status': 409,
+															'message': 'OU -' + ouProps.name + '- already exists'
+														});
+													});
+											} else {
 												OrgUnit.findOne({ name: ouProps.parent}, { name: true })
 													.then((orgunitParent) => {
 														if(!orgunitParent) {
@@ -70,6 +112,20 @@ module.exports = {
 															if(temp.constructor !== Array) {
 																ouProps.alias = [temp];
 															}
+															var permUsers = new Array();
+															var permUser = { name: key_user.name, canRead: true, canModify: true, canSec: true };
+															permUsers.push(permUser);
+															permUser = { name: 'admin', canRead: true, canModify: true, canSec: true };
+															permUsers.push(permUser);
+															var permRoles = new Array();
+															var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
+															permRoles.push(permRole);
+															permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
+															permRoles.push(permRole);
+															var permOrgs = new Array();
+															const permOrg = { name: ouProps.org, canRead: true, canModify: true, canSec: true };
+															permOrgs.push(permOrg);
+															ouProps.perm = { users: permUser, roles: permRoles, orgs: permOrgs };
 															const date = new Date();
 															const mod = {by: key, when: date, what: 'OU creation'};
 															ouProps.org = org._id;
@@ -77,10 +133,10 @@ module.exports = {
 															ouProps.mod.push(mod);
 															OrgUnit.create(ouProps)
 																.then(() => {
-																	logger.info('OU -' + ouProps.name + '- created');
+																	logger.info('OU -' + ouProps.name + '- created under -' + org.name + '- org');
 																	res.status(201).json({
 																		'status': 201,
-																		'message': 'OU -' + ouProps.name + '- created'
+																		'message': 'OU -' + ouProps.name + '- created under -' + org.name + '- org'
 																	});
 																})
 																.catch((err) => {
@@ -95,6 +151,7 @@ module.exports = {
 														}
 													})
 													.catch((err) => {
+														logger.info('OrgUnit_controller---------');
 														logger.info(err);
 														res.status(500).json({
 															'status': 500,
@@ -102,38 +159,11 @@ module.exports = {
 															'Error': err
 														});
 													});
-											} else {
-												var temp = ouProps.alias;
-												if(temp.constructor !== Array) {
-													ouProps.alias = [temp];
-												}
-												ouProps.parent = ouProps.org;
-												const date = new Date();
-												const mod = {by: key, when: date};
-												ouProps.org = org._id;
-												ouProps.mod = new Array();
-												ouProps.mod.push(mod);
-												OrgUnit.create(ouProps)
-													.then(() => {
-														logger.info('OU -' + ouProps.name + '- created');
-														res.status(201).json({
-															'status': 201,
-															'message': 'OU -' + ouProps.name + '- created'
-														});
-													})
-													.catch((err) => {
-														logger.info(err);
-														const mess = {id: 422, error: 'Error: OU -' + ouProps.name + '- already exists'};
-														logger.info(mess);
-														res.status(406).json({
-															'status': 406,
-															'message': 'OU -' + ouProps.name + '- already exists'
-														});
-													});
 											}
 										}
 									})
 									.catch((err) => {
+										logger.info('OrgUnit_controller---------');
 										logger.info(err);
 										res.status(500);
 										res.json({
@@ -153,6 +183,7 @@ module.exports = {
 					} //else2
 				})
 				.catch((err) => {
+					logger.info('OrgUnit_controller---------');
 					logger.info(err);
 					res.status(500);
 					res.json({

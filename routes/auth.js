@@ -13,7 +13,7 @@ var auth = {
 			res.status(401);
 			res.json({
 				'status': 401,
-				'message': 'Please, give credentiales'
+				'message': 'Please, give credentials'
 			});
 			return;
 		}

@@ -38,6 +38,7 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+.eslintrc.json
 ~$*
 
 # carpetas node/npm  #
