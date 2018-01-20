@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const OwnerSchema = require('./owner');
 const PermissionsSchema = require('./permissions');
-const BlocksSchema = require('./blocks');
+//const BlocksSchema = require('./blocks');
 const Schema = mongoose.Schema;
 
 const CoursesSchema = new Schema ({
@@ -12,6 +12,10 @@ const CoursesSchema = new Schema ({
 		required: true
 	},
 	title: {
+		type: String,
+		required: true
+	},
+	org: {
 		type: String,
 		required: true
 	},
@@ -57,10 +61,13 @@ const CoursesSchema = new Schema ({
 		default: 0,
 		min: [0,'Course cost cannot be less than 0']
 	},
-	own: {OwnerSchema},
-	mod: [{ModSchema}],
-	perm: {PermissionsSchema},
-	blocks: [{BlocksSchema}],
+	own: OwnerSchema,
+	mod: [ModSchema],
+	perm: PermissionsSchema,
+	blocks: [{
+		type: Schema.Types.ObjectId,
+		ref: 'blocks'
+	}],
 	status: {
 		type: String,
 		enum: ['Draft','Published'],
@@ -68,7 +75,7 @@ const CoursesSchema = new Schema ({
 	}
 });
 
-CoursesSchema.index( { code: 1, title: 1}, { unique: true } );
-
+CoursesSchema.index( { code: 1, title: 1, org: 1}, { unique: true } );
+CoursesSchema.index( { org: 1 }, { unique: false } );
 const Courses = mongoose.model('courses', CoursesSchema);
 module.exports = Courses;

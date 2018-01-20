@@ -104,7 +104,6 @@ module.exports = {
 												});
 											})
 											.catch((err) => {
-												var mess = {};
 												var errString = err.toString();
 												var re = new RegExp('duplicate key error collection');
 												var found = errString.match(re);
@@ -114,39 +113,19 @@ module.exports = {
 														'message': 'Error: user -' + userProps.name + '- already exists'
 													});
 												} else {
-													mess = {id: 500, message: 'Error: ' + err};
-													logger.info('User controller Register ----');
-													logger.info(mess);
-													res.status(500).json({
-														'status': 500,
-														'message': 'Error:',
-														'Error': err
-													});
+													sendError(res,err,'register -- User create --');
 												}
 
 											});
 									}
 								})
 								.catch((err) => {
-									const mess = {id: 500, error: 'Error: ' + err};
-									logger.info('User controller Register ----');
-									logger.info(mess);
-									res.status(500).json({
-										'status': 500,
-										'message': 'Error:',
-										'Error': err
-									});
+									sendError(res,err,'register -- Finding orgUnit --');
 								});
 						}
 					})
 					.catch((err) => {
-						logger.info('User controller Register ----');
-						logger.info(err);
-						res.status(500).json({
-							'status': 500,
-							'message': 'Error:',
-							'Error': err
-						});
+						sendError(res,err,'register -- Finding org --');
 					});
 			}
 		}
@@ -208,23 +187,11 @@ module.exports = {
 								}
 							})
 							.catch((err) => {
-								logger.info('User controller getDetails ----');
-								logger.info(err);
-								res.status(500).json({
-									'status': 500,
-									'message': 'Error:',
-									'Error': err
-								});
+								sendError(res,err,'getDetails -- Finding User --');
 							});
 					})
 					.catch((err) => {
-						logger.info('User controller getDetails ----');
-						logger.info(err);
-						res.status(500).json({
-							'status': 500,
-							'message': 'Error:',
-							'Error': err
-						});
+						sendError(res,err,'getDetails -- Finding key User --');
 					});
 			} // else2
 		} // else1
@@ -260,13 +227,7 @@ module.exports = {
 					}
 				})
 				.catch((err) => {
-					logger.info('User controller validateEmail ----');
-					logger.info(err);
-					res.status(500);
-					res.json({
-						'status': 500,
-						'message': 'Error: ' + err
-					});
+					sendError(res,err,'validateEmail -- Finding email --');
 				});
 		}
 	},
@@ -324,25 +285,11 @@ module.exports = {
 								}
 							})
 							.catch((err) => {
-								logger.info('User controller passwordChange ----');
-								logger.info(err);
-								res.status(500);
-								res.json({
-									'status': 500,
-									'message': 'Error: ',
-									'Error': err
-								});
+								sendError(res,err,'passwordChange -- Finding User --');
 							});
 					})
 					.catch((err) => {
-						logger.info('User controller passwordChange ----');
-						logger.info(err);
-						res.status(500);
-						res.json({
-							'status': 500,
-							'message': 'Error: ',
-							'Error': err
-						});
+						sendError(res,err,'passwordChange -- Finding key User --');
 					});
 			} // else2
 		} // else1
@@ -394,25 +341,11 @@ module.exports = {
 							}
 						})
 						.catch((err) => {
-							logger.info('User controller modify ----');
-							logger.info(err);
-							res.status(500);
-							res.json({
-								'status': 500,
-								'message': 'Error:',
-								'Error': err
-							});
+							sendError(res,err,'modify -- Finding User to modify --');
 						});
 				})
 				.catch((err) => {
-					logger.info('User controller passwordChange ----');
-					logger.info(err);
-					res.status(500);
-					res.json({
-						'status': 500,
-						'message': 'Error:',
-						'Error': err
-					});
+					sendError(res,err,'modify -- Finding Key User --');
 				});
 		} // else1
 	}
@@ -429,4 +362,15 @@ function properCase(obj) {
 		if(i === arrayLength) { newName += word; } else { newName += word + ' '; }
 	});
 	return newName;
+}
+
+function sendError(res, err, section) {
+	logger.info('User controller -- Section: ' + section + '----');
+	logger.info(err);
+	res.status(500).json({
+		'status': 500,
+		'message': 'Error',
+		'Error': err.message
+	});
+	return;
 }

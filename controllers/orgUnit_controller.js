@@ -140,37 +140,18 @@ module.exports = {
 																	});
 																})
 																.catch((err) => {
-																	logger.info(err);
-																	const mess = {id: 409, error: 'Error: OU -' + ouProps.name + '- already exists'};
-																	logger.info(mess);
-																	res.status(409).json({
-																		'status': 409,
-																		'message': 'OU -' + ouProps.name + '- already exists'
-																	});
+																	sendError(res,err,'register -- Create orgUnit --');
 																});
 														}
 													})
 													.catch((err) => {
-														logger.info('OrgUnit_controller---------');
-														logger.info(err);
-														res.status(500).json({
-															'status': 500,
-															'message': 'Error',
-															'Error': err
-														});
+														sendError(res,err,'register -- Finding parent orgUnit --');
 													});
 											}
 										}
 									})
 									.catch((err) => {
-										logger.info('OrgUnit_controller---------');
-										logger.info(err);
-										res.status(500);
-										res.json({
-											'status': 500,
-											'message': 'Error',
-											'Error': err
-										});
+										sendError(res,err,'register -- Finding Org --');
 									});
 							} //else3
 						} else { // else aqui
@@ -183,15 +164,19 @@ module.exports = {
 					} //else2
 				})
 				.catch((err) => {
-					logger.info('OrgUnit_controller---------');
-					logger.info(err);
-					res.status(500);
-					res.json({
-						'status': 500,
-						'message': 'Error',
-						'Error': err
-					});
+					sendError(res,err,'register -- Finding Key User --');
 				});
 		} //else1
 	}
 };
+
+function sendError(res, err, section) {
+	logger.info('orgUnit controller -- Section: ' + section + '----');
+	logger.info(err);
+	res.status(500).json({
+		'status': 500,
+		'message': 'Error',
+		'Error': err.message
+	});
+	return;
+}

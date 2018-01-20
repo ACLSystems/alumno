@@ -41,6 +41,8 @@ module.exports = (app) => {
 
 	app.get('/api/v1/user/getdetails', UserController.getDetails);
 	app.put('/api/v1/user/modify', UserController.modify);
+	app.get('/api/v1/course/listCategories', CourseController.listCategories);
+	app.get('/api/v1/course/listCourses', CourseController.listCourses);
 
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados
