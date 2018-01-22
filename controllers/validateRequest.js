@@ -31,7 +31,16 @@ module.exports = function(req, res, next) {
 	var token = (req.body && req.body.access_token) || req.headers['x-access-token'];
 	var key = (req.body && req.body.x_key) || req.headers['x-key'];
 
-	if (token || key) {
+	if(!token || !key ) {
+		res.status(400);
+		res.json({
+			'status': 400,
+			'message': 'Missing token or key'
+		});
+		return;
+	}
+
+	if (token && key) {
 		var decoded = jwt.decode(token, require('../config/secret')());
 
 		if(decoded.exp <= Date.now()) {
@@ -53,6 +62,15 @@ module.exports = function(req, res, next) {
 						roles: user.roles,
 						username: user.name
 					};
+					console.log(req.url);
+					console.log(req.url.indexOf('admin'));
+					console.log(req.url.indexOf('business'));
+					console.log(req.url.indexOf('orgadm'));
+					console.log(req.url.indexOf('orgcontent'));
+					console.log(req.url.indexOf('author'));
+					console.log(req.url.indexOf('instructor'));
+					console.log(req.url.indexOf('supervisor'));
+					console.log(req.url.indexOf('/api/v1/'));
 					if (  (req.url.indexOf('admin') >= 0 && dbUserObj.roles.isAdmin) ||
 									(req.url.indexOf('business') >= 0 && dbUserObj.roles.isBusiness) ||
 									(req.url.indexOf('orgadm') >= 0 && dbUserObj.roles.isOrg) ||
