@@ -140,7 +140,7 @@ module.exports = {
 			});
 		} else { // else1
 			const key = req.headers['x-key'];
-			const username = req.headers['name'] || (req.body && req.body.name);
+			const username = req.headers['name'] || (req.query && req.query.name);
 			if(!username) {
 				res.status(406).json({
 					'status': 406,
@@ -165,18 +165,20 @@ module.exports = {
 									//console.log(user); // eslint-disable-line
 									const result = permissions.access(key_user,user,obj_type);
 									if(result.canRead) {
-										const send_user = {
+										var send_user = {
 											name: user.name,
 											org: user.org.name,
 											orgUnit: user.orgUnit.name,
-											person: {
+										};
+										if(user.person) {
+											send_user.person = {
 												name: user.person.name,
 												fatherName: user.person.father,
 												motherName: user.person.motherName,
 												email: user.person.email,
 												birthDate: user.person.birthDate
-											}
-										};
+											};
+										}
 										res.status(200).json(send_user);
 									} else {
 										res.status(403).json({
