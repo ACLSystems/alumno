@@ -1,3 +1,4 @@
+const version = require('./shared/version');
 const winston = require('winston');
 require('winston-daily-rotate-file');
 const app = require('./app');
@@ -19,6 +20,7 @@ var logger = new(winston.Logger) ({
 app.set('port', process.env.PORT || 3050);
 
 var server = app.listen(app.get('port'),() => {
-	console.log('Listening on port ' + server.address().port); // eslint-disable-line 
+	console.log(version.app + '@' + version.version); // eslint-disable-line
+	console.log('Listening on port ' + server.address().port); // eslint-disable-line
 	logger.info('Listening on port ' + server.address().port);
 });

@@ -264,7 +264,7 @@ module.exports = {
 										what: 'Password modified'
 									};
 									user.mod.push(mod);
-									const result = permissions.access(key_user,user,obj_type);
+									const result = permissions.access(key_user,user,'user');
 									if(result.canModify) {
 										user.save();
 										res.status(200);
@@ -318,7 +318,7 @@ module.exports = {
 				.then((key_user) => {
 					User.findOne({ 'name': userProps.name })
 						.then((user) => {
-							const result = permissions.access(key_user,user,obj_type);
+							const result = permissions.access(key_user,user,'user');
 							if(result.canModify) {
 								const date = new Date();
 								const mod = {
@@ -349,8 +349,57 @@ module.exports = {
 					sendError(res,err,'modify -- Finding Key User --');
 				});
 		} // else1
-	}
+	}, // Modify
 
+	list(req,res) {
+		const key = (req.query && req.query.x_key) || req.headers['x-key'];
+		User.findOne({ name: key })
+			.populate('org')
+			.then((key_user) => {
+				if(!key_user.roles.isAdmin && key_user.roles.isOrg) {
+					User.find({ org: key_user.org._id })
+						.then((users) => {
+							res.status(200).json({
+								'status': 200,
+								'message': 'Users from -' + key_user.org.name +'-',
+								'users': users
+							});
+						})
+						.catch((err) => {
+							sendError(res,err,'list -- Finding Users list (isOrg) --');
+						});
+				}
+				if(key_user.roles.isAdmin) {
+					if(req.query && req.query.org) {
+						Org.findOne({ name: req.query.org })
+							.then((org) => {
+								User.find({ org: org._id })
+									.then((users) => {
+										res.status(200).json({
+											'status': 200,
+											'message': 'Users from -' + org.name +'-',
+											'users': users
+										});
+									})
+									.catch((err) => {
+										sendError(res,err,'list -- Finding Users list (isAdmin) --');
+									});
+							})
+							.catch((err) => {
+								sendError(res,err,'list -- Finding Org --');
+							});
+					} else {
+						res.status(406).json({
+							'status': 406,
+							'message': 'Please provide -org- in params'
+						});
+					}
+				}
+			})
+			.catch((err) => {
+				sendError(res,err,'list -- Finding Key User --');
+			});
+	}
 };
 
 function properCase(obj) {

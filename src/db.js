@@ -1,6 +1,7 @@
 // Bring Mongoose into the app
 const mongoose = require( 'mongoose' );
 const init = require('./init');
+const version = require('../shared/version');
 mongoose.Promise = global.Promise;
 
 // Bring winston
@@ -49,7 +50,7 @@ mongoose.connection.on('connected', function () {
 	message = 'Mongoose default connection open successfully to ' + dbURI;
 	logger.info(message);
 	console.log(message); // eslint-disable-line
-	init.init('1.0');
+	init.init(version);
 });
 
 // If the connection throws an error
@@ -71,7 +72,7 @@ process.on('SIGINT', function() {
 	mongoose.connection.close(function () {
 		message = 'Mongoose default connection disconnected through app termination. Server process ends successfully';
 		logger.info(message);
-		console.log(message); // eslint-disable-line 
+		console.log(message); // eslint-disable-line
 		process.exit(0);
 	});
 });

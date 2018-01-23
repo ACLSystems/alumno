@@ -1,8 +1,11 @@
+const version = require('../shared/version');
+
 module.exports = {
 	help(req, res) {
 		res.status(200);
 		res.json({
-			'Version': '1.0.1.2',
+			'App': version.app,
+			'Version': version.version,
 			'description': 'Minor corrections',
 			'Usage': 'In general, to use APIs you need to send JSON in body and authentication tokens in headers, like: x-key (user logged) x-access-token (token received after login). Responses are same send in json format and every API has it own',
 			'help': {

@@ -50,11 +50,13 @@ module.exports = (app) => {
 	// Rutas para roles de 'isAdmin'
 
 	app.post('/api/v1/admin/org/register', OrgController.register);
+	app.get('/api/v1/admin/user/list', UserController.list);
 
 	// Rutas para roles de 'isOrg'
 
 	app.post('/api/v1/orgadm/user/massiveRegister', MassUsersController.massiveRegister);
 	app.post('/api/v1/orgadm/orgunit/register', OrgUnitController.register);
+	app.get('/api/v1/orgadm/user/list', UserController.list);
 
 	// Rutas para roles de 'isAuthor'
 

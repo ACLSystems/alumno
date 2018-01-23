@@ -5,6 +5,7 @@ const OrgUnits = require('./orgUnits');
 const winston = require('winston');
 const bcrypt = require('bcrypt-nodejs');
 
+
 /* eslint-disable no-console */
 
 var transport = new(winston.transports.DailyRotateFile) ({
@@ -270,7 +271,8 @@ module.exports = {
 
 					// terminamos la inicializacion con el registro de control
 					const control = new Control({
-						version: version,
+						version: version.version,
+						name: version.app,
 						schemas: [
 							'control',
 							'orgs',
@@ -290,7 +292,17 @@ module.exports = {
 					message = 'Database initialized...';
 					logger.info(message);
 					console.log(message);
-				} //Aqui
+				} else {
+					control.version = version.version;
+					control.name = version.app;
+					control.save().catch((err) => {
+						message = 'Trying to save control document';
+						logger.info(message);
+						console.log(message);
+						logger.info(err);
+						console.log(err);
+					});
+				}
 			})
 			.catch((err) => {
 				logger.info(err);
