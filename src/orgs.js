@@ -31,7 +31,7 @@ const OrgsSchema = new Schema ({
 		default: true
 	},
 	mod: [ModSchema],
-	perm: PermissionsSchema
+	perm: PermissionsSchema,
 });
 
 OrgsSchema.pre('save', function(next) {

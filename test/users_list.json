@@ -1,0 +1,1564 @@
+[
+        {
+            "_id": "5a60fd11cbc7f7931707e6eb",
+            "roles": {
+                "_id": "5a60fd11cbc7f7931707e6f4",
+                "isSupervisor": false,
+                "isInstructor": false,
+                "isAuthor": false,
+                "isOrgContent": false,
+                "isOrg": true,
+                "isBusiness": false,
+                "isAdmin": false
+            },
+            "name": "bimbo_admin",
+            "password": "$2a$10$/3/Wydfh6s5iwdME0O310eiV1Zffq1rQxG56w07jDbuh2niCaeaO6",
+            "person": {
+                "birthDate": "2018-01-18T20:01:21.440Z",
+                "name": "Bimbo",
+                "fatherName": "User",
+                "motherName": "Admin",
+                "email": "user@bimbo.com.mx",
+                "_id": "5a60fd11cbc7f7931707e6f3",
+                "location": {
+                    "coordinates": []
+                }
+            },
+            "org": "5a60f0465c62ff5ac8d61687",
+            "admin": {
+                "_id": "5a60fd11cbc7f7931707e6f2",
+                "passwordSaved": "saved",
+                "recoverString": "q8l6lbbei3wyl9b074dqrnrao94qyrtadq9",
+                "isVerified": false,
+                "isActive": true
+            },
+            "perm": {
+                "_id": "5a60fd11cbc7f7931707e6ed",
+                "orgUnits": [],
+                "orgs": [
+                    {
+                        "name": "bimbo",
+                        "_id": "5a60fd11cbc7f7931707e6ee",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "roles": [
+                    {
+                        "name": "isAdmin",
+                        "_id": "5a60fd11cbc7f7931707e6f0",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "isOrg",
+                        "_id": "5a60fd11cbc7f7931707e6ef",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "users": [
+                    {
+                        "name": "bimbo_admin",
+                        "_id": "5a60fd11cbc7f7931707e6f1",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ]
+            },
+            "orgUnit": "5a60fc5fcbc7f7931707e6e4",
+            "__v": 0,
+            "mod": [
+                {
+                    "_id": "5a60fd11cbc7f7931707e6ec",
+                    "what": "User creation",
+                    "when": "2018-01-18T20:01:21.435Z",
+                    "by": "bimbo_admin"
+                }
+            ]
+        },
+        {
+            "_id": "5a61194705055bfe04a5be24",
+            "__v": 0,
+            "name": "u1",
+            "password": "$2a$10$xNqHnmWszRS8j62EhMDoR.M63MhxK9IGxSV3LcURl87JC4fR96Wha",
+            "org": "5a60f0465c62ff5ac8d61687",
+            "orgUnit": "5a60fc5fcbc7f7931707e6e4",
+            "person": {
+                "birthDate": "2000-01-01T06:00:00.000Z",
+                "email": "u1@mail.com",
+                "motherName": "Prado",
+                "fatherName": "Perez",
+                "name": "Juan",
+                "_id": "5a65237737fbbe5ad6d6852f",
+                "location": {
+                    "coordinates": []
+                }
+            },
+            "perm": {
+                "_id": "5a61194705055bfe04a5be28",
+                "orgUnits": [],
+                "orgs": [
+                    {
+                        "name": "bimbo",
+                        "_id": "5a61194705055bfe04a5be29",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "roles": [
+                    {
+                        "name": "isAdmin",
+                        "_id": "5a61194705055bfe04a5be2b",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "isOrg",
+                        "_id": "5a61194705055bfe04a5be2a",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "users": [
+                    {
+                        "name": "bimbo_admin",
+                        "_id": "5a61194705055bfe04a5be2d",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "u1",
+                        "_id": "5a61194705055bfe04a5be2c",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ]
+            },
+            "roles": {
+                "_id": "5a65237737fbbe5ad6d6852e",
+                "isSupervisor": false,
+                "isInstructor": true,
+                "isAuthor": true,
+                "isOrgContent": false,
+                "isOrg": false,
+                "isBusiness": false,
+                "isAdmin": false
+            },
+            "admin": {
+                "_id": "5a61194705055bfe04a5be25",
+                "passwordSaved": "saved",
+                "recoverString": "",
+                "isVerified": false,
+                "isActive": true
+            },
+            "mod": [
+                {
+                    "_id": "5a61194705055bfe04a5be27",
+                    "what": "User creation",
+                    "when": "2018-01-18T22:01:43.121Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a64ec9bdb23d0e2ee237367",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T19:40:11.357Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6516bcad25ed22fa17de99",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:39:56.417Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65181368333728f96cbf0c",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:45:39.227Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65185285fd8d2a1b80c964",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:46:42.514Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65188338aeda2af6dd859c",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:47:31.493Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6518b2b347992bcc9179fd",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:48:18.694Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6518e031eb412c82457ac9",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:49:04.266Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65197f1f259f2f6e327a4b",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:51:43.183Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651a08f13a5431e312cbab",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:54:00.363Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651a2d750348329623df67",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:54:37.051Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651afa400084363fc4feb3",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:58:02.507Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651b206f09af36f692b4a2",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:58:40.403Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651c606ee8cb3c917bc861",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:04:00.380Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651c83e1e3613d3286bd0c",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:04:35.499Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651d23bbe31f3ff4b08ed4",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:07:15.500Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651fd5be4c184b58e75818",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:18:45.451Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65200bc120304c4561c11a",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:19:39.296Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65220133bf1755589394ff",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:28:01.984Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a652222503c0a55ec635159",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:28:34.181Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6522a56c80fd582f36f33d",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:30:45.248Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6522b82454545888434f00",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:31:04.476Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65232927e0e25a828c3344",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:32:57.501Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65233a37fbbe5ad6d684f8",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:33:14.509Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65237737fbbe5ad6d6852d",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:34:15.420Z",
+                    "by": "bimbo_admin"
+                }
+            ]
+        },
+        {
+            "_id": "5a61194705055bfe04a5be2f",
+            "__v": 0,
+            "name": "u2",
+            "password": "$2a$10$0cu1tDx64n1TXL0f1DbJt.i6W2GRNfwJSHtfM6p8tvxy1Qh1aISO6",
+            "org": "5a60f0465c62ff5ac8d61687",
+            "orgUnit": "5a60fc5fcbc7f7931707e6e4",
+            "person": {
+                "birthDate": "2001-02-02T06:00:00.000Z",
+                "email": "u2@mail.com",
+                "motherName": "Gonzalez",
+                "fatherName": "Simon",
+                "name": "Felipe",
+                "_id": "5a65237737fbbe5ad6d68532",
+                "location": {
+                    "coordinates": []
+                }
+            },
+            "perm": {
+                "_id": "5a61194705055bfe04a5be33",
+                "orgUnits": [],
+                "orgs": [
+                    {
+                        "name": "bimbo",
+                        "_id": "5a61194705055bfe04a5be34",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "roles": [
+                    {
+                        "name": "isAdmin",
+                        "_id": "5a61194705055bfe04a5be36",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "isOrg",
+                        "_id": "5a61194705055bfe04a5be35",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "users": [
+                    {
+                        "name": "bimbo_admin",
+                        "_id": "5a61194705055bfe04a5be38",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "u2",
+                        "_id": "5a61194705055bfe04a5be37",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ]
+            },
+            "roles": {
+                "_id": "5a65237737fbbe5ad6d68531",
+                "isSupervisor": false,
+                "isInstructor": false,
+                "isAuthor": false,
+                "isOrgContent": false,
+                "isOrg": false,
+                "isBusiness": false,
+                "isAdmin": false
+            },
+            "admin": {
+                "_id": "5a61194705055bfe04a5be30",
+                "passwordSaved": "saved",
+                "recoverString": "",
+                "isVerified": false,
+                "isActive": true
+            },
+            "mod": [
+                {
+                    "_id": "5a61194705055bfe04a5be32",
+                    "what": "User creation",
+                    "when": "2018-01-18T22:01:43.121Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a64ec9bdb23d0e2ee237369",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T19:40:11.572Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6516bcad25ed22fa17de9b",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:39:56.623Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65181368333728f96cbf0e",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:45:39.435Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65185285fd8d2a1b80c966",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:46:42.730Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65188338aeda2af6dd859e",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:47:31.700Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6518b2b347992bcc9179ff",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:48:18.898Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6518e031eb412c82457acb",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:49:04.474Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65197f1f259f2f6e327a4d",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:51:43.410Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651a08f13a5431e312cbad",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:54:00.576Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651a2d750348329623df69",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:54:37.258Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651afa400084363fc4feb5",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:58:02.725Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651b206f09af36f692b4a4",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:58:40.615Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651c606ee8cb3c917bc863",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:04:00.591Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651c83e1e3613d3286bd0e",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:04:35.704Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651d23bbe31f3ff4b08ed6",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:07:15.726Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651fd5be4c184b58e7581a",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:18:45.674Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65200bc120304c4561c11c",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:19:39.509Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65220233bf175558939501",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:28:02.197Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a652222503c0a55ec63515b",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:28:34.394Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6522a56c80fd582f36f33f",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:30:45.463Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6522b82454545888434f02",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:31:04.690Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65232927e0e25a828c3346",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:32:57.723Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65233a37fbbe5ad6d684fb",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:33:14.727Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65237737fbbe5ad6d68530",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:34:15.622Z",
+                    "by": "bimbo_admin"
+                }
+            ]
+        },
+        {
+            "_id": "5a61194705055bfe04a5be3a",
+            "__v": 0,
+            "name": "u3",
+            "password": "$2a$10$9alEwqmtrPHMqw7QNWgwwuS8xkaVeloWDR1DmvmM8/KlX8BSDvtzC",
+            "org": "5a60f0465c62ff5ac8d61687",
+            "orgUnit": "5a60fc5fcbc7f7931707e6e4",
+            "person": {
+                "birthDate": "2002-03-03T06:00:00.000Z",
+                "email": "u3@mail.com",
+                "motherName": "Camarena",
+                "fatherName": "Manzano",
+                "name": "Carlos",
+                "_id": "5a65237837fbbe5ad6d68535",
+                "location": {
+                    "coordinates": []
+                }
+            },
+            "perm": {
+                "_id": "5a61194705055bfe04a5be3e",
+                "orgUnits": [],
+                "orgs": [
+                    {
+                        "name": "bimbo",
+                        "_id": "5a61194705055bfe04a5be3f",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "roles": [
+                    {
+                        "name": "isAdmin",
+                        "_id": "5a61194705055bfe04a5be41",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "isOrg",
+                        "_id": "5a61194705055bfe04a5be40",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "users": [
+                    {
+                        "name": "bimbo_admin",
+                        "_id": "5a61194705055bfe04a5be43",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "u3",
+                        "_id": "5a61194705055bfe04a5be42",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ]
+            },
+            "roles": {
+                "_id": "5a65237837fbbe5ad6d68534",
+                "isSupervisor": false,
+                "isInstructor": false,
+                "isAuthor": false,
+                "isOrgContent": false,
+                "isOrg": false,
+                "isBusiness": false,
+                "isAdmin": false
+            },
+            "admin": {
+                "_id": "5a61194705055bfe04a5be3b",
+                "passwordSaved": "saved",
+                "recoverString": "",
+                "isVerified": false,
+                "isActive": true
+            },
+            "mod": [
+                {
+                    "_id": "5a61194705055bfe04a5be3d",
+                    "what": "User creation",
+                    "when": "2018-01-18T22:01:43.122Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a64ec9bdb23d0e2ee23736b",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T19:40:11.790Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6516bcad25ed22fa17de9d",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:39:56.835Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65181368333728f96cbf10",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:45:39.632Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65185285fd8d2a1b80c968",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:46:42.929Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65188338aeda2af6dd85a0",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:47:31.898Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6518b3b347992bcc917a01",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:48:19.106Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6518e031eb412c82457acd",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:49:04.664Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65197f1f259f2f6e327a4f",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:51:43.606Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651a08f13a5431e312cbaf",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:54:00.774Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651a2d750348329623df6b",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:54:37.461Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651afa400084363fc4feb7",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:58:02.926Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651b206f09af36f692b4a6",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:58:40.809Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651c606ee8cb3c917bc865",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:04:00.793Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651c83e1e3613d3286bd10",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:04:35.904Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651d23bbe31f3ff4b08ed8",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:07:15.932Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651fd5be4c184b58e7581c",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:18:45.883Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65200bc120304c4561c11e",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:19:39.723Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65220233bf175558939503",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:28:02.398Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a652222503c0a55ec63515d",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:28:34.601Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6522a56c80fd582f36f341",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:30:45.662Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6522b82454545888434f04",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:31:04.897Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65232927e0e25a828c3348",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:32:57.924Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65233a37fbbe5ad6d684fe",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:33:14.930Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65237737fbbe5ad6d68533",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:34:15.820Z",
+                    "by": "bimbo_admin"
+                }
+            ]
+        },
+        {
+            "_id": "5a61194705055bfe04a5be45",
+            "__v": 0,
+            "name": "u6",
+            "password": "$2a$10$rU1b1/tQEVhxw00IPFGeMu5QGZeznyMzEwBfK9BqNdFKd38Fhv1Nq",
+            "org": "5a60f0465c62ff5ac8d61687",
+            "orgUnit": "5a60fc5fcbc7f7931707e6e4",
+            "person": {
+                "birthDate": "2005-06-06T05:00:00.000Z",
+                "email": "u6@mail.com",
+                "motherName": "Palomares",
+                "fatherName": "Blade",
+                "name": "Alfonso",
+                "_id": "5a65237837fbbe5ad6d68538",
+                "location": {
+                    "coordinates": []
+                }
+            },
+            "perm": {
+                "_id": "5a61194705055bfe04a5be49",
+                "orgUnits": [],
+                "orgs": [
+                    {
+                        "name": "bimbo",
+                        "_id": "5a61194705055bfe04a5be4a",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "roles": [
+                    {
+                        "name": "isAdmin",
+                        "_id": "5a61194705055bfe04a5be4c",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "isOrg",
+                        "_id": "5a61194705055bfe04a5be4b",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "users": [
+                    {
+                        "name": "bimbo_admin",
+                        "_id": "5a61194705055bfe04a5be4e",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "u6",
+                        "_id": "5a61194705055bfe04a5be4d",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ]
+            },
+            "roles": {
+                "_id": "5a65237837fbbe5ad6d68537",
+                "isSupervisor": false,
+                "isInstructor": false,
+                "isAuthor": false,
+                "isOrgContent": false,
+                "isOrg": false,
+                "isBusiness": false,
+                "isAdmin": false
+            },
+            "admin": {
+                "_id": "5a61194705055bfe04a5be46",
+                "passwordSaved": "saved",
+                "recoverString": "",
+                "isVerified": false,
+                "isActive": true
+            },
+            "mod": [
+                {
+                    "_id": "5a61194705055bfe04a5be48",
+                    "what": "User creation",
+                    "when": "2018-01-18T22:01:43.122Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a64ec9bdb23d0e2ee23736d",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T19:40:11.993Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6516bdad25ed22fa17de9f",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:39:57.037Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65181368333728f96cbf12",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:45:39.840Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65185385fd8d2a1b80c96a",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:46:43.131Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65188438aeda2af6dd85a2",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:47:32.097Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6518b3b347992bcc917a03",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:48:19.309Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6518e031eb412c82457acf",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:49:04.874Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65197f1f259f2f6e327a51",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:51:43.810Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651a08f13a5431e312cbb1",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:54:00.975Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651a2d750348329623df6d",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:54:37.661Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651afb400084363fc4feb9",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:58:03.119Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651b216f09af36f692b4a8",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:58:41.001Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651c606ee8cb3c917bc867",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:04:00.995Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651c84e1e3613d3286bd12",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:04:36.104Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651d24bbe31f3ff4b08eda",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:07:16.132Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651fd6be4c184b58e7581e",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:18:46.097Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65200bc120304c4561c120",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:19:39.928Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65220233bf175558939505",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:28:02.606Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a652222503c0a55ec63515f",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:28:34.806Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6522a56c80fd582f36f343",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:30:45.876Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6522b92454545888434f06",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:31:05.094Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65232a27e0e25a828c334a",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:32:58.122Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65233b37fbbe5ad6d68501",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:33:15.131Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65237837fbbe5ad6d68536",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:34:16.022Z",
+                    "by": "bimbo_admin"
+                }
+            ]
+        },
+        {
+            "_id": "5a61194705055bfe04a5be50",
+            "__v": 0,
+            "name": "u7",
+            "password": "$2a$10$Zj3dKhcTYcJ0p.y9BJ2GPuQRGYIvXbjNSG7ANaxiYMUUsJAThs1Z6",
+            "org": "5a60f0465c62ff5ac8d61687",
+            "orgUnit": "5a60fc5fcbc7f7931707e6e4",
+            "person": {
+                "birthDate": "2006-07-07T05:00:00.000Z",
+                "email": "u7@mail.com",
+                "motherName": "Vega",
+                "fatherName": "Martinez",
+                "name": "Sofia",
+                "_id": "5a65237837fbbe5ad6d6853b",
+                "location": {
+                    "coordinates": []
+                }
+            },
+            "perm": {
+                "_id": "5a61194705055bfe04a5be54",
+                "orgUnits": [],
+                "orgs": [
+                    {
+                        "name": "bimbo",
+                        "_id": "5a61194705055bfe04a5be55",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "roles": [
+                    {
+                        "name": "isAdmin",
+                        "_id": "5a61194705055bfe04a5be57",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "isOrg",
+                        "_id": "5a61194705055bfe04a5be56",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "users": [
+                    {
+                        "name": "bimbo_admin",
+                        "_id": "5a61194705055bfe04a5be59",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "u7",
+                        "_id": "5a61194705055bfe04a5be58",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ]
+            },
+            "roles": {
+                "_id": "5a65237837fbbe5ad6d6853a",
+                "isSupervisor": false,
+                "isInstructor": false,
+                "isAuthor": false,
+                "isOrgContent": false,
+                "isOrg": false,
+                "isBusiness": false,
+                "isAdmin": false
+            },
+            "admin": {
+                "_id": "5a61194705055bfe04a5be51",
+                "passwordSaved": "saved",
+                "recoverString": "",
+                "isVerified": false,
+                "isActive": true
+            },
+            "mod": [
+                {
+                    "_id": "5a61194705055bfe04a5be53",
+                    "what": "User creation",
+                    "when": "2018-01-18T22:01:43.122Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a64ec9cdb23d0e2ee23736f",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T19:40:12.194Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6516bdad25ed22fa17dea1",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:39:57.230Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65181468333728f96cbf14",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:45:40.046Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65185385fd8d2a1b80c96c",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:46:43.333Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65188438aeda2af6dd85a4",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:47:32.302Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6518b3b347992bcc917a05",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:48:19.517Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6518e131eb412c82457ad1",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:49:05.074Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6519801f259f2f6e327a53",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:51:44.013Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651a09f13a5431e312cbb3",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:54:01.185Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651a2d750348329623df6f",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:54:37.861Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651afb400084363fc4febb",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:58:03.321Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651b216f09af36f692b4aa",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:58:41.191Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651c616ee8cb3c917bc869",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:04:01.205Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651c84e1e3613d3286bd14",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:04:36.300Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651d24bbe31f3ff4b08edc",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:07:16.339Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651fd6be4c184b58e75820",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:18:46.300Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65200cc120304c4561c122",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:19:40.133Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65220233bf175558939507",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:28:02.817Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a652223503c0a55ec635161",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:28:35.011Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6522a66c80fd582f36f345",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:30:46.086Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6522b92454545888434f08",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:31:05.292Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65232a27e0e25a828c334c",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:32:58.332Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65233b37fbbe5ad6d68504",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:33:15.345Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65237837fbbe5ad6d68539",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:34:16.221Z",
+                    "by": "bimbo_admin"
+                }
+            ]
+        },
+        {
+            "_id": "5a61194705055bfe04a5be5b",
+            "__v": 0,
+            "name": "u8",
+            "password": "$2a$10$LaJlOGgABmVHAgpEhyYyuuRbsGI43cJC1APPRGseh7ftBY5VfkI9G",
+            "org": "5a60f0465c62ff5ac8d61687",
+            "orgUnit": "5a60fc5fcbc7f7931707e6e4",
+            "person": {
+                "birthDate": "2007-08-08T05:00:00.000Z",
+                "email": "u8@mail.com",
+                "motherName": "Ruiz",
+                "fatherName": "Solorzano",
+                "name": "Jimena",
+                "_id": "5a65237837fbbe5ad6d6853e",
+                "location": {
+                    "coordinates": []
+                }
+            },
+            "perm": {
+                "_id": "5a61194705055bfe04a5be5f",
+                "orgUnits": [],
+                "orgs": [
+                    {
+                        "name": "bimbo",
+                        "_id": "5a61194705055bfe04a5be60",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "roles": [
+                    {
+                        "name": "isAdmin",
+                        "_id": "5a61194705055bfe04a5be62",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "isOrg",
+                        "_id": "5a61194705055bfe04a5be61",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "users": [
+                    {
+                        "name": "bimbo_admin",
+                        "_id": "5a61194705055bfe04a5be64",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "u8",
+                        "_id": "5a61194705055bfe04a5be63",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ]
+            },
+            "roles": {
+                "_id": "5a65237837fbbe5ad6d6853d",
+                "isSupervisor": false,
+                "isInstructor": true,
+                "isAuthor": true,
+                "isOrgContent": false,
+                "isOrg": false,
+                "isBusiness": false,
+                "isAdmin": false
+            },
+            "admin": {
+                "_id": "5a61194705055bfe04a5be5c",
+                "passwordSaved": "saved",
+                "recoverString": "",
+                "isVerified": false,
+                "isActive": true
+            },
+            "mod": [
+                {
+                    "_id": "5a61194705055bfe04a5be5e",
+                    "what": "User creation",
+                    "when": "2018-01-18T22:01:43.122Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a64ec9cdb23d0e2ee237371",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T19:40:12.404Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6516bdad25ed22fa17dea3",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:39:57.435Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65181468333728f96cbf16",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:45:40.245Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65185385fd8d2a1b80c96e",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:46:43.534Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65188438aeda2af6dd85a6",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:47:32.513Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6518b3b347992bcc917a07",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:48:19.723Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6518e131eb412c82457ad3",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:49:05.279Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6519801f259f2f6e327a55",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:51:44.221Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651a09f13a5431e312cbb5",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:54:01.386Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651a2e750348329623df71",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:54:38.064Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651afb400084363fc4febd",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:58:03.526Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651b216f09af36f692b4ac",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T22:58:41.396Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651c616ee8cb3c917bc86b",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:04:01.409Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651c84e1e3613d3286bd16",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:04:36.510Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651d24bbe31f3ff4b08ede",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:07:16.543Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a651fd6be4c184b58e75822",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:18:46.510Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65200cc120304c4561c124",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:19:40.329Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65220333bf175558939509",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:28:03.017Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a652223503c0a55ec635163",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:28:35.218Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6522a66c80fd582f36f347",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:30:46.297Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a6522b92454545888434f0a",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:31:05.497Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65232a27e0e25a828c334e",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:32:58.531Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65233b37fbbe5ad6d68507",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:33:15.548Z",
+                    "by": "bimbo_admin"
+                },
+                {
+                    "_id": "5a65237837fbbe5ad6d6853c",
+                    "what": "Massive User Modification",
+                    "when": "2018-01-21T23:34:16.425Z",
+                    "by": "bimbo_admin"
+                }
+            ]
+        },
+        {
+            "_id": "5a623b37a96a593eb245b9e3",
+            "roles": {
+                "_id": "5a623b37a96a593eb245b9ec",
+                "isSupervisor": false,
+                "isInstructor": false,
+                "isAuthor": true,
+                "isOrgContent": false,
+                "isOrg": false,
+                "isBusiness": false,
+                "isAdmin": false
+            },
+            "name": "bimbo_autor",
+            "password": "$2a$10$buoDumjqG9cMHmB6541qRu4/hICUBSsM2uv7ZYdTKyEU9mjQfs1jC",
+            "person": {
+                "birthDate": "2018-01-19T18:38:47.438Z",
+                "name": "Bimbo",
+                "fatherName": "User",
+                "motherName": "Autor",
+                "email": "user_autor@bimbo.com.mx",
+                "_id": "5a623b37a96a593eb245b9eb",
+                "location": {
+                    "coordinates": []
+                }
+            },
+            "org": "5a60f0465c62ff5ac8d61687",
+            "admin": {
+                "_id": "5a623b37a96a593eb245b9ea",
+                "passwordSaved": "saved",
+                "recoverString": "",
+                "isVerified": false,
+                "isActive": true
+            },
+            "perm": {
+                "_id": "5a623b37a96a593eb245b9e5",
+                "orgUnits": [],
+                "orgs": [
+                    {
+                        "name": "bimbo",
+                        "_id": "5a623b37a96a593eb245b9e6",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "roles": [
+                    {
+                        "name": "isAdmin",
+                        "_id": "5a623b37a96a593eb245b9e8",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    },
+                    {
+                        "name": "isOrg",
+                        "_id": "5a623b37a96a593eb245b9e7",
+                        "canSec": true,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ],
+                "users": [
+                    {
+                        "name": "bimbo_autor",
+                        "_id": "5a623b37a96a593eb245b9e9",
+                        "canSec": false,
+                        "canModify": true,
+                        "canRead": true
+                    }
+                ]
+            },
+            "orgUnit": "5a60fc5fcbc7f7931707e6e4",
+            "__v": 0,
+            "mod": [
+                {
+                    "_id": "5a623b37a96a593eb245b9e4",
+                    "what": "User creation",
+                    "when": "2018-01-19T18:38:47.424Z",
+                    "by": "bimbo_autor"
+                }
+            ]
+        }
+    ]

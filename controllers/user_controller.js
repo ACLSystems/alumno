@@ -353,15 +353,26 @@ module.exports = {
 
 	list(req,res) {
 		const key = (req.query && req.query.x_key) || req.headers['x-key'];
+		var sort = { name: 1 };
+		var skip = 0;
+		var limit = 15;
+		if(req.query.sort) { sort = { name: req.query.sort }; }
+		if(req.query.skip) { skip = parseInt( req.query.skip ); }
+		if(req.query.limit) { limit = parseInt( req.query.limit ); }
 		User.findOne({ name: key })
 			.populate('org')
 			.then((key_user) => {
 				if(!key_user.roles.isAdmin && key_user.roles.isOrg) {
 					User.find({ org: key_user.org._id })
+						.sort(sort)
+						.skip(skip)
+						.limit(limit)
 						.then((users) => {
+							let usersCount = users.length;
 							res.status(200).json({
 								'status': 200,
-								'message': 'Users from -' + key_user.org.name +'-',
+								'message': usersCount + ' users found from -' + key_user.org.name +'-',
+								'usersCount': usersCount,
 								'users': users
 							});
 						})
@@ -374,10 +385,15 @@ module.exports = {
 						Org.findOne({ name: req.query.org })
 							.then((org) => {
 								User.find({ org: org._id })
+									.sort(sort)
+									.skip(skip)
+									.limit(limit)
 									.then((users) => {
+										let usersCount = users.length;
 										res.status(200).json({
 											'status': 200,
-											'message': 'Users from -' + org.name +'-',
+											'message': usersCount + ' users from -' + org.name +'-',
+											'usersCount': usersCount,
 											'users': users
 										});
 									})

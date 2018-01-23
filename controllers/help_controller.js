@@ -95,6 +95,12 @@ module.exports = {
 							{ 'name': 'u7', 'password': 'pass7', 'org': 'bimbo', 'orgUnit': 'bimbo', 'person': { 'name': 'SofiA', 'fatherName': 'MartInez', 'motherName': 'Vega', 'email': 'u7@mail.com', 'birthDate': '07/07/2006'} },
 							{ 'name': 'u8', 'password': 'pass8', 'org': 'bimbo', 'orgUnit': 'bimbo', 'person': { 'name': 'JiMena', 'fatherName': 'SolorZano', 'motherName': 'Ruiz', 'email': 'u8@mail.com', 'birthDate': '08/08/2007'} }
 						]
+				},
+				'list': {
+					'access': '/api/v1/admin/user/list for isAdmin or /api/v1/orgadm/user/list for isOrg',
+					'method': 'GET',
+					'description': 'list users in org',
+					'usage': 'For isAdmin you must provide org in params. There are available params to control flow data, like sort, skip and limit.'
 				}
 			},
 			'org': {
