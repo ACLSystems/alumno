@@ -5,7 +5,6 @@ const OrgUnit = require('../src/orgUnits');
 const generate = require('nanoid/generate');
 //const moment = require('moment');
 const permissions = require('../shared/permissions');
-const obj_type = 'user';
 require('winston-daily-rotate-file');
 
 
@@ -55,7 +54,7 @@ module.exports = {
 								'message': 'Error: Org -' + userProps.org + '- does not exist'
 							});
 						} else {
-							OrgUnit.findOne({ name: userProps.orgunit}, { name: true })
+							OrgUnit.findOne({ name: userProps.orgUnit}, { name: true })
 								.then((ou) => {
 									if (!ou) {
 										res.status(404).json({
@@ -110,7 +109,7 @@ module.exports = {
 												if(found) {
 													res.status(406).json({
 														'status': 406,
-														'message': 'Error: user -' + userProps.name + '- already exists'
+														'message': 'Error: user -' + userProps.name + '- or email: -'+ userProps.person.email + '- already exists'
 													});
 												} else {
 													sendError(res,err,'register -- User create --');
@@ -163,7 +162,7 @@ module.exports = {
 								} else {
 									//console.log(key_user); // eslint-disable-line
 									//console.log(user); // eslint-disable-line
-									const result = permissions.access(key_user,user,obj_type);
+									const result = permissions.access(key_user,user,'user');
 									if(result.canRead) {
 										var send_user = {
 											name: user.name,

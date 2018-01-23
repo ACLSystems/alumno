@@ -62,31 +62,33 @@ module.exports = function(req, res, next) {
 						roles: user.roles,
 						username: user.name
 					};
-					console.log(req.url);
-					console.log(req.url.indexOf('admin'));
-					console.log(req.url.indexOf('business'));
-					console.log(req.url.indexOf('orgadm'));
-					console.log(req.url.indexOf('orgcontent'));
-					console.log(req.url.indexOf('author'));
-					console.log(req.url.indexOf('instructor'));
-					console.log(req.url.indexOf('supervisor'));
-					console.log(req.url.indexOf('/api/v1/'));
-					if (  (req.url.indexOf('admin') >= 0 && dbUserObj.roles.isAdmin) ||
-									(req.url.indexOf('business') >= 0 && dbUserObj.roles.isBusiness) ||
-									(req.url.indexOf('orgadm') >= 0 && dbUserObj.roles.isOrg) ||
-									(req.url.indexOf('orgcontent') >= 0 && dbUserObj.roles.isOrgContent) ||
-									(req.url.indexOf('author') >= 0 && dbUserObj.roles.isAuthor) ||
-									(req.url.indexOf('instructor') >= 0 && dbUserObj.roles.isInstructor) ||
-									(req.url.indexOf('supervisor') >= 0 && dbUserObj.roles.isSupervisor) ||
-									(req.url.indexOf('admin') < 0 &&
-									req.url.indexOf('business') < 0 &&
-									req.url.indexOf('orgadm') < 0 &&
-									req.url.indexOf('orgcontent') < 0 &&
-									req.url.indexOf('author') < 0 &&
-									req.url.indexOf('instructor') < 0 &&
-									req.url.indexOf('supervisor') < 0 &&
-									req.url.indexOf('admin') < 0 &&
-									req.url.indexOf('/api/v1/') >= 0)) {
+					/*
+					console.log(req.url + ' '  // eslint-disable-line
+					+ req.url.indexOf('admin') + ' '
+					+ req.url.indexOf('orgadm') + ' '
+					+ req.url.indexOf('orgcontent') + ' '
+					+ req.url.indexOf('author') + ' '
+					+ req.url.indexOf('instructor') + ' '
+					+ req.url.indexOf('supervisor') + ' '
+					+ req.url.indexOf('/api/v1/') + ' '
+					);
+					*/
+					if (  (req.url.indexOf('admin') !== -1 && dbUserObj.roles.isAdmin) ||
+									(req.url.indexOf('business') !== -1 && dbUserObj.roles.isBusiness) ||
+									(req.url.indexOf('orgadm') !== -1 && dbUserObj.roles.isOrg) ||
+									(req.url.indexOf('orgcontent') !== -1 && dbUserObj.roles.isOrgContent) ||
+									(req.url.indexOf('author') !== -1 && dbUserObj.roles.isAuthor) ||
+									(req.url.indexOf('instructor') !== -1 && dbUserObj.roles.isInstructor) ||
+									(req.url.indexOf('supervisor') !== -1 && dbUserObj.roles.isSupervisor) ||
+									(req.url.indexOf('admin') === -1 &&
+									req.url.indexOf('business') === -1 &&
+									req.url.indexOf('orgadm') === -1 &&
+									req.url.indexOf('orgcontent') === -1 &&
+									req.url.indexOf('author') === -1 &&
+									req.url.indexOf('instructor') === -1 &&
+									req.url.indexOf('supervisor') === -1 &&
+									req.url.indexOf('admin') === -1 &&
+									req.url.indexOf('/api/v1/') !== -1)) {
 						next();
 					} else {
 						res.status(403);

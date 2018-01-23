@@ -84,16 +84,25 @@ module.exports = {
 											//console.log(objOrgUnit); // eslint-disable-line
 											var orgStatus = 'ok';
 											var orgUnitStatus = 'ok';
-											if(!objOrg) {
+											var rolesStatus = 'ok';
+											if(!objOrg) { // si la organización es válida
 												orgStatus = 'Not found or not available';
 												status = 'Some errors found';
 											}
-											if(!objOrgUnit) {
+											if(!objOrgUnit) { // si la orgUnit es válida
 												orgUnitStatus = 'Not found';
 												status = 'Some errors found';
 											}
+											if(val.roles && (val.roles.isAdmin || val.roles.isOrg || val.roles.isBusiness)) {
+												rolesStatus = 'Assigning this role is not allowed';
+												status = 'Some errors found';
+											}
 											if(status === 'Some errors found') {
-												failed.push({ name: val.name, nStat: 'ok', org: val.org, oStat: orgStatus, orgUnit: val.orgUnit, ouStat: orgUnitStatus });
+												if(val.roles) {
+													failed.push({ name: val.name, nStat: 'ok', org: val.org, oStat: orgStatus, orgUnit: val.orgUnit, ouStat: orgUnitStatus, roles: val.roles, rolesStatus: rolesStatus });
+												} else {
+													failed.push({ name: val.name, nStat: 'ok', org: val.org, oStat: orgStatus, orgUnit: val.orgUnit, ouStat: orgUnitStatus });
+												}
 												status = 'ok';
 											} else {
 												var permUsers = new Array();
@@ -115,7 +124,15 @@ module.exports = {
 												val.mod.push(mod);
 												val.org = objOrg._id;
 												val.orgUnit = objOrgUnit._id;
+												var roles = {};
+												if(val.roles) { roles = val.roles; }
 												val.roles = addRoles();
+												if(val.roles) {
+													if(roles.isOrgContent) 	{val.roles.isOrgContent = true; }
+													if(roles.isAuthor		 ) 	{val.roles.isAuthor = true;			}
+													if(roles.isInstructor) 	{val.roles.isInstructor = true; }
+													if(roles.isSupervisor) 	{val.roles.isSupervisor = true; }
+												}
 												var admin = {
 													isActive: true,
 													isVerified: false,
@@ -153,7 +170,6 @@ module.exports = {
 												}
 												if(usersToUpdate) {
 													usersToUpdate.forEach(function(userToUpdate) {
-														delete userToUpdate.roles;
 														delete userToUpdate.perm;
 														const date = new Date();
 														const mod = {

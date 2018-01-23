@@ -2,6 +2,8 @@ module.exports = {
 	help(req, res) {
 		res.status(200);
 		res.json({
+			'Version': '1.0.1.2',
+			'description': 'Minor corrections',
 			'Usage': 'In general, to use APIs you need to send JSON in body and authentication tokens in headers, like: x-key (user logged) x-access-token (token received after login). Responses are same send in json format and every API has it own',
 			'help': {
 				'access': '/api/help',
@@ -96,7 +98,7 @@ module.exports = {
 				'register': {
 					'access': '/api/v1/admin/org/register',
 					'method': 'POST',
-					'description': 'register organization. Requires token obtained from login. Only Admin can create organizations',
+					'description': 'register organization. Requires token obtained from login. Only Admin can create orgs',
 					'usage': 'Send authentication tokens in headers, and org data in JSON format at body',
 					'example': {
 						'name': 'bimbo',
@@ -104,12 +106,23 @@ module.exports = {
 						'alias': ['bimbote', 'bimbito', 'otro bimbo']
 					}
 				},
+				'list': {
+					'access': '/api/v1/admin/org/list',
+					'method': 'GET',
+					'description': 'list organizations. Requires token obtained from login. Only Admin can list orgs',
+					'usage': 'Send authentication tokens in headers'
+				},
+				'modify': {
+					'access': 'isAdmin: /api/v1/admin/org/modify isOrg: /api/v1/orgadm/modify',
+					'method': 'PUT',
+					'description': 'modify organization. Requires token obtained from login. Only Admin or Org Admins can access this API'
+				}
 			},
 			'orgunit': {
 				'register': {
 					'access': '/api/v1/orgadm/orgunit/register',
 					'method': 'POST',
-					'description': 'register organizational unit. Requires token obtained from login. Only Org can create OUs',
+					'description': 'register organizational unit. Requires token obtained from login. Only isOrg and isAdmin can create OUs',
 					'usage': 'Send authentication tokens in headers, and orgunit data in JSON format at body',
 					'example': {
 						'name': 'bimbo',
@@ -117,6 +130,17 @@ module.exports = {
 						'alias': 'bimbito',
 						'org': 'bimbo'
 					}
+				},
+				'massiveRegister': {
+					'access': '/api/v1/orgadm/orgunit/masiveregister',
+					'method': 'POST',
+					'description': 'register organizational units. Requires token obtained from login. Only isOrg and isAdmin can create OUs',
+					'usage': 'Send authentication tokens in headers, and orgunit data in JSON format at body. Type could be any of: org,country,region,state,city,area,campus,department,building,section,floor,room]. org cannot be displayed to final user',
+					'example': [
+						{ 'name': 'dir_general', 'longName': 'Dirección General', 'alias': 'Dir. Gral.', 'type': 'department' },
+						{	'name': 'sistemas', 'longName': 'Dirección de Sistemas', 'alias': 'Sistemas', 'type': 'department' },
+						{ 'name': 'finanzas', 'longName': 'Dirección de Finanzas', 'alias': 'Finanzas', 'type': 'department' }
+					]
 				}
 			},
 			course: {

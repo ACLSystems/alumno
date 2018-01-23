@@ -133,6 +133,7 @@ module.exports = {
 						alias: ['Público', 'Pública', 'General'],
 						org: orgPublic._id,
 						parent: 'public',
+						type: 'org',
 						isActive: true,
 						mod: [mod],
 						perm: {
@@ -172,6 +173,7 @@ module.exports = {
 						alias: ['acl systems', 'ACL', 'ACL Systems'],
 						org: orgACL._id,
 						parent: 'acl',
+						type: 'org',
 						isActive: true,
 						mod: [mod],
 						perm: {

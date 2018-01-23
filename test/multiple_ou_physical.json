@@ -1,0 +1,13 @@
+[
+	{ "name": "conalep", "longName": "Colegio Nacional de Educación P", "alias": "CONALEP", "type": "org" },
+	{	"name": "norte", "longName": "Región Norte", "alias": "Norte", "type": "region", "parent": "conalep" },
+	{ "name": "sur", "longName": "Región Sur", "alias": "Sur", "type": "region", "parent": "conalep" },
+	{ "name": "sonora", "longName": "Sonora", "alias": "Estado de Sonora", "type": "state", "parent": "norte" },
+	{ "name": "chiapas", "longName": "Chiapas", "alias": "Estado de Chiapas", "type": "state", "parent": "sur" },
+	{ "name": "obregon", "longName": "Ciudad Obregón", "alias": "Cd. Obregón", "type": "city", "parent": "sonora" },
+	{ "name": "tuxtlagutierrez", "longName": "Tuxtla Gutierrez", "alias": "Tuxtla Gutierrez", "type": "city", "parent": "chiapas" },
+	{ "name": "plantel_sonora", "longName": "Plantel Sonora", "alias": "Plantel Sonora", "type": "campus", "parent": "obregon" },
+	{ "name": "plantel_tuxtla", "longName": "Plantel Tuxtla Gutierrez", "alias": "Plantel Tuxtla", "type": "campus", "parent": "tuxtlagutierrez" }
+	{ "name": "matematicas_son", "longName": "Departamento de matemáticas Sonora", "alias": "Departamento de Matemáticas Sonora", "type": "department", "parent": "plantel_sonora" },
+	{ "name": "cienciassoc_tux", "longName": "Departamento de ciencias sociales Tuxtla", "alias": "Departamento de Ciencias Sociales Tuxtla", "type": "department", "parent": "plantel_tuxtla" }
+]
