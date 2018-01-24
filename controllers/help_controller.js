@@ -51,7 +51,7 @@ module.exports = {
 					}
 				},
 				'passwordChange': {
-					'access': '/api/user/passwordChange',
+					'access': '/api/v1/user/passwordChange',
 					'method': 'PUT',
 					'description': 'used to change user password (user explicity changes password) or an admin changes another user password',
 					'usage': 'Send authentication tokens in headers, and user to change password and password in JSON format at body',
@@ -101,7 +101,13 @@ module.exports = {
 					'method': 'GET',
 					'description': 'list users in org',
 					'usage': 'For isAdmin you must provide org in params. There are available params to control flow data, like sort, skip and limit.'
-				}
+				},
+				'count': {
+					'access': '/api/v1/admin/user/count for isAdmin or /api/v1/orgadm/user/count for isOrg',
+					'method': 'GET',
+					'description': 'total count for users in org',
+					'usage': 'For isAdmin you must provide org in params. There are available params to control flow data, like sort, skip and limit.'
+				},
 			},
 			'org': {
 				'register': {

@@ -32,14 +32,16 @@ module.exports = (app) => {
 
 	app.get('/', GetNothing.greeting);
 	app.post('/login', auth.login);
+	app.all('/api/user/*', [require('../controllers/validateParams')]);
 	app.post('/api/user/register', UserController.register);
 	app.get('/api/user/validateEmail', UserController.validateEmail);
-	app.put('/api/user/passwordChange', UserController.passwordChange);
 	app.get('/api/help', HelpController.help);
 
 	// Rutas que pueden acceder solo usuarios autenticados
 
+	app.all('/api/v1/user/*', [require('../controllers/validateParams')]);
 	app.get('/api/v1/user/getdetails', UserController.getDetails);
+	app.put('/api/v1/user/passwordChange', UserController.passwordChange);
 	app.put('/api/v1/user/modify', UserController.modify);
 	app.get('/api/v1/course/listCategories', CourseController.listCategories);
 	app.get('/api/v1/course/listCourses', CourseController.listCourses);
@@ -51,12 +53,14 @@ module.exports = (app) => {
 
 	app.post('/api/v1/admin/org/register', OrgController.register);
 	app.get('/api/v1/admin/user/list', UserController.list);
+	app.get('/api/v1/admin/user/count', UserController.count);
 
 	// Rutas para roles de 'isOrg'
 
 	app.post('/api/v1/orgadm/user/massiveRegister', MassUsersController.massiveRegister);
 	app.post('/api/v1/orgadm/orgunit/register', OrgUnitController.register);
 	app.get('/api/v1/orgadm/user/list', UserController.list);
+	app.get('/api/v1/orgadm/user/count', UserController.count);
 
 	// Rutas para roles de 'isAuthor'
 
