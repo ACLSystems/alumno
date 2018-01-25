@@ -72,7 +72,7 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
-	case '/api/user/validateEmail':
+	case '/api/user/validateemail':
 		if(!req.headers['email'] && !req.query.email) {
 			res.status(406).json({
 				'status': 406,
@@ -82,7 +82,7 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
-	case '/api/v1/user/passwordChange':
+	case '/api/v1/user/passwordchange':
 		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
@@ -117,8 +117,63 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
+	case '/api/v1/user/getroles':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by query to process'
+			});
+		} else if(!req.query.name && !req.headers['name']) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give user name by query or by header to process'
+			});
+		} else {
+			next();
+		}
+		break;
+	case '/api/v1/user/setroles':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by query to process'
+			});
+		} else if(!req.body.name) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give user name by query or by header to process'
+			});
+		} else if(!req.body.roles) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give roles of user to set'
+			});
+		} else {
+			const roles = Object.keys(req.body.roles);
+			var message = '';
+			roles.forEach(function(key) {
+				if(key !== 'isAdmin' &&
+				key !== 'isOrg' &&
+				key !== 'isBusiness' &&
+				key !== 'isOrgContent' &&
+				key !== 'isAuthor' &&
+				key !== 'isInstructor' &&
+				key !== 'isSupervisor') {
+					message = 'Please use only recongnized roles';
+				}
+			});
+			if (message !== '') {
+				res.status(406).json({
+					'status': 406,
+					'message': message
+				});
+			} else {
+				next();
+			}
+		}
+		break;
 	default:
-		res.send(404).json({
+		res.status(404).json({
 			'status': 404,
 			'message': 'API not found'
 		});

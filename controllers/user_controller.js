@@ -163,6 +163,150 @@ module.exports = {
 			});
 	},
 
+	getRoles(req, res) {
+		const key = req.headers['x-key'];
+		const username = req.headers['name'] || (req.query && req.query.name);
+		User.findOne({ name: key })
+			.populate('org','name')
+			.populate('orgUnit','name')
+			.then((key_user) => {
+				if(key_user.roles.isAdmin || (key_user.roles.isOrg)) {
+					User.findOne({ name: username })
+						.populate('org','name')
+						.populate('orgUnit', 'name')
+						.then((user) => {
+							if (!user) {
+								res.status(404).json({
+									'status': 404,
+									'message': 'User -' + username + '- does not exist'
+								});
+							} else {
+								//console.log(key_user); // eslint-disable-line
+								//console.log(user); // eslint-disable-line
+								const result = permissions.access(key_user,user,'user');
+								if(result.canRead) {
+									var send_user = {
+										name: user.name,
+										org: user.org.name,
+										orgUnit: user.orgUnit.name,
+									};
+									if(user.roles) {
+										if(key_user.roles.isAdmin) {
+											send_user.roles = {
+												isAdmin: user.roles.isAdmin,
+												isBusiness: user.roles.isBusiness,
+												isOrg: user.roles.isOrg,
+												isOrgContent: user.roles.isOrgContent,
+												isAuthor: user.roles.isAuthor,
+												isInstructor: user.roles.isInstructor,
+												isSupervisor: user.roles.isSupervisor
+											};
+										}	else {
+											send_user.roles = {
+												isOrgContent: user.roles.isOrgContent,
+												isAuthor: user.roles.isAuthor,
+												isInstructor: user.roles.isInstructor,
+												isSupervisor: user.roles.isSupervisor
+											};
+										}
+										res.status(200).json({
+											'status' : 200,
+											'message' : send_user
+										});
+									} else {
+										res.status(404).json({
+											'status': 404,
+											'message': 'Something is wrong: User ' + user.name + ' has no roles (what!!!?). Please check with Administrator'
+										});
+									}
+								} else {
+									res.status(403).json({
+										'status': 403,
+										'message': 'User ' + key + ' not authorized'
+									});
+								}
+							}
+						})
+						.catch((err) => {
+							sendError(res,err,'getDetails -- Finding User --');
+						});
+				} else {
+					res.status(403).json({
+						'status': 403,
+						'message': 'Only admins can view or change roles'
+					});
+				}
+			}) //key_user
+			.catch((err) => {
+				sendError(res,err,'getDetails -- Finding key User --');
+			});
+	},
+
+	setRoles(req, res) {
+		const key = req.headers['x-key'];
+		const userProps = req.body;
+		User.findOne({ name: key })
+			.populate('org','name')
+			.populate('orgUnit','name')
+			.then((key_user) => {
+				if(key_user.roles.isAdmin || (key_user.roles.isOrg)) {
+					User.findOne({ name: userProps.name })
+						.populate('org','name')
+						.populate('orgUnit', 'name')
+						.then((user) => {
+							if (!user) {
+								res.status(404).json({
+									'status': 404,
+									'message': 'User -' + userProps.name + '- does not exist'
+								});
+							} else {
+								if(key_user.org.name === user.org.name && !key_user.roles.isAdmin) {
+									res.status(406).json({
+										'status': 406,
+										'message': 'User ' + key_user.name + ' cannot modify roles for ' + user.name + '. They do not belong the same org.'
+									});
+								} else {
+									if(user.roles) {
+										if(key_user.roles.isAdmin) {
+											if(userProps.roles.isAdmin !== undefined ) { user.roles.isAdmin = userProps.roles.isAdmin; }
+											if(userProps.roles.isOrg !== undefined ) { user.roles.isOrg = userProps.roles.isOrg; }
+											if(userProps.roles.isBusiness !== undefined ) { user.roles.isBusiness = userProps.roles.isBusiness; }
+										}
+										if(userProps.roles.isOrgContent !== undefined ) { user.roles.isOrgContent = userProps.roles.isOrgContent; }
+										if(userProps.roles.isAuthor !== undefined ) { user.roles.isAuthor = userProps.roles.isAuthor; }
+										if(userProps.roles.isInstructor !== undefined ) { user.roles.isInstructor = userProps.roles.isInstructor; }
+										if(userProps.roles.isSupervisor  !== undefined ) { user.roles.isSupervisor = userProps.roles.isSupervisor; }
+										user.save().catch((err) => {
+											sendError(res,err,'setRoles -- Saving User--');
+										});
+										res.status(200).json({
+											'status': 200,
+											'message': 'Roles for ' + user.name + ' have been modified'
+										});
+									} else {
+										res.status(404).json({
+											'status': 404,
+											'message': 'Something is wrong: User ' + user.name + ' has no roles (what!!!?). Please check with Administrator'
+										});
+									}
+								}
+							}
+						})
+						.catch((err) => {
+							sendError(res,err,'setRoles -- Finding User to set--');
+						});
+				} else {
+					res.status(403).json({
+						'status': 403,
+						'message': 'Only admins can view or change roles'
+					});
+				}
+			}) //key_user
+			.catch((err) => {
+				sendError(res,err,'setRoles -- Finding key User --');
+			});
+	},
+
 	//validateEmail(req, res, next) {
 	validateEmail(req, res) {
 		const email = req.headers['email'] || (req.body && req.body.email);
@@ -212,7 +356,9 @@ module.exports = {
 							user.mod.push(mod);
 							const result = permissions.access(key_user,user,'user');
 							if(result.canModify) {
-								user.save();
+								user.save().catch((err) => {
+									sendError(res,err,'passwordChange -- Saving User--');
+								});
 								res.status(200);
 								res.json({
 									'status': 200,
@@ -265,7 +411,9 @@ module.exports = {
 								what: 'User modification'
 							};
 							user.mod.push(mod);
-							user.save();
+							user.save().catch((err) => {
+								sendError(res,err,'modify -- Saving User--');
+							});
 							res.status(200);
 							res.json({
 								'status':200,

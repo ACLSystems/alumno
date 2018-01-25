@@ -6,7 +6,7 @@ module.exports = {
 		res.json({
 			'App': version.app,
 			'Version': version.version,
-			'description': 'Minor corrections',
+			'description': version.description,
 			'Usage': 'In general, to use APIs you need to send JSON in body and authentication tokens in headers, like: x-key (user logged) x-access-token (token received after login). Responses are same send in json format and every API has it own',
 			'help': {
 				'access': '/api/help',
@@ -42,7 +42,7 @@ module.exports = {
 					}
 				},
 				'validateEmail': {
-					'access': '/api/user/validateEmail',
+					'access': '/api/user/validateemail',
 					'method': 'GET',
 					'description': 'used to validate user email when he/she losts his/her password. This returns token to construct URL for password change',
 					'usage': 'Send json in body or in header',
@@ -51,7 +51,7 @@ module.exports = {
 					}
 				},
 				'passwordChange': {
-					'access': '/api/v1/user/passwordChange',
+					'access': '/api/v1/user/passwordchange',
 					'method': 'PUT',
 					'description': 'used to change user password (user explicity changes password) or an admin changes another user password',
 					'usage': 'Send authentication tokens in headers, and user to change password and password in JSON format at body',
@@ -61,12 +61,33 @@ module.exports = {
 					}
 				},
 				'getDetails': {
-					'access': '/api/v1/user/getDetails',
+					'access': '/api/v1/user/getdetails',
 					'method': 'GET',
 					'description': 'get user details',
 					'usage': 'Send authentication tokens in headers, and username to get details in JSON format at body',
 					'example': {
 						'name': 'user01'
+					}
+				},
+				'getRoles': {
+					'access': '/api/v1/user/getroles',
+					'method': 'GET',
+					'description': 'get user roles',
+					'usage': 'Send authentication tokens in headers, and username to get details in JSON format at body. Only isAdmin and isOrg allowed',
+					'example': {
+						'name': 'user01'
+					}
+				},
+				'setRoles': {
+					'access': '/api/v1/user/setroles',
+					'method': 'PUT',
+					'description': 'set user roles',
+					'usage': 'Send authentication tokens in headers, and username to get details in JSON format at body. Only isAdmin and isOrg allowed',
+					'example': {
+						'name': 'user01',
+						'roles': {
+							'isAuthor': 'true'
+						}
 					}
 				},
 				'modify': {
@@ -81,7 +102,7 @@ module.exports = {
 					}
 				},
 				'massiveRegister': {
-					'access': '/api/v1/orgadm/user/massiveRegister',
+					'access': '/api/v1/orgadm/user/massiveregister',
 					'method': 'POST',
 					'description': 'register users in massive way',
 					'usage': 'Send authentication tokens in headers, and user array in JSON format at body',
@@ -177,13 +198,13 @@ module.exports = {
 					}
 				},
 				'listCategories': {
-					'access': '/api/v1/course/listCategories',
+					'access': '/api/v1/course/listcategories',
 					'method': 'GET',
 					'description': 'list courses categories',
 					'usage': 'Send authentication tokens in headers. Use params (in url) for sort, skip and limit'
 				},
 				'listCourses': {
-					'access': '/api/v1/course/listCourses',
+					'access': '/api/v1/course/listcourses',
 					'method': 'GET',
 					'description': 'list courses',
 					'usage': 'Send authentication tokens in headers. Use params (in url) for sort, skip and limit. You can send JSON for query categories'
