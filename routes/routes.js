@@ -39,12 +39,17 @@ module.exports = (app) => {
 
 	// Rutas que pueden acceder solo usuarios autenticados
 
+	// Rutas para usuarios
+
 	app.all('/api/v1/user/*', [require('../controllers/validateParams')]);
 	app.get('/api/v1/user/getdetails', UserController.getDetails);
 	app.get('/api/v1/user/getroles', UserController.getRoles);
 	app.put('/api/v1/user/setroles', UserController.setRoles);
 	app.put('/api/v1/user/passwordchange', UserController.passwordChange);
 	app.put('/api/v1/user/modify', UserController.modify);
+
+	// Rutas para cursos
+
 	app.get('/api/v1/course/listcategories', CourseController.listCategories);
 	app.get('/api/v1/course/listcourses', CourseController.listCourses);
 
@@ -59,7 +64,9 @@ module.exports = (app) => {
 
 	// Rutas para roles de 'isOrg'
 
+	app.all('/api/v1/orgadm/*', [require('../controllers/validateParams')]);
 	app.post('/api/v1/orgadm/user/massiveregister', MassUsersController.massiveRegister);
+	app.post('/api/v1/orgadm/orgunit/massiveregister', OrgUnitController.massiveRegister);
 	app.post('/api/v1/orgadm/orgunit/register', OrgUnitController.register);
 	app.get('/api/v1/orgadm/user/list', UserController.list);
 	app.get('/api/v1/orgadm/user/count', UserController.count);

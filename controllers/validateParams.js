@@ -172,10 +172,71 @@ module.exports = function(req, res, next) {
 			}
 		}
 		break;
+
+	case '/api/v1/orgadm/orgunit/massiveregister':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by body to process'
+			});
+		} else {
+			var status = 'ok';
+			var result = new Array();
+			req.body.forEach(function(ou,index) {
+				if(!ou.name) {
+					result.push({ 'status': index + '.- Missing OU name'});
+					status = 'not ok';
+				}
+				if(!ou.parent) {
+					result.push({ 'status': index + '.- Missing OU parent name'});
+					status = 'not ok';
+				}
+				if(!ou.type) {
+					result.push({ 'status': index + '.- Missing OU type'});
+					status = 'not ok';
+				}
+			});
+			if(status === 'ok'){
+				next();
+			} else {
+				res.status(406).json({
+					'status': 406,
+					'message': result
+				});
+			}
+		}
+		break;
+	case '/api/v1/orgadm/orgunit/register':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by body to process'
+			});
+		} else if(!req.body.name) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give user name by body to process'
+			});
+		} else if(!req.body.org) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give org name by body to process'
+			});
+		/*
+		} else if(!req.body.parent) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give orgUnit parent name by body to process'
+			});
+		*/
+		} else {
+			next();
+		}
+		break;
 	default:
 		res.status(404).json({
 			'status': 404,
-			'message': 'API not found'
+			'message': 'API not found - validate Params'
 		});
 	}
 };

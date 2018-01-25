@@ -3,8 +3,11 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt-nodejs');
 const ModSchema = require('./modified');
 const PermissionsSchema = require('./permissions');
+const PointSchema = require('./point');
+const AddressSchema = require('./address');
 const moment = require('moment');
 const Schema = mongoose.Schema;
+
 
 // Esquema para datos de la persona que posee un usuario
 const PersonSchema = new Schema ({
@@ -30,10 +33,6 @@ const PersonSchema = new Schema ({
 	},
 	celPhone: {
 		type: String
-	},
-	location: {
-		type: { type: String },
-		coordinates: []
 	},
 	genre: {
 		type: String,
@@ -141,7 +140,9 @@ const UserSchema = new Schema ({
 	roles: RolesSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema,
-	admin: AdmUsrSchema
+	admin: AdmUsrSchema,
+	geo: PointSchema,
+	address: AddressSchema
 });
 
 

@@ -1,6 +1,8 @@
 // Esquema para modelar Unidades Organizacionales
 const mongoose = require('mongoose');
 const ModSchema = require('./modified');
+const PointSchema = require('./point');
+const AddressSchema = require('./address');
 const PermissionsSchema = require('./permissions');
 const Schema = mongoose.Schema;
 
@@ -31,6 +33,8 @@ const OrgUnitsSchema = new Schema ({
 		type: Boolean,
 		default: true
 	},
+	geo:PointSchema,
+	address: AddressSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema
 });

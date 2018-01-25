@@ -20,20 +20,27 @@ var auth = {
 
 		Users.findOne({ name: username })
 			.then((user) => {
-				user.validatePassword(password, function(err, isOk) {
-					if(isOk) {
-						/*
-						var dbUserObj = {
-							name: user.name,
-							role: user.roles,
-							username: user.name
-						};
-						*/
-						res.status(200);
-						//res.json(genToken(dbUserObj));
-						res.json(genToken());
-					}
-				});
+				if(!user) {
+					res.status(404).json({
+						'status': 404,
+						'message': 'User -' + username + '- not found'
+					});
+				} else {
+					user.validatePassword(password, function(err, isOk) {
+						if(isOk) {
+							/*
+							var dbUserObj = {
+								name: user.name,
+								role: user.roles,
+								username: user.name
+							};
+							*/
+							res.status(200);
+							//res.json(genToken(dbUserObj));
+							res.json(genToken());
+						}
+					});
+				}
 			})
 			.catch((err) => {
 				const mess = {id: 404, error: 'Error: password incorrect'};

@@ -90,7 +90,7 @@ module.exports = {
 							const date = new Date();
 							const userProps = new User({
 								name: orgProps.name + '-public',
-								password: 'alumno_admin',
+								password: orgProps.name + '_public_admin',
 								org: orgProps._id,
 								orgUnit: ouProps._id,
 								roles: {
