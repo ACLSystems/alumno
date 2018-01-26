@@ -69,6 +69,12 @@ module.exports = {
 						'name': 'user01'
 					}
 				},
+				'near': {
+					'access': '/api/user/near',
+					'method': 'GET',
+					'description': 'search near ourUnits',
+					'usage': 'authentication no need, send longitud (lng) and latitud (lat) in query (params). If no org send, it will set to public'
+				},
 				'getRoles': {
 					'access': '/api/v1/user/getroles',
 					'method': 'GET',
