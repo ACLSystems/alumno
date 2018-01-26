@@ -62,6 +62,8 @@ module.exports = (app) => {
 	app.post('/api/v1/admin/org/register', OrgController.register);
 	app.get('/api/v1/admin/user/list', UserController.list);
 	app.get('/api/v1/admin/user/count', UserController.count);
+	app.get('/api/v1/admin/org/list', OrgController.list);
+	app.get('/api/v1/admin/org/getdetailsadmin', OrgController.getDetailsAdmin);
 
 	// Rutas para roles de 'isOrg'
 
@@ -71,6 +73,7 @@ module.exports = (app) => {
 	app.post('/api/v1/orgadm/orgunit/register', OrgUnitController.register);
 	app.get('/api/v1/orgadm/user/list', UserController.list);
 	app.get('/api/v1/orgadm/user/count', UserController.count);
+	app.get('/api/v1/orgadm/org/getdetails', OrgController.getDetails);
 
 	// Rutas para roles de 'isAuthor'
 
