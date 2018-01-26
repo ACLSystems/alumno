@@ -141,7 +141,7 @@ const UserSchema = new Schema ({
 	mod: [ModSchema],
 	perm: PermissionsSchema,
 	admin: AdmUsrSchema,
-	geo: PointSchema,
+	geometry: PointSchema,
 	address: AddressSchema
 });
 

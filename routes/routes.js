@@ -34,6 +34,7 @@ module.exports = (app) => {
 	app.post('/login', auth.login);
 	app.all('/api/user/*', [require('../controllers/validateParams')]);
 	app.post('/api/user/register', UserController.register);
+	app.get('/api/user/near', OrgUnitController.index);
 	app.get('/api/user/validateEmail', UserController.validateEmail);
 	app.get('/api/help', HelpController.help);
 

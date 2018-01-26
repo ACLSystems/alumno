@@ -253,6 +253,7 @@ module.exports = {
 											ou.mod = new Array();
 											ou.mod.push(mod);
 											ou._id = objOrgUnit._id;
+											ouToUpdate.push(ou);
 										}
 									}
 								});  // termina el bucle
@@ -291,7 +292,55 @@ module.exports = {
 			.catch((err) => {
 				sendError(res,err,'massiveRegister -- Finding Key User --');
 			});
-	} //massiveRegister
+	}, //massiveRegister
+
+	index(req, res){
+		const lng = req.query.lng;
+		const lat = req.query.lat;
+		var org = 'public';
+		var result = new Array();
+		if(req.query.org) { org = req.query.org; }
+		var max = 20000;
+		if(req.query.max) { max = parseInt(req.query.max);}
+		OrgUnit.geoNear(
+			{ type: 'Point', 'coordinates': [parseFloat(lng), parseFloat(lat)] },
+			{ spherical: true, maxDistance: max }
+		)
+			.then((ous) => {
+				Org.findOne({ name: org })
+					.then((o) => {
+						ous.forEach(function(ou) {
+							if(String(ou.obj.org) === String(o._id)) {
+								var temp = {};
+								temp.dis = ou.dis;
+								temp.obj = {
+									name: ou.obj.name,
+									longName: ou.obj.longName,
+									type: ou.obj.type,
+									parent: ou.obj.parent,
+									org: o.name,
+									isActive: ou.obj.isActive,
+									alias: ou.obj.alias
+								};
+								result.push(temp);
+							}
+						});
+						res.status(200).json({
+							'status': 200,
+							'message': {
+								'ousNum': result.length,
+								'ous': result
+							}
+						});
+					})
+					.catch((err) => {
+						sendError(res,err,'index -- Finding org --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'index -- Finding orgUnit --');
+			});
+	}
 };
 
 function sendError(res, err, section) {

@@ -33,7 +33,7 @@ const OrgUnitsSchema = new Schema ({
 		type: Boolean,
 		default: true
 	},
-	geo:PointSchema,
+	geometry:PointSchema,
 	address: AddressSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema

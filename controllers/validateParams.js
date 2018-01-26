@@ -1,7 +1,12 @@
 
 
 module.exports = function(req, res, next) {
-	switch (req.url) {
+	var url = req.url;
+	const indexurl = url.indexOf('?');
+	if(indexurl !== -1){
+		url = url.substring(0,indexurl);
+	}
+	switch (url) {
 	case '/api/user/register':
 		if(!req.body){
 			res.status(406).json({
@@ -57,6 +62,23 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
+
+	case '/api/user/near':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by query to process'
+			});
+		} else if(!req.query.lng && !req.query.lat) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give coordinates (lng,lat) in query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/getdetails':
 		if(!req.query) {
 			res.status(406).json({
@@ -233,6 +255,7 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
+
 	default:
 		res.status(404).json({
 			'status': 404,
