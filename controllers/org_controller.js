@@ -304,36 +304,31 @@ module.exports = {
 												});
 											})
 											.catch((err) => {
-												logger.info('Org modify -- Org find --');
-												logger.info(err);
-												res.status(500).json({
-													'status': 500,
-													'message': err.message
-												});
+												sendError(res,err,'Org modify -- Org find --');
 											});
 									}
 								})
 								.catch((err) => {
-									logger.info('Org modify -- Org find --');
-									logger.info(err);
-									res.status(500).json({
-										'status': 500,
-										'message': err.message
-									});
+									sendError(res,err,'Org modify -- Org find --');
 								});
 						}
 					})
 					.catch((err) => {
-						logger.info('Org modify -- Key user find --');
-						logger.info(err);
-						res.status(500).json({
-							'status': 500,
-							'message': err.message
-						});
+						sendError(res,err,'Org modify -- Key user find--');
 					});
-
 			}
 		}
 	} // modify
 
 };
+
+function sendError(res, err, section) {
+	logger.info('orgUnit controller -- Section: ' + section + '----');
+	logger.info(err);
+	res.status(500).json({
+		'status': 500,
+		'message': 'Error',
+		'Error': err.message
+	});
+	return;
+}

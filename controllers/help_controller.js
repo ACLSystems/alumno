@@ -9,12 +9,12 @@ module.exports = {
 			'description': version.description,
 			'Usage': 'In general, to use APIs you need to send JSON in body and authentication tokens in headers, like: x-key (user logged) x-access-token (token received after login). Responses are same send in json format and every API has it own',
 			'help': {
-				'access': '/api/help',
+				'access': req.protocol + '://' +req.headers.host + '/api/help',
 				'method': 'GET',
 				'description': 'This help'
 			},
 			'login': {
-				'access': '/login',
+				'access': req.protocol + '://' +req.headers.host + '/login',
 				'method': 'POST',
 				'description': 'Use login first to get access to most APIs.',
 				'usage': 'Send JSON in body',
@@ -26,7 +26,7 @@ module.exports = {
 			'user': {
 				'General': 'APIs for most operations respect to user objects',
 				'register': {
-					'access': '/api/user/register',
+					'access': req.protocol + '://' +req.headers.host + '/api/user/register',
 					'method': 'POST',
 					'description': 'to register an user. Must have org and orgunit. For public users use: public org and orgunit',
 					'usage': 'Send headers with token, and json in body',
@@ -42,7 +42,7 @@ module.exports = {
 					}
 				},
 				'validateEmail': {
-					'access': '/api/user/validateemail',
+					'access': req.protocol + '://' +req.headers.host + '/api/user/validateemail',
 					'method': 'GET',
 					'description': 'used to validate user email when he/she losts his/her password. This returns token to construct URL for password change',
 					'usage': 'Send json in body or in header',
@@ -51,7 +51,7 @@ module.exports = {
 					}
 				},
 				'passwordChange': {
-					'access': '/api/v1/user/passwordchange',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/user/passwordchange',
 					'method': 'PUT',
 					'description': 'used to change user password (user explicity changes password) or an admin changes another user password',
 					'usage': 'Send authentication tokens in headers, and user to change password and password in JSON format at body',
@@ -61,7 +61,7 @@ module.exports = {
 					}
 				},
 				'getDetails': {
-					'access': '/api/v1/user/getdetails',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/user/getdetails',
 					'method': 'GET',
 					'description': 'get user details',
 					'usage': 'Send authentication tokens in headers, and username to get details in JSON format at body',
@@ -70,13 +70,13 @@ module.exports = {
 					}
 				},
 				'near': {
-					'access': '/api/user/near',
+					'access': req.protocol + '://' +req.headers.host + '/api/user/near',
 					'method': 'GET',
 					'description': 'search near ourUnits',
 					'usage': 'authentication no need, send longitud (lng) and latitud (lat) in query (params). If no org send, it will set to public'
 				},
 				'getRoles': {
-					'access': '/api/v1/user/getroles',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/user/getroles',
 					'method': 'GET',
 					'description': 'get user roles',
 					'usage': 'Send authentication tokens in headers, and username to get details in JSON format at body. Only isAdmin and isOrg allowed',
@@ -85,7 +85,7 @@ module.exports = {
 					}
 				},
 				'setRoles': {
-					'access': '/api/v1/user/setroles',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/user/setroles',
 					'method': 'PUT',
 					'description': 'set user roles',
 					'usage': 'Send authentication tokens in headers, and username to get details in JSON format at body. Only isAdmin and isOrg allowed',
@@ -97,7 +97,7 @@ module.exports = {
 					}
 				},
 				'modify': {
-					'access': '/api/v1/user/modify',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/user/modify',
 					'method': 'PUT',
 					'description': 'modify user details. This API is intended for user. Do not modify admin properties',
 					'usage': 'Send authentication tokens in headers, and username to get details in JSON format at body',
@@ -108,7 +108,7 @@ module.exports = {
 					}
 				},
 				'massiveRegister': {
-					'access': '/api/v1/orgadm/user/massiveregister',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/orgadm/user/massiveregister',
 					'method': 'POST',
 					'description': 'register users in massive way',
 					'usage': 'Send authentication tokens in headers, and user array in JSON format at body',
@@ -124,13 +124,13 @@ module.exports = {
 						]
 				},
 				'list': {
-					'access': '/api/v1/admin/user/list for isAdmin or /api/v1/orgadm/user/list for isOrg',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/admin/user/list for isAdmin or ' + req.protocol + '://' +req.headers.host +  '/api/v1/orgadm/user/list for isOrg',
 					'method': 'GET',
 					'description': 'list users in org',
 					'usage': 'For isAdmin you must provide org in params. There are available params to control flow data, like sort, skip and limit.'
 				},
 				'count': {
-					'access': '/api/v1/admin/user/count for isAdmin or /api/v1/orgadm/user/count for isOrg',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/admin/user/count for isAdmin' + req.protocol + '://' +req.headers.host +  ' or /api/v1/orgadm/user/count for isOrg',
 					'method': 'GET',
 					'description': 'total count for users in org',
 					'usage': 'For isAdmin you must provide org in params. There are available params to control flow data, like sort, skip and limit.'
@@ -138,7 +138,7 @@ module.exports = {
 			},
 			'org': {
 				'register': {
-					'access': '/api/v1/admin/org/register',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/admin/org/register',
 					'method': 'POST',
 					'description': 'register organization. Requires token obtained from login. Only Admin can create orgs',
 					'usage': 'Send authentication tokens in headers, and org data in JSON format at body',
@@ -149,20 +149,20 @@ module.exports = {
 					}
 				},
 				'list': {
-					'access': '/api/v1/admin/org/list',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/admin/org/list',
 					'method': 'GET',
 					'description': 'list organizations. Requires token obtained from login. Only Admin can list orgs',
-					'usage': 'Send authentication tokens in headers'
+					'usage': 'Send authentication tokens in headers. Optionally, you can use sort (name sort increasing (1) and decreasing(-1), skip and limit to paginate.)'
 				},
 				'modify': {
-					'access': 'isAdmin: /api/v1/admin/org/modify isOrg: /api/v1/orgadm/modify',
+					'access': 'isAdmin: '+ req.protocol + '://' +req.headers.host + '/api/v1/admin/org/modify isOrg: '+ req.protocol + '://' +req.headers.host + '/api/v1/orgadm/modify',
 					'method': 'PUT',
 					'description': 'modify organization. Requires token obtained from login. Only Admin or Org Admins can access this API'
 				}
 			},
 			'orgunit': {
 				'register': {
-					'access': '/api/v1/orgadm/orgunit/register',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/orgadm/orgunit/register',
 					'method': 'POST',
 					'description': 'register organizational unit. Requires token obtained from login. Only isOrg and isAdmin can create OUs',
 					'usage': 'Send authentication tokens in headers, and orgunit data in JSON format at body',
@@ -174,7 +174,7 @@ module.exports = {
 					}
 				},
 				'massiveRegister': {
-					'access': '/api/v1/orgadm/orgunit/masiveregister',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/orgadm/orgunit/masiveregister',
 					'method': 'POST',
 					'description': 'register organizational units. Requires token obtained from login. Only isOrg and isAdmin can create OUs',
 					'usage': 'Send authentication tokens in headers, and orgunit data in JSON format at body. Type could be any of: org,country,region,state,city,area,campus,department,building,section,floor,room]. org cannot be displayed to final user',
@@ -183,11 +183,23 @@ module.exports = {
 						{	'name': 'sistemas', 'longName': 'Dirección de Sistemas', 'alias': 'Sistemas', 'type': 'department' },
 						{ 'name': 'finanzas', 'longName': 'Dirección de Finanzas', 'alias': 'Finanzas', 'type': 'department' }
 					]
-				}
+				},
+				'list': {
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/admin/orgunit/list',
+					'method': 'GET',
+					'description': 'lists organizational units. Requires token obtained from login. Only isOrg and isAdmin can list OUs',
+					'usage': 'Send authentication tokens in headers. In query, send org and a json document to query org units (use this json document to create you own query, but you cannot use org property). Optionally, you can use sort(name sort increasing (1) or decreasing(-1)), skip and limit to paginate.',
+					'example': {
+						'name': 'bimbo',
+						'longName': 'Bimbo OU',
+						'alias': 'bimbito',
+						'org': 'bimbo'
+					}
+				},
 			},
 			course: {
 				'create': {
-					'access': '/api/v1/author/course/create',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/author/course/create',
 					'method': 'POST',
 					'description': 'create content repository (course). Only for isAuthor',
 					'usage': 'Send authentication tokens in headers, and data in JSON format at body',
@@ -204,13 +216,13 @@ module.exports = {
 					}
 				},
 				'listCategories': {
-					'access': '/api/v1/course/listcategories',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/course/listcategories',
 					'method': 'GET',
 					'description': 'list courses categories',
 					'usage': 'Send authentication tokens in headers. Use params (in url) for sort, skip and limit'
 				},
 				'listCourses': {
-					'access': '/api/v1/course/listcourses',
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/course/listcourses',
 					'method': 'GET',
 					'description': 'list courses',
 					'usage': 'Send authentication tokens in headers. Use params (in url) for sort, skip and limit. You can send JSON for query categories'

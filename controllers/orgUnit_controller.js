@@ -340,7 +340,60 @@ module.exports = {
 			.catch((err) => {
 				sendError(res,err,'index -- Finding orgUnit --');
 			});
-	}
+	}, // index
+
+	list(req,res) {
+		var key = req.headers['x-key'];
+		if(!key) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'No x-key found'
+			});
+		} else {
+			var sort = { name: 1 };
+			var skip = 0;
+			var limit = 15;
+			var query = {};
+			console.log(req.protocol);
+			if(req.query.sort) { sort = { name: req.query.sort }; }
+			if(req.query.skip) { skip = parseInt( req.query.skip ); }
+			if(req.query.limit) { limit = parseInt( req.query.limit ); }
+			if(req.query.query) { query = JSON.parse(req.query.query); }
+			Org.findOne({ name: req.query.org })
+				.then((org) => {
+					query.org = org._id;
+					OrgUnit.find(query)
+						.sort(sort)
+						.skip(skip)
+						.limit(limit)
+						.then((ous) => {
+							var send_ous = new Array();
+							ous.forEach(function(ou) {
+								send_ous.push({
+									name: ou.name,
+									longName: ou.longName,
+									type: ou.type,
+									org: org.name,
+									parent: ou.parent
+								});
+							});
+							res.status(200).json({
+								'status': 200,
+								'message': {
+									ousNum: send_ous.length,
+									ous: send_ous}
+							});
+						})
+						.catch((err) => {
+							sendError(res,err,'OU list -- Finding OrgUnits --');
+						});
+				})
+				.catch((err) => {
+					sendError(res,err,'OU list -- Finding Org --');
+				});
+		}
+	}, // list
+
 };
 
 function sendError(res, err, section) {
