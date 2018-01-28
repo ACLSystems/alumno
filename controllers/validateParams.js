@@ -7,56 +7,74 @@ module.exports = function(req, res, next) {
 		url = url.substring(0,indexurl);
 	}
 	switch (url) {
+	// RUTA PARA CODIGOS DE ERROR
+	case '/api/errorcodes':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 51: Please, give data by query to process'
+			});
+		} else if (req.query.isNan()) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 52: Data given in errcode param is not a number'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	// RUTAS PARA USUARIOS ---------------------------------------------------------USUARIOS
 	case '/api/user/register':
 		if(!req.body){
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give data by body to process'
+				'message': 'Error 1700: Please, give data by body to process'
 			});
 		} else if(!req.body.name) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please give user name'
+				'message': 'Error 1701: Please give user name'
 			});
 		} else if (!req.body.org) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please give org'
+				'message': 'Error 1702: Please give org'
 			});
 		} else if(!req.body.orgUnit){
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please give orgUnit'
+				'message': 'Error 1703: Please give orgUnit'
 			});
 		} else if(!req.body.password) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please give password for ' + req.body.name
+				'message': 'Error 1704: Please give password for ' + req.body.name
 			});
 		} else if(!req.body.person){
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please give person details for ' + req.body.name + '. If you send a JSON like { "person.name" : "myName" } , please re-write to  {"person": { "name": "myName"}} in order to process'
+				'message': 'Error 1705: Please give person details for ' + req.body.name + '. If you send a JSON like { "person.name" : "myName" } , please re-write to  {"person": { "name": "myName"}} in order to process'
 			});
 		} else if(!req.body.person.name) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please give person name for ' + req.body.name
+				'message': 'Error 1706: Please give person name for ' + req.body.name
 			});
 		} else if(!req.body.person.fatherName) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please give person fatherName for ' + req.body.name
+				'message': 'Error 1707: Please give person fatherName for ' + req.body.name
 			});
 		} else if(!req.body.person.motherName) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please give person motherName for ' + req.body.name
+				'message': 'Error 1708: Please give person motherName for ' + req.body.name
 			});
 		} else if(!req.body.person.email){
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please give person email for ' + req.body.name
+				'message': 'Error 1709: Please give person email for ' + req.body.name
 			});
 		} else {
 			next();
@@ -67,12 +85,12 @@ module.exports = function(req, res, next) {
 		if(!req.query) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give data by query to process'
+				'message': 'Error 1720: Please, give data by query to process'
 			});
 		} else if(!req.query.lng && !req.query.lat) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give coordinates (lng,lat) in query to process'
+				'message': 'Error 1721: Please, give coordinates (lng,lat) in query to process'
 			});
 		} else {
 			next();
@@ -83,12 +101,12 @@ module.exports = function(req, res, next) {
 		if(!req.query) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give data by query to process'
+				'message': 'Error 1730: Please, give data by query to process'
 			});
 		} else if(!req.query.name && !req.headers['name']) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give user name by query or by header to process'
+				'message': 'Error 1731: Please, give user name by query or by header to process'
 			});
 		} else {
 			next();
@@ -98,7 +116,7 @@ module.exports = function(req, res, next) {
 		if(!req.headers['email'] && !req.query.email) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give user email to process'
+				'message': 'Error 1740: Please, give user email to process'
 			});
 		} else {
 			next();
@@ -108,17 +126,17 @@ module.exports = function(req, res, next) {
 		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give data by query to process'
+				'message': 'Error 1750: Please, give data by query to process'
 			});
 		} else if(!req.body.name) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give user name by query to process'
+				'message': 'Error 1751: Please, give user name by query to process'
 			});
 		} else if(!req.body.password) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give user password by query to process'
+				'message': 'Error 1752: Please, give user password by query to process'
 			});
 		} else {
 			next();
@@ -128,12 +146,12 @@ module.exports = function(req, res, next) {
 		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give data by query to process'
+				'message': 'Error 1760: Please, give data by query to process'
 			});
 		} else if(!req.body.name) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give user name by query to process'
+				'message': 'Error 1761: Please, give user name by query to process'
 			});
 		} else {
 			next();
@@ -143,12 +161,12 @@ module.exports = function(req, res, next) {
 		if(!req.query) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give data by query to process'
+				'message': 'Error 1770: Please, give data by query to process'
 			});
 		} else if(!req.query.name && !req.headers['name']) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give user name by query or by header to process'
+				'message': 'Error 1771: Please, give user name by query or by header to process'
 			});
 		} else {
 			next();
@@ -158,17 +176,17 @@ module.exports = function(req, res, next) {
 		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give data by query to process'
+				'message': 'Error 1780: Please, give data by query to process'
 			});
 		} else if(!req.body.name) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give user name by query or by header to process'
+				'message': 'Error 1781: Please, give user name by query or by header to process'
 			});
 		} else if(!req.body.roles) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give roles of user to set'
+				'message': 'Error 1782: Please, give roles of user to set'
 			});
 		} else {
 			const roles = Object.keys(req.body.roles);
@@ -181,7 +199,7 @@ module.exports = function(req, res, next) {
 				key !== 'isAuthor' &&
 				key !== 'isInstructor' &&
 				key !== 'isSupervisor') {
-					message = 'Please use only recongnized roles';
+					message = 'Error 1783: Please use only recognized roles';
 				}
 			});
 			if (message !== '') {
@@ -195,26 +213,27 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	// RUTAS PARA UNIDADES ORGANIZACIONALES --------------------------------------UNIDADES ORGANIZACIONALES
 	case '/api/v1/orgadm/orgunit/massiveregister':
 		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give data by body to process'
+				'message': 'Error 1100: Please, give data by body to process'
 			});
 		} else {
 			var status = 'ok';
 			var result = new Array();
 			req.body.forEach(function(ou,index) {
 				if(!ou.name) {
-					result.push({ 'status': index + '.- Missing OU name'});
+					result.push({ 'status': index + 'Error 1101: Missing OU name'});
 					status = 'not ok';
 				}
 				if(!ou.parent) {
-					result.push({ 'status': index + '.- Missing OU parent name'});
+					result.push({ 'status': index + 'Error 1102: Missing OU parent name'});
 					status = 'not ok';
 				}
 				if(!ou.type) {
-					result.push({ 'status': index + '.- Missing OU type'});
+					result.push({ 'status': index + 'Error 1103: Missing OU type'});
 					status = 'not ok';
 				}
 			});
@@ -232,25 +251,66 @@ module.exports = function(req, res, next) {
 		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give data by body to process'
+				'message': 'Error 1110: Please, give data by body to process'
 			});
 		} else if(!req.body.name) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give user name by body to process'
+				'message': 'Error 1111: Please, give user name by body to process'
 			});
 		} else if(!req.body.org) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give org name by body to process'
+				'message': 'Error 1112: Please, give org name by body to process'
 			});
-		/*
-		} else if(!req.body.parent) {
+		} else {
+			next();
+		}
+		break;
+
+		// RUTAS PARA CURSOS -------------------------------------------------------CURSOS
+	case '/api/v1/author/course/create':
+		if(!req.body) {  // POST
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give orgUnit parent name by body to process'
+				'message': 'Error 1400: Please, give data by body to process'
 			});
-		*/
+		} else if (req.body.code) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1401: course code is required'
+			});
+		} else if (req.body.title) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1402: course title is required'
+			});
+		} else if (req.body.categories) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1403: course categories are required'
+			});
+		} else {
+			next();
+		}
+		break;
+	case '/api/v1/course/listcategories':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1420: Please, give data by query params to process'
+			});
+		} else {
+			next();
+		}
+		break;
+	case '/api/v1/course/listcourses':
+		//var temp = {};
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1430: Please, give data by query params to process'
+			});
 		} else {
 			next();
 		}
@@ -259,7 +319,7 @@ module.exports = function(req, res, next) {
 	default:
 		res.status(404).json({
 			'status': 404,
-			'message': 'API not found - validate Params'
+			'message': 'Error 101: API not found'
 		});
 	}
 };

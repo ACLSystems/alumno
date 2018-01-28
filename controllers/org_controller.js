@@ -21,7 +21,7 @@ var logger = new(winston.Logger) ({
 module.exports = {
 	//register(req, res, next) {
 	register(req, res) {
-		var key = (req.body && req.body.x_key) || req.headers['x-key'];
+		var key = req.headers.key;
 		if(!key) {
 			res.status(406).json({
 				'status': 406,
@@ -158,7 +158,7 @@ module.exports = {
 	},
 
 	list(req,res) {
-		var key = req.headers['x-key'];
+		var key = req.headers.key;
 		if(!key) {
 			res.status(406).json({
 				'status': 406,
@@ -195,7 +195,7 @@ module.exports = {
 	}, // list
 
 	getDetailsAdmin(req,res) {
-		var key = req.headers['x-key'];
+		var key = req.headers.key;
 		if(!key) {
 			res.status(406).json({
 				'status': 406,
@@ -226,7 +226,7 @@ module.exports = {
 	}, // getDetailsAdmin
 
 	getDetails(req,res) {
-		var key = req.headers['x-key'];
+		var key = req.headers.key;
 		if(!key) {
 			res.status(406).json({
 				'status': 406,
@@ -262,7 +262,7 @@ module.exports = {
 	}, // getDetailsAdmin
 
 	modify(req, res) {
-		var key = (req.body && req.body.x_key) || req.headers['x-key'];
+		var key = req.headers.key;
 		if(!key) {
 			res.status(406).json({
 				'status': 406,

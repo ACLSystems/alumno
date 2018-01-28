@@ -24,35 +24,7 @@ var logger = new(winston.Logger) ({
 
 module.exports = {
 	create(req,res) {
-		var key = (req.body && req.body.x_key) || req.headers['x-key'];
-		if(!req.body) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'Error: Please, give data to process'
-			});
-			return;
-		}
-		if(!req.body.code) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'Error: course code is required'
-			});
-			return;
-		}
-		if(!req.body.title) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'Error: course title is required'
-			});
-			return;
-		}
-		if(!req.body.categories) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'Error: course categories are required'
-			});
-			return;
-		}
+		var key = req.headers.key;
 		var course = req.body;
 		User.findOne({ name: key })
 			.populate('org')
@@ -118,21 +90,13 @@ module.exports = {
 	}, // fin del create
 
 	listCategories(req,res) {
-		if(!req.query) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'Error: Please, give data to process'
-			});
-			return;
-		} else {
-			var sort = { name: 1 };
-			var skip = 0;
-			var limit = 15;
-			if(req.query.sort) { sort = { name: req.query.sort }; }
-			if(req.query.skip) { skip = parseInt( req.query.skip ); }
-			if(req.query.limit) { limit = parseInt( req.query.limit ); }
-		}
-		var key = req.headers['x-key'];
+		var sort = { name: 1 };
+		var skip = 0;
+		var limit = 15;
+		if(req.query.sort) { sort = { name: req.query.sort }; }
+		if(req.query.skip) { skip = parseInt( req.query.skip ); }
+		if(req.query.limit) { limit = parseInt( req.query.limit ); }
+		var key = req.headers.key;
 		User.findOne({ name: key })
 			.populate('org')
 			.then((user) => {
@@ -160,29 +124,20 @@ module.exports = {
 	}, // fin del getCategories
 
 	listCourses(req,res) {
-		if(!req.body) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'Error: Please, give data to process'
-			});
-			return;
-		}
-		var key = req.headers['x-key'];
+		var query = {};
+		var key = req.headers.key;
 		User.findOne({ name: key })
 			.populate('org')
-			.then((user) => {
+			.then((key_user) => {
 				var sort = { name: 1 };
 				var skip = 0;
 				var limit = 15;
-				var query = { org: user.org.name };
+				query = { org: key_user.org.name };
 				if(req.query.sort) { sort = { name: req.query.sort }; }
 				if(req.query.skip) { skip = parseInt( req.query.skip ); }
 				if(req.query.limit) { limit = parseInt( req.query.limit ); }
 				if(req.query.categories) {
-					query = {
-						org: user.org.name,
-						categories: JSON.parse(req.query.categories)
-					};
+					query.categories = JSON.parse(req.query.categories);
 				}
 				Course.find(query)
 					.sort(sort)

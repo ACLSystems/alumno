@@ -25,7 +25,7 @@ var logger = new(winston.Logger) ({
 module.exports = {
 	//register(req, res, next) {
 	register(req, res) {
-		var key = (req.body && req.body.x_key) || req.headers['x-key'];
+		var key = req.headers.key;
 		const userProps = req.body;
 		Org.findOne({ name: userProps.org }, { name: true } )
 			.then((org) => {
@@ -111,7 +111,7 @@ module.exports = {
 
 	//getDetails(req, res, next) {
 	getDetails(req, res) {
-		const key = req.headers['x-key'];
+		const key = req.headers.key;
 		const username = req.headers['name'] || (req.query && req.query.name);
 		User.findOne({ name: key })
 			.populate('org','name')
@@ -164,7 +164,7 @@ module.exports = {
 	},
 
 	getRoles(req, res) {
-		const key = req.headers['x-key'];
+		const key = req.headers.key;
 		const username = req.headers['name'] || (req.query && req.query.name);
 		User.findOne({ name: key })
 			.populate('org','name')
@@ -243,7 +243,7 @@ module.exports = {
 	},
 
 	setRoles(req, res) {
-		const key = req.headers['x-key'];
+		const key = req.headers.key;
 		const userProps = req.body;
 		User.findOne({ name: key })
 			.populate('org','name')
@@ -337,7 +337,7 @@ module.exports = {
 
 	//passwordChange(req, res, next) {
 	passwordChange(req, res) {
-		const key = (req.body && req.body.x_key) || req.headers['x-key'];
+		const key = req.headers.key;
 		const userProps = req.body;
 		User.findOne({ name: key })
 			.populate('org','name')
@@ -388,7 +388,7 @@ module.exports = {
 
 	//modify(req, res, next) {
 	modify(req, res) {
-		var key = (req.body && req.body.x_key) || req.headers['x-key'];
+		var key = req.headers.key;
 		const userProps = req.body;
 		userProps.person.name = properCase(userProps.person.name);
 		userProps.person.fatherName = properCase(userProps.person.fatherName);
@@ -437,7 +437,7 @@ module.exports = {
 	}, // Modify
 
 	list(req,res) {
-		const key = (req.query && req.query.x_key) || req.headers['x-key'];
+		const key = (req.query && req.query.x_key) || req.headers.key;
 		var sort = { name: 1 };
 		var skip = 0;
 		var limit = 15;
@@ -520,7 +520,7 @@ module.exports = {
 	}, //list
 
 	count(req,res) {
-		const key = (req.query && req.query.x_key) || req.headers['x-key'];
+		const key = (req.query && req.query.x_key) || req.headers.key;
 		User.findOne({ name: key })
 			.populate('org')
 			.then((key_user) => {

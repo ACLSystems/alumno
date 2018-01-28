@@ -1,10 +1,11 @@
-const UserController = require('../controllers/user_controller');
-const OrgController = require('../controllers/org_controller');
-const OrgUnitController = require('../controllers/orgUnit_controller');
 const GetNothing = require('../controllers/get_nothing');
+const HelpController = require('../controllers/help_controller');
+const ErrorMessController = require('../controllers/errmessage_controller');
+const UserController = require('../controllers/user_controller');
 const auth = require('./auth');
 const MassUsersController = require('../controllers/massiveUsers_Controller');
-const HelpController = require('../controllers/help_controller');
+const OrgController = require('../controllers/org_controller');
+const OrgUnitController = require('../controllers/orgUnit_controller');
 const CourseController = require('../controllers/course_controller');
 
 module.exports = (app) => {
@@ -37,6 +38,8 @@ module.exports = (app) => {
 	app.get('/api/user/near', OrgUnitController.index);
 	app.get('/api/user/validateEmail', UserController.validateEmail);
 	app.get('/api/help', HelpController.help);
+	app.get('/api/errorcodes',[require('../controllers/validateParams')]);
+	app.get('/api/errorcodes',ErrorMessController.errorCodes);
 
 	// Rutas que pueden acceder solo usuarios autenticados
 
@@ -49,11 +52,13 @@ module.exports = (app) => {
 	app.put('/api/v1/user/passwordchange', UserController.passwordChange);
 	app.put('/api/v1/user/modify', UserController.modify);
 
-	// Rutas para cursos
+	// Rutas para roles de 'isAuthor'
 
+	app.all('/api/v1/course/*', [require('../controllers/validateParams')]);
 	app.get('/api/v1/course/listcategories', CourseController.listCategories);
 	app.get('/api/v1/course/listcourses', CourseController.listCourses);
-
+	app.all('/api/v1/author/course/*', [require('../controllers/validateParams')]);
+	app.post('/api/v1/author/course/create', CourseController.create);
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados
 

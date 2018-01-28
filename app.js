@@ -17,7 +17,7 @@ routes(app);
 app.use(function(req, res) {
 	res.status(404).json({
 		'status': 404,
-		'message': 'API not found'
+		'message': 'Error 100: API not found'
 	});
 });
 

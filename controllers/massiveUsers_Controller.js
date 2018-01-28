@@ -34,7 +34,7 @@ module.exports = {
 			var numUsers = {
 				requested: usersReq.length
 			};
-			var key = (req.body && req.body.x_key) || req.headers['x-key'];
+			var key = req.headers.key;
 			User.findOne({ name: key })
 				.populate('org')
 				.then((key_user) => {

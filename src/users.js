@@ -8,6 +8,24 @@ const AddressSchema = require('./address');
 const moment = require('moment');
 const Schema = mongoose.Schema;
 
+// Esquema para el usuario que es un estudiante
+const StudentSchema = new Schema ({
+	id: {
+		type: String
+	},
+	career: {
+		type: String
+	},
+	term: {
+		type: String
+	},
+	isActive: {
+		type: Boolean,
+		default: true
+	}
+});
+
+module.exports = StudentSchema;
 
 // Esquema para datos de la persona que posee un usuario
 const PersonSchema = new Schema ({
@@ -142,7 +160,8 @@ const UserSchema = new Schema ({
 	perm: PermissionsSchema,
 	admin: AdmUsrSchema,
 	geometry: PointSchema,
-	address: AddressSchema
+	address: AddressSchema,
+	student: StudentSchema
 });
 
 

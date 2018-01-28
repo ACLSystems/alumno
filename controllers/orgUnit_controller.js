@@ -23,7 +23,7 @@ module.exports = {
 	//register(req, res, next) {
 	register(req, res) {
 		const ouProps = req.body;
-		var key = (req.body && req.body.x_key) || req.headers['x-key'];
+		var key = req.headers.key;
 		Users.findOne({ name: key }, { name: true, org: true, roles: true })
 			.populate('org')
 			.then((key_user) => {
@@ -169,7 +169,7 @@ module.exports = {
 	massiveRegister(req,res) {
 		var org = '';
 		var numOU = { requested: req.body.length };
-		var key = (req.body && req.body.x_key) || req.headers['x-key'];
+		var key = req.headers.key;
 		var searchOU = {};
 		var searchO = {};
 		Users.findOne({ name: key }, { name: true, org: true, roles: true })
@@ -343,7 +343,7 @@ module.exports = {
 	}, // index
 
 	list(req,res) {
-		var key = req.headers['x-key'];
+		var key = req.headers.key;
 		if(!key) {
 			res.status(406).json({
 				'status': 406,
@@ -354,7 +354,6 @@ module.exports = {
 			var skip = 0;
 			var limit = 15;
 			var query = {};
-			console.log(req.protocol);
 			if(req.query.sort) { sort = { name: req.query.sort }; }
 			if(req.query.skip) { skip = parseInt( req.query.skip ); }
 			if(req.query.limit) { limit = parseInt( req.query.limit ); }

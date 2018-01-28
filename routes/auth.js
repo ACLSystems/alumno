@@ -1,6 +1,22 @@
 const jwt = require('jwt-simple');
+const winston = require('winston');
 const Users = require('../src/users');
-//const bcrypt = require('bcrypt-nodejs');
+const Session = require('../src/sessions');
+require('winston-daily-rotate-file');
+
+var transport = new(winston.transports.DailyRotateFile) ({
+	filename: './logs/log',
+	datePattern: 'yyyy-MM-dd.',
+	prepend: true,
+	localTime: true,
+	level: process.env.ENV === 'development' ? 'debug' : 'info'
+});
+
+var logger = new(winston.Logger) ({
+	transports: [
+		transport
+	]
+});
 
 var auth = {
 
@@ -28,16 +44,23 @@ var auth = {
 				} else {
 					user.validatePassword(password, function(err, isOk) {
 						if(isOk) {
-							/*
-							var dbUserObj = {
-								name: user.name,
-								role: user.roles,
-								username: user.name
-							};
-							*/
-							res.status(200);
-							//res.json(genToken(dbUserObj));
-							res.json(genToken());
+							var session = new Session;
+							var objToken = genToken(user);
+							var date = new Date();
+							session.user = objToken.user._id;
+							session.token = objToken.token;
+							session.date = date;
+							session.save().then(() => {
+								res.status(200);
+								res.json({
+									'status': 200,
+									'token': objToken.token,
+									'expires': objToken.expires
+								});
+							})
+								.catch((err) => {
+									sendError(res,err,'auth -- Saving session --');
+								});
 						}
 					});
 				}
@@ -46,76 +69,7 @@ var auth = {
 				const mess = {id: 404, error: 'Error: password incorrect'};
 				res.status(404).send(mess + err);
 			});
-
-		/*
-		var dbUserObj = auth.validate(username, password);
-		console.log(dbUserObj);
-		if (!dbUserObj) {
-			res.status(401);
-			res.json({
-				'status': 401,
-				'message': 'Credenciales no validas'
-			});
-			return;
-		} else {
-			// If authentication is success, we will generate a Token
-			// and dispatch it to the client
-			res.status(200);
-			res.json(genToken(dbUserObj));
-		}
-		*/
 	}
-
-	/*
-	validate: function(username, password) {
-		Users.findOne({ name: username })
-			.then((user) => {
-				user.validatePassword(password, function(err, isOk) {
-					if(isOk) {
-						var temp = {
-							name: user.name,
-							role: user.roles,
-							username: user.name
-						};
-						console.log(temp);
-						return temp;
-					} else {
-						return;
-					}
-				});
-				if(user){
-					bcrypt.compare(password, user.password, function(err,check){
-						if(check) {
-							var dbUserObj = {
-								name: user.name,
-								role: user.roles,
-								username: user.name
-							};
-							console.log(dbUserObj);
-							return dbUserObj;
-						}
-					});
-				}
-			});
-	},
-
-	validateUser: function(username) {
-		console.log('Estamos en validateUser: ' + username);
-		Users.findOne({ name: username})
-			.then((user) => {
-				if(!user) {
-					return;
-				} else {
-					var dbUserObj = {
-						name: user.name,
-						role: user.roles,
-						username: user.name
-					};
-				};
-			});
-		return dbUserObj;
-	},
-	*/
 };
 
 // private Methods
@@ -123,6 +77,7 @@ var auth = {
 function genToken(user) {
 	var expires = expiresIn(7);  // 7 días
 	var token = jwt.encode({
+		user: user.name,
 		exp: expires
 	}, require('../config/secret')());
 
@@ -136,6 +91,17 @@ function genToken(user) {
 function expiresIn(numDays) {
 	var dateObj = new Date();
 	return dateObj.setDate(dateObj.getDate() + numDays);
+}
+
+function sendError(res, err, section) {
+	logger.info('Course controller -- Section: ' + section + '----');
+	logger.info(err);
+	res.status(500).json({
+		'status': 500,
+		'message': 'Error',
+		'Error': err.message
+	});
+	return;
 }
 
 module.exports = auth;
