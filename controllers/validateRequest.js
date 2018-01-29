@@ -48,30 +48,30 @@ module.exports = function(req, res, next) {
 		} else {
 			var headerSeg = segments[0];
 			var payloadSeg = segments[1];
-			var signatureSeg = segments[2];
-			var header = {};
-			var payload = {};
+			//var signatureSeg = segments[2];
 			var itwasError = false;
 			if(headerSeg) {
 				try {
-					header = JSON.parse(base64urlDecode(headerSeg));
+					var header = JSON.parse(base64urlDecode(headerSeg));
 				} catch(e) {
 					if (e instanceof SyntaxError) {
 						res.status(400).json({
 							'status': 400,
-							'message': 'Error 202: Header token is malformed or corrupt: Please verify'
+							'message': 'Error 202: Header token is malformed or corrupt: Please verify',
+							'debug': header
 						});
 					}
 					itwasError = true;
 				}
 			} else if(payloadSeg) {
 				try {
-					payload = JSON.parse(base64urlDecode(payloadSeg));
+					var payload = JSON.parse(base64urlDecode(payloadSeg));
 				} catch(e) {
 					if (e instanceof SyntaxError) {
 						res.status(400).json({
 							'status': 400,
-							'message': 'Error 203: Payload token is malformed or corrupt: Please verify'
+							'message': 'Error 203: Payload token is malformed or corrupt: Please verify',
+							'debug': payload
 						});
 					}
 				}
@@ -101,33 +101,38 @@ module.exports = function(req, res, next) {
 						roles: user.roles,
 						username: user.name
 					};
+					var url = req.url;
+					const indexurl = url.indexOf('?');
+					if(indexurl !== -1){
+						url = url.substring(0,indexurl);
+					}
 					/*
-					console.log(req.url + ' '  // eslint-disable-line
-					+ req.url.indexOf('admin') + ' '
-					+ req.url.indexOf('orgadm') + ' '
-					+ req.url.indexOf('orgcontent') + ' '
-					+ req.url.indexOf('author') + ' '
-					+ req.url.indexOf('instructor') + ' '
-					+ req.url.indexOf('supervisor') + ' '
-					+ req.url.indexOf('/api/v1/') + ' '
+					console.log(url + ' '  // eslint-disable-line
+					+ url.indexOf('admin') + ' '
+					+ url.indexOf('orgadm') + ' '
+					+ url.indexOf('orgcontent') + ' '
+					+ url.indexOf('author') + ' '
+					+ url.indexOf('instructor') + ' '
+					+ url.indexOf('supervisor') + ' '
+					+ url.indexOf('/api/v1/') + ' '
 					);
 					*/
-					if (  (req.url.indexOf('admin') !== -1 && dbUserObj.roles.isAdmin) ||
-									(req.url.indexOf('business') !== -1 && dbUserObj.roles.isBusiness) ||
-									(req.url.indexOf('orgadm') !== -1 && dbUserObj.roles.isOrg) ||
-									(req.url.indexOf('orgcontent') !== -1 && dbUserObj.roles.isOrgContent) ||
-									(req.url.indexOf('author') !== -1 && dbUserObj.roles.isAuthor) ||
-									(req.url.indexOf('instructor') !== -1 && dbUserObj.roles.isInstructor) ||
-									(req.url.indexOf('supervisor') !== -1 && dbUserObj.roles.isSupervisor) ||
-									(req.url.indexOf('admin') === -1 &&
-									req.url.indexOf('business') === -1 &&
-									req.url.indexOf('orgadm') === -1 &&
-									req.url.indexOf('orgcontent') === -1 &&
-									req.url.indexOf('author') === -1 &&
-									req.url.indexOf('instructor') === -1 &&
-									req.url.indexOf('supervisor') === -1 &&
-									req.url.indexOf('admin') === -1 &&
-									req.url.indexOf('/api/v1/') !== -1)) {
+					if (  (url.indexOf('admin') !== -1 && dbUserObj.roles.isAdmin) ||
+									(url.indexOf('business') !== -1 && dbUserObj.roles.isBusiness) ||
+									(url.indexOf('orgadm') !== -1 && dbUserObj.roles.isOrg) ||
+									(url.indexOf('orgcontent') !== -1 && dbUserObj.roles.isOrgContent) ||
+									(url.indexOf('author') !== -1 && dbUserObj.roles.isAuthor) ||
+									(url.indexOf('instructor') !== -1 && dbUserObj.roles.isInstructor) ||
+									(url.indexOf('supervisor') !== -1 && dbUserObj.roles.isSupervisor) ||
+									(url.indexOf('admin') === -1 &&
+									url.indexOf('business') === -1 &&
+									url.indexOf('orgadm') === -1 &&
+									url.indexOf('orgcontent') === -1 &&
+									url.indexOf('author') === -1 &&
+									url.indexOf('instructor') === -1 &&
+									url.indexOf('supervisor') === -1 &&
+									url.indexOf('admin') === -1 &&
+									url.indexOf('/api/v1/') !== -1)) {
 						next();
 					} else {
 						res.status(403);

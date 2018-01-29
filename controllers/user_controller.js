@@ -51,12 +51,16 @@ module.exports = {
 								};
 								userProps.admin = admin;
 								var permUsers = new Array();
-								var author = userProps.name;
+								var permUser = { name: userProps.name, canRead: true, canModify: true, canSec: false };
+								permUsers.push(permUser);
 								if (key) {
+									permUser = { name: key, canRead: true, canModify: true, canSec: false };
+									permUsers.push(permUser);
+								}
+								var author = userProps.name;
+								if(key) {
 									author = key;
 								}
-								const permUser = { name: author, canRead: true, canModify: true, canSec: false };
-								permUsers.push(permUser);
 								var permRoles = new Array();
 								var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
 								permRoles.push(permRole);
@@ -112,7 +116,7 @@ module.exports = {
 	//getDetails(req, res, next) {
 	getDetails(req, res) {
 		const key = req.headers.key;
-		const username = req.headers['name'] || (req.query && req.query.name);
+		const username = req.query.name;
 		User.findOne({ name: key })
 			.populate('org','name')
 			.populate('orgUnit','name')
@@ -127,9 +131,8 @@ module.exports = {
 								'message': 'User -' + username + '- does not exist'
 							});
 						} else {
-							//console.log(key_user); // eslint-disable-line
-							//console.log(user); // eslint-disable-line
 							const result = permissions.access(key_user,user,'user');
+							//console.log(result); // eslint-disable-line
 							if(result.canRead) {
 								var send_user = {
 									name: user.name,
@@ -149,7 +152,7 @@ module.exports = {
 							} else {
 								res.status(403).json({
 									'status': 403,
-									'message': 'User ' + key + ' not authorized'
+									'message': 'User ' + key_user.name + ' not authorized on user ' + user.name
 								});
 							}
 						}
