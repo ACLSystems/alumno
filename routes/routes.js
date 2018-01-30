@@ -59,6 +59,7 @@ module.exports = (app) => {
 	app.get('/api/v1/course/listcourses', CourseController.listCourses);
 	app.all('/api/v1/author/course/*', [require('../controllers/validateParams')]);
 	app.post('/api/v1/author/course/create', CourseController.create);
+	app.post('/api/v1/author/course/createblock', CourseController.createBlock);
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados
 
@@ -81,10 +82,5 @@ module.exports = (app) => {
 	app.get('/api/v1/orgadm/user/list', UserController.list);
 	app.get('/api/v1/orgadm/user/count', UserController.count);
 	app.get('/api/v1/orgadm/org/getdetails', OrgController.getDetails);
-
-
-	// Rutas para roles de 'isAuthor'
-
-	app.post('/api/v1/author/course/create', CourseController.create);
 
 };

@@ -39,7 +39,7 @@ const OrgUnitsSchema = new Schema ({
 	perm: PermissionsSchema
 });
 
-OrgUnitsSchema.index( { name: 1, parent: 1}, { unique: true } );
+OrgUnitsSchema.index( { name: 1, parent: 1, org: 1}, { unique: true } );
 
 const OrgUnits = mongoose.model('orgUnits', OrgUnitsSchema);
 module.exports = OrgUnits;

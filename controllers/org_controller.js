@@ -31,16 +31,9 @@ module.exports = {
 			//console.log('aquí estoy'); // eslint-disable-line
 			if(!req.body) return res.sendStatus(400).res.send({id: 417, err: 'Please, give data to process'});
 			const orgProps = req.body;
-			if(orgProps.alias){
-				const temp = orgProps.alias;
-				if(temp.constructor !== Array) {
-					orgProps.alias = [temp];
-				}
-			}
-			const date = new Date();
-			var mod = {by: key, when: date, what: 'Org Creation'};
+			if(orgProps.alias) { orgProps.alias = parseArray(orgProps.alias); }
 			orgProps.mod = new Array();
-			orgProps.mod.push(mod);
+			orgProps.mod.push(generateMod(key,'Org Creation'));
 			var permUsers = new Array();
 			var permUser = { name: key, canRead: true, canModify: true, canSec: true };
 			permUsers.push(permUser);
@@ -79,15 +72,13 @@ module.exports = {
 						type: 'org',
 						perm: { users: permUser, roles: permRoles, orgs: permOrgs },
 					};
-					const date = new Date();
-					var mod = {by: key, when: date, what: 'OU creation'};
 					ouProps.mod = new Array();
-					ouProps.mod.push(mod);
+					ouProps.mod.push(generateMod(key,'OU creation'));
 					OrgUnit.create(ouProps)
 						.then(() => {
 							logger.info('OU -' + ouProps.name + '- created under -' + orgProps.name + '- org');
 							// Creación usuario "publico"
-							const date = new Date();
+							const mod = generateMod(key,'User Creation');
 							const userProps = new User({
 								name: orgProps.name + '-public',
 								password: orgProps.name + '_public_admin',
@@ -98,11 +89,7 @@ module.exports = {
 									isOrgContent: true,
 									isSupervisor: true
 								},
-								mod: [{
-									by: key,
-									when: date,
-									what: 'User creation'
-								}],
+								mod: [mod],
 								perm: {
 									users: [{
 										name: 'admin',
@@ -293,9 +280,8 @@ module.exports = {
 											'message': 'Org -' + req.body.name + '- not found'
 										});
 									} else {
-										const date = new Date();
 										orgProps.mod = org.mod;
-										orgProps.mod.push({by: key, when: date, what: 'Org modification'});
+										orgProps.mod.push(generateMod(key,'Org modification'));
 										Org.findByIdAndUpdate({ _id: org._id }, {$set: orgProps })
 											.then(() => {
 												res.status(200).json({
@@ -332,3 +318,27 @@ function sendError(res, err, section) {
 	});
 	return;
 }
+
+function parseArray(myarr) {
+	const myarr_temp = myarr;
+	if(myarr_temp.constructor !== Array) {
+		myarr = [myarr_temp];
+	}
+	return myarr;
+}
+
+function generateMod(by, desc) {
+	const date = new Date();
+	return {by: by, when: date, what: desc};
+}
+
+/*
+function generatePerm(user,org, orgUnit) {
+	return {
+		users: [{name: user, canRead: true, canModify: true, canSec: true}],
+		roles: [{name: 'isOrgContent', canRead: true, canModify: true, canSec: true}],
+		orgs: [{name: org, canRead: true, canModify: false, canSec: false}],
+		orgUnits: [{name: orgUnit, canRead: true, canModify: false, canSec: false }]
+	};
+}
+*/

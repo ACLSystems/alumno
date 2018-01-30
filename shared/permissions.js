@@ -87,6 +87,7 @@ module.exports = {
 		// O que el usuario sea isAdmin
 
 		var orgs = object.perm.orgs;
+		var orgUnits = object.perm.orgUnits;
 		var roles = object.perm.roles;
 
 		// Rol a buscar: isOrg
@@ -160,9 +161,17 @@ module.exports = {
 		//      - Objetos tipo 'content' de la organización a la que pertenece
 
 		foundRole = roles.find(x => x.name === 'isAuthor'); // Objeto tiene isAuthor
-		if(foundRole && (obj_type === 'org' || obj_type === 'orgUnit' || obj_type === 'content' || obj_type === 'group')) {
+		if(foundRole && (obj_type === 'org' || obj_type === 'orgUnit')){
+			returnObj = {
+				by: 'author',
+				canRead: true,
+				canModify: false,
+				canSec: false
+			};
+			return returnObj;
+		} else if (foundRole && (obj_type === 'content' || obj_type === 'group')) {
 			if(user.roles.isAuthor) {
-				var foundOrgUnit = orgunits.find(x => x.name === user.orgUnit);
+				var foundOrgUnit = orgUnits.find(x => x.name === user.orgUnit);
 				if(foundOrgUnit){
 					returnObj = {
 						by: 'author',

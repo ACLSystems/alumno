@@ -2,6 +2,8 @@ const winston = require('winston');
 const User = require('../src/users');
 const Course = require('../src/courses');
 const Category = require('../src/categories');
+const Block = require('../src/blocks');
+const permissions = require('../shared/permissions');
 //const Org = require('../src/orgs');
 //const OrgUnit = require('../src/orgUnits');
 //const permissions = require('../shared/permissions');
@@ -166,7 +168,91 @@ module.exports = {
 			.catch((err) => {
 				sendError(res,err,'listCourses -- Finding User --');
 			});
-	}
+	}, // listCourses
+
+	createBlock(req,res) {
+		const key = req.headers.key;
+		var queryCourse = {};
+		if(req.body.courseCode) {
+			queryCourse = { code: req.body.courseCode };
+		} else if(req.body.courseId) {
+			queryCourse = { code: req.body.courseId};
+		}
+		User.findOne({ name: key})
+			.populate('org')
+			.populate('orgUnit')
+			.then((key_user) => {
+				var block = new Block;
+				block.org = key_user.org._id;
+				block.code = req.body.code;
+				block.type = req.body.type;
+				block.title = req.body.title;
+				block.section = req.body.section;
+				block.number = req.body.number;
+				block.order = req.body.order;
+				block.content = req.body.content;
+				if(req.body.media) {
+					block.media = parseArray(req.body.media);
+				}
+				block.status = 'draft';
+				block.version = 1;
+				if(req.body.keywords) {
+					block.keywords = parseArray(req.body.keywords);
+				}
+				block.own = {
+					user: key_user.name,
+					org: key_user.org.name,
+					orgUnit: key_user.orgUnit.name
+				};
+				block.mod.push(generateMod(key_user.name));
+				block.perm = generatePerm(key_user.name, key_user.org.name, key_user.orgUnit.name);
+				block.save()
+					.then((block) => {
+						Course.findOne(queryCourse)
+							.then((course) => {
+								block.keywords.push(course.code);
+								course.keywords.forEach(function(keyword) {
+									block.keywords.push(keyword);
+								});
+								block.save().catch((err) => {
+									sendError(res,err,'createBlock -- Saving block again with keywords. --');
+								});
+								const result = permissions.access(key_user,course,'content');
+								if(course.own.user === key_user.name || result.canModify ) {
+									course.blocks.push(block._id);
+									let desc = 'Course modification - Adding block ' + block.code;
+									course.mod.push(generateMod(key_user.name,desc));
+									course.save()
+										.then(() => {
+											res.status(201).json({
+												'status': 200,
+												'message': 'block -' + block.code + '- of course -' + course.code + '- was saved.'
+											});
+										})
+										.catch((err) => {
+											sendError(res,err,'createBlock -- Relating block, saving course --');
+										});
+								}
+							})
+							.catch((err) => {
+								sendError(res,err,'createBlock -- Searching Course --');
+							});
+					})
+					.catch((err) => {
+						if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
+							res.status(406).json({
+								'status': 406,
+								'message': 'Error 1439: Block -' + block.code + '- already exists'
+							});
+						} else {
+							sendError(res,err,'createBlock -- Saving Block --');
+						}
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'createBlock -- Searching Key User --');
+			});
+	} // createBlock
 };
 
 function sendError(res, err, section) {
@@ -178,4 +264,26 @@ function sendError(res, err, section) {
 		'Error': err.message
 	});
 	return;
+}
+
+function parseArray(myarr) {
+	const myarr_temp = myarr;
+	if(myarr_temp.constructor !== Array) {
+		myarr = [myarr_temp];
+	}
+	return myarr;
+}
+
+function generateMod(by, desc) {
+	const date = new Date();
+	return {by: by, when: date, what: desc};
+}
+
+function generatePerm(user,org, orgUnit) {
+	return {
+		users: [{name: user, canRead: true, canModify: true, canSec: true}],
+		roles: [{name: 'isOrgContent', canRead: true, canModify: true, canSec: true}],
+		orgs: [{name: org, canRead: true, canModify: false, canSec: false}],
+		orgUnits: [{name: orgUnit, canRead: true, canModify: false, canSec: false }]
+	};
 }

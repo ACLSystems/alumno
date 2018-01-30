@@ -46,3 +46,7 @@ Thumbs.db
 # mejor correr: node install
 # para que instale todo lo que node necesita
 node_modules/*
+
+# otros archivos     #
+######################
+doc/Oferta*

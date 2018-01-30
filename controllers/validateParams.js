@@ -113,7 +113,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 	case '/api/user/validateemail':
-		if(!req.headers['email'] && !req.query.email) {
+		if(!req.query.email) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1740: Please, give user email to process'
@@ -163,7 +163,7 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1770: Please, give data by query to process'
 			});
-		} else if(!req.headers['name']) {
+		} else if(!req.query.name) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1771: Please, give user name by query or by header to process'
@@ -275,17 +275,17 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1400: Please, give data by body to process'
 			});
-		} else if (req.body.code) {
+		} else if (!req.body.code) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1401: course code is required'
 			});
-		} else if (req.body.title) {
+		} else if (!req.body.title) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1402: course title is required'
 			});
-		} else if (req.body.categories) {
+		} else if (!req.body.categories) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1403: course categories are required'
@@ -315,6 +315,65 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
+	case '/api/v1/author/course/createblock':
+		//var temp = {};
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1430: Please, give data by body to process'
+			});
+		} else if (!req.body.courseCode && !req.body.courseId) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1431: Please, give course code or course id to which block is related'
+			});
+		} else if (!req.body.title) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1432: Please, give title by body to process'
+			});
+		} else if (!req.body.type) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1433: Please, give block type by body to process'
+			});
+		} else if (req.body.type !== 'text' &&
+				req.body.type !== 'textVideo' &&
+				req.body.type !== 'video' &&
+				req.body.type !== 'task' &&
+				req.body.type !== 'questionnarie'
+		) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1434: Block type must be one of the next strings: text, textVideo, video, task or questionnarie'
+			});
+		} else if (!req.body.section) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1435: Please, give section number by body to process'
+			});
+		} else if (!req.body.number) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1436: Please, give block number by body to process'
+			});
+		} else if (!req.body.order) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1437: Please, give order number by body to process'
+			});
+		} else if (req.body.status && req.body.status !== 'draft' &&
+								req.body.statys !== 'published') {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1438: Please, Block status must be one of the next strings: draft or published'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	// NO HAY RUTAS --------------------------------------------------------------
 
 	default:
 		res.status(404).json({
