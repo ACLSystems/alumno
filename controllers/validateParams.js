@@ -268,7 +268,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-		// RUTAS PARA CURSOS -------------------------------------------------------CURSOS
+		// RUTAS PARA CONTENIDOS ---------------------------------------------------CONTENIDOS
 	case '/api/v1/author/course/create':
 		if(!req.body) {  // POST
 			res.status(406).json({
@@ -367,6 +367,50 @@ module.exports = function(req, res, next) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1438: Please, Block status must be one of the next strings: draft or published'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/author/file/upload':
+		if(!req.file) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1440: Please, give file to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/author/file/download':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1441: Please, give data by query to process'
+			});
+		} else if (!req.query.filename && !req.query.fileid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1442: Please, give fileid or filename by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+
+	case '/api/v1/author/course/getblock':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1443: Please, give data by query to process'
+			});
+		} else if (!req.query.code) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1444: Please, give block code by query to process'
 			});
 		} else {
 			next();

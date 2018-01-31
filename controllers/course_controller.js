@@ -31,25 +31,25 @@ module.exports = {
 		User.findOne({ name: key })
 			.populate('org')
 			.populate('orgUnit')
-			.then((user) => {
+			.then((key_user) => {
 				const date = new Date();
-				course.org = user.org.name,
+				course.org = key_user.org._id,
 				course.own = {
-					user: user.name,
-					org: user.org.name,
-					orgUnit: user.orgUnit.name
+					user: key_user.name,
+					org: key_user.org.name,
+					orgUnit: key_user.orgUnit.name
 				};
 				course.mod = {
-					by: user.name,
+					by: key_user.name,
 					when: date,
 					what: 'Course Creation'
 				};
 				course.perm = {
-					users: [{ name: user.name, canRead: true, canModify: true, canSec: true }],
+					users: [{ name: key_user.name, canRead: true, canModify: true, canSec: true }],
 					roles: [{ name: 'isAuthor', canRead: true, canModify: false, canSec: false},
 						{ name: 'isOrgContent', canRead: true, canModify: false, canSec: true}],
-					orgs: [{ name: user.org.name, canRead: true, canModify: false, canSec: false}],
-					orgUnits: [{ name: user.orgUnit.name, canRead: true, canModify: true, canSec: false}]
+					orgs: [{ name: key_user.org.name, canRead: true, canModify: false, canSec: false}],
+					orgUnits: [{ name: key_user.orgUnit.name, canRead: true, canModify: true, canSec: false}]
 				};
 				course.status = 'Draft';
 				Course.create(course)
@@ -64,7 +64,7 @@ module.exports = {
 										const category = new Category({
 											name: cat,
 											isVisible: true,
-											org: user.org.name
+											org: key_user.org._id
 										});
 										category.save()
 											.catch((err) => {
@@ -82,7 +82,14 @@ module.exports = {
 						});
 					})
 					.catch((err) => {
-						sendError(res,err,'listCategories -- Course Creation --');
+						if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
+							res.status(406).json({
+								'status': 406,
+								'message': 'Error 1447: course -' + course.code + '- already exists'
+							});
+						} else {
+							sendError(res,err,'createCourse -- Saving Course --');
+						}
 					});
 
 			})
@@ -204,8 +211,8 @@ module.exports = {
 					org: key_user.org.name,
 					orgUnit: key_user.orgUnit.name
 				};
-				block.mod.push(generateMod(key_user.name));
-				block.perm = generatePerm(key_user.name, key_user.org.name, key_user.orgUnit.name);
+				block.mod = generateMod(key_user.name,'Block creation');
+				block.perm = generatePerm(key_user.name,key_user.org.name,key_user.orgUnit.name);
 				block.save()
 					.then((block) => {
 						Course.findOne(queryCourse)
@@ -252,7 +259,53 @@ module.exports = {
 			.catch((err) => {
 				sendError(res,err,'createBlock -- Searching Key User --');
 			});
-	} // createBlock
+	}, // createBlock
+
+	getBlock(req,res) {
+		const key = req.headers.key;
+		User.findOne({name: key})
+			.populate('org')
+			.populate('orgUnit')
+			.then((key_user) => {
+				Block.findOne({ org: key_user.org._id, code: req.query.code })
+					.then((block) => {
+						if(block) {
+							const result = permissions.access(key_user,block,'content');
+							if(result.canRead) {
+								var send_block = {
+									title: block.title,
+									content: block.content,
+									section: block.section,
+									number: block.number,
+									order: block.order,
+									version: block.version,
+									media: block.media
+								};
+								res.status(200).json({
+									'status': 200,
+									'message': send_block
+								});
+							} else {
+								res.status(406).json({
+									'status': 406,
+									'message': 'Error 1445: User -'+ key_user.name + '- does not have permissions for block -' + block.code + '-'
+								});
+							}
+						} else {
+							res.status(406).json({
+								'status': 406,
+								'message': 'Error 1446: We cannot found any block with code -' + req.query.code + '-'
+							});
+						}
+					})
+					.catch((err) => {
+						sendError(res,err,'getBlock -- Searching Block --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'getBlock -- Searching Block --');
+			});
+	}
 };
 
 function sendError(res, err, section) {

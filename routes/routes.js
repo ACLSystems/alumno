@@ -7,6 +7,11 @@ const MassUsersController = require('../controllers/massiveUsers_Controller');
 const OrgController = require('../controllers/org_controller');
 const OrgUnitController = require('../controllers/orgUnit_controller');
 const CourseController = require('../controllers/course_controller');
+const FileController = require('../controllers/file_controller');
+const multer = require('multer');
+const dir = '/Users/Arturo/data';
+const fileSize = 1048576;
+const files = 1;
 
 module.exports = (app) => {
 
@@ -29,23 +34,41 @@ module.exports = (app) => {
 	// are sure that authentication is not needed
 	app.all('/api/v1/*', [require('../controllers/validateRequest')]);
 
+
+	// MIDDLEWARE --------------------------------------------------------------------------
+
+
+	var upload = multer({
+		dest: dir,
+		limits: {
+			fileSize: fileSize,
+			files: files
+		}
+	});
+
+	app.all('/api/user/*', [require('../controllers/validateParams')]);
+	app.get('/api/errorcodes',[require('../controllers/validateParams')]);
+	app.all('/api/v1/user/*', [require('../controllers/validateParams')]);
+	app.all('/api/v1/course/*', [require('../controllers/validateParams')]);
+	app.all('/api/v1/author/course/*', [require('../controllers/validateParams')]);
+	app.all('/api/v1/orgadm/*', [require('../controllers/validateParams')]);
+
+	// RUTAS ---------------------------------------------------------------------------------
+
 	// Rutas que cualquiera puede acceder
 
 	app.get('/', GetNothing.greeting);
 	app.post('/login', auth.login);
-	app.all('/api/user/*', [require('../controllers/validateParams')]);
 	app.post('/api/user/register', UserController.register);
 	app.get('/api/user/near', OrgUnitController.index);
 	app.get('/api/user/validateEmail', UserController.validateEmail);
 	app.get('/api/help', HelpController.help);
-	app.get('/api/errorcodes',[require('../controllers/validateParams')]);
 	app.get('/api/errorcodes',ErrorMessController.errorCodes);
 
 	// Rutas que pueden acceder solo usuarios autenticados
 
 	// Rutas para usuarios
 
-	app.all('/api/v1/user/*', [require('../controllers/validateParams')]);
 	app.get('/api/v1/user/getdetails', UserController.getDetails);
 	app.get('/api/v1/user/getroles', UserController.getRoles);
 	app.put('/api/v1/user/setroles', UserController.setRoles);
@@ -54,12 +77,13 @@ module.exports = (app) => {
 
 	// Rutas para roles de 'isAuthor'
 
-	app.all('/api/v1/course/*', [require('../controllers/validateParams')]);
 	app.get('/api/v1/course/listcategories', CourseController.listCategories);
 	app.get('/api/v1/course/listcourses', CourseController.listCourses);
-	app.all('/api/v1/author/course/*', [require('../controllers/validateParams')]);
 	app.post('/api/v1/author/course/create', CourseController.create);
 	app.post('/api/v1/author/course/createblock', CourseController.createBlock);
+	app.get('/api/v1/author/course/getblock', CourseController.getBlock);
+	app.post('/api/v1/author/file/upload', upload.single('file'), FileController.upload);
+	app.get('/api/v1/author/file/download', FileController.download);
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados
 
@@ -74,7 +98,6 @@ module.exports = (app) => {
 
 	// Rutas para roles de 'isOrg'
 
-	app.all('/api/v1/orgadm/*', [require('../controllers/validateParams')]);
 	app.post('/api/v1/orgadm/user/massiveregister', MassUsersController.massiveRegister);
 	app.post('/api/v1/orgadm/orgunit/massiveregister', OrgUnitController.massiveRegister);
 	app.post('/api/v1/orgadm/orgunit/register', OrgUnitController.register);

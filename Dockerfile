@@ -4,6 +4,9 @@ FROM node:latest
 # Creamos el directorio donde residirá la aplicación
 RUN mkdir -p /usr/src/app
 
+# Creamos el directorio para datos 
+RUN mkdir -p /usr/src/data
+
 # Indicamos el directorio de trabajo, que es el que acabamos de crear
 WORKDIR /usr/src/app
 

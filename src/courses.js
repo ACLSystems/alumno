@@ -16,8 +16,8 @@ const CoursesSchema = new Schema ({
 		required: true
 	},
 	org: {
-		type: String,
-		required: true
+		type: Schema.Types.ObjectId,
+		ref: 'orgs'
 	},
 	type: {
 		type: String,

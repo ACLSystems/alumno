@@ -197,7 +197,7 @@ module.exports = {
 					}
 				},
 			},
-			course: {
+			content: {
 				'create': {
 					'access': req.protocol + '://' +req.headers.host + '/api/v1/author/course/create',
 					'method': 'POST',
@@ -226,6 +226,18 @@ module.exports = {
 					'method': 'GET',
 					'description': 'list courses',
 					'usage': 'Send authentication tokens in headers. Use params (in url) for sort, skip and limit. You can send JSON for query categories'
+				},
+				'createBlock': {
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/course/createblock',
+					'method': 'POST',
+					'description': 'create block',
+					'usage': 'Send authentication tokens in headers. Send block in JSON'
+				},
+				'getBlock': {
+					'access': req.protocol + '://' +req.headers.host + '/api/v1/course/getblock',
+					'method': 'GET',
+					'description': 'get block',
+					'usage': 'Send authentication tokens in headers. Send block code in params'
 				}
 			}
 		});

@@ -17,8 +17,8 @@ const CategorySchema = new Schema ({
 		default: true
 	},
 	org: {
-		type: String,
-		required: true
+		type: Schema.Types.ObjectId,
+		ref: 'orgs'
 	}
 });
 

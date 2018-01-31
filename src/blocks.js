@@ -48,9 +48,9 @@ const BlocksSchema = new Schema ({
 		type: Boolean,
 		default: false
 	},
-	own: {OwnerSchema},
-	mod: [{ModSchema}],
-	perm: {PermissionsSchema}
+	own: OwnerSchema,
+	mod: [ModSchema],
+	perm: PermissionsSchema
 });
 
 BlocksSchema.index( { org: 1, code: 1}, { unique: true } );
