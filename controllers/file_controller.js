@@ -49,7 +49,7 @@ module.exports = {
 		if(fileid){
 			File.findById(fileid)
 				.then((file) => {
-					res.setHeader('Content-disposition', 'attachment; filename=' + file.filename);
+					res.setHeader('Content-disposition', 'attachment; filename=' + file.name);
 					res.setHeader('Content-type', file.mimetype);
 					res.download(file.path, file.filename);
 				})
@@ -60,7 +60,7 @@ module.exports = {
 		if(file){
 			File.findOne({name: file})
 				.then((file) => {
-					res.setHeader('Content-disposition', 'attachment; filename=' + file.filename);
+					res.setHeader('Content-disposition', 'attachment; filename=' + file.name);
 					res.setHeader('Content-type', file.mimetype);
 					res.download(file.path, file.filename);
 				})

@@ -322,7 +322,7 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1430: Please, give data by body to process'
 			});
-		} else if (!req.body.courseCode && !req.body.courseId) {
+		} else if (!req.body.coursecode && !req.body.courseId) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1431: Please, give course code or course id to which block is related'
@@ -407,10 +407,133 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1443: Please, give data by query to process'
 			});
-		} else if (!req.query.code) {
+		} else if (!req.query.code && !req.query.id) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1444: Please, give block code by query to process'
+				'message': 'Error 1444: Please, give block code (code) or block id (id)  by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/author/course/getblocklist':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1457: Please, give data by query to process'
+			});
+		} else if (!req.query.code && !req.query.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1458: Please, give course code or course id by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/author/course/get':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1448: Please, give data by query to process'
+			});
+		} else if (!req.query.code && !req.query.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1449: Please, give course code by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/author/course/createquestionnarie':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1448: Please, give data by body to process'
+			});
+		} else {
+			if (!req.body.code && !req.body.id) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error 1449: Please, give course code or course id by query to process'
+				});
+			} else {
+				next();
+			}
+		}
+		break;
+
+	case '/api/v1/author/course/addquestions':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1455: Please, give data by body to process'
+			});
+		} else if (!req.body.code && !req.body.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1456: Please, give course code by body to process'
+			});
+		} else if(req.body && req.body.questionnarie && !req.body.questionnarie.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1466: Please, give questionnarie id by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/author/course/modify':
+		if(!req.body) {  // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1458: Please, give data by body to process'
+			});
+		} else if (!req.body.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1459: Please, give course id by body to process'
+			});
+		} else if (!req.body.course) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1460: Please, give JSON course by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/author/course/getblockby':
+		if(!req.body) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1455: Please, give data by query to process'
+			});
+		} else if (!req.query.id && !req.query.code) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1456: Please, give course id or course code by query to process'
+			});
+		} else if (req.query.index && (req.query.section || req.query.number || req.query.order )) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1457: Please, choose one between index or section + number'
+			});
+		} else if (req.query.order && (req.query.index || req.query.section || req.query.number)) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1457: Please, choose one between index or section + number'
+			});
+		} else if (!req.query.index && (!req.query.section || !req.query.number) && !req.query.order) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1458: Please, choose one between index or section + number or order'
 			});
 		} else {
 			next();

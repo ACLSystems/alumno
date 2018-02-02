@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const OwnerSchema = require('./owner');
 const PermissionsSchema = require('./permissions');
-const WtaskSchema = require('./wtasks');
-const WquestSchema = require('./wquestionnaries');
+const TaskSchema = require('./tasks');
+const QuestionnarieSchema = require('./questionnaries');
 const Schema = mongoose.Schema;
 
 const BlocksSchema = new Schema ({
@@ -32,8 +32,8 @@ const BlocksSchema = new Schema ({
 	media: [String],
 	keywords: [String],
 	rules: String,
-	questionnaries: [{WquestSchema}],
-	tasks: [{WtaskSchema}],
+	questionnaries: [QuestionnarieSchema],
+	tasks: [TaskSchema],
 	status: {
 		type: String,
 		enum: ['draft','published'],

@@ -5,7 +5,7 @@ const PermissionsSchema = require('./permissions');
 const OwnerSchema = require('./owner');
 const Schema = mongoose.Schema;
 
-const TasksSchema = new Schema ({
+const TaskSchema = new Schema ({
 	title: {
 		type: String,
 		required: true
@@ -18,6 +18,12 @@ const TasksSchema = new Schema ({
 	},
 	files: {
 		type: String
+	},
+	w: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 1
 	},
 	status: {
 		type: String,
@@ -40,5 +46,6 @@ const TasksSchema = new Schema ({
 	perm: {PermissionsSchema}
 });
 
-const Task = mongoose.model('tasks', TasksSchema);
-module.exports = Task;
+//const Task = mongoose.model('tasks', TaskSchema);
+//module.exports = Task;
+module.exports = TaskSchema;

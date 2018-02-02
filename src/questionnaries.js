@@ -2,8 +2,32 @@
 const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const OwnerSchema = require('./owner');
-const PermissionsSchema = require('./permission');
+const PermissionsSchema = require('./permissions');
 const Schema = mongoose.Schema;
+
+const OptionSchema = new Schema ({
+	name: {
+		type: String,
+		required: true
+	},
+	value: {
+		type: String,
+		required: true
+	}
+});
+
+module.exports = OptionSchema;
+
+const AnswerSchema = new Schema ({
+	type: {
+		type: String,
+		enum: ['index', 'text']
+	},
+	index: Number,
+	text: String
+});
+
+module.exports = AnswerSchema;
 
 const QuestionSchema = new Schema ({
 	text: {
@@ -12,19 +36,18 @@ const QuestionSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum: ['Open', 'Option'],
+		enum: ['open', 'option'],
 		required: true
 	},
-	options: [String],
-	answers: [String],
+	options: [OptionSchema],
+	answers: [AnswerSchema],
 	isVisible: Boolean,
-	author: {
-		type: Schema.Types.ObjectId,
-		ref: 'user'
-	},
-	own: {OwnerSchema},
-	mod: [{ModSchema}],
-	perm: {PermissionsSchema}
+	w: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 1
+	}
 });
 
 module.exports = QuestionSchema;
@@ -32,20 +55,27 @@ module.exports = QuestionSchema;
 const QuestionnarieSchema = new Schema ({
 	type: {
 		type: String,
-		enum: ['Quiz','Poll'],
+		enum: ['quiz','poll'],
 		default: 'Quiz'
 	},
-	questions: [{QuestionSchema}],
+	questions: [QuestionSchema],
+	w: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 1
+	},
 	version: {
 		type: String,
 		min: [1, 'Questionnarie version cannot be less than 1']
 	},
 	keywords: [String],
 	isVisible: Boolean,
-	own: {OwnerSchema},
-	mod: [{ModSchema}],
-	perm: {PermissionsSchema}
+	own: OwnerSchema,
+	mod: [ModSchema],
+	perm: PermissionsSchema
 });
 
-const Questionnaries = mongoose.model('questionnaries', QuestionnarieSchema);
-module.exports = Questionnaries;
+//const Questionnaries = mongoose.model('questionnaries', QuestionnarieSchema);
+//module.exports = Questionnaries;
+module.exports = QuestionnarieSchema;

@@ -21,12 +21,16 @@ const CoursesSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum: ['Self-paced','Tutor']
+		enum: ['self-paced','tutor']
 	},
 	level: {
 		type: String,
-		enum: ['Basic','Intermediate','Advanced','Expert'],
-		default: 'Basic'
+		enum: ['basic','intermediate','advanced','expert'],
+		default: 'basic'
+	},
+	author: {
+		type: String,
+		required: true
 	},
 	categories: {
 		type: [String],
@@ -51,6 +55,11 @@ const CoursesSchema = new Schema ({
 	syllabus: {
 		type: String
 	},
+	version: {
+		type: Number,
+		default: 1,
+		min: [0,'Version cannot be less than 0']
+	},
 	price: {
 		type: Number,
 		default: 0,
@@ -70,12 +79,15 @@ const CoursesSchema = new Schema ({
 	}],
 	status: {
 		type: String,
-		enum: ['Draft','Published'],
-		default: 'Draft'
+		enum: ['draft','published'],
+		default: 'draft'
 	}
 });
 
-CoursesSchema.index( { code: 1, title: 1, org: 1}, { unique: true } );
-CoursesSchema.index( { org: 1 }, { unique: false } );
+CoursesSchema.index( { code: 1, org: 1}, { unique: true } );
+CoursesSchema.index( { categories: 1, org: 1 }, { unique: false } );
+CoursesSchema.index( { keyworkds: 1, org: 1 }, { unique: false } );
+CoursesSchema.index( { title: 1, org: 1 }, { unique: false } );
+CoursesSchema.index( { author: 1, org: 1 }, { unique: false } );
 const Courses = mongoose.model('courses', CoursesSchema);
 module.exports = Courses;

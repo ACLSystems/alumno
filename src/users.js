@@ -164,6 +164,7 @@ const UserSchema = new Schema ({
 	student: StudentSchema
 });
 
+// Middleware ------------------------------------------------------------------
 
 //Encriptar password antes de guardarlo en la base
 UserSchema.pre('save', function(next) {
@@ -189,6 +190,9 @@ UserSchema.methods.validatePassword = function(password, cb) {
 		cb(null, isOk);
 	});
 };
+
+// Indices ---------------------------------------------------------------------
+
 
 const User = mongoose.model('users', UserSchema);
 module.exports = User;

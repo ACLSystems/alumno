@@ -82,6 +82,12 @@ module.exports = (app) => {
 	app.post('/api/v1/author/course/create', CourseController.create);
 	app.post('/api/v1/author/course/createblock', CourseController.createBlock);
 	app.get('/api/v1/author/course/getblock', CourseController.getBlock);
+	app.get('/api/v1/author/course/getblocklist', CourseController.getBlocklist);
+	app.get('/api/v1/author/course/getblockby', CourseController.getBlockBy);
+	app.get('/api/v1/author/course/get', CourseController.get);
+	app.post('/api/v1/author/course/createquestionnarie', CourseController.createQuestionnarie);
+	app.post('/api/v1/author/course/addquestions', CourseController.addQuestions);
+	app.put('/api/v1/author/course/modify', CourseController.modify);
 	app.post('/api/v1/author/file/upload', upload.single('file'), FileController.upload);
 	app.get('/api/v1/author/file/download', FileController.download);
 
