@@ -213,7 +213,18 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	// RUTAS PARA UNIDADES ORGANIZACIONALES --------------------------------------UNIDADES ORGANIZACIONALES
+	// RUTAS PARA ORGANIZACIONES -------------------------------------------------ORGANIZACIONES
+
+	case '/api/v1/orgadm/user/massiveregister':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -1770: Please, give data by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
 	case '/api/v1/orgadm/orgunit/massiveregister':
 		if(!req.body) {
 			res.status(406).json({
@@ -247,6 +258,7 @@ module.exports = function(req, res, next) {
 			}
 		}
 		break;
+
 	case '/api/v1/orgadm/orgunit/register':
 		if(!req.body) {
 			res.status(406).json({
@@ -267,6 +279,54 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
+
+	case '/api/v1/orgadm/orgunit/list':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -1110: Please, give data by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/orgadm/user/list':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -1110: Please, give data by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/orgadm/user/count':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -1110: Please, give data by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/orgadm/org/getdetails':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -1110: Please, give data by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	// RUTAS PARA UNIDADES ORGANIZACIONALES --------------------------------------UNIDADES ORGANIZACIONALES
+
+
 
 		// RUTAS PARA CONTENIDOS ---------------------------------------------------CONTENIDOS
 	case '/api/v1/author/course/create':

@@ -26,6 +26,7 @@
 /ssl/*
 /data/*
 /config/secret.js
+/config/newpass.js
 *.log
 *.sql
 *.sqlite

@@ -2,6 +2,8 @@ const Org = require('../src/orgs');
 const OrgUnit = require('../src/orgUnits');
 const User = require('../src/users');
 const winston = require('winston');
+const bcrypt = require('bcrypt-nodejs');
+const newpass = require('../config/newpass');
 require('winston-daily-rotate-file');
 
 var transport = new(winston.transports.DailyRotateFile) ({
@@ -79,9 +81,11 @@ module.exports = {
 							logger.info('OU -' + ouProps.name + '- created under -' + orgProps.name + '- org');
 							// Creación usuario "publico"
 							const mod = generateMod(key,'User Creation');
+							const salt = bcrypt.genSaltSync(10);
+							const password = bcrypt.hashSync(orgProps.name +'_'+ newpass.public(), salt);
 							const userProps = new User({
 								name: orgProps.name + '-public',
-								password: orgProps.name + '_public_admin',
+								password: password,
 								org: orgProps._id,
 								orgUnit: ouProps._id,
 								roles: {

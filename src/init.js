@@ -4,6 +4,7 @@ const Orgs = require('./orgs');
 const OrgUnits = require('./orgUnits');
 const winston = require('winston');
 const bcrypt = require('bcrypt-nodejs');
+const newpass = require('../config/newpass');
 
 
 /* eslint-disable no-console */
@@ -223,7 +224,7 @@ module.exports = {
 					};
 
 					const salt = bcrypt.genSaltSync(10);
-					const password = bcrypt.hashSync('alumno_admin', salt);
+					const password = bcrypt.hashSync(newpass.admin(), salt);
 					const admin = new Users({
 						name: 'admin',
 						password: password,
