@@ -322,6 +322,7 @@ module.exports = {
 								var temp = {};
 								temp.dis = ou.dis;
 								temp.obj = {
+									id: ou.obj.id,
 									name: ou.obj.name,
 									longName: ou.obj.longName,
 									type: ou.obj.type,
