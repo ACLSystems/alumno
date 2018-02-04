@@ -186,108 +186,116 @@ module.exports = {
 						searchOU = { org: key_user.org._id };
 						searchO = { name: org };
 					}
-				} // else2
-				Org.findOne(searchO)
-					.then((org) => {
-						OrgUnit.find(searchOU)
-							.then((orgUnits) => {
-								var objOUParent = '';
-								var ouParent = '';
-								var objOrgUnit = '';
-								var status = 'ok';
-								var parentStatus = 'ok';
-								var orgStatus = 'ok';
-								var failed = new Array();
-								var ouTOinsert = new Array();
-								var ouToUpdate = new Array();
-								req.body.forEach(function(ou) {  // Bucle
-									objOUParent = orgUnits.find(function(objOUParent) { return objOUParent.name === ou.parent; });
-									ouParent = req.body.find(function(ouParent) {return ouParent.name === ou.parent; });
-									if(!objOUParent && !ouParent) { // validamos que exista el parent
-										parentStatus = 'Parent not found in database or not declared in JSON';
-										status = 'Some errors found';
-									}
-									if(!ou.org && !org) {
-										orgStatus = 'Org missing';
-										status = 'Some errors found';
-									}
-									if(status === 'Some errors found') {
-										failed.push({name: ou.name, parent: ou.parent, pStatus: parentStatus, org: orgStatus});
-										status = 'ok';
-									} else {
-										if(!ou.org) {
-											ou.org = org._id;
-										}
-										objOrgUnit = orgUnits.find(function(objOrgUnit) { return objOrgUnit.name === ou.name; });
-										if(!objOrgUnit) { // quiere decir que no existe el OU y key quiere insertar uno nuevo
-											var permUsers = new Array();
-											var permUser = { name: key, canRead: true, canModify: true, canSec: true };
-											permUsers.push(permUser);
-											var permOrgs = new Array();
-											var permOrg = { name: ou.org, canRead: true, canModify: true, canSec: true };
-											permOrgs.push(permOrg);
-											var permRoles = new Array();
-											var permRole =  { name: 'isOrg', canRead: true, canModify: true, canSec: true};
-											permRoles.push(permRole);
-											ou.perm = { users: permUsers, roles: permRoles, orgs: permOrgs };
-											const date = new Date();
-											const mod = {
-												by: key,
-												when: date,
-												what: 'OU creation'
-											};
-											ou.mod = new Array();
-											ou.mod.push(mod);
-											const temp = ou.alias;
-											if(temp.constructor !== Array) {
-												ou.alias = [temp];
+					Org.findOne(searchO)
+						.then((org) => {
+							if(org) {
+								OrgUnit.find(searchOU)
+									.then((orgUnits) => {
+										var objOUParent = '';
+										var ouParent = '';
+										var objOrgUnit = '';
+										var status = 'ok';
+										var parentStatus = 'ok';
+										var orgStatus = 'ok';
+										var failed = new Array();
+										var ouTOinsert = new Array();
+										var ouToUpdate = new Array();
+										req.body.forEach(function(ou) {  // Bucle
+											objOUParent = orgUnits.find(function(objOUParent) { return objOUParent.name === ou.parent; });
+											ouParent = req.body.find(function(ouParent) {return ouParent.name === ou.parent; });
+											if(!objOUParent && !ouParent) { // validamos que exista el parent
+												parentStatus = 'Parent not found in database or not declared in JSON';
+												status = 'Some errors found';
 											}
-											ouTOinsert.push(ou);
-										} else { // existe el OU
-											const date = new Date();
-											const mod = {
-												by: key,
-												when: date,
-												what: 'OU modification'
-											};
-											ou.mod = new Array();
-											ou.mod.push(mod);
-											ou._id = objOrgUnit._id;
-											ouToUpdate.push(ou);
+											if(!ou.org && !org) {
+												orgStatus = 'Org missing';
+												status = 'Some errors found';
+											}
+											if(status === 'Some errors found') {
+												failed.push({name: ou.name, parent: ou.parent, pStatus: parentStatus, org: orgStatus});
+												status = 'ok';
+											} else {
+												ou.org = org._id;
+												objOrgUnit = orgUnits.find(function(objOrgUnit) { return objOrgUnit.name === ou.name; });
+												if(!objOrgUnit) { // quiere decir que no existe el OU y key quiere insertar uno nuevo
+													var permUsers = new Array();
+													var permUser = { name: key, canRead: true, canModify: true, canSec: true };
+													permUsers.push(permUser);
+													var permOrgs = new Array();
+													var permOrg = { name: ou.org, canRead: true, canModify: true, canSec: true };
+													permOrgs.push(permOrg);
+													var permRoles = new Array();
+													var permRole =  { name: 'isOrg', canRead: true, canModify: true, canSec: true};
+													permRoles.push(permRole);
+													ou.perm = { users: permUsers, roles: permRoles, orgs: permOrgs };
+													const date = new Date();
+													const mod = {
+														by: key,
+														when: date,
+														what: 'OU creation'
+													};
+													ou.mod = new Array();
+													ou.mod.push(mod);
+													if(ou.alias){
+														const temp = ou.alias;
+														if(temp.constructor !== Array) {
+															ou.alias = [temp];
+														}
+													}
+													ouTOinsert.push(ou);
+												} else { // existe el OU
+													const date = new Date();
+													const mod = {
+														by: key,
+														when: date,
+														what: 'OU modification'
+													};
+													ou.mod = new Array();
+													ou.mod.push(mod);
+													ou._id = objOrgUnit._id;
+													ouToUpdate.push(ou);
+												}
+											}
+										});  // termina el bucle
+										if(ouTOinsert) {
+											//console.log(JSON.stringify(ouTOinsert,null,2));
+											OrgUnit.insertMany(ouTOinsert)
+												.catch((err) => {
+													sendError(res,err,'massiveRegister -- Inserting OrgUnits --');
+												});
+											numOU.inserted = ouTOinsert.length;
 										}
-									}
-								});  // termina el bucle
-								if(ouTOinsert) {
-									OrgUnit.insertMany(ouTOinsert)
-										.catch((err) => {
-											sendError(res,err,'massiveRegister -- Inserting OrgUnits --');
-										});
-									numOU.inserted = ouTOinsert.length;
-								}
-								if(ouToUpdate) {
-									ouToUpdate.forEach(function(ou2Up) {
-										OrgUnit.update({_id: ou2Up._id}, {$set: ou2Up})
-											.catch((err) => {
-												sendError(res,err,'massiveRegister -- Updating OrgUnits --');
+										if(ouToUpdate) {
+											ouToUpdate.forEach(function(ou2Up) {
+												OrgUnit.update({_id: ou2Up._id}, {$set: ou2Up})
+													.catch((err) => {
+														sendError(res,err,'massiveRegister -- Updating OrgUnits --');
+													});
 											});
+											numOU.updated = ouToUpdate.length;
+										}
+										numOU.failed = failed.length;
+										var result = numOU;
+										result.details = failed;
+										res.status(200).json({
+											'status': 200,
+											message: result
+										});
+									})
+									.catch((err) => {
+										sendError(res,err,'massiveRegister -- Finding OrgUnits --');
 									});
-									numOU.updated = ouToUpdate.length;
-								}
-								numOU.failed = failed.length;
-								var result = numOU;
-								result.details = failed;
-								res.status(200).json({
-									'status': 200,
-									message: result
+							} else {
+								res.status(404).json({
+									'status': 404,
+									'message': 'Error: Org not found'
 								});
-							})
-							.catch((err) => {
-								sendError(res,err,'massiveRegister -- Finding OrgUnits --');
-							});
-					})
-					.catch((err) => {
-						sendError(res,err,'massiveRegister -- Finding Orgs --');
-					});
+							}
+						})
+						.catch((err) => {
+							sendError(res,err,'massiveRegister -- Finding Orgs --');
+						});
+				} // else2
 			})
 			.catch((err) => {
 				sendError(res,err,'massiveRegister -- Finding Key User --');
