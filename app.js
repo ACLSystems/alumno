@@ -8,7 +8,7 @@ const routes = require('./routes/routes');
 const app = express();
 
 app.use(helmet());
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParserJsonError());
 routes(app);
 
