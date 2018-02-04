@@ -373,7 +373,9 @@ module.exports = {
 									longName: ou.longName,
 									type: ou.type,
 									org: org.name,
-									parent: ou.parent
+									parent: ou.parent,
+									geometry: ou.geometry,
+									address: ou.address
 								});
 							});
 							res.status(200).json({

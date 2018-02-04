@@ -33,6 +33,8 @@ const OrgUnitsSchema = new Schema ({
 		type: Boolean,
 		default: true
 	},
+	contactPhone: [String],
+	formatted_address: String,
 	geometry:PointSchema,
 	address: AddressSchema,
 	mod: [ModSchema],
