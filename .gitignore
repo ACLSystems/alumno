@@ -25,6 +25,7 @@
 /logs/*
 /ssl/*
 /data/*
+/config/secret.js
 *.log
 *.sql
 *.sqlite
