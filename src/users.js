@@ -10,7 +10,7 @@ const Schema = mongoose.Schema;
 
 // Esquema para el usuario que es un estudiante
 const StudentSchema = new Schema ({
-	id: {
+	id: { // se puede usar como matricula o id del estudiante
 		type: String
 	},
 	career: {
