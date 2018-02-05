@@ -1,5 +1,8 @@
 // Esquema para modelar grupos
 const mongoose = require('mongoose');
+const ModSchema = require('./modified');
+const OwnerSchema = require('./owner');
+const PermissionsSchema = require('./permissions');
 //const BlocksSchema = require('./blocks');
 //const CoursesSchema = require('./courses');
 //const OrgsSchema = require('./orgs');
@@ -29,18 +32,14 @@ const GradesSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'users'
 	},
-	results: [{ResultsSchema}]
+	results: [ResultsSchema]
 });
 
 module.exports = GradesSchema;
 
 const DatesSchema = new Schema ({
-	section: {
-		type: Number,
-		required: true
-	},
-	block: {
-		type: Number,
+	id: {  // Block ID
+		type: String,
 		required: true
 	},
 	beginDate: {
@@ -80,7 +79,7 @@ const GroupsSchema = new Schema ({
 	endDate: {
 		type: Date
 	},
-	dates: [{DatesSchema}],
+	dates: [DatesSchema],
 	org: {
 		type: Schema.Types.ObjectId,
 		ref: 'orgs'
@@ -88,8 +87,12 @@ const GroupsSchema = new Schema ({
 	orgUnit: {
 		type: Schema.Types.ObjectId,
 		ref: 'orgUnits'
-	}
+	},
+	own: OwnerSchema,
+	mod: [ModSchema],
+	perm: PermissionsSchema,
 });
 
+GroupsSchema.index( { code: 1, org: 1}, { unique: true } );
 const Groups = mongoose.model('groups', GroupsSchema);
 module.exports = Groups;

@@ -363,7 +363,7 @@ module.exports = {
 			var skip = 0;
 			var limit = 15;
 			var query = {};
-			if(req.query.sort) { sort = { name: req.query.sort }; }
+			if(req.query.sort) { sort = { longName: req.query.sort }; }
 			if(req.query.skip) { skip = parseInt( req.query.skip ); }
 			if(req.query.limit) { limit = parseInt( req.query.limit ); }
 			if(req.query.query) { query = JSON.parse(req.query.query); }
@@ -378,6 +378,7 @@ module.exports = {
 							var send_ous = new Array();
 							ous.forEach(function(ou) {
 								send_ous.push({
+									id: ou._id,
 									name: ou.name,
 									longName: ou.longName,
 									type: ou.type,
@@ -403,6 +404,46 @@ module.exports = {
 				});
 		}
 	}, // list
+
+	publiclist(req,res) {
+		var sort = { longName: 1 };
+		var skip = 0;
+		var limit = 15;
+		var query = {};
+		if(req.query.sort) { sort = { longName: req.query.sort }; }
+		if(req.query.skip) { skip = parseInt( req.query.skip ); }
+		if(req.query.limit) { limit = parseInt( req.query.limit ); }
+		if(req.query.query) { query = JSON.parse(req.query.query); }
+		Org.findOne({ name: req.query.org })
+			.then((org) => {
+				query.org = org._id;
+				OrgUnit.find(query)
+					.sort(sort)
+					.skip(skip)
+					.limit(limit)
+					.then((ous) => {
+						var send_ous = new Array();
+						ous.forEach(function(ou) {
+							send_ous.push({
+								longName: ou.longName,
+								address: ou.address
+							});
+						});
+						res.status(200).json({
+							'status': 200,
+							'message': {
+								ousNum: send_ous.length,
+								ous: send_ous}
+						});
+					})
+					.catch((err) => {
+						sendError(res,err,'OU list -- Finding OrgUnits --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'OU list -- Finding Org --');
+			});
+	}, // publiclist
 
 };
 

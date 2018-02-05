@@ -35,7 +35,7 @@ module.exports = {
 						'message': 'Error: Org -' + userProps.org + '- does not exist'
 					});
 				} else {
-					OrgUnit.findOne({ name: userProps.orgUnit}, { name: true })
+					OrgUnit.findOne({$or: [{ name: userProps.orgUnit}, {longName: userProps.orgUnit}, {_id: userProps.orgUnit}]}, { name: true })
 						.then((ou) => {
 							if (!ou) {
 								res.status(404).json({
@@ -444,14 +444,17 @@ module.exports = {
 		var sort = { name: 1 };
 		var skip = 0;
 		var limit = 15;
+		var query = {};
 		if(req.query.sort) { sort = { name: req.query.sort }; }
 		if(req.query.skip) { skip = parseInt( req.query.skip ); }
 		if(req.query.limit) { limit = parseInt( req.query.limit ); }
+		if(req.query.query) { query = JSON.parse(req.query.query); }
 		User.findOne({ name: key })
 			.populate('org')
 			.then((key_user) => {
 				if(!key_user.roles.isAdmin && key_user.roles.isOrg) {
-					User.find({ org: key_user.org._id })
+					query.org = key_user.org._id;
+					User.find(query)
 						.sort(sort)
 						.skip(skip)
 						.limit(limit)

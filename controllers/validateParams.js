@@ -326,9 +326,18 @@ module.exports = function(req, res, next) {
 
 	// RUTAS PARA UNIDADES ORGANIZACIONALES --------------------------------------UNIDADES ORGANIZACIONALES
 
+	case '/api/orgunit/list':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -1110: Please, give data by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
 
-
-		// RUTAS PARA CONTENIDOS ---------------------------------------------------CONTENIDOS
+	// RUTAS PARA CONTENIDOS ---------------------------------------------------CONTENIDOS
 	case '/api/v1/author/course/create':
 		if(!req.body) {  // POST
 			res.status(406).json({
@@ -594,6 +603,88 @@ module.exports = function(req, res, next) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1458: Please, choose one between index or section + number or order'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	// RUTAS PARA GRUPOS ---------------------------------------------------------GRUPOS
+
+	case '/api/v1/instructor/group/create':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else if (!req.body.code) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group code by body to process'
+			});
+		} else if (!req.body.name) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group name by body to process'
+			});
+		} else if (!req.body.course) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give course id by body to process'
+			});
+		} else if (req.body.endDate && !req.body.beginDate) {
+			var endDate = Date.parse(req.body.endDate);
+			var now = new Date();
+			if(endDate <= now) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error -: endDate is past. Please use a future date or none'
+				});
+			} else {
+				next();
+			}
+		} else if(req.body.beginDate && req.body.endDate) {
+			var beginDate = Date.parse(req.body.beginDate);
+			if(endDate <= beginDate) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error -: endDate is less than beginDate. Please use valid dates'
+				});
+			} else if (endDate <= now) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error -: endDate is past. Please use a future date or none'
+				});
+			} else {
+				next();
+			}
+		} else {
+			next();
+		}
+		break;
+
+	// RUTAS PARA CARRERAS -------------------------------------------------------CARRERAS
+
+	case '/api/v1/orgadm/career/create':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else if (!req.body.name) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give career name by body to process'
+			});
+		} else if (!req.body.longName) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give career long name by body to process'
+			});
+		} else if (!req.body.area) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give career area by body to process'
 			});
 		} else {
 			next();

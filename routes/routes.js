@@ -7,7 +7,9 @@ const MassUsersController = require('../controllers/massiveUsers_Controller');
 const OrgController = require('../controllers/org_controller');
 const OrgUnitController = require('../controllers/orgUnit_controller');
 const CourseController = require('../controllers/course_controller');
+const GroupController = require('../controllers/group_controller');
 const FileController = require('../controllers/file_controller');
+const CareerController = require('../controllers/career_controller');
 const multer = require('multer');
 const dir = '/Users/Arturo/data';
 const fileSize = 1048576;
@@ -51,7 +53,9 @@ module.exports = (app) => {
 	app.all('/api/v1/user/*', [require('../controllers/validateParams')]);
 	app.all('/api/v1/course/*', [require('../controllers/validateParams')]);
 	app.all('/api/v1/author/course/*', [require('../controllers/validateParams')]);
+	app.all('/api/v1/instructor/group/*', [require('../controllers/validateParams')]);
 	app.all('/api/v1/orgadm/*', [require('../controllers/validateParams')]);
+	app.all('/api/orgunit/*', [require('../controllers/validateParams')]);
 
 	// RUTAS ---------------------------------------------------------------------------------
 
@@ -64,16 +68,21 @@ module.exports = (app) => {
 	app.get('/api/user/validateEmail', UserController.validateEmail);
 	app.get('/api/help', HelpController.help);
 	app.get('/api/errorcodes',ErrorMessController.errorCodes);
+	app.get('/api/orgunit/list', OrgUnitController.publiclist);
 
 	// Rutas que pueden acceder solo usuarios autenticados
 
 	// Rutas para usuarios
 
 	app.get('/api/v1/user/getdetails', UserController.getDetails);
-	app.get('/api/v1/user/getroles', UserController.getRoles);
-	app.put('/api/v1/user/setroles', UserController.setRoles);
 	app.put('/api/v1/user/passwordchange', UserController.passwordChange);
 	app.put('/api/v1/user/modify', UserController.modify);
+
+	// Rutas que pueden acceder solo usuarios autenticados y autorizados
+
+	// Rutas para roles de 'isInstructor'
+
+	app.post('/api/v1/instructor/group/create', GroupController.create);
 
 	// Rutas para roles de 'isAuthor'
 
@@ -91,8 +100,6 @@ module.exports = (app) => {
 	app.post('/api/v1/author/file/upload', upload.single('file'), FileController.upload);
 	app.get('/api/v1/author/file/download', FileController.download);
 
-	// Rutas que pueden acceder solo usuarios autenticados y autorizados
-
 	// Rutas para roles de 'isAdmin'
 
 	app.post('/api/v1/admin/org/register', OrgController.register);
@@ -101,6 +108,8 @@ module.exports = (app) => {
 	app.get('/api/v1/admin/org/list', OrgController.list);
 	app.get('/api/v1/admin/orgunit/list', OrgUnitController.list);
 	app.get('/api/v1/admin/org/getdetailsadmin', OrgController.getDetailsAdmin);
+	app.get('/api/v1/admin/user/getroles', UserController.getRoles);
+	app.put('/api/v1/admin/user/setroles', UserController.setRoles);
 
 	// Rutas para roles de 'isOrg'
 
@@ -111,5 +120,7 @@ module.exports = (app) => {
 	app.get('/api/v1/orgadm/user/list', UserController.list);
 	app.get('/api/v1/orgadm/user/count', UserController.count);
 	app.get('/api/v1/orgadm/org/getdetails', OrgController.getDetails);
+	app.post('/api/v1/orgadm/career/create', CareerController.create);
+
 
 };
