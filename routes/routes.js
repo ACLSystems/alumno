@@ -69,6 +69,8 @@ module.exports = (app) => {
 	app.get('/api/help', HelpController.help);
 	app.get('/api/errorcodes',ErrorMessController.errorCodes);
 	app.get('/api/orgunit/list', OrgUnitController.publiclist);
+	app.get('/api/career/list', CareerController.list);
+	app.get('/api/career/listareas', CareerController.listAreas);
 
 	// Rutas que pueden acceder solo usuarios autenticados
 
@@ -121,6 +123,7 @@ module.exports = (app) => {
 	app.get('/api/v1/orgadm/user/count', UserController.count);
 	app.get('/api/v1/orgadm/org/getdetails', OrgController.getDetails);
 	app.post('/api/v1/orgadm/career/create', CareerController.create);
+	app.post('/api/v1/orgadm/career/massivecreate', CareerController.massiveCreation);
 
 
 };

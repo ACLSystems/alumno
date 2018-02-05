@@ -691,6 +691,18 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+
+	case '/api/v1/orgadm/career/massivecreate':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	// NO HAY RUTAS --------------------------------------------------------------
 
 	default:
