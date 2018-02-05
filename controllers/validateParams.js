@@ -703,6 +703,40 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	// RUTAS PARA PERIODOS (TERMS) ---------------------------------------------PERIODOS (TERMS)
+
+	case '/api/v1/orgadm/term/create':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else if (!req.body.name) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give term name by body to process'
+			});
+		} else if (!req.body.type) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give type term by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/orgadm/term/massivecreate':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	// NO HAY RUTAS --------------------------------------------------------------
 
 	default:

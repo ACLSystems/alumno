@@ -22,7 +22,7 @@ const CareerSchema = new Schema ({
 	org: {
 		type: Schema.Types.ObjectId,
 		ref: 'orgs'
-	},
+	}
 });
 
 CareerSchema.index( { org: 1}, { unique: false } );

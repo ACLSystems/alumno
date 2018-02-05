@@ -8,8 +8,8 @@ const TermSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum: ['Semester', 'Quarter', 'Trimester', 'Quadmester'],
-		default: 'Semester'
+		enum: ['semester', 'quarter', 'trimester', 'quadmester'],
+		default: 'semester'
 	},
 	isVisible: {
 		type: Boolean,
@@ -17,8 +17,8 @@ const TermSchema = new Schema ({
 		default: true
 	},
 	org: {
-		type: String,
-		required: true
+		type: Schema.Types.ObjectId,
+		ref: 'orgs'
 	}
 });
 
