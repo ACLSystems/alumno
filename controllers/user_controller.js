@@ -26,7 +26,7 @@ module.exports = {
 	//register(req, res, next) {
 	register(req, res) {
 		var key = req.headers.key;
-		const userProps = req.body;
+		var userProps = req.body;
 		Org.findOne({ name: userProps.org }, { name: true } )
 			.then((org) => {
 				if (!org) {
@@ -35,7 +35,7 @@ module.exports = {
 						'message': 'Error: Org -' + userProps.org + '- does not exist'
 					});
 				} else {
-					OrgUnit.findOne({$or: [{ name: userProps.orgUnit}, {longName: userProps.orgUnit}, {_id: userProps.orgUnit}]}, { name: true })
+					OrgUnit.findOne({$or: [{ name: userProps.orgUnit}, {longName: userProps.orgUnit}]})
 						.then((ou) => {
 							if (!ou) {
 								res.status(404).json({

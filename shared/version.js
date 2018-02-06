@@ -1,5 +1,5 @@
 module.exports = {
 	app: 'alumno',
-	version: '1.0.1.16',
+	version: '1.0.1.17',
 	description: 'Adding APIs to list careers and terms'
 };
