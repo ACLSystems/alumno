@@ -28,22 +28,27 @@ var logger = new(winston.Logger) ({
 module.exports = {
 	//register(req, res, next) {
 	register(req, res) {
-		var key = req.headers.key;
+		var key = '';
+		if(req.headers.key) {
+			key = req.headers.key;
+		} else {
+			key = req.body.name;
+		}
 		var userProps = req.body;
-		if(userProps.name !== userProps.person.email) {
+		if(userProps.name !== userProps.person.email) { // que el nombre de usuario sera igual a su correo
 			userProps.name = userProps.person.email;
 		}
-		Org.findOne({ name: userProps.org }, { name: true } )
+		Org.findOne({ name: userProps.org }, { name: true } ) // buscar organización
 			.then((org) => {
-				if (!org) {
+				if (!org) {							// si no existe organización le damos el bastonazo
 					res.status(404).json({
 						'status': 404,
 						'message': 'Error: Org -' + userProps.org + '- does not exist'
 					});
-				} else {
+				} else {				// buscar unidad org
 					OrgUnit.findOne({$or: [{ name: userProps.orgUnit}, {longName: userProps.orgUnit}]})
 						.then((ou) => {
-							if (!ou) {
+							if (!ou) {			// si no hay ou, lo mismo
 								res.status(404).json({
 									'status': 404,
 									'message': 'Error: OU -' + userProps.orgUnit + '- does not exist'
@@ -63,14 +68,12 @@ module.exports = {
 								var permUsers = new Array();
 								var permUser = { name: userProps.name, canRead: true, canModify: true, canSec: false };
 								permUsers.push(permUser);
-								if (key) {
+								if (userProps.name !== key) {
 									permUser = { name: key, canRead: true, canModify: true, canSec: false };
 									permUsers.push(permUser);
 								}
 								var author = userProps.name;
-								if(key) {
-									author = key;
-								}
+								author = key;
 								var permRoles = new Array();
 								var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
 								permRoles.push(permRole);
@@ -125,7 +128,7 @@ module.exports = {
 												'message': 'Error: user -' + userProps.name + '- or email: -'+ userProps.person.email + '- already exists'
 											});
 											*/
-											User.findOne({$or:[{name: userProps.name},{'person.email': userProps.name}]})
+											User.findOne({$or:[{name: userProps.name},{'person.email': userProps.person.email}]})
 												.then((user) => {
 													if(user.admin && user.admin.adminCreate) {
 														user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
@@ -154,7 +157,11 @@ module.exports = {
 																		});
 																	})
 																	.catch((err) => {
-																		sendError(res,err,'register -- Sending Mail --');
+																		res.status(201).json({
+																			'status': 201,
+																			'message': 'Register was sucessfully done, but email was not send'
+																		});
+																		sendError(res,err,'register -- Sending Mail --',true);
 																	});
 															})
 															.catch((err) => {
@@ -163,16 +170,13 @@ module.exports = {
 													} else {
 														res.status(406).json({
 															'status': 406,
-															'message': 'You have already registered previously'
+															'message': 'You have already been registered previously'
 														});
 													}
 												})
 												.catch((err) => {
 													sendError(res,err,'register -- Finding User --');
 												});
-
-
-
 										} else {
 											sendError(res,err,'register -- User create --');
 										}
@@ -743,13 +747,15 @@ function properCase(obj) {
 	return newName;
 }
 
-function sendError(res, err, section) {
+function sendError(res, err, section, send_status) {
 	logger.info('User controller -- Section: ' + section + '----');
 	logger.info(err);
-	res.status(500).json({
-		'status': 500,
-		'message': 'Error',
-		'Error': err.message
-	});
+	if(!send_status) {
+		res.status(500).json({
+			'status': 500,
+			'message': 'Error',
+			'Error': err.message
+		});
+	}
 	return;
 }
