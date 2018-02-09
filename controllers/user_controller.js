@@ -663,9 +663,7 @@ module.exports = {
 										if(listing === 'basic') {
 											var send_users = new Array();
 											users.forEach(function(u) {
-												send_users.push({
-													'name': u.name
-												});
+												send_users.push(u.name);
 											});
 											res.status(200).json({
 												'status': 200,
