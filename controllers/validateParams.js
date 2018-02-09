@@ -437,17 +437,17 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1434: Block type must be one of the next strings: text, textVideo, video, task or questionnarie'
 			});
-		} else if (!req.body.section) {
+		} else if (req.body.section === undefined) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1435: Please, give section number by body to process'
 			});
-		} else if (!req.body.number) {
+		} else if (req.body.number === undefined) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1436: Please, give block number by body to process'
 			});
-		} else if (!req.body.order) {
+		} else if (req.body.order === undefined) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1437: Please, give order number by body to process'

@@ -595,10 +595,12 @@ module.exports = {
 		var skip = 0;
 		var limit = 15;
 		var query = {};
+		var listing = '';
 		if(req.query.sort) { sort = { name: req.query.sort }; }
 		if(req.query.skip) { skip = parseInt( req.query.skip ); }
 		if(req.query.limit) { limit = parseInt( req.query.limit ); }
 		if(req.query.query) { query = JSON.parse(req.query.query); }
+		if(req.query.listing) { listing = req.query.listing; }
 		User.findOne({ name: key })
 			.populate('org')
 			.then((key_user) => {
@@ -625,7 +627,6 @@ module.exports = {
 									name: user.name,
 									person: user.person,
 									student: user.student,
-									org: user.org,
 									orgUnit: user.orgUnit
 								});
 							});
@@ -659,12 +660,27 @@ module.exports = {
 										} else {
 											message = usersCount + ' users found from -' + org.name + '-';
 										}
-										res.status(200).json({
-											'status': 200,
-											'message': message,
-											'usersCount': usersCount,
-											'users': users
-										});
+										if(listing === 'basic') {
+											var send_users = new Array();
+											users.forEach(function(u) {
+												send_users.push({
+													'name': u.name
+												});
+												res.status(200).json({
+													'status': 200,
+													'message': message,
+													'usersCount': usersCount,
+													'users': send_users
+												});
+											});
+										} else {
+											res.status(200).json({
+												'status': 200,
+												'message': message,
+												'usersCount': usersCount,
+												'users': users
+											});
+										}
 									})
 									.catch((err) => {
 										sendError(res,err,'list -- Finding Users list (isAdmin) --');

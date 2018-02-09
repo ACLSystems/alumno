@@ -53,7 +53,7 @@ module.exports = {
 					orgs: [{ name: key_user.org.name, canRead: true, canModify: false, canSec: false}],
 					orgUnits: [{ name: key_user.orgUnit.name, canRead: true, canModify: true, canSec: false}]
 				};
-				course.status = 'Draft';
+				course.status = 'draft';
 				course.version = 1;
 				Course.create(course)
 					.then(() => {
@@ -210,35 +210,35 @@ module.exports = {
 			.populate('org')
 			.populate('orgUnit')
 			.then((key_user) => {
-				var block = new Block;
-				block.org = key_user.org._id;
-				block.code = req.body.code;
-				block.type = req.body.type;
-				block.title = req.body.title;
-				block.section = req.body.section;
-				block.number = req.body.number;
-				block.order = req.body.order;
-				block.content = req.body.content;
-				if(req.body.media) {
-					block.media = parseArray(req.body.media);
-				}
-				block.status = 'draft';
-				block.version = 1;
-				if(req.body.keywords) {
-					block.keywords = parseArray(req.body.keywords);
-				}
-				block.own = {
-					user: key_user.name,
-					org: key_user.org.name,
-					orgUnit: key_user.orgUnit.name
-				};
-				block.mod = generateMod(key_user.name,'Block creation');
-				block.perm = generatePerm(key_user.name,key_user.org.name,key_user.orgUnit.name);
-				block.save()
-					.then((block) => {
-						Course.findOne(queryCourse)
-							.then((course) => {
-								if(course) {
+				Course.findOne(queryCourse)
+					.then((course) => {
+						if(course) {
+							var block = new Block;
+							block.org = key_user.org._id;
+							block.code = req.body.code;
+							block.type = req.body.type;
+							block.title = req.body.title;
+							block.section = req.body.section;
+							block.number = req.body.number;
+							block.order = req.body.order;
+							block.content = req.body.content;
+							if(req.body.media) {
+								block.media = parseArray(req.body.media);
+							}
+							block.status = 'draft';
+							block.version = 1;
+							if(req.body.keywords) {
+								block.keywords = parseArray(req.body.keywords);
+							}
+							block.own = {
+								user: key_user.name,
+								org: key_user.org.name,
+								orgUnit: key_user.orgUnit.name
+							};
+							block.mod = generateMod(key_user.name,'Block creation');
+							block.perm = generatePerm(key_user.name,key_user.org.name,key_user.orgUnit.name);
+							block.save()
+								.then((block) => {
 									block.keywords.push(course.code);
 									course.keywords.forEach(function(keyword) {
 										block.keywords.push(keyword);
@@ -262,26 +262,26 @@ module.exports = {
 												sendError(res,err,'createBlock -- Relating block, saving course --');
 											});
 									}
-								} else {
-									res.status(404).json({
-										'status': 404,
-										'message': 'Course not found'
-									});
-								}
-							})
-							.catch((err) => {
-								sendError(res,err,'createBlock -- Searching Course --');
+								})
+								.catch((err) => {
+									if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
+										res.status(406).json({
+											'status': 406,
+											'message': 'Error 1439: Block -' + req.body.code + '- already exists'
+										});
+									} else {
+										sendError(res,err,'createBlock -- Saving Block --');
+									}
+								});
+						} else {
+							res.status(404).json({
+								'status': 404,
+								'message': 'Course not found'
 							});
+						}
 					})
 					.catch((err) => {
-						if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
-							res.status(406).json({
-								'status': 406,
-								'message': 'Error 1439: Block -' + block.code + '- already exists'
-							});
-						} else {
-							sendError(res,err,'createBlock -- Saving Block --');
-						}
+						sendError(res,err,'createBlock -- Searching Course --');
 					});
 			})
 			.catch((err) => {
