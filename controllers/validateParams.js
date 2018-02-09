@@ -81,6 +81,22 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/user/confirm':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give data by query to process'
+			});
+		} else if(!req.query.email || !req.query.token) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1781: Please, give email and token to confirm'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/user/near':
 		if(!req.query) {
 			res.status(406).json({
@@ -212,6 +228,11 @@ module.exports = function(req, res, next) {
 			}
 		}
 		break;
+
+	case '/api/v1/user/mygroups':
+		next();
+		break;
+
 
 	// RUTAS PARA ORGANIZACIONES -------------------------------------------------ORGANIZACIONES
 
@@ -658,6 +679,38 @@ module.exports = function(req, res, next) {
 			} else {
 				next();
 			}
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/instructor/group/createroster':
+		if(!req.body) {  // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else if (!req.body.code) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group code by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/instructor/group/listroster':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.code) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group code by query to process'
+			});
 		} else {
 			next();
 		}

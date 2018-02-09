@@ -9,38 +9,10 @@ const PermissionsSchema = require('./permissions');
 //const OrgUnitsSchema = require('./orgUnits');
 const Schema = mongoose.Schema;
 
-const ResultsSchema = new Schema ({
-	section: {
-		type: Number,
-		required: true
-	},
-	block: {
-		type: Number,
-		required: true
-	},
-	obtained: {
-		type: Number,
-		min: [0,'Grade cannot be less than 0'],
-		max: [100, 'Grade cannot be greater than 100']
-	}
-});
-
-module.exports = ResultsSchema;
-
-const GradesSchema = new Schema ({
-	user: {
-		type: Schema.Types.ObjectId,
-		ref: 'users'
-	},
-	results: [ResultsSchema]
-});
-
-module.exports = GradesSchema;
-
 const DatesSchema = new Schema ({
-	id: {  // Block ID
-		type: String,
-		required: true
+	block: {
+		type: Schema.Types.ObjectId,
+		ref: 'blocks'
 	},
 	beginDate: {
 		type: Date
@@ -51,6 +23,51 @@ const DatesSchema = new Schema ({
 });
 
 module.exports = DatesSchema;
+
+
+const GradesSchema = new Schema ({
+	block: {
+		type: Schema.Types.ObjectId,
+		ref: 'blocks'
+	},
+	tasksFiles: {
+		type: [String]
+	},
+	taskGrades: {
+		type: [Number],
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	questAnswers: {
+		type: [String]
+	},
+	questGrades: {
+		type: [Number],
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	track: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	}
+
+});
+
+module.exports = GradesSchema;
+
+const RosterSchema = new Schema ({
+	status: {
+		type: String,
+		enum: ['pending','active','finished','remove']
+	},
+	grades: GradesSchema
+});
+
+module.exports = RosterSchema;
 
 const GroupsSchema = new Schema ({
 	code: {
@@ -73,6 +90,7 @@ const GroupsSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'users'
 	}],
+	roster: [RosterSchema],
 	beginDate: {
 		type: Date
 	},
@@ -94,5 +112,6 @@ const GroupsSchema = new Schema ({
 });
 
 GroupsSchema.index( { code: 1, org: 1}, { unique: true } );
+GroupsSchema.index( { name: 1, org: 1}, { unique: false} );
 const Groups = mongoose.model('groups', GroupsSchema);
 module.exports = Groups;

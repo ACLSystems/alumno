@@ -137,9 +137,13 @@ module.exports = {
 													isActive: true,
 													isVerified: false,
 													recoverString: '',
-													passwordSaved: ''
+													passwordSaved: '',
+													adminCreate: true
 												};
 												val.admin = admin;
+												if(val.name !== val.person.email) {
+													val.name === val.person.email;
+												}
 												if(val.person.name) { val.person.name = properCase(val.person.name); }
 												if(val.person.fatherName) { val.person.fatherName = properCase(val.person.fatherName); }
 												if(val.person.motherName) { val.person.motherName = properCase(val.person.motherName); }

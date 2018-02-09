@@ -31,6 +31,11 @@ const BlocksSchema = new Schema ({
 	content: String,
 	media: [String],
 	keywords: [String],
+	defaultmin: {
+		type: Number,
+		required: true,
+		default: 5
+	},
 	rules: String,
 	questionnaries: [QuestionnarieSchema],
 	tasks: [TaskSchema],

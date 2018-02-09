@@ -66,6 +66,7 @@ module.exports = (app) => {
 	app.post('/login', auth.login);
 	app.post('/api/user/register', UserController.register);
 	app.get('/api/user/near', OrgUnitController.index);
+	app.get('/api/user/confirm', UserController.confirm);
 	app.get('/api/user/validateEmail', UserController.validateEmail);
 	app.get('/api/help', HelpController.help);
 	app.get('/api/errorcodes',ErrorMessController.errorCodes);
@@ -82,12 +83,15 @@ module.exports = (app) => {
 	app.get('/api/v1/user/getdetails', UserController.getDetails);
 	app.put('/api/v1/user/passwordchange', UserController.passwordChange);
 	app.put('/api/v1/user/modify', UserController.modify);
+	app.get('/api/v1/user/mygroups', GroupController.mygroups);
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados
 
 	// Rutas para roles de 'isInstructor'
 
 	app.post('/api/v1/instructor/group/create', GroupController.create);
+	app.put('/api/v1/instructor/group/createroster', GroupController.createRoster);
+	app.get('/api/v1/instructor/group/listroster', GroupController.listRoster);
 
 	// Rutas para roles de 'isAuthor'
 

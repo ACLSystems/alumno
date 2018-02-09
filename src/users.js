@@ -129,6 +129,14 @@ const AdmUsrSchema = new Schema({
 	passwordSaved:{
 		type: String,
 		default: ''
+	},
+	validationString: {
+		type: String,
+		default: ''
+	},
+	adminCreate: {
+		type: Boolean,
+		default: false
 	}
 });
 
@@ -140,7 +148,7 @@ const UserSchema = new Schema ({
 		type: String,
 		required: [true, 'User name is required'],
 		unique: [true, 'User name already exists. Please verify'],
-		lowercase: true
+		match: /\S+@\S+\.\S+/
 	},
 	password: {
 		type: String,

@@ -5,7 +5,10 @@ const OrgUnit = require('../src/orgUnits');
 const generate = require('nanoid/generate');
 //const moment = require('moment');
 const permissions = require('../shared/permissions');
+const mailjet = require('../shared/mailjet');
 require('winston-daily-rotate-file');
+
+const url = 'https://alumno.sloppy.zone/api/user/confirmuser?';
 
 
 var transport = new(winston.transports.DailyRotateFile) ({
@@ -27,6 +30,9 @@ module.exports = {
 	register(req, res) {
 		var key = req.headers.key;
 		var userProps = req.body;
+		if(userProps.name !== userProps.person.email) {
+			userProps.name = userProps.person.email;
+		}
 		Org.findOne({ name: userProps.org }, { name: true } )
 			.then((org) => {
 				if (!org) {
@@ -47,8 +53,12 @@ module.exports = {
 									isActive: true,
 									isVerified: false,
 									recoverString: '',
-									passwordSaved: ''
+									passwordSaved: '',
+									adminCreate: false
 								};
+								if(userProps.name !== key) {
+									admin.adminCreate = true;
+								}
 								userProps.admin = admin;
 								var permUsers = new Array();
 								var permUser = { name: userProps.name, canRead: true, canModify: true, canSec: false };
@@ -80,27 +90,94 @@ module.exports = {
 								};
 								userProps.mod = new Array();
 								userProps.mod.push(mod);
+								// User Create
 								User.create(userProps)
-									.then(() => {
-										res.status(201).json({
-											'status': 201,
-											'message': 'User - ' + userProps.name + '- created'
-										});
+									.then((user) => {
+										user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
+										user.admin.adminCreate = false;
+										user.save()
+											.then((user) => {
+												const link = url + 'email=' + user.person.email + '&token=' + user.admin.validationString;
+												mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',310518,link)
+													.then(() => {
+														res.status(201).json({
+															'status': 201,
+															'message': 'User - ' + userProps.name + '- created',
+															'uri': link
+														});
+													})
+													.catch((err) => {
+														sendError(res,err,'register -- Sending Mail --');
+													});
+											})
+											.catch((err) => {
+												sendError(res,err,'register -- Saving User validation String --');
+											});
 									})
 									.catch((err) => {
 										var errString = err.toString();
 										var re = new RegExp('duplicate key error collection');
 										var found = errString.match(re);
 										if(found) {
+											/*
 											res.status(406).json({
 												'status': 406,
 												'message': 'Error: user -' + userProps.name + '- or email: -'+ userProps.person.email + '- already exists'
 											});
+											*/
+											User.findOne({$or:[{name: userProps.name},{'person.email': userProps.name}]})
+												.then((user) => {
+													if(user.admin && user.admin.adminCreate) {
+														user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
+														user.admin.adminCreate = false;
+														user.mod.push({
+															by: author,
+															when: date,
+															what: 'User completed registration'
+														});
+														user.org = userProps.org;
+														user.orgUnit = userProps.ou;
+														user.password = userProps.password;
+														user.person = userProps.person;
+														if(userProps.student) {
+															user.student = userProps.student;
+														}
+														user.save()
+															.then((user) => {
+																const link = url + 'email=' + user.person.email + '&token=' + user.admin.validationString;
+																mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',310518,link)
+																	.then(() => {
+																		res.status(201).json({
+																			'status': 201,
+																			'message': 'User - ' + userProps.name + '- created',
+																			'uri': link
+																		});
+																	})
+																	.catch((err) => {
+																		sendError(res,err,'register -- Sending Mail --');
+																	});
+															})
+															.catch((err) => {
+																sendError(res,err,'register -- Saving User validation String --');
+															});
+													} else {
+														res.status(406).json({
+															'status': 406,
+															'message': 'You have already registered previously'
+														});
+													}
+												})
+												.catch((err) => {
+													sendError(res,err,'register -- Finding User --');
+												});
+
+
+
 										} else {
 											sendError(res,err,'register -- User create --');
 										}
-
 									});
+								// User Create
 							}
 						})
 						.catch((err) => {
@@ -110,6 +187,35 @@ module.exports = {
 			})
 			.catch((err) => {
 				sendError(res,err,'register -- Finding org --');
+			});
+	},
+
+	confirm(req,res) {
+		const email = req.query.email;
+		const token = req.query.token;
+		User.findOne({'person.email': email})
+			.then((user) => {
+				if(token === user.admin.validationString){
+					user.admin.isVerified = true;
+					user.save()
+						.then(() => {
+							res.status(200).json({
+								'status': 200,
+								'message': 'User -'+ user.person.email + '- verified'
+							});
+						})
+						.catch((err) => {
+							sendError(res,err,'confirmUser -- Saving User Status --');
+						});
+				} else {
+					res.status(406).json({
+						'status': 406,
+						'message': 'Token is not valid. Please verify'
+					});
+				}
+			})
+			.catch((err) => {
+				sendError(res,err,'confirmUser -- Finding Email --');
 			});
 	},
 
@@ -312,15 +418,16 @@ module.exports = {
 
 	//validateEmail(req, res, next) {
 	validateEmail(req, res) {
-		const email = req.headers['email'] || (req.body && req.body.email);
+		const email = (req.body && req.body.email);
 		User.findOne({ 'person.email': email})
 			.then((user) => {
 				if(user) {
 					var emailID = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
 					user.admin.recoverString = emailID;
+					const link = url + 'email=' + user.person.email + '&token=' + user.admin.validationString;
+					mailjet.sendMail(user.person.email, user.person.name, 'Solicitud de recuperación de contraseña',311647,link);
 					user.save();
-					res.status(200);
-					res.json({
+					res.status(200).json({
 						'status': 200,
 						'message': 'Email found',
 						'id': emailID
@@ -335,6 +442,45 @@ module.exports = {
 			})
 			.catch((err) => {
 				sendError(res,err,'validateEmail -- Finding email --');
+			});
+	},
+
+	passwordRecovery(req, res) {
+		const email = (req.body && req.body.email);
+		const emailID = (req.body && req.body.emailID);
+		const password = (req.body && req.body.password);
+		User.findOne({ 'person.email': email})
+			.then((user) => {
+				if(user) {
+					if(emailID === user.admin.recoverString) {
+						user.admin.recoverString = '';
+						user.password = password;
+						user.save()
+							.then(() => {
+								res.status(200).json({
+									'status': 200,
+									'message': 'Password recovery sucessfully'
+								});
+							})
+							.catch((err) => {
+								sendError(res,err,'passwordRecovery -- Saving User --');
+							});
+					} else {
+						res.status(404).json({
+							'status': 404,
+							'message': 'Token ID is not valid and we cannot proceed with password recovery. Please try again.'
+						});
+					}
+				} else {
+					res.status(404);
+					res.json({
+						'status': 404,
+						'message': 'Email ' + email + 'does not exist'
+					});
+				}
+			})
+			.catch((err) => {
+				sendError(res,err,'passwordRecovery -- Finding user --');
 			});
 	},
 
@@ -468,11 +614,22 @@ module.exports = {
 							} else {
 								message = usersCount + ' users found from -' + key_user.org.name + '-';
 							}
+							var users_send = new Array();
+							users.forEach(function(user) {
+								users_send.push({
+									id: user._id,
+									name: user.name,
+									person: user.person,
+									student: user.student,
+									org: user.org,
+									orgUnit: user.orgUnit
+								});
+							});
 							res.status(200).json({
 								'status': 200,
 								'message': message,
 								'usersCount': usersCount,
-								'users': users
+								'users': users_send
 							});
 						})
 						.catch((err) => {

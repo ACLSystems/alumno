@@ -34,7 +34,7 @@ var auth = {
 			return;
 		}
 
-		Users.findOne({ name: username })
+		Users.findOne({$or: [{name: username},{'person.email': username}] })
 			.then((user) => {
 				if(!user) {
 					res.status(404).json({
@@ -51,8 +51,7 @@ var auth = {
 							session.token = objToken.token;
 							session.date = date;
 							session.save().then(() => {
-								res.status(200);
-								res.json({
+								res.status(200).json({
 									'status': 200,
 									'token': objToken.token,
 									'expires': objToken.expires
@@ -61,13 +60,18 @@ var auth = {
 								.catch((err) => {
 									sendError(res,err,'auth -- Saving session --');
 								});
+						} else {
+							res.status(400).json({
+								'status': 400,
+								'message': 'Password incorrect'
+							});
 						}
 					});
 				}
 			})
 			.catch((err) => {
-				const mess = {id: 404, error: 'Error: password incorrect'};
-				res.status(404).send(mess + err);
+				const mess = {id: 500, error: 'Error: server error'};
+				res.status(500).send(mess + err);
 			});
 	}
 };
