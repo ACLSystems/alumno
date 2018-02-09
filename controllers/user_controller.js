@@ -666,12 +666,12 @@ module.exports = {
 												send_users.push({
 													'name': u.name
 												});
-												res.status(200).json({
-													'status': 200,
-													'message': message,
-													'usersCount': usersCount,
-													'users': send_users
-												});
+											});
+											res.status(200).json({
+												'status': 200,
+												'message': message,
+												'usersCount': usersCount,
+												'users': send_users
 											});
 										} else {
 											res.status(200).json({
