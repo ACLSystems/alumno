@@ -57,6 +57,7 @@ module.exports = (app) => {
 	app.all('/api/v1/instructor/group/*', [require('../controllers/validateParams')]);
 	app.all('/api/v1/orgadm/*', [require('../controllers/validateParams')]);
 	app.all('/api/orgunit/*', [require('../controllers/validateParams')]);
+	app.all('/api/course/*', [require('../controllers/validateParams')]);
 
 	// RUTAS ---------------------------------------------------------------------------------
 
@@ -75,6 +76,8 @@ module.exports = (app) => {
 	app.get('/api/career/listareas', CareerController.listAreas);
 	app.get('/api/term/list', TermController.list);
 	app.get('/api/term/listtypes', TermController.listTypes);
+	app.get('/api/course/getblocklist', CourseController.getBlocklistStudents);
+	app.get('/api/course/list', CourseController.listCoursesStudents);
 
 	// Rutas que pueden acceder solo usuarios autenticados
 
@@ -83,7 +86,8 @@ module.exports = (app) => {
 	app.get('/api/v1/user/getdetails', UserController.getDetails);
 	app.put('/api/v1/user/passwordchange', UserController.passwordChange);
 	app.put('/api/v1/user/modify', UserController.modify);
-	app.get('/api/v1/user/mygroups', GroupController.mygroups);
+	app.get('/api/v1/user/mygroups', GroupController.myGroups);
+	app.get('/api/v1/user/nextblock', GroupController.nextBlock);
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados
 
@@ -106,6 +110,7 @@ module.exports = (app) => {
 	app.post('/api/v1/author/course/createquestionnarie', CourseController.createQuestionnarie);
 	app.post('/api/v1/author/course/addquestions', CourseController.addQuestions);
 	app.put('/api/v1/author/course/modify', CourseController.modify);
+	app.put('/api/v1/author/course/makeavailable', CourseController.makeAvailable);
 	app.post('/api/v1/author/file/upload', upload.single('file'), FileController.upload);
 	app.get('/api/v1/author/file/download', FileController.download);
 

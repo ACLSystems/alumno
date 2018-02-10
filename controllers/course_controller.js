@@ -4,6 +4,7 @@ const Course = require('../src/courses');
 const Category = require('../src/categories');
 const Block = require('../src/blocks');
 const permissions = require('../shared/permissions');
+const Org = require('../src/orgs');
 
 //const Org = require('../src/orgs');
 //const OrgUnit = require('../src/orgUnits');
@@ -58,12 +59,9 @@ module.exports = {
 				Course.create(course)
 					.then(() => {
 						course.categories.forEach( function(cat) {
-							//console.log(cat); // eslint-disable-line
 							Category.findOne({ name: cat })
 								.then((cat_found) => {
-									//console.log(cat_found); // eslint-disable-line
 									if(!cat_found){
-										//console.log('aca ando'); // eslint-disable-line
 										const category = new Category({
 											name: cat,
 											isVisible: true,
@@ -197,6 +195,67 @@ module.exports = {
 				sendError(res,err,'listCourses -- Finding User --');
 			});
 	}, // listCourses
+
+	listCoursesStudents(req,res) {
+		var query = {};
+		Org.findOne({ name: req.query.org })
+			.then((org) => {
+				var sort = { name: 1 };
+				var skip = 0;
+				var limit = 15;
+				query = { org: org._id };
+				if(req.query.sort) { sort = { name: req.query.sort }; }
+				if(req.query.skip) { skip = parseInt( req.query.skip ); }
+				if(req.query.limit) { limit = parseInt( req.query.limit ); }
+				if(req.query.categories) {
+					query.categories = JSON.parse(req.query.categories);
+				}
+				if(req.query.keywords) {
+					query.keywords = JSON.parse(req.query.categories);
+				}
+				if(req.query.title) {
+					query.title = { title: { $regex : /req.query.title/i }};
+				}
+				if(req.query.author) {
+					query.author = { author: req.query.author };
+				}
+				query.status = 'published';
+				query.isVisible = true;
+				Course.find(query)
+					.sort(sort)
+					.skip(skip)
+					.limit(limit)
+					.then((courses) => {
+						var send_courses = new Array();
+						courses.forEach(function(course) {
+							send_courses.push({
+								id: course._id,
+								title: course.title,
+								code: course.code,
+								image: course.image,
+								description: course.description,
+								categories: course.categories,
+								isVisible: course.isVisible,
+								price: course.price,
+								author: course.author
+							});
+						});
+						res.status(200).json({
+							'status': 201,
+							'message': {
+								'coursesNum': send_courses.length,
+								'courses': send_courses
+							}
+						});
+					})
+					.catch((err) => {
+						sendError(res,err,'listCourses -- Finding Course --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'listCourses -- Finding User --');
+			});
+	}, // listCoursesStudents
 
 	createBlock(req,res) {
 		const key = req.headers.key;
@@ -521,6 +580,56 @@ module.exports = {
 			});
 	},// getBlocklist
 
+	getBlocklistStudents(req,res) {
+		var query = {};
+		if(req.query.code) {
+			query = { code: req.query.code };
+		} else {
+			query = { _id: req.query.id };
+		}
+		Course.findOne(query)
+			.then((course) => {
+				if(course) {
+					if(course.isVisible || course.status === 'published') {
+						Block.find({ _id: { $in: course.blocks }})
+							.then((blocks) => {
+								var send_blocks = new Array();
+								blocks.forEach(function(block) {
+									if(block.isVisible && block.status === 'published') {
+										send_blocks.push({
+											id: 						block._id,
+											title: 					block.title,
+											section: 				block.section,
+											number: 				block.number
+										});
+									}
+								});
+								res.status(200).json({
+									'status': 200,
+									'message': {
+										blockNum: send_blocks.length,
+										blocks: send_blocks
+									}
+								});
+							});
+					} else {
+						res.status(404).json({
+							'status': 404,
+							'message': 'Course you requested is not visible nor published yet'
+						});
+					}
+				} else {
+					res.status(404).json({
+						'status': 404,
+						'message': 'Course not found'
+					});
+				}
+			}) // aqui
+			.catch((err) => {
+				sendError(res,err,'getBlocklist -- Searching Course --');
+			});
+	},// getBlocklist
+
 	createQuestionnarie(req,res) {
 		const key = req.headers.key;
 		var queryBlock = {};
@@ -788,7 +897,61 @@ module.exports = {
 			.catch((err) => {
 				sendError(res,err,'modifyBlock -- Searching Key user --');
 			});
-	} // modifyBlock
+	}, // modifyBlock
+
+	makeAvailable(req,res) {
+		const key = req.headers.key;
+		const coursecode = req.body.code;
+		User.findOne({name: key})
+			.then(() => {
+				Course.findOne({code: coursecode})
+					.then((course) => {
+						course.status = 'published';
+						course.isVisible = true;
+						course.save()
+							.then((course) => {
+								Block.find({_id: {$in: course.blocks}})
+									.then((blocks) => {
+										var status = 'ok';
+										var details = new Array();
+										blocks.forEach(function(block) {
+											block.isVisible = true;
+											block.status = 'published';
+											block.save()
+												.catch((err) => {
+													status = 'not ok';
+													details.push(err.message);
+												});
+										});
+										if(status === 'ok') {
+											res.status(200).json({
+												'stauts': 200,
+												'message': 'Course -' + course.code + '- available'
+											});
+										} else {
+											res.status(500).json({
+												'status': 500,
+												'message': 'There was some errors',
+												'details': details
+											});
+										}
+									})
+									.catch((err) => {
+										sendError(res,err,'makeAvailable.courses -- Searching Blocks --');
+									});
+							})
+							.catch((err) => {
+								sendError(res,err,'makeAvailable.courses -- Saving Course --');
+							});
+					})
+					.catch((err) => {
+						sendError(res,err,'makeAvailable.courses -- Searching Course --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'makeAvailable.courses -- Searching Key user --');
+			});
+	} // makeAvailable
 };
 
 function sendError(res, err, section) {

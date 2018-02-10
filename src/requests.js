@@ -3,6 +3,7 @@
 const mongoose = require('mongoosee');
 const Schema = mongoose.Schema;
 
+mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 const ItemsSchema = new Schema ({
 	itemCode: {

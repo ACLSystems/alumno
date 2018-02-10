@@ -6,6 +6,8 @@ const AddressSchema = require('./address');
 const PermissionsSchema = require('./permissions');
 const Schema = mongoose.Schema;
 
+mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
 const OrgUnitsSchema = new Schema ({
 	name: {
 		type: String,

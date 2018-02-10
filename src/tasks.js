@@ -5,6 +5,8 @@ const PermissionsSchema = require('./permissions');
 const OwnerSchema = require('./owner');
 const Schema = mongoose.Schema;
 
+mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
 const TaskSchema = new Schema ({
 	title: {
 		type: String,

@@ -8,6 +8,8 @@ const AddressSchema = require('./address');
 const moment = require('moment');
 const Schema = mongoose.Schema;
 
+mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
 // Esquema para el usuario que es un estudiante
 const StudentSchema = new Schema ({
 	id: { // se puede usar como matricula o id del estudiante

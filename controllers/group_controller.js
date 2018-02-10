@@ -4,6 +4,7 @@ const User = require('../src/users');
 //const OrgUnit = require('../src/orgUnits');
 const Course = require('../src/courses');
 const Group = require('../src/groups');
+const Block = require('../src/blocks');
 //const permissions = require('../shared/permissions');
 require('winston-daily-rotate-file');
 
@@ -135,10 +136,7 @@ module.exports = {
 				Group.findOne({ code: roster.code })
 					.populate('instructor')
 					.populate('orgUnit')
-					.populate({
-						path: 'roster.student',
-						model: 'users'
-					})
+					.populate('students')
 					.then((group) => {
 						if(group) {
 							var send_group = {
@@ -152,20 +150,20 @@ module.exports = {
 							};
 
 							var students = new Array();
-							group.roster.forEach(function(s) {
+							group.students.forEach(function(s) {
 
 								students.push({
 									id: s.id,
 									username: s.name,
-									name: s.student.person.name,
-									fatherName: s.student.person.fatherName,
-									motherName: s.student.person.motherName,
-									email: s.student.person.email,
-									career: s.student.career,
-									term: s.student.term
+									name: s.person.name,
+									fatherName: s.person.fatherName,
+									motherName: s.person.motherName,
+									email: s.person.email,
+									career: s.career,
+									term: s.term
 								});
 							});
-							send_group.roster = students;
+							send_group.students = students;
 
 							res.status(200).json({
 								'status': 200,
@@ -187,7 +185,7 @@ module.exports = {
 			});
 	}, //listRoster
 
-	mygroups(req,res) {
+	myGroups(req,res) {
 		const key = req.headers.key;
 		User.findOne({$or: [{name: key},{'person.email': key}]})
 			.then((key_user) => {
@@ -201,13 +199,16 @@ module.exports = {
 							var myStudent = students.findIndex(myStudent => myStudent == key_user._id + '');
 							send_groups.push({
 								code: group.code,
+								groupid: group._id,
 								name: group.name,
 								course: group.course.title,
 								courseCode: group.course.code,
+								courseid: group.course._id,
 								instructor: group.instructor.person.name + ' ' + group.instructor.person.fatherName,
 								beginDate: group.beginDate,
 								endDate: group.endDate,
-								myStatus: group.roster[myStudent].status
+								myStatus: group.roster[myStudent].status,
+								firstBlock: group.course.blocks[0]
 							});
 						});
 						if(groups.length === 0) {
@@ -237,7 +238,107 @@ module.exports = {
 			.catch((err) => {
 				sendError(res,err,'mygroups.Group -- Finding User --');
 			});
-	} // mygroups
+	}, // mygroups
+
+	nextBlock(req,res) {
+		const key = req.headers.key;
+		const groupid = req.query.groupid;
+		const courseid = req.query.courseid;
+		const blockid = req.query.blockid;
+		var students = new Array();
+		User.findOne({$or: [{name: key},{'person.email': key}]}) // Buscar el usuario
+			.then((key_user) => {
+				Group.findById(groupid)		// Buscar el grupo solicitado
+					.then((group) => {
+						students = group.students;
+						var myStudent = students.find(myStudent => myStudent == key_user._id + '');
+						if(myStudent) {
+							Course.findById(courseid) // Buscar el curso
+								.then((course) => {
+									if(course) {
+										var blocks = course.blocks;
+										Block.findById(blockid)	// Buscar el bloque solicitado
+											.then((block) => {
+												if(block) {
+													var status = 'ok';
+													var prevblockid = '';
+													var nextblockid = '';
+													var blockIndex = blocks.findIndex(blockIndex => blockIndex == blockid + '');
+													if(blockIndex === -1) {
+														res.status(404).json({
+															'status': 404,
+															'message': 'Error XXXX: Data integrity error. Block not found. Please notify administrator'
+														});
+														status = 'data integrity error';
+													} else if (blocks.length === 1) {
+														nextblockid = '';
+														prevblockid = '';
+													} else if (blockIndex === 0) {
+														nextblockid = blocks[blockIndex + 1];
+													} else if (blockIndex > 0 && blockIndex < blocks.length - 1) {
+														nextblockid = blocks[blockIndex + 1];
+														prevblockid = blocks[blockIndex - 1];
+													} else if (blockIndex === blocks.length - 1 && blockIndex !== 0) {
+														prevblockid = blocks[blockIndex - 1];
+													}
+													if(block.isVisible && block.status === 'published') {
+														var send_content = {
+															blockCode:				block.code,
+															blockType: 				block.type,
+															blockTitle: 			block.title,
+															blockSection: 		block.section,
+															blockNumber: 			block.number,
+															blockContent: 		block.content,
+															blockMinimumTime: block.defaultmin,
+															blockPrevId:			prevblockid,
+															blockNextId:			nextblockid
+														};
+														res.status(200).json({
+															'status': 200,
+															'message': send_content
+														});
+													} else {
+														res.status(404).json({
+															'status': 404,
+															'message': 'Block requested is not available (not visible nor published)'
+														});
+													}
+												} else {
+													res.status(404).json({
+														'status': 404,
+														'message': 'Block requested is not found'
+													});
+												}
+											})
+											.catch((err) => {
+												sendError(res,err,'nextBlock.Group -- Finding Block --');
+											});
+									} else {
+										res.status(404).json({
+											'status': 404,
+											'message': 'Course requested is not found'
+										});
+									}
+
+								})
+								.catch((err) => {
+									sendError(res,err,'nextBlock.Group -- Finding Course --');
+								});
+						} else {
+							res.status(404).json({
+								'status': 404,
+								'message': 'You do not belong to this group. Please contact your administrator'
+							});
+						}
+					})
+					.catch((err) => {
+						sendError(res,err,'nextBlock.Group -- Finding Group --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'nextBlock.Group -- Finding User --');
+			});
+	}
 };
 
 

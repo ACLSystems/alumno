@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 //const GroupsSchema = require('./groups');
 const Schema = mongoose.Schema;
 
+mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
 const TracksSchema = new Schema ({
 	user: {
 		type: String,

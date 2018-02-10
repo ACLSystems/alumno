@@ -4,6 +4,7 @@ const init = require('./init');
 const version = require('../shared/version');
 mongoose.Promise = global.Promise;
 
+
 // Bring winston
 const winston = require('winston');
 require('winston-daily-rotate-file');

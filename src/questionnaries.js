@@ -58,6 +58,10 @@ const QuestionnarieSchema = new Schema ({
 		enum: ['quiz','poll'],
 		default: 'Quiz'
 	},
+	begin: {
+		type: Boolean,
+		default: false
+	},
 	questions: [QuestionSchema],
 	w: {
 		type: Number,

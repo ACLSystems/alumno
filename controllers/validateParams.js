@@ -233,6 +233,63 @@ module.exports = function(req, res, next) {
 		next();
 		break;
 
+	case '/api/course/getblocklist':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give data by query to process'
+			});
+		} else if (!req.query.code && !req.query.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give course code or course id by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/course/list':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give data by query to process'
+			});
+		} else if (!req.query.org) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give org by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/user/nextblock':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give data by query to process'
+			});
+		} else if(!req.query.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1781: Please, give groupid by query to process'
+			});
+		} else if(!req.query.courseid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1781: Please, give courseid by query to process'
+			});
+		} else if(!req.query.blockid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1781: Please, give blockid by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
 
 	// RUTAS PARA ORGANIZACIONES -------------------------------------------------ORGANIZACIONES
 
@@ -630,6 +687,22 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/author/course/makeavailable':
+		if(!req.body) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1455: Please, give data by body to process'
+			});
+		} else if (!req.body.code) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1456: Please, give course code by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	// RUTAS PARA GRUPOS ---------------------------------------------------------GRUPOS
 
 	case '/api/v1/instructor/group/create':
@@ -715,6 +788,8 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
+
+
 
 	// RUTAS PARA CARRERAS -------------------------------------------------------CARRERAS
 

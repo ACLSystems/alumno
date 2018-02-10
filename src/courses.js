@@ -6,6 +6,8 @@ const PermissionsSchema = require('./permissions');
 //const BlocksSchema = require('./blocks');
 const Schema = mongoose.Schema;
 
+mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
 const CoursesSchema = new Schema ({
 	code: {
 		type: String,

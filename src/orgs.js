@@ -4,6 +4,8 @@ const ModSchema = require('./modified');
 const PermissionsSchema = require('./permissions');
 const Schema = mongoose.Schema;
 
+mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
 const OrgsSchema = new Schema ({
 	name: {
 		type: String,

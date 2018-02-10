@@ -9,6 +9,8 @@ const PermissionsSchema = require('./permissions');
 //const OrgUnitsSchema = require('./orgUnits');
 const Schema = mongoose.Schema;
 
+mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
 const DatesSchema = new Schema ({
 	block: {
 		type: Schema.Types.ObjectId,

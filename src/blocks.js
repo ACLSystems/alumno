@@ -7,6 +7,8 @@ const TaskSchema = require('./tasks');
 const QuestionnarieSchema = require('./questionnaries');
 const Schema = mongoose.Schema;
 
+mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
 const BlocksSchema = new Schema ({
 	org: {
 		type: Schema.Types.ObjectId,
