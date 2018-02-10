@@ -660,10 +660,21 @@ module.exports = {
 										} else {
 											message = usersCount + ' users found from -' + org.name + '-';
 										}
+										var send_users = new Array();
 										if(listing === 'basic') {
-											var send_users = new Array();
 											users.forEach(function(u) {
 												send_users.push(u.name);
+											});
+											res.status(200).json({
+												'status': 200,
+												'message': message,
+												'usersCount': usersCount,
+												'users': send_users
+											});
+										} else if(listing === 'id') {
+											send_users = new Array();
+											users.forEach(function(u) {
+												send_users.push({name: u.name, id: u._id});
 											});
 											res.status(200).json({
 												'status': 200,
