@@ -21,10 +21,14 @@ module.exports = OptionSchema;
 const AnswerSchema = new Schema ({
 	type: {
 		type: String,
-		enum: ['index', 'text']
+		enum: ['index', 'text', 'tf']
 	},
 	index: Number,
-	text: String
+	text: String,
+	tf: {
+		type: String,
+		enum: ['true', 'false']
+	}
 });
 
 module.exports = AnswerSchema;
@@ -45,7 +49,11 @@ const QuestionSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum: ['open', 'option'],
+		enum: ['open', 'text', 'option', 'tf'],
+		// open 	>>> pregunta abierta
+		// text 	>>> pregunta con respuesta de texto
+		// option >>> pregunta con opciones (opción múltiple)
+		// tf			>>> verdadero(t), falso(f)
 		required: true
 	},
 	options: [OptionSchema],

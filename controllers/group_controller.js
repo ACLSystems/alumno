@@ -292,6 +292,33 @@ module.exports = {
 															blockPrevId:			prevblockid,
 															blockNextId:			nextblockid
 														};
+														var questionnaries = block.questionnaries;
+														var send_questionnaries = new Array();
+														questionnaries.forEach(function(quest) {
+															if(quest.isVisible) {
+																var questions = quest.questions;
+																var send_questions = new Array();
+																questions.forEach(function(q) {
+																	if(q.isVisible) {
+																		send_questions.push({
+																			text: 		q.text,
+																			help: 		q.help,
+																			type: 		q.type,
+																			w: 				q.w,
+																			answers:	q.answers,
+																			options:	q.options,
+																			footer:		q.footer
+																		});
+																	}
+																});
+																send_questionnaries.push({
+																	type: quest.type,
+																	begin: quest.begin,
+																	questions: send_questions
+																});
+															}
+														});
+														send_content.questionnaries= send_questionnaries;
 														res.status(200).json({
 															'status': 200,
 															'message': send_content
