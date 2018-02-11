@@ -30,9 +30,18 @@ const AnswerSchema = new Schema ({
 module.exports = AnswerSchema;
 
 const QuestionSchema = new Schema ({
+	header: {
+		type: String
+	},
+	footer: {
+		type: String
+	},
 	text: {
 		type: String,
 		required: true
+	},
+	help: {
+		type: String
 	},
 	type: {
 		type: String,

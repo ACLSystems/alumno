@@ -235,6 +235,7 @@ module.exports = {
 								image: course.image,
 								description: course.description,
 								categories: course.categories,
+								keywords: course.keywords,
 								isVisible: course.isVisible,
 								price: course.price,
 								author: course.author

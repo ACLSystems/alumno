@@ -260,7 +260,6 @@ module.exports = {
 										Block.findById(blockid)	// Buscar el bloque solicitado
 											.then((block) => {
 												if(block) {
-													var status = 'ok';
 													var prevblockid = '';
 													var nextblockid = '';
 													var blockIndex = blocks.findIndex(blockIndex => blockIndex == blockid + '');
@@ -269,7 +268,7 @@ module.exports = {
 															'status': 404,
 															'message': 'Error XXXX: Data integrity error. Block not found. Please notify administrator'
 														});
-														status = 'data integrity error';
+														return;
 													} else if (blocks.length === 1) {
 														nextblockid = '';
 														prevblockid = '';
