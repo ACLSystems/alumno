@@ -197,18 +197,27 @@ module.exports = {
 						groups.forEach(function(group) {
 							var students = group.students;
 							var myStudent = students.findIndex(myStudent => myStudent == key_user._id + '');
+							var lastSeenBlock = '';
+							if (group.roster[myStudent].grades) {
+								if(group.roster[myStudent].grades.length > 0) {
+									if(group.roster[myStudent].grades[group.roster[myStudent].grades.length -1].block) {
+										lastSeenBlock = group.roster[myStudent].grades[group.roster[myStudent].grades.length -1].block;
+									}
+								}
+							}
 							send_groups.push({
-								code: group.code,
-								groupid: group._id,
-								name: group.name,
-								course: group.course.title,
-								courseCode: group.course.code,
-								courseid: group.course._id,
-								instructor: group.instructor.person.name + ' ' + group.instructor.person.fatherName,
-								beginDate: group.beginDate,
-								endDate: group.endDate,
-								myStatus: group.roster[myStudent].status,
-								firstBlock: group.course.blocks[0]
+								code: 					group.code,
+								groupid: 				group._id,
+								name: 					group.name,
+								course: 				group.course.title,
+								courseCode: 		group.course.code,
+								courseid: 			group.course._id,
+								instructor: 		group.instructor.person.name + ' ' + group.instructor.person.fatherName,
+								beginDate: 			group.beginDate,
+								endDate: 				group.endDate,
+								myStatus: 			group.roster[myStudent].status,
+								firstBlock: 		group.course.blocks[0],
+								lastSeenBlock:	lastSeenBlock
 							});
 						});
 						if(groups.length === 0) {
@@ -240,29 +249,142 @@ module.exports = {
 			});
 	}, // mygroups
 
+	myGroup(req,res) {
+		const key 		= req.headers.key;
+		const groupid	= req.query.groupid;
+		User.findOne({$or: [{name: key},{'person.email': key}]})
+			.then((key_user) => {
+				Group.findOne({_id: groupid})
+					.populate('course')
+					.then((myGroup) => {
+						var students = myGroup.students;
+						var myStudent = students.findIndex(myStudent => myStudent == key_user._id + '');
+						var grades = new Array();
+						if (myGroup.roster[myStudent].grades) {
+							grades = myGroup.roster[myStudent].grades;
+						}
+						Course.findOne({code: myGroup.course.code})
+							.then((course) => {
+								if(course) {
+									if(course.isVisible || course.status === 'published') {
+										Block.find({ _id: { $in: course.blocks }})
+											.then((blocks) => {
+												var send_blocks = new Array();
+												blocks.forEach(function(block) {
+													if(block.isVisible && block.status === 'published') {
+														var send_block = {
+															id: 						block._id,
+															title: 					block.title,
+															section: 				block.section,
+															number: 				block.number
+														};
+														if(grades.length > 0) {
+															grades.forEach(function(grade) {
+																let g1 = grade.block + '';
+																let g2 = block._id + '';
+																if(g1 === g2) {
+																	send_block.track = true;
+																} else {
+																	send_block.track = false;
+																}
+															});
+														}
+														send_blocks.push(send_block);
+													}
+												});
+												res.status(200).json({
+													'status': 200,
+													'message': {
+														blockNum: send_blocks.length,
+														blocks: send_blocks
+													}
+												});
+											})
+											.catch((err) => {
+												sendError(res,err,'mygroup.Group -- Finding blocks --');
+											});
+									} else {
+										res.status(404).json({
+											'status': 404,
+											'message': 'Course is not visible nor published yet'
+										});
+									}
+								}
+							})
+							.catch((err) => {
+								sendError(res,err,'mygroup.Group -- Finding Course --');
+							});
+					})
+					.catch((err) => {
+						sendError(res,err,'mygroup.Group -- Finding Group --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'mygroup.Group -- Finding User --');
+			});
+	}, // mygroup
+
 	nextBlock(req,res) {
-		const key = req.headers.key;
-		const groupid = req.query.groupid;
-		const courseid = req.query.courseid;
-		const blockid = req.query.blockid;
-		var students = new Array();
+		const key 			= req.headers.key;
+		const groupid 	= req.query.groupid;
+		const courseid 	= req.query.courseid;
+		const blockid 	= req.query.blockid;
+		var		lastid 		= 'empty';
+		if(req.query.lastid) {
+			lastid = req.query.lastid;
+		}
+		var students 		= new Array();
+		var myStudent = -1;
 		User.findOne({$or: [{name: key},{'person.email': key}]}) // Buscar el usuario
 			.then((key_user) => {
 				Group.findById(groupid)		// Buscar el grupo solicitado
 					.then((group) => {
 						students = group.students;
-						var myStudent = students.find(myStudent => myStudent == key_user._id + '');
-						if(myStudent) {
+						myStudent = students.findIndex(myStudent => myStudent == key_user._id + '');
+						//var myStudentIndex = students.findIndex(myStudent => myStudent == key_user._id + '');
+						if(myStudent > -1 ) {
 							Course.findById(courseid) // Buscar el curso
 								.then((course) => {
-									if(course) {
+									if(course) {					// Encontramos curso, ahora hay que buscar el registro track del usuario
 										var blocks = course.blocks;
 										Block.findById(blockid)	// Buscar el bloque solicitado
 											.then((block) => {
 												if(block) {
 													var prevblockid = '';
 													var nextblockid = '';
-													var blockIndex = blocks.findIndex(blockIndex => blockIndex == blockid + '');
+													var grades = {};
+													if(group.roster[myStudent].grades) {
+														grades = group.roster[myStudent].grades;
+														var myGrade = {};
+														grades.forEach(function(grade) {
+															const blockString = grade.block + '';
+															if(blockString === lastid) {
+																myGrade = grade.block;
+															}
+														});
+														if(Object.keys(myGrade).length === 0) {
+															if(lastid !== 'empty') {
+																myGrade = {
+																	block: lastid,
+																	track: 100
+																};
+																grades.push(myGrade);
+															}
+														}
+													} else {
+														if(lastid !== 'empty') {
+															grades = [{
+																block: lastid,
+																track: 100
+															}];
+														}
+													}
+													group.roster[myStudent].grades = grades;
+													group.save()
+														.catch((err) => {
+															sendError(res,err,'nextBlock.Group -- Saving Block --');
+														});
+													var blockIndex 	= blocks.findIndex(blockIndex => blockIndex == blockid + '');
 													if(blockIndex === -1) {
 														res.status(404).json({
 															'status': 404,
@@ -289,6 +411,7 @@ module.exports = {
 															blockNumber: 			block.number,
 															blockContent: 		block.content,
 															blockMinimumTime: block.defaultmin,
+															blockCurrentId:		block._id,
 															blockPrevId:			prevblockid,
 															blockNextId:			nextblockid
 														};
@@ -371,13 +494,15 @@ module.exports = {
 
 // Private Functions -----------------------------------------------------------
 
-function sendError(res, err, section) {
+function sendError(res, err, section,send_user) {
 	logger.info('Course controller -- Section: ' + section + '----');
 	logger.info(err);
-	res.status(500).json({
-		'status': 500,
-		'message': 'Error',
-		'Error': err.message
-	});
+	if(!send_user) {
+		res.status(500).json({
+			'status': 500,
+			'message': 'Error',
+			'Error': err.message
+		});
+	}
 	return;
 }

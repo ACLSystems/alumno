@@ -25,6 +25,8 @@
 /logs/*
 /ssl/*
 /data/*
+/config/secret.js
+/config/newpass.js
 *.log
 *.sql
 *.sqlite
@@ -45,3 +47,8 @@ Thumbs.db
 # mejor correr: node install
 # para que instale todo lo que node necesita
 node_modules/*
+
+# otros archivos     #
+######################
+doc/Oferta*
+/src/*NO_USAR*

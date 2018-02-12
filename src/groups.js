@@ -66,7 +66,7 @@ const RosterSchema = new Schema ({
 		type: String,
 		enum: ['pending','active','finished','remove']
 	},
-	grades: GradesSchema
+	grades: [GradesSchema]
 });
 
 module.exports = RosterSchema;

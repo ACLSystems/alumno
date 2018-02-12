@@ -233,6 +233,22 @@ module.exports = function(req, res, next) {
 		next();
 		break;
 
+	case '/api/v1/user/mygroup':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give data by query to process'
+			});
+		} else if (!req.query.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give group id by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/course/getblocklist':
 		if(!req.query) {
 			res.status(406).json({

@@ -52,3 +52,4 @@ node_modules/*
 # otros archivos     #
 ######################
 doc/Oferta*
+/src/*NO_USAR*
