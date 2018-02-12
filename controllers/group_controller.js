@@ -257,64 +257,71 @@ module.exports = {
 				Group.findOne({_id: groupid})
 					.populate('course')
 					.then((myGroup) => {
-						var students = myGroup.students;
-						var myStudent = students.findIndex(myStudent => myStudent == key_user._id + '');
-						var grades = new Array();
-						if (myGroup.roster[myStudent].grades) {
-							grades = myGroup.roster[myStudent].grades;
-						}
-						Course.findOne({code: myGroup.course.code})
-							.then((course) => {
-								if(course) {
-									if(course.isVisible || course.status === 'published') {
-										Block.find({ _id: { $in: course.blocks }})
-											.then((blocks) => {
-												var send_blocks = new Array();
-												blocks.forEach(function(block) {
-													if(block.isVisible && block.status === 'published') {
-														var send_block = {
-															id: 						block._id,
-															title: 					block.title,
-															section: 				block.section,
-															number: 				block.number,
-															track:					false
-														};
-														if(grades.length > 0) {
-															grades.forEach(function(grade) {
-																let g1 = grade.block + '';
-																let g2 = block._id + '';
-																if(g1 === g2) {
-																	if(grade.track === 100) {
-																		send_block.track = true;
+						if(myGroup) {
+							var students = myGroup.students;
+							var myStudent = students.findIndex(myStudent => myStudent == key_user._id + '');
+							var grades = new Array();
+							if (myGroup.roster[myStudent].grades) {
+								grades = myGroup.roster[myStudent].grades;
+							}
+							Course.findOne({code: myGroup.course.code})
+								.then((course) => {
+									if(course) {
+										if(course.isVisible || course.status === 'published') {
+											Block.find({ _id: { $in: course.blocks }})
+												.then((blocks) => {
+													var send_blocks = new Array();
+													blocks.forEach(function(block) {
+														if(block.isVisible && block.status === 'published') {
+															var send_block = {
+																id: 						block._id,
+																title: 					block.title,
+																section: 				block.section,
+																number: 				block.number,
+																track:					false
+															};
+															if(grades.length > 0) {
+																grades.forEach(function(grade) {
+																	let g1 = grade.block + '';
+																	let g2 = block._id + '';
+																	if(g1 === g2) {
+																		if(grade.track === 100) {
+																			send_block.track = true;
+																		}
 																	}
-																}
-															});
+																});
+															}
+															send_blocks.push(send_block);
 														}
-														send_blocks.push(send_block);
-													}
+													});
+													res.status(200).json({
+														'status': 200,
+														'message': {
+															blockNum: send_blocks.length,
+															blocks: send_blocks
+														}
+													});
+												})
+												.catch((err) => {
+													sendError(res,err,'mygroup.Group -- Finding blocks --');
 												});
-												res.status(200).json({
-													'status': 200,
-													'message': {
-														blockNum: send_blocks.length,
-														blocks: send_blocks
-													}
-												});
-											})
-											.catch((err) => {
-												sendError(res,err,'mygroup.Group -- Finding blocks --');
+										} else {
+											res.status(404).json({
+												'status': 404,
+												'message': 'Course is not visible nor published yet'
 											});
-									} else {
-										res.status(404).json({
-											'status': 404,
-											'message': 'Course is not visible nor published yet'
-										});
+										}
 									}
-								}
-							})
-							.catch((err) => {
-								sendError(res,err,'mygroup.Group -- Finding Course --');
+								})
+								.catch((err) => {
+									sendError(res,err,'mygroup.Group -- Finding Course --');
+								});
+						} else {
+							res.status(400).json({
+								'status': 400,
+								'message': 'Group with id -' + groupid + '- not found'
 							});
+						}
 					})
 					.catch((err) => {
 						sendError(res,err,'mygroup.Group -- Finding Group --');
