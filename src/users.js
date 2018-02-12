@@ -24,6 +24,15 @@ const StudentSchema = new Schema ({
 	isActive: {
 		type: Boolean,
 		default: true
+	},
+	type: {
+		type: String,
+		enum:['internal', 'external'],
+		default: 'internal'
+	},
+	external: {
+		type: String,
+		enum: ['private','public','particular']
 	}
 });
 

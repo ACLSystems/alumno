@@ -276,16 +276,17 @@ module.exports = {
 															id: 						block._id,
 															title: 					block.title,
 															section: 				block.section,
-															number: 				block.number
+															number: 				block.number,
+															track:					false
 														};
 														if(grades.length > 0) {
 															grades.forEach(function(grade) {
 																let g1 = grade.block + '';
 																let g2 = block._id + '';
 																if(g1 === g2) {
-																	send_block.track = true;
-																} else {
-																	send_block.track = false;
+																	if(grade.track === 100) {
+																		send_block.track = true;
+																	}
 																}
 															});
 														}
