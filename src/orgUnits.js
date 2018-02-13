@@ -25,7 +25,7 @@ const OrgUnitsSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum: ['org', 'country', 'region', 'state', 'city', 'area', 'campus', 'department', 'building', 'section', 'floor','room']
+		enum: ['org', 'country', 'region', 'state', 'city', 'area', 'campus', 'institute', 'department', 'building', 'section', 'floor','room']
 	},
 	org: {
 		type: Schema.Types.ObjectId,

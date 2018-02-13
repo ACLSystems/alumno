@@ -33,6 +33,9 @@ const StudentSchema = new Schema ({
 	external: {
 		type: String,
 		enum: ['private','public','particular']
+	},
+	origin: {
+		type: String
 	}
 });
 
