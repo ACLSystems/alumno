@@ -431,7 +431,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	// RUTAS PARA CONTENIDOS ---------------------------------------------------CONTENIDOS
+	// RUTAS PARA CONTENIDOS -----------------------------------------------------CONTENIDOS
 	case '/api/v1/author/course/create':
 		if(!req.body) {  // POST
 			res.status(406).json({
@@ -535,6 +535,23 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
+
+	case '/api/v1/author/course/modifyblock':
+		if(!req.body) {  // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1430: Please, give data by body to process'
+			});
+		} else if (!req.body.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1431: Please, give block id by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 
 	case '/api/v1/author/file/upload':
 		if(!req.file) {  // POST
@@ -805,7 +822,26 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-
+	case '/api/v1/instructor/group/addstudent':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else if (!req.body.code) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group code by body to process'
+			});
+		} else if (!req.body.student) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give student id by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
 
 	// RUTAS PARA CARRERAS -------------------------------------------------------CARRERAS
 

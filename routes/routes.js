@@ -97,6 +97,7 @@ module.exports = (app) => {
 	app.post('/api/v1/instructor/group/create', GroupController.create);
 	app.put('/api/v1/instructor/group/createroster', GroupController.createRoster);
 	app.get('/api/v1/instructor/group/listroster', GroupController.listRoster);
+	app.post('/api/v1/instructor/group/addstudent', GroupController.addStudent);
 
 	// Rutas para roles de 'isAuthor'
 
@@ -104,6 +105,7 @@ module.exports = (app) => {
 	app.get('/api/v1/course/listcourses', CourseController.listCourses);
 	app.post('/api/v1/author/course/create', CourseController.create);
 	app.post('/api/v1/author/course/createblock', CourseController.createBlock);
+	app.put('/api/v1/author/course/modifyblock', CourseController.modifyBlock);
 	app.get('/api/v1/author/course/getblock', CourseController.getBlock);
 	app.get('/api/v1/author/course/getblocklist', CourseController.getBlocklist);
 	app.get('/api/v1/author/course/getblockby', CourseController.getBlockBy);

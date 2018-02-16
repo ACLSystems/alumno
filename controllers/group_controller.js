@@ -128,6 +128,58 @@ module.exports = {
 			});
 	}, //createRoster
 
+	addStudent(req,res) {
+		const key = req.headers.key;
+		var roster = req.body;
+		User.findOne({ name: key })
+			.then(() => {
+				Group.findOne({ code: roster.code })
+					.then((group) => {
+						User.findById(roster.student)
+							.then((student) => {
+								if(student){
+									if(group) {
+										group.students.push(student._id);
+										group.roster.push({
+											status: 'pending',
+											grades: []
+										});
+										group.save()
+											.then(() => {
+												res.status(200).json({
+													'status': 200,
+													'message': 'Roster modified'
+												});
+											})
+											.catch((err) => {
+												sendError(res,err,'createRoster.Group -- Saving Group --');
+											});
+									} else {
+										res.status(404).json({
+											'status': 404,
+											'mesage': 'Group -' + roster.code + '- not found'
+										});
+									}
+								} else {
+									res.status(404).json({
+										'status': 404,
+										'mesage': 'Student -' + roster.student + '- not found'
+									});
+								}
+							})
+							.catch((err) => {
+								sendError(res,err,'addStudent.Group -- Finding Student --');
+							});
+					})
+					.catch((err) => {
+						sendError(res,err,'addStudent.Group -- Finding Group --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'addStudent.Group -- Finding User --');
+			});
+	}, //addStudent
+
 	listRoster(req,res) {
 		const key = req.headers.key;
 		var roster = req.query;
