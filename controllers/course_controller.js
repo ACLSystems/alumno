@@ -878,6 +878,16 @@ module.exports = {
 								if(req_block.keywords) 				{block.keywords = req_block.keywords;}
 								if(req_block.media) 					{block.media = req_block.media;}
 								if(req_block.type) 						{block.type = req_block.type;}
+								block.save()
+									.then(() => {
+										res.status(200).json({
+											'status': 200,
+											'message': 'Block -'+ block._id +'- modified'
+										});
+									})
+									.catch((err) => {
+										sendError(res,err,'modifyBlock -- Saving block --');
+									});
 							} else {
 								res.status(406).json({
 									'status': 406,
