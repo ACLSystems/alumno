@@ -49,7 +49,7 @@ const QuestionSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum: ['open', 'text', 'option', 'tf'],
+		enum: ['open', 'text', 'option', 'tf', 'map'],
 		// open 	>>> pregunta abierta
 		// text 	>>> pregunta con respuesta de texto
 		// option >>> pregunta con opciones (opción múltiple)

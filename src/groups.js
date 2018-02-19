@@ -26,30 +26,42 @@ const DatesSchema = new Schema ({
 
 module.exports = DatesSchema;
 
+const TasksSchema = new Schema ({
+	file: {
+		type: String
+	},
+	text: {
+		type: String
+	},
+	grade: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	}
+});
+
+module.exports = TasksSchema;
+
+const QuestsSchema = new Schema ({
+	answers: [],
+	grade: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	}
+});
+
+module.exports = QuestsSchema;
 
 const GradesSchema = new Schema ({
 	block: {
 		type: Schema.Types.ObjectId,
 		ref: 'blocks'
 	},
-	tasksFiles: {
-		type: [String]
-	},
-	taskGrades: {
-		type: [Number],
-		min: [0,'Minimum value is 0'],
-		max: [100,'Maximum value is 100'],
-		default: 0
-	},
-	questAnswers: {
-		type: [String]
-	},
-	questGrades: {
-		type: [Number],
-		min: [0,'Minimum value is 0'],
-		max: [100,'Maximum value is 100'],
-		default: 0
-	},
+	tasks: [TasksSchema],
+	quests: [QuestsSchema],
 	track: {
 		type: Number,
 		min: [0,'Minimum value is 0'],
@@ -62,6 +74,10 @@ const GradesSchema = new Schema ({
 module.exports = GradesSchema;
 
 const RosterSchema = new Schema ({
+	student: {
+		type: Schema.Types.ObjectId,
+		ref: 'users'
+	},
 	status: {
 		type: String,
 		enum: ['pending','active','finished','remove']
@@ -88,10 +104,6 @@ const GroupsSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'users'
 	},
-	students: [{
-		type: Schema.Types.ObjectId,
-		ref: 'users'
-	}],
 	roster: [RosterSchema],
 	beginDate: {
 		type: Date

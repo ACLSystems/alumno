@@ -88,6 +88,7 @@ module.exports = (app) => {
 	app.put('/api/v1/user/modify', UserController.modify);
 	app.get('/api/v1/user/mygroups', GroupController.myGroups);
 	app.get('/api/v1/user/mygroup', GroupController.myGroup);
+	app.get('/api/v1/user/mygrades', GroupController.myGrades);
 	app.get('/api/v1/user/nextblock', GroupController.nextBlock);
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados

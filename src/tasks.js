@@ -19,7 +19,7 @@ const TaskSchema = new Schema ({
 		type: String
 	},
 	files: {
-		type: String
+		type: [String]
 	},
 	w: {
 		type: Number,
@@ -29,8 +29,8 @@ const TaskSchema = new Schema ({
 	},
 	status: {
 		type: String,
-		enum: ['Draft','Published'],
-		default: 'Draft'
+		enum: ['draft','published'],
+		default: 'draft'
 	},
 	version: {
 		type: Number,
