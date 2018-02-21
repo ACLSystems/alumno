@@ -1,10 +1,10 @@
-const winston = require('winston');
-const User = require('../src/users');
-const Course = require('../src/courses');
-const Category = require('../src/categories');
-const Block = require('../src/blocks');
+const winston			= require('winston');
+const User				= require('../src/users');
+const Course			= require('../src/courses');
+const Category		= require('../src/categories');
+const Block				= require('../src/blocks');
 const permissions = require('../shared/permissions');
-const Org = require('../src/orgs');
+const Org					= require('../src/orgs');
 
 //const Org = require('../src/orgs');
 //const OrgUnit = require('../src/orgUnits');
@@ -103,9 +103,9 @@ module.exports = {
 		var sort = { name: 1 };
 		var skip = 0;
 		var limit = 15;
-		if(req.query.sort) { sort = { name: req.query.sort }; }
-		if(req.query.skip) { skip = parseInt( req.query.skip ); }
-		if(req.query.limit) { limit = parseInt( req.query.limit ); }
+		if(req.query.sort)	{ sort 	= { name: req.query.sort 		}; 	}
+		if(req.query.skip)	{ skip 	= parseInt( req.query.skip 	); 	}
+		if(req.query.limit) { limit = parseInt( req.query.limit );	}
 		var key = req.headers.key;
 		User.findOne({ name: key })
 			.populate('org')
@@ -143,9 +143,9 @@ module.exports = {
 				var skip = 0;
 				var limit = 15;
 				query = { org: key_user.org._id };
-				if(req.query.sort) { sort = { name: req.query.sort }; }
-				if(req.query.skip) { skip = parseInt( req.query.skip ); }
-				if(req.query.limit) { limit = parseInt( req.query.limit ); }
+				if(req.query.sort) 	{ sort 	= { name: req.query.sort }; 		}
+				if(req.query.skip) 	{ skip 	= parseInt( req.query.skip 	); 	}
+				if(req.query.limit) { limit = parseInt( req.query.limit ); 	}
 				if(req.query.categories) {
 					query.categories = JSON.parse(req.query.categories);
 				}
@@ -166,17 +166,17 @@ module.exports = {
 						var send_courses = new Array();
 						courses.forEach(function(course) {
 							send_courses.push({
-								id: course._id,
-								title: course.title,
-								code: course.code,
-								image: course.image,
-								description: course.description,
-								categories: course.categories,
-								isVisible: course.isVisible,
-								version: course.version,
-								status: course.status,
-								price: course.price,
-								author: course.author
+								id: 					course._id,
+								title: 				course.title,
+								code: 				course.code,
+								image: 				course.image,
+								description: 	course.description,
+								categories: 	course.categories,
+								isVisible: 		course.isVisible,
+								version: 			course.version,
+								status: 			course.status,
+								price: 				course.price,
+								author: 			course.author
 							});
 						});
 						res.status(200).json({
@@ -204,9 +204,9 @@ module.exports = {
 				var skip = 0;
 				var limit = 15;
 				query = { org: org._id };
-				if(req.query.sort) { sort = { name: req.query.sort }; }
-				if(req.query.skip) { skip = parseInt( req.query.skip ); }
-				if(req.query.limit) { limit = parseInt( req.query.limit ); }
+				if(req.query.sort) 	{ sort 	= { name: req.query.sort }; 		}
+				if(req.query.skip) 	{ skip 	= parseInt( req.query.skip 	); 	}
+				if(req.query.limit) { limit = parseInt( req.query.limit ); 	}
 				if(req.query.categories) {
 					query.categories = JSON.parse(req.query.categories);
 				}
@@ -229,16 +229,16 @@ module.exports = {
 						var send_courses = new Array();
 						courses.forEach(function(course) {
 							send_courses.push({
-								id: course._id,
-								title: course.title,
-								code: course.code,
-								image: course.image,
-								description: course.description,
-								categories: course.categories,
-								keywords: course.keywords,
-								isVisible: course.isVisible,
-								price: course.price,
-								author: course.author
+								id: 					course._id,
+								title: 				course.title,
+								code: 				course.code,
+								image: 				course.image,
+								description:	course.description,
+								categories:		course.categories,
+								keywords: 		course.keywords,
+								isVisible: 		course.isVisible,
+								price: 				course.price,
+								author: 			course.author
 							});
 						});
 						res.status(200).json({
@@ -273,14 +273,15 @@ module.exports = {
 				Course.findOne(queryCourse)
 					.then((course) => {
 						if(course) {
-							var block = new Block;
-							block.org = key_user.org._id;
-							block.code = req.body.code;
-							block.type = req.body.type;
-							block.title = req.body.title;
+							var order = course.blocks.length;
+							var block 		= new Block;
+							block.org 		= key_user.org._id;
+							block.code 		= req.body.code;
+							block.type 		= req.body.type;
+							block.title 	= req.body.title;
 							block.section = req.body.section;
-							block.number = req.body.number;
-							block.order = req.body.order;
+							block.number 	= req.body.number;
+							block.order 	= order;
 							block.content = req.body.content;
 							if(req.body.media) {
 								block.media = parseArray(req.body.media);
@@ -536,6 +537,7 @@ module.exports = {
 							const result = permissions.access(key_user,course,'content');
 							if(result.canRead) {
 								Block.find({ _id: { $in: course.blocks }})
+									.sort({order:1})
 									.then((blocks) => {
 										var send_blocks = new Array();
 										blocks.forEach(function(block) {
@@ -609,7 +611,7 @@ module.exports = {
 									'status': 200,
 									'message': {
 										blockNum: send_blocks.length,
-										blocks: send_blocks
+										blocks: 	send_blocks
 									}
 								});
 							});
@@ -846,7 +848,7 @@ module.exports = {
 			});
 	}, // modify
 
-	modifyBlock(req,res) {
+	modifyBlock(req,res) { // modificar bloque
 		const key = req.headers.key;
 		User.findOne({ name: key })
 			.populate('org')
@@ -865,19 +867,19 @@ module.exports = {
 								};
 								block.mod.push(mod);
 								var req_block = req.body.block;
-								if(req_block.content) 				{block.content = req_block.content;}
-								if(req_block.order) 					{block.order = req_block.order;}
-								if(req_block.number) 					{block.number = req_block.number;}
-								if(req_block.section) 				{block.section = req_block.section;}
-								if(req_block.title) 					{block.title = req_block.title;}
-								if(req_block.code) 						{block.code = req_block.code;}
-								if(req_block.isVisible) 			{block.isVisible = req_block.isVisible;}
-								if(req_block.status) 					{block.status = req_block.status;}
-								if(req_block.tasks) 					{block.tasks = req_block.tasks;}
-								if(req_block.questionnaries) 	{block.questionnaries = req_block.questionnaries;}
-								if(req_block.keywords) 				{block.keywords = req_block.keywords;}
-								if(req_block.media) 					{block.media = req_block.media;}
-								if(req_block.type) 						{block.type = req_block.type;}
+								if(req_block.content) 				{block.content 				= req_block.content;				}
+								if(req_block.order) 					{block.order 					= req_block.order;					}
+								if(req_block.number) 					{block.number 				= req_block.number;					}
+								if(req_block.section) 				{block.section				= req_block.section;				}
+								if(req_block.title) 					{block.title					= req_block.title;					}
+								if(req_block.code) 						{block.code						= req_block.code;						}
+								if(req_block.isVisible) 			{block.isVisible			= req_block.isVisible;			}
+								if(req_block.status) 					{block.status					= req_block.status;					}
+								if(req_block.tasks) 					{block.tasks					= req_block.tasks;					}
+								if(req_block.questionnaries) 	{block.questionnaries	= req_block.questionnaries;	}
+								if(req_block.keywords) 				{block.keywords 			= req_block.keywords;				}
+								if(req_block.media) 					{block.media 					= req_block.media;					}
+								if(req_block.type) 						{block.type 					= req_block.type;						}
 								block.save()
 									.then(() => {
 										res.status(200).json({
@@ -909,6 +911,85 @@ module.exports = {
 				sendError(res,err,'modifyBlock -- Searching Key user --');
 			});
 	}, // modifyBlock
+
+
+	moveBlock(req,res) { // mover bloque de orden de aparición
+		const key = req.headers.key;
+		const courseid			= req.body.courseid;
+		const blockid				= req.body.blockid;
+		const refblockid		= req.body.refblockid;
+		User.findOne({ name: key })
+			.then(() => {
+				Course.findById(courseid)
+					.then((course) => {
+						if(course) {
+							//console.log(JSON.stringify(course.blocks));
+							var blocks = course.blocks;
+							var refblockIndex = -1;
+							var blockIndex = -1;
+							if(refblockid === 'zero') {
+								refblockIndex = 0;
+							} else {
+								refblockIndex = blocks.findIndex(function(elem) {return elem + '' === refblockid;});
+							}
+							if(refblockIndex === -1) {
+								res.status(404).json({
+									'status': 404,
+									'message': 'Reference Block -' + refblockid + '- not found'
+								});
+								return;
+							}
+							blockIndex = blocks.findIndex(function(elem) {return elem + '' === blockid;});
+							if(blockIndex === -1) {
+								res.status(404).json({
+									'status': 404,
+									'message': 'Block to move -' + blockid + '- not found'
+								});
+								return;
+							}
+							blocks.splice(refblockIndex,0,blocks[blockIndex]);
+							if(refblockIndex < blockIndex ) {
+								blocks.splice(blockIndex + 1,1);
+							}
+							if (refblockIndex > blockIndex) {
+								blocks.splice(blockIndex,1);
+							}
+							var i = 0;
+							blocks.forEach(function(block) {
+								Block.findByIdAndUpdate(block,{$set: {order: i}})
+									.catch((err) => {
+										sendError(res,err,'moveBlock -- Saving course --');
+									});
+								i++;
+							});
+							course.blocks = blocks;
+							course.save()
+								.catch((err) => {
+									sendError(res,err,'moveBlock -- Saving course --');
+								});
+							res.status(200).json({
+								'status': 200,
+								'message': {
+									'blocksNum': blocks.length,
+									'blocks': blocks
+								}
+							});
+						} else {
+							res.status(404).json({
+								'status': 404,
+								'message': 'Course -' + courseid + '- not found'
+							});
+						}
+					})
+					.catch((err) => {
+						sendError(res,err,'moveBlock -- Searching Course --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'moveBlock -- Searching Key user --');
+			});
+	}, // moveBlock
+
 
 	makeAvailable(req,res) {
 		const key = req.headers.key;
@@ -1000,41 +1081,41 @@ function generatePerm(user,org, orgUnit) {
 
 function prettyCourse(course) {
 	return {
-		id: course._id,
-		orgid: course.org._id,
-		orgname: course.org.name,
-		code: course.code,
-		title: course.title,
-		type: course.type,
-		level: course.level,
-		author: course.author,
-		categories: course.categories,
-		keywords: course.keywords,
-		description: course.description,
-		image: course.image,
-		details: course.details,
-		syllabus: course.syllabus,
-		price: course.price,
-		status: course.status,
-		isVisible: course.isVisible,
+		id: 					course._id,
+		orgid: 				course.org._id,
+		orgname: 			course.org.name,
+		code: 				course.code,
+		title: 				course.title,
+		type: 				course.type,
+		level: 				course.level,
+		author: 			course.author,
+		categories: 	course.categories,
+		keywords: 		course.keywords,
+		description: 	course.description,
+		image: 				course.image,
+		details: 			course.details,
+		syllabus: 		course.syllabus,
+		price: 				course.price,
+		status: 			course.status,
+		isVisible: 		course.isVisible,
 	};
 }
 
 function prettyGetBlockBy(obj){
 	return {
-		id: obj._id,
-		org: obj.org,
-		code: obj.code,
-		type: obj.type,
-		title: obj.title,
-		section: obj.section,
-		number: obj.number,
-		order: obj.order,
-		content: obj.content,
+		id: 			obj._id,
+		org: 			obj.org,
+		code: 		obj.code,
+		type: 		obj.type,
+		title: 		obj.title,
+		section: 	obj.section,
+		number: 	obj.number,
+		order: 		obj.order,
+		content: 	obj.content,
 		keywords: obj.keywords,
-		tasks: obj.tasks,
-		version: obj.version,
-		media: obj.media,
+		tasks: 		obj.tasks,
+		version: 	obj.version,
+		media: 		obj.media,
 		questionnaries: prettyQuests(obj)
 	};
 }

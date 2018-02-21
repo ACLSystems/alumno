@@ -79,6 +79,12 @@ const QuestionnarieSchema = new Schema ({
 		type: Boolean,
 		default: false
 	},
+	minimum:  {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 1
+	},
 	questions: [QuestionSchema],
 	w: {
 		type: Number,

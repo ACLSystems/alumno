@@ -736,6 +736,38 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/author/course/moveblock':
+		if(!req.body) {  // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1455: Please, give data by body to process'
+			});
+		} else if (!req.body.courseid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1456: Please, give course id by body to process'
+			});
+		} else if (!req.body.blockid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1456: Please, give block id to move by body to process'
+			});
+		} else if (!req.body.refblockid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1456: Please, give reference block id to move or \'zero\' to move block to top by body to process'
+			});
+		} else if(req.body.refblockid === req.body.blockid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1456: blockid and refblockid must be different. Move to the same place?'
+			});
+		} else {
+			next();
+		}
+		break;
+
+
 	case '/api/v1/author/course/makeavailable':
 		if(!req.body) {  // GET
 			res.status(406).json({

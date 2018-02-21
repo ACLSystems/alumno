@@ -114,6 +114,7 @@ module.exports = (app) => {
 	app.post('/api/v1/author/course/createquestionnarie', CourseController.createQuestionnarie);
 	app.post('/api/v1/author/course/addquestions', CourseController.addQuestions);
 	app.put('/api/v1/author/course/modify', CourseController.modify);
+	app.put('/api/v1/author/course/moveblock', CourseController.moveBlock);
 	app.put('/api/v1/author/course/makeavailable', CourseController.makeAvailable);
 	app.post('/api/v1/author/file/upload', upload.single('file'), FileController.upload);
 	app.get('/api/v1/author/file/download', FileController.download);
