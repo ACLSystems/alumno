@@ -640,47 +640,52 @@ module.exports = {
 															blockPrevId:			prevblockid,
 															blockNextId:			nextblockid
 														};
-														var questionnaries = block.questionnaries;
-														var send_questionnaries = new Array();
-														questionnaries.forEach(function(quest) {
-															if(quest.isVisible) {
-																var questions = quest.questions;
-																var send_questions = new Array();
-																questions.forEach(function(q) {
-																	if(q.isVisible) {
-																		send_questions.push({
-																			text: 		q.text,
-																			help: 		q.help,
-																			type: 		q.type,
-																			w: 				q.w,
-																			answers:	q.answers,
-																			options:	q.options,
-																			footer:		q.footer
-																		});
-																	}
-																});
-																send_questionnaries.push({
-																	type: quest.type,
-																	begin: quest.begin,
-																	questions: send_questions
-																});
-															}
-														});
-														send_content.questionnaries= send_questionnaries;
-														var tasks = block.tasks;
-														var send_tasks = new Array();
-														tasks.forEach(function(task) {
-															if(task.isVisible && status === 'published') {
-																send_tasks.push({
-																	title: 				task.text,
-																	description: 	task.help,
-																	content: 			task.content,
-																	w: 						task.w,
-																	files:				task.files
-																});
-															}
-														});
-														send_content.tasks= send_tasks;
+														if(block.questionnaries && block.questionnaries.length > 0) {
+															var questionnaries =  new Array();
+															questionnaries = block.questionnaries;
+															var send_questionnaries = new Array();
+															questionnaries.forEach(function(quest) {
+																if(quest.isVisible) {
+																	var questions = quest.questions;
+																	var send_questions = new Array();
+																	questions.forEach(function(q) {
+																		if(q.isVisible) {
+																			send_questions.push({
+																				text: 		q.text,
+																				help: 		q.help,
+																				type: 		q.type,
+																				w: 				q.w,
+																				answers:	q.answers,
+																				options:	q.options,
+																				footer:		q.footer
+																			});
+																		}
+																	});
+																	send_questionnaries.push({
+																		type: quest.type,
+																		begin: quest.begin,
+																		questions: send_questions
+																	});
+																}
+															});
+															send_content.questionnaries= send_questionnaries;
+														}
+														if(block.tasks && block.tasks.length > 0) {
+															var tasks = block.tasks;
+															var send_tasks = new Array();
+															tasks.forEach(function(task) {
+																if(task.isVisible && status === 'published') {
+																	send_tasks.push({
+																		title: 				task.text,
+																		description: 	task.help,
+																		content: 			task.content,
+																		w: 						task.w,
+																		files:				task.files
+																	});
+																}
+															});
+															send_content.tasks= send_tasks;
+														}
 														res.status(200).json({
 															'status': 200,
 															'message': send_content
