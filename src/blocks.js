@@ -39,7 +39,7 @@ const BlocksSchema = new Schema ({
 		default: 5
 	},
 	rules: String,
-	questionnaries: [QuestionnarieSchema],
+	questionnaries: QuestionnarieSchema,
 	tasks: [TaskSchema],
 	status: {
 		type: String,
