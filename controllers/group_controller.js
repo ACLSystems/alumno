@@ -346,6 +346,7 @@ module.exports = {
 									if(course) {
 										if(course.isVisible || course.status === 'published') {
 											Block.find({ _id: { $in: course.blocks }})
+												.sort({order:1})
 												.then((blocks) => {
 													var send_blocks = new Array();
 													blocks.forEach(function(block) {
@@ -640,11 +641,11 @@ module.exports = {
 															blockPrevId:			prevblockid,
 															blockNextId:			nextblockid
 														};
-														if(block.questionnaries && block.questionnaries.length > 0) {
-															var questionnaries =  new Array();
-															questionnaries = block.questionnaries;
-															var send_questionnaries = new Array();
-															questionnaries.forEach(function(quest) {
+														if(block.questionnarie) {
+															var questionnarie =  {};
+															questionnarie = block.questionnarie;
+															var send_questionnarie = new Array();
+															questionnarie.forEach(function(quest) {
 																if(quest.isVisible) {
 																	var questions = quest.questions;
 																	var send_questions = new Array();
@@ -661,14 +662,14 @@ module.exports = {
 																			});
 																		}
 																	});
-																	send_questionnaries.push({
+																	send_questionnarie.push({
 																		type: quest.type,
 																		begin: quest.begin,
 																		questions: send_questions
 																	});
 																}
 															});
-															send_content.questionnaries= send_questionnaries;
+															send_content.questionnarie= send_questionnarie;
 														}
 														if(block.tasks && block.tasks.length > 0) {
 															var tasks = block.tasks;

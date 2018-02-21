@@ -692,7 +692,7 @@ module.exports = {
 									}]
 								}
 							};
-							block.questionnaries.push(questionnarie);
+							block.questionnarie = questionnarie;
 							block.save()
 								.then(() => {
 									res.status(200).json({
