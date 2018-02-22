@@ -669,18 +669,7 @@ module.exports = {
 																			if(q.text) 				{send_question.text = q.text;}
 																			if(q.help) 				{send_question.help = q.help;}
 																			if(q.group && q.group.length > 0) 	{send_question.group = q.group;}
-																			send_questions.push({
-																				text					: q.text,
-																				help					: q.help,
-																				type					: q.type,
-																				w							: q.w,
-																				answers				:	q.answers,
-																				options				:	q.options,
-																				header				: q.header,
-																				footer				:	q.footer,
-																				footerShow		: q.footerShow,
-																				group					: q.group
-																			});
+																			send_questions.push(send_question);
 																			if(q.options && q.options.length > 0) {
 																				var options = new Array();
 																				q.options.forEach(function(o) {
