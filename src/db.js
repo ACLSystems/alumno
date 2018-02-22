@@ -25,10 +25,10 @@ var logger = new(winston.Logger) ({
 
 
 // Build the connection string
-var dbURI = 'mongodb://mongo/alumno';
+var dbURI = 'mongodb://operator:Password01@mongo/alumno';
 if(process.env.MONGO_URI) { dbURI = process.env.MONGO_URI; }
 
-console.log('Using ' + dbURI); // eslint-disable-line
+//console.log('Using ' + dbURI); // eslint-disable-line
 
 // Build connection options
 let options = {
@@ -48,7 +48,7 @@ var message = '';
 // CONNECTION EVENTS
 // When successfully connected
 mongoose.connection.on('connected', function () {
-	message = 'Mongoose default connection open successfully to ' + dbURI;
+	message = 'DB connection open successfully';
 	logger.info(message);
 	console.log(message); // eslint-disable-line
 	init.init(version);
@@ -56,14 +56,14 @@ mongoose.connection.on('connected', function () {
 
 // If the connection throws an error
 mongoose.connection.on('error',function (err) {
-	message = 'Mongoose default connection error: ' + err;
+	message = 'DB connection error: ' + err;
 	logger.info(message);
 	console.log(message); // eslint-disable-line
 });
 
 // When the connection is disconnected
 mongoose.connection.on('disconnected', function () {
-	message = 'Mongoose default connection disconnected';
+	message = 'DB connection disconnected';
 	logger.info(message);
 	console.log(message); // eslint-disable-line
 });
@@ -71,7 +71,7 @@ mongoose.connection.on('disconnected', function () {
 // If the Node process ends, close the Mongoose connection
 process.on('SIGINT', function() {
 	mongoose.connection.close(function () {
-		message = 'Mongoose default connection disconnected through app termination. Server process ends successfully';
+		message = 'DB connection disconnected through app termination. Server process ends successfully';
 		logger.info(message);
 		console.log(message); // eslint-disable-line
 		process.exit(0);

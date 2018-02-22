@@ -2,35 +2,41 @@ const mailjet = require ('node-mailjet')
 	.connect(process.env.MJ_APIKEY_PUBLIC, process.env.MJ_APIKEY_PRIVATE);
 const request = mailjet.post('send', {'version': 'v3.1'});
 
-const fromEmail = 'no-reply@aclsystems.mx';
+const fromEmail = 'soporte@superatemexico.com';
 const fromName = 'Superate Mexico';
-//const TemplateID = 310518;
 
-exports.sendMail = function(toEmail,toName,subject,templateID,link) {
-	return new Promise(function(resolve,reject) {
-		request.request({
-			'Messages':[
+exports.sendMail = function(toEmail,toName,subject,templateID,link,errNum,controller,message) {
+	var mail_message =
+		{
+			'From': {
+				'Email': fromEmail,
+				'Name': fromName
+			},
+			'To': [
 				{
-					'From': {
-						'Email': fromEmail,
-						'Name': fromName
-					},
-					'To': [
-						{
-							'Email': toEmail,
-							'Name': toName
-						}
-					],
-					'TemplateID': templateID,
-					'TemplateLanguage': true,
-					'Subject': subject,
-					'Variables': {
-						'Nombre': toName,
-						'confirmation_link': link
-					}
+					'Email': toEmail,
+					'Name': toName
 				}
-			]
-		})
+			],
+			'TemplateID': templateID,
+			'TemplateLanguage': true,
+			'Subject': subject
+		};
+	if(templateID === 311647) {
+		mail_message.Variables = {
+			'Nombre': toName,
+			'confirmation_link': link
+		};
+	}
+	if(templateID === 321554) {
+		mail_message.Variables = {
+			'errNum': errNum,
+			'controller': controller,
+			'message': message
+		};
+	}
+	return new Promise(function(resolve,reject) {
+		request.request({'Messages': [mail_message]})
 			.then((result) => {
 				resolve(result.body.Messages[0].Status);
 			})

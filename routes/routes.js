@@ -65,6 +65,7 @@ module.exports = (app) => {
 
 	app.get('/', GetNothing.greeting);
 	app.post('/login', auth.login);
+	app.post('/api/test', GroupController.test);
 	app.post('/api/user/register', UserController.register);
 	app.get('/api/user/near', OrgUnitController.index);
 	app.get('/api/user/confirm', UserController.confirm);

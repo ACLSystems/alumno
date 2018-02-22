@@ -1,13 +1,15 @@
-const winston = require('winston');
+//const winston = require('winston');
 const User = require('../src/users');
 //const Org = require('../src/orgs');
 //const OrgUnit = require('../src/orgUnits');
 const Course = require('../src/courses');
 const Group = require('../src/groups');
 const Block = require('../src/blocks');
+const Err = require('../controllers/err500_controller');
 //const permissions = require('../shared/permissions');
 require('winston-daily-rotate-file');
 
+/*
 var transport = new(winston.transports.DailyRotateFile) ({
 	filename: './logs/log',
 	datePattern: 'yyyy-MM-dd.',
@@ -21,6 +23,7 @@ var logger = new(winston.Logger) ({
 		transport
 	]
 });
+*/
 
 module.exports = {
 	create(req,res) {
@@ -71,7 +74,7 @@ module.exports = {
 											'message': 'Error -: group -' + group.code + '- already exists'
 										});
 									} else {
-										sendError(res,err,'create.Group -- creating Group --');
+										Err.sendError(res,err,'group_controller','group_controller','create -- creating Group --');
 									}
 								});
 						} else {
@@ -82,11 +85,11 @@ module.exports = {
 						}
 					})
 					.catch((err) => {
-						sendError(res,err,'create.Group -- Finding Course --');
+						Err.sendError(res,err,'group_controller','create -- Finding Course --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'create.Group -- Finding User --');
+				Err.sendError(res,err,'group_controller','create -- Finding User --');
 			});
 	}, // create
 
@@ -119,7 +122,7 @@ module.exports = {
 									});
 								})
 								.catch((err) => {
-									sendError(res,err,'createRoster.Group -- Saving Group --');
+									Err.sendError(res,err,'group_controller','createRoster -- Saving Group --');
 								});
 						} else {
 							res.status(404).json({
@@ -129,11 +132,11 @@ module.exports = {
 						}
 					})
 					.catch((err) => {
-						sendError(res,err,'createRoster.Group -- Finding Group --');
+						Err.sendError(res,err,'group_controller','createRoster -- Finding Group --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'createRoster.Group -- Finding User --');
+				Err.sendError(res,err,'group_controller','createRoster -- Finding User --');
 			});
 	}, //createRoster
 
@@ -168,7 +171,7 @@ module.exports = {
 												});
 											})
 											.catch((err) => {
-												sendError(res,err,'createRoster.Group -- Saving Group --');
+												Err.sendError(res,err,'group_controller','addStudent -- Saving Group --');
 											});
 									} else {
 										res.status(404).json({
@@ -184,15 +187,15 @@ module.exports = {
 								}
 							})
 							.catch((err) => {
-								sendError(res,err,'addStudent.Group -- Finding Student --');
+								Err.sendError(res,err,'group_controller','addStudent -- Finding Student --');
 							});
 					})
 					.catch((err) => {
-						sendError(res,err,'addStudent.Group -- Finding Group --');
+						Err.sendError(res,err,'group_controller','addStudent -- Finding Group --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'addStudent.Group -- Finding User --');
+				Err.sendError(res,err,'group_controller','addStudent -- Finding User --');
 			});
 	}, //addStudent
 
@@ -247,11 +250,11 @@ module.exports = {
 						}
 					})
 					.catch((err) => {
-						sendError(res,err,'createRoster.Group -- Finding Group --');
+						Err.sendError(res,err,'group_controller','listRoster -- Finding Group --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'createRoster.Group -- Finding User --');
+				Err.sendError(res,err,'group_controller','listRoster -- Finding User --');
 			});
 	}, //listRoster
 
@@ -312,11 +315,11 @@ module.exports = {
 						}
 					})
 					.catch((err) => {
-						sendError(res,err,'mygroups.Group -- Finding Groups --');
+						Err.sendError(res,err,'group_controller','mygroups -- Finding Groups --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'mygroups.Group -- Finding User --');
+				Err.sendError(res,err,'group_controller','mygroups -- Finding User --');
 			});
 	}, // mygroups
 
@@ -390,7 +393,7 @@ module.exports = {
 												});
 											})
 											.catch((err) => {
-												sendError(res,err,'mygroup.Group -- Finding blocks --');
+												Err.sendError(res,err,'group_controller','mygroup -- Finding blocks --');
 											});
 									} else {
 										res.status(404).json({
@@ -413,11 +416,11 @@ module.exports = {
 						}
 					})
 					.catch((err) => {
-						sendError(res,err,'mygroup.Group -- Finding Group --');
+						Err.sendError(res,err,'group_controller','mygroup -- Finding Group --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'mygroup.Group -- Finding User --');
+				Err.sendError(res,err,'group_controller','mygroup -- Finding User --');
 			});
 	}, // mygroup
 
@@ -506,7 +509,7 @@ module.exports = {
 													});
 												})
 												.catch((err) => {
-													sendError(res,err,'mygrades.Group -- Finding blocks --');
+													Err.sendError(res,err,'group_controller','mygrades -- Finding blocks --');
 												});
 										} else {
 											res.status(404).json({
@@ -517,7 +520,7 @@ module.exports = {
 									}
 								})
 								.catch((err) => {
-									sendError(res,err,'mygrades.Group -- Finding Course --');
+									Err.sendError(res,err,'group_controller','mygrades -- Finding Course --');
 								});
 						} else {
 							res.status(400).json({
@@ -527,11 +530,11 @@ module.exports = {
 						}
 					})
 					.catch((err) => {
-						sendError(res,err,'mygrades.Group -- Finding Group --');
+						Err.sendError(res,err,'group_controller','mygrades -- Finding Group --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'mygrades.Group -- Finding User --');
+				Err.sendError(res,err,'group_controller','mygrades -- Finding User --');
 			});
 	}, // myGrades
 
@@ -619,7 +622,7 @@ module.exports = {
 														group.roster[studentIndex].grades = grades;
 														group.save()
 															.catch((err) => {
-																sendError(res,err,'nextBlock.Group -- Saving Block --');
+																Err.sendError(res,err,'group_controller','nextBlock -- Saving Block --');
 															});
 														var blockIndex 	= blocks.findIndex(blockIndex => blockIndex == blockid + '');
 														if(blockIndex === -1) {
@@ -647,10 +650,11 @@ module.exports = {
 																blockSection		:	block.section,
 																blockNumber			: block.number,
 																blockContent		:	block.content,
+																blockMedia			: block.media,
 																blockMinimumTime: block.defaultmin,
 																blockCurrentId	:	block._id,
 																blockPrevId			:	prevblockid,
-																blockNextId			:	nextblockid
+																blockNextId			:	nextblockid,
 															};
 															if(block.type === 'textVideo' && block.begin) {
 																send_content.blockBegin = true;
@@ -672,7 +676,7 @@ module.exports = {
 																			if(q.text) 				{send_question.text = q.text;}
 																			if(q.help) 				{send_question.help = q.help;}
 																			if(q.group && q.group.length > 0) 	{send_question.group = q.group;}
-																			send_questions.push(send_question);
+																			//send_questions.push(send_question);
 																			if(q.options && q.options.length > 0) {
 																				var options = new Array();
 																				q.options.forEach(function(o) {
@@ -759,7 +763,7 @@ module.exports = {
 													}
 												})
 												.catch((err) => {
-													sendError(res,err,'nextBlock.Group -- Finding Block --');
+													Err.sendError(res,err,'group_controller','nextBlock -- Finding Block --');
 												});
 										} else {
 											res.status(404).json({
@@ -770,7 +774,7 @@ module.exports = {
 
 									})
 									.catch((err) => {
-										sendError(res,err,'nextBlock.Group -- Finding Course --');
+										Err.sendError(res,err,'group_controller','nextBlock -- Finding Course --');
 									});
 							} else {
 								res.status(404).json({
@@ -786,28 +790,21 @@ module.exports = {
 						}
 					})
 					.catch((err) => {
-						sendError(res,err,'nextBlock.Group -- Finding Group --');
+						Err.sendError(res,err,'group_controller','nextBlock -- Finding Group --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'nextBlock.Group -- Finding User --');
+				Err.sendError(res,err,'group_controller','nextBlock -- Finding User --');
 			});
+	}, // nextBlock
+
+	test(req,res) {
+		var message = 'Mensaje de prueba';
+		Err.sendError(res,message,'group_controller','test -- testing email --');
 	}
 };
 
 
 
-// Private Functions -----------------------------------------------------------
 
-function sendError(res, err, section,send_user) {
-	logger.info('Course controller -- Section: ' + section + '----');
-	logger.info(err);
-	if(!send_user) {
-		res.status(500).json({
-			'status': 500,
-			'message': 'Error',
-			'Error': err.message
-		});
-	}
-	return;
-}
+// Private Functions -----------------------------------------------------------
