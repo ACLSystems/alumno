@@ -641,17 +641,20 @@ module.exports = {
 														}
 														if(block.isVisible && block.status === 'published') {
 															var send_content = {
-																blockCode:				block.code,
-																blockType: 				block.type,
-																blockTitle: 			block.title,
-																blockSection: 		block.section,
-																blockNumber: 			block.number,
-																blockContent: 		block.content,
+																blockCode				:	block.code,
+																blockType				: block.type,
+																blockTitle			: block.title,
+																blockSection		:	block.section,
+																blockNumber			: block.number,
+																blockContent		:	block.content,
 																blockMinimumTime: block.defaultmin,
-																blockCurrentId:		block._id,
-																blockPrevId:			prevblockid,
-																blockNextId:			nextblockid
+																blockCurrentId	:	block._id,
+																blockPrevId			:	prevblockid,
+																blockNextId			:	nextblockid
 															};
+															if(block.type === 'textVideo' && block.begin) {
+																send_content.blockBegin = true;
+															}
 															if(block.questionnarie) {
 																var questionnarie = block.questionnarie;
 																var send_questionnarie = {};

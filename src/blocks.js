@@ -25,6 +25,10 @@ const BlocksSchema = new Schema ({
 		type: String,
 		required: true
 	},
+	begin: {
+		type: Boolean,
+		default: false
+	},
 	section: Number,
 	number: Number,
 	order: Number,
