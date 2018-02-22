@@ -1,10 +1,12 @@
-const winston			= require('winston');
-const User				= require('../src/users');
-const Course			= require('../src/courses');
-const Category		= require('../src/categories');
-const Block				= require('../src/blocks');
-const permissions = require('../shared/permissions');
-const Org					= require('../src/orgs');
+const winston				= require('winston');
+const User					= require('../src/users');
+const Course				= require('../src/courses');
+const Category			= require('../src/categories');
+const Block					= require('../src/blocks');
+const Questionnarie = require('../src/questionnaries');
+//const Task = require('../src/tasks');
+const permissions 	= require('../shared/permissions');
+const Org						= require('../src/orgs');
 
 //const Org = require('../src/orgs');
 //const OrgUnit = require('../src/orgUnits');
@@ -350,7 +352,8 @@ module.exports = {
 			});
 	}, // createBlock
 
-	getBlock(req,res) {
+	getBlock(req,res) { // Sirve para obtener el detalle de un bloque en particular
+		// el bloque se busca por código de bloque
 		const key = req.headers.key;
 		User.findOne({name: key})
 			.populate('org')
@@ -392,7 +395,8 @@ module.exports = {
 			});
 	}, // get block
 
-	getBlockBy(req,res) {
+	getBlockBy(req,res) { // mismo que el anterior, solo que acá la búsqueda es por section + number
+		// o por order
 		const key = req.headers.key;
 		User.findOne({name: key})
 			.populate('org')
@@ -478,7 +482,7 @@ module.exports = {
 			});
 	}, // getBlockBy
 
-	get(req,res) {
+	get(req,res) { // trae los detalles del curso por código de curso
 		const key = req.headers.key;
 		User.findOne({name: key})
 			.populate('org')
@@ -521,7 +525,7 @@ module.exports = {
 			});
 	}, // get
 
-	getBlocklist(req,res) {
+	getBlocklist(req,res) { // trae la lista de bloques del curso
 		const key = req.headers.key;
 		User.findOne({name: key})
 			.populate('org')
@@ -583,7 +587,8 @@ module.exports = {
 			});
 	},// getBlocklist
 
-	getBlocklistStudents(req,res) {
+	getBlocklistStudents(req,res) { // trae la lista de bloques para el estudiante. Este API es
+		// reemplazado por mygroup
 		var query = {};
 		if(req.query.code) {
 			query = { code: req.query.code };
@@ -633,7 +638,7 @@ module.exports = {
 			});
 	},// getBlocklist
 
-	createQuestionnarie(req,res) {
+	createQuestionnarie(req,res) { // crea un cuestionario asociado a un bloque
 		const key = req.headers.key;
 		var queryBlock = {};
 		User.findOne({ name: key })
@@ -692,16 +697,22 @@ module.exports = {
 									}]
 								}
 							};
-							block.questionnarie = questionnarie;
-							block.save()
-								.then(() => {
-									res.status(200).json({
-										'status': 200,
-										'message': 'Questionnarie saved'
-									});
+							Questionnarie.create(questionnarie)
+								.then((quest) => {
+									block.questionnarie = quest._id;
+									block.save()
+										.then(() => {
+											res.status(200).json({
+												'status': 200,
+												'message': 'Questionnarie saved'
+											});
+										})
+										.catch((err) => {
+											sendError(res,err,'createQuestionnarie -- Saving block --');
+										});
 								})
 								.catch((err) => {
-									sendError(res,err,'createQuestionnarie -- Saving block --');
+									sendError(res,err,'createQuestionnarie -- Creating questionnarie --');
 								});
 						} else {
 							res.status(404).json({
@@ -719,53 +730,94 @@ module.exports = {
 			});
 	}, // createQuestionnarie
 
-	addQuestions(req,res) {
-		const key = req.headers.key;
+	getQuestionnarie(req,res) {
+		const key 	= req.headers.key;
+		var blockid = req.query.blockid;
 		User.findOne({ name: key })
 			.populate('org')
 			.populate('orgUnit')
-			.then((key_user) => {
-				var query = { _id: req.body.id };
-				if(!req.body.id) {
-					query = { code: req.body.code, org: key_user.org._id };
-				}
-				Block.findOne(query)
+			.then(() => {
+				Block.findById(blockid)
 					.then((block) => {
 						if(block) {
-							const result = permissions.access(key_user,block,'content');
-							if(result.canModify) {
-								var qobj = '';
-								//bobj = course.blocks.find(function(bobj) { return bobj.section === section && bobj.number === number; });
-								qobj = block.questionnaries.find(function(qobj) {
-									var id = qobj._id + '';
-									return id === req.body.questionnarie.id;
-								});
-								var index = -1;
-								if(qobj) {
-									index = block.questionnaries.indexOf(qobj);
-									req.body.questionnarie.questions.forEach(function(question) {
-										block.questionnaries[index].questions.push(question);
-									});
-									block.save()
-										.then(() => {
-											res.status(200).json({
-												'status': 200,
-												'message': 'Questions added'
+							if(block.questionnarie) {
+								Questionnarie.findById(block.questionnarie)
+									.then((quest) => {
+										if(quest) {
+											var send_questionnarie = {
+												id						: quest.id,
+												type					: quest.type,
+												begin					: quest.begin,
+												minimum				: quest.minumim,
+												repeatIfFail	:	quest.repeatIfFail,
+												repeatIfPass	: quest.repeatIfPass,
+												w							: quest.w,
+												version				: quest.version,
+												keywords			: quest.keywords,
+												isVisible			: quest.isVisible
+											};
+											var send_questions = new Array();
+											if(quest.questions) {
+												var question = {};
+												quest.questions.forEach(function(q) {
+													question = {
+														type				: q.type,
+														header			: q.header,
+														footer			: q.footer,
+														footerShow	: q.footerShow,
+														text				: q.text,
+														group				: q.group,
+														help				: q.help,
+														isVisible		: q.isVisible,
+														w						: q.w
+													};
+													if(q.options && q.options.length > 0) {
+														var options = new Array();
+														q.options.forEach(function(o) {
+															options.push({
+																name	: o.name,
+																value	: o.value
+															});
+														});
+														question.options = options;
+													}
+													var answers = new Array();
+													var answer = {};
+													q.answers.forEach(function(a) {
+														answer = {
+															type	: a.type,
+															index	: a.index,
+															text	: a.text,
+															tf		: a.tf,
+														};
+														if(a.group && a.group.length > 0) {
+															answer.group = a.group;
+														}
+													});
+													answers.push(answer);
+													question.answers = answers;
+													send_questions.push(question);
+												});
+												send_questionnarie.questions = send_questions;
+											}
+											res.status(202).json({
+												'status': 202,
+												'message': send_questionnarie
 											});
-										})
-										.catch((err) => {
-											sendError(res,err,'addQuestion -- Saving Block --');
-										});
-								} else {
-									res.status(404).json({
-										'status': 404,
-										'message': 'Error 1457: Questionnarie not found'
+										} else {
+											res.status(404).json({
+												'status': 404,
+												'message': 'Error 1455: This block have a questionnarie related, but the questionnarie cannot found'
+											});
+										}
+									})
+									.catch((err) => {
+										sendError(res,err,'getQuestionnarie -- Searching block --');
 									});
-								}
 							} else {
-								res.status(406).json({
-									'status': 406,
-									'message': 'Error 1456: User -' + key_user.name + '- cannot modify block'
+								res.status(404).json({
+									'status': 404,
+									'message': 'Error 1455: This block does not have a questionnarie related'
 								});
 							}
 						} else {
@@ -776,7 +828,46 @@ module.exports = {
 						}
 					})
 					.catch((err) => {
-						sendError(res,err,'addQuestion -- Searching block --');
+						sendError(res,err,'getQuestionnarie -- Searching block --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'getQuestionnarie -- Searching Key user --');
+			});
+	}, //getQuestionnarie
+
+	addQuestions(req,res) { // agrega preguntas al cuestionario
+		const key = req.headers.key;
+		User.findOne({ name: key })
+			.populate('org')
+			.populate('orgUnit')
+			.then(() => {
+				var query = { _id: req.query.id };
+				Questionnarie.findOne(query)
+					.then((quest) => {
+						if(quest) {
+							req.body.questionnarie.questions.forEach(function(question) {
+								quest.questions.push(question);
+							});
+							quest.save()
+								.then(() => {
+									res.status(200).json({
+										'status': 200,
+										'message': 'Questions added'
+									});
+								})
+								.catch((err) => {
+									sendError(res,err,'addQuestion -- Saving Questionnarie --');
+								});
+						} else {
+							res.status(404).json({
+								'status': 404,
+								'message': 'Error 1455: Questionnarie not found'
+							});
+						}
+					})
+					.catch((err) => {
+						sendError(res,err,'addQuestion -- Searching questionnarie --');
 					});
 			})
 			.catch((err) => {
@@ -784,7 +875,7 @@ module.exports = {
 			});
 	}, // addQuestions
 
-	modify(req,res) {  // modificar curso
+	modify(req,res) {  // modificar propiedades del curso
 		const key = req.headers.key;
 		User.findOne({ name: key })
 			.populate('org')
@@ -848,7 +939,7 @@ module.exports = {
 			});
 	}, // modify
 
-	modifyBlock(req,res) { // modificar bloque
+	modifyBlock(req,res) { // modificar propiedades del bloque
 		const key = req.headers.key;
 		User.findOne({ name: key })
 			.populate('org')
@@ -875,8 +966,6 @@ module.exports = {
 								if(req_block.code) 						{block.code						= req_block.code;						}
 								if(req_block.isVisible) 			{block.isVisible			= req_block.isVisible;			}
 								if(req_block.status) 					{block.status					= req_block.status;					}
-								if(req_block.tasks) 					{block.tasks					= req_block.tasks;					}
-								if(req_block.questionnaries) 	{block.questionnaries	= req_block.questionnaries;	}
 								if(req_block.keywords) 				{block.keywords 			= req_block.keywords;				}
 								if(req_block.media) 					{block.media 					= req_block.media;					}
 								if(req_block.type) 						{block.type 					= req_block.type;						}
@@ -991,7 +1080,7 @@ module.exports = {
 	}, // moveBlock
 
 
-	makeAvailable(req,res) {
+	makeAvailable(req,res) { // pone disponible el curso y los bloques del curso
 		const key = req.headers.key;
 		const coursecode = req.body.code;
 		User.findOne({name: key})

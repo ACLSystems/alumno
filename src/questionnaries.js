@@ -5,6 +5,8 @@ const OwnerSchema = require('./owner');
 const PermissionsSchema = require('./permissions');
 const Schema = mongoose.Schema;
 
+mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
 const OptionSchema = new Schema ({
 	name: {
 		type: String,
@@ -21,13 +23,16 @@ module.exports = OptionSchema;
 const AnswerSchema = new Schema ({
 	type: {
 		type: String,
-		enum: ['index', 'text', 'tf']
+		enum: ['index', 'text', 'tf', 'group']
 	},
 	index: Number,
 	text: String,
 	tf: {
 		type: String,
 		enum: ['true', 'false']
+	},
+	group: {
+		type: Array
 	}
 });
 
@@ -40,20 +45,28 @@ const QuestionSchema = new Schema ({
 	footer: {
 		type: String
 	},
+	footerShow: {
+		type: Boolean,
+		default: false
+	},
 	text: {
-		type: String,
-		required: true
+		type: String
+	},
+	group: {
+		type: [String]
 	},
 	help: {
 		type: String
 	},
 	type: {
 		type: String,
-		enum: ['open', 'text', 'option', 'tf', 'map'],
+		enum: ['open', 'text', 'option', 'tf', 'map','group'],
 		// open 	>>> pregunta abierta
 		// text 	>>> pregunta con respuesta de texto
 		// option >>> pregunta con opciones (opción múltiple)
 		// tf			>>> verdadero(t), falso(f)
+		// map		>>> Grupo de preguntas que basan sus respuestas en un set de opciones
+		// group	>>> Grupo de preguntas que basan sus respuestas en un grupo de respuestas
 		required: true
 	},
 	options: [OptionSchema],
@@ -70,6 +83,10 @@ const QuestionSchema = new Schema ({
 module.exports = QuestionSchema;
 
 const QuestionnarieSchema = new Schema ({
+	org: {
+		type: Schema.Types.ObjectId,
+		ref: 'orgs'
+	},
 	type: {
 		type: String,
 		enum: ['quiz','poll'],
@@ -83,7 +100,19 @@ const QuestionnarieSchema = new Schema ({
 		type: Number,
 		min: [0,'Minimum value is 0'],
 		max: [100,'Maximum value is 100'],
-		default: 1
+		default: 60
+	},
+	repeatIfFail: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [5,'Maximum value is 5'],
+		default: 5
+	},
+	repeatIfPass: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [5,'Maximum value is 5'],
+		default: 5
 	},
 	questions: [QuestionSchema],
 	w: {
@@ -103,6 +132,5 @@ const QuestionnarieSchema = new Schema ({
 	perm: PermissionsSchema
 });
 
-//const Questionnaries = mongoose.model('questionnaries', QuestionnarieSchema);
-//module.exports = Questionnaries;
-module.exports = QuestionnarieSchema;
+const Questionnaries = mongoose.model('questionnaries', QuestionnarieSchema);
+module.exports = Questionnaries;

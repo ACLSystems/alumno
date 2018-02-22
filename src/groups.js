@@ -11,6 +11,17 @@ const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
+const AdminSchema = new Schema({
+	blocksPending: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [1000,'Maximum value is 1000'],
+		default: 2
+	}
+});
+
+module.exports = AdminSchema;
+
 const DatesSchema = new Schema ({
 	block: {
 		type: Schema.Types.ObjectId,
@@ -123,6 +134,7 @@ const GroupsSchema = new Schema ({
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema,
+	admin: AdminSchema
 });
 
 GroupsSchema.index( { code: 1, org: 1}, { unique: true } );

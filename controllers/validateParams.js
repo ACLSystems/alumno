@@ -563,6 +563,11 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1431: Please, give block id by body to process'
 			});
+		} else if (!req.body.block) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1432: Please, give fields inside block by body to process'
+			});
 		} else {
 			next();
 		}
@@ -651,15 +656,29 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1448: Please, give data by body to process'
 			});
+		} else if(!req.body.code && !req.body.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1449: Please, give course code or course id by query to process'
+			});
 		} else {
-			if (!req.body.code && !req.body.id) {
-				res.status(406).json({
-					'status': 406,
-					'message': 'Error 1449: Please, give course code or course id by query to process'
-				});
-			} else {
-				next();
-			}
+			next();
+		}
+		break;
+
+	case '/api/v1/author/course/getquestionnarie':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1448: Please, give data by query to process'
+			});
+		} else if(!req.query.blockid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1449: Please, give block id by query to process'
+			});
+		} else {
+			next();
 		}
 		break;
 
@@ -669,15 +688,15 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1455: Please, give data by body to process'
 			});
-		} else if (!req.body.code && !req.body.id) {
+		} else if (!req.body.id) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1456: Please, give course code by body to process'
+				'message': 'Error 1456: Please, give questionnarie id by body to process'
 			});
-		} else if(req.body && req.body.questionnarie && !req.body.questionnarie.id) {
+		} else if(!req.body.questionnarie) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1466: Please, give questionnarie id by body to process'
+				'message': 'Error 1466: Please, give questionnarie by body to process'
 			});
 		} else {
 			next();

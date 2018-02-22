@@ -3,8 +3,6 @@ const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const OwnerSchema = require('./owner');
 const PermissionsSchema = require('./permissions');
-const TaskSchema = require('./tasks');
-const QuestionnarieSchema = require('./questionnaries');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
@@ -39,8 +37,14 @@ const BlocksSchema = new Schema ({
 		default: 5
 	},
 	rules: String,
-	questionnarie: QuestionnarieSchema,
-	tasks: [TaskSchema],
+	questionnarie: {
+		type: Schema.Types.ObjectId,
+		ref: 'questionnaries'
+	},
+	tasks: [{
+		type: Schema.Types.ObjectId,
+		ref: 'tasks'
+	}],
 	status: {
 		type: String,
 		enum: ['draft','published'],

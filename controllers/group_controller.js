@@ -325,7 +325,7 @@ module.exports = {
 		const groupid	= req.query.groupid;
 		User.findOne({$or: [{name: key},{'person.email': key}]})
 			.then((key_user) => {
-				Group.findOne({_id: groupid})
+				Group.findById(groupid)
 					.populate('course')
 					.then((myGroup) => {
 						if(myGroup) {
@@ -341,67 +341,70 @@ module.exports = {
 							if (myGroup.roster[studentIndex].grades) {
 								grades = myGroup.roster[studentIndex].grades;
 							}
-							Course.findOne({code: myGroup.course.code})
-								.then((course) => {
-									if(course) {
-										if(course.isVisible || course.status === 'published') {
-											Block.find({ _id: { $in: course.blocks }})
-												.sort({order:1})
-												.then((blocks) => {
-													var send_blocks = new Array();
-													blocks.forEach(function(block) {
-														if(block.isVisible && block.status === 'published') {
-															var send_block = {
-																id: 						block._id,
-																title: 					block.title,
-																section: 				block.section,
-																number: 				block.number,
-																track:					false,
-																questionnarie: 	false,
-																task:						false
-															};
-															if(block.questionnaries && block.questionnaries.length > 0) {
-																send_block.questionnarie = true;
-															}
-															if(block.tasks && block.tasks.length > 0) {
-																send_block.tasks = true;
-															}
-															if(grades.length > 0) {
-																grades.forEach(function(grade) {
-																	let g1 = grade.block + '';
-																	let g2 = block._id + '';
-																	if(g1 === g2) {
-																		if(grade.track === 100) {
-																			send_block.track = true;
-																		}
+							if(myGroup.course) {
+								var course = myGroup.course;
+								if(course.isVisible) {
+									if(course.status === 'published') {
+										Block.find({ _id: { $in: course.blocks }})
+											.sort({order:1})
+											.then((blocks) => {
+												var send_blocks = new Array();
+												blocks.forEach(function(block) {
+													if(block.isVisible && block.status === 'published') {
+														var send_block = {
+															id: 						block._id,
+															title: 					block.title,
+															section: 				block.section,
+															number: 				block.number,
+															track:					false,
+															questionnarie: 	false,
+															task:						false
+														};
+														if(block.questionnarie) {
+															send_block.questionnarie = true;
+														}
+														if(block.tasks && block.tasks.length > 0) {
+															send_block.tasks = true;
+														}
+														if(grades.length > 0) {
+															grades.forEach(function(grade) {
+																let g1 = grade.block + '';
+																let g2 = block._id + '';
+																if(g1 === g2) {
+																	if(grade.track === 100) {
+																		send_block.track = true;
 																	}
-																});
-															}
-															send_blocks.push(send_block);
+																}
+															});
 														}
-													});
-													res.status(200).json({
-														'status': 200,
-														'message': {
-															blockNum: send_blocks.length,
-															blocks: send_blocks
-														}
-													});
-												})
-												.catch((err) => {
-													sendError(res,err,'mygroup.Group -- Finding blocks --');
+														send_blocks.push(send_block);
+													}
 												});
-										} else {
-											res.status(404).json({
-												'status': 404,
-												'message': 'Course is not visible nor published yet'
+												res.status(200).json({
+													'status': 200,
+													'message': {
+														myStatus: myGroup.roster[studentIndex].status,
+														blockNum: send_blocks.length,
+														blocks	: send_blocks
+													}
+												});
+											})
+											.catch((err) => {
+												sendError(res,err,'mygroup.Group -- Finding blocks --');
 											});
-										}
+									} else {
+										res.status(404).json({
+											'status': 404,
+											'message': 'Course is not published yet'
+										});
 									}
-								})
-								.catch((err) => {
-									sendError(res,err,'mygroup.Group -- Finding Course --');
-								});
+								} else {
+									res.status(404).json({
+										'status': 404,
+										'message': 'Course is not visible'
+									});
+								}
+							}
 						} else {
 							res.status(400).json({
 								'status': 400,
@@ -551,177 +554,242 @@ module.exports = {
 			.then((key_user) => {
 				Group.findById(groupid)		// Buscar el grupo solicitado
 					.then((group) => {
-						//students = group.roster;
-						//myStudent = students.findIndex(myStudent => myStudent.student == key_user._id + '');
-						//var myStudentIndex = students.findIndex(myStudent => myStudent == key_user._id + '');
-						var i = 0;
-						var studentIndex = -1;
-						group.roster.forEach(function(s) {
-							if(s.student + '' === key_user._id + '') {
-								studentIndex = i;
+						if(group) {
+							var i = 0;
+							var studentIndex = -1;
+							group.roster.forEach(function(s) {
+								if(s.student + '' === key_user._id + '') {
+									studentIndex = i;
+								}
+								i++;
+							});
+							var blocksPending = 2; // default por sistema, solo pueden ver dos bloques
+							if(group.admin && group.admin.blocksPending) {
+								blocksPending = group.admin.blocksPending;
 							}
-							i++;
-						});
-						if(studentIndex > -1 ) {
-							Course.findById(courseid) // Buscar el curso
-								.then((course) => {
-									if(course) {					// Encontramos curso, ahora hay que buscar el registro track del usuario
-										var blocks = course.blocks;
-										Block.findById(blockid)	// Buscar el bloque solicitado
-											.then((block) => {
-												if(block) {
-													var prevblockid = '';
-													var nextblockid = '';
-													var grades = {};
-													if(group.roster[studentIndex].grades) {
-														grades = group.roster[studentIndex].grades;
-														var myGrade = {};
-														grades.forEach(function(grade) {
-															const blockString = grade.block + '';
-															if(blockString === lastid) {
-																myGrade = grade.block;
+							var studentStatus = '';
+							if(studentIndex > -1 ) {
+								studentStatus = group.roster[studentIndex].status;
+								Course.findById(courseid) // Buscar el curso
+									.then((course) => {
+										if(course) {					// Encontramos curso, ahora hay que buscar el registro track del usuario
+											var blocks = course.blocks;
+											Block.findById(blockid)	// Buscar el bloque solicitado
+												.populate('questionnarie')
+												.then((block) => {
+													if(block) {
+														var prevblockid = '';
+														var nextblockid = '';
+														var grades = {};
+														if(group.roster[studentIndex].grades) {
+															grades = group.roster[studentIndex].grades;
+															var myGrade = {};
+															var blocksPresented = 0;
+															grades.forEach(function(grade) {
+																const blockString = grade.block + '';
+																if(blockString === lastid) {
+																	myGrade = grade.block;
+																}
+															});
+															if(Object.keys(myGrade).length === 0) { // Existe el bloque
+																if(lastid !== 'empty') {
+																	myGrade = {
+																		block: lastid,
+																		track: 100
+																	};
+																	if(quests.length > 0) {
+																		myGrade.quests = quests;
+																	}
+																	grades.push(myGrade);
+																	blocksPresented++;
+																}
 															}
-														});
-														if(Object.keys(myGrade).length === 0) { // Existe el bloque
+														} else { // No existe el bloque
 															if(lastid !== 'empty') {
-																myGrade = {
+																grades = [{
 																	block: lastid,
 																	track: 100
-																};
+																}];
 																if(quests.length > 0) {
-																	myGrade.quests = quests;
+																	grades.quests = quests;
 																}
-																grades.push(myGrade);
+																blocksPresented++;
 															}
 														}
-													} else { // No existe el bloque
-														if(lastid !== 'empty') {
-															grades = [{
-																block: lastid,
-																track: 100
-															}];
-															if(quests.length > 0) {
-																grades.quests = quests;
-															}
+														group.roster[studentIndex].grades = grades;
+														group.save()
+															.catch((err) => {
+																sendError(res,err,'nextBlock.Group -- Saving Block --');
+															});
+														var blockIndex 	= blocks.findIndex(blockIndex => blockIndex == blockid + '');
+														if(blockIndex === -1) {
+															res.status(404).json({
+																'status': 404,
+																'message': 'Error XXXX: Data integrity error. Block not found. Please notify administrator'
+															});
+															return;
+														} else if (blocks.length === 1) {
+															nextblockid = '';
+															prevblockid = '';
+														} else if (blockIndex === 0) {
+															nextblockid = blocks[blockIndex + 1];
+														} else if (blockIndex > 0 && blockIndex < blocks.length - 1) {
+															nextblockid = blocks[blockIndex + 1];
+															prevblockid = blocks[blockIndex - 1];
+														} else if (blockIndex === blocks.length - 1 && blockIndex !== 0) {
+															prevblockid = blocks[blockIndex - 1];
 														}
-													}
-													group.roster[studentIndex].grades = grades;
-													group.save()
-														.catch((err) => {
-															sendError(res,err,'nextBlock.Group -- Saving Block --');
-														});
-													var blockIndex 	= blocks.findIndex(blockIndex => blockIndex == blockid + '');
-													if(blockIndex === -1) {
-														res.status(404).json({
-															'status': 404,
-															'message': 'Error XXXX: Data integrity error. Block not found. Please notify administrator'
-														});
-														return;
-													} else if (blocks.length === 1) {
-														nextblockid = '';
-														prevblockid = '';
-													} else if (blockIndex === 0) {
-														nextblockid = blocks[blockIndex + 1];
-													} else if (blockIndex > 0 && blockIndex < blocks.length - 1) {
-														nextblockid = blocks[blockIndex + 1];
-														prevblockid = blocks[blockIndex - 1];
-													} else if (blockIndex === blocks.length - 1 && blockIndex !== 0) {
-														prevblockid = blocks[blockIndex - 1];
-													}
-													if(block.isVisible && block.status === 'published') {
-														var send_content = {
-															blockCode:				block.code,
-															blockType: 				block.type,
-															blockTitle: 			block.title,
-															blockSection: 		block.section,
-															blockNumber: 			block.number,
-															blockContent: 		block.content,
-															blockMinimumTime: block.defaultmin,
-															blockCurrentId:		block._id,
-															blockPrevId:			prevblockid,
-															blockNextId:			nextblockid
-														};
-														if(block.questionnarie) {
-															var questionnarie =  {};
-															questionnarie = block.questionnarie;
-															var send_questionnarie = new Array();
-															questionnarie.forEach(function(quest) {
-																if(quest.isVisible) {
-																	var questions = quest.questions;
+														if(block.isVisible && block.status === 'published') {
+															var send_content = {
+																blockCode:				block.code,
+																blockType: 				block.type,
+																blockTitle: 			block.title,
+																blockSection: 		block.section,
+																blockNumber: 			block.number,
+																blockContent: 		block.content,
+																blockMinimumTime: block.defaultmin,
+																blockCurrentId:		block._id,
+																blockPrevId:			prevblockid,
+																blockNextId:			nextblockid
+															};
+															if(block.questionnarie) {
+																var questionnarie = block.questionnarie;
+																var send_questionnarie = {};
+																if(questionnarie.isVisible) {
+																	var questions = questionnarie.questions;
 																	var send_questions = new Array();
 																	questions.forEach(function(q) {
+																		var send_question = {};
 																		if(q.isVisible) {
+																			if(q.header) 			{send_question.header = q.header;}
+																			if(q.footer) 			{send_question.footer = q.footer;}
+																			if(q.footerShow) 	{send_question.footerShow = q.footerShow;}
+																			if(q.type) 				{send_question.type = q.type;}
+																			if(q.w) 					{send_question.w = q.w;}
+																			if(q.text) 				{send_question.text = q.text;}
+																			if(q.help) 				{send_question.help = q.help;}
+																			if(q.group && q.group.length > 0) 	{send_question.group = q.group;}
 																			send_questions.push({
-																				text: 		q.text,
-																				help: 		q.help,
-																				type: 		q.type,
-																				w: 				q.w,
-																				answers:	q.answers,
-																				options:	q.options,
-																				footer:		q.footer
+																				text					: q.text,
+																				help					: q.help,
+																				type					: q.type,
+																				w							: q.w,
+																				answers				:	q.answers,
+																				options				:	q.options,
+																				header				: q.header,
+																				footer				:	q.footer,
+																				footerShow		: q.footerShow,
+																				group					: q.group
 																			});
+																			if(q.options && q.options.length > 0) {
+																				var options = new Array();
+																				q.options.forEach(function(o) {
+																					options.push({
+																						name	: o.name,
+																						value	: o.value
+																					});
+																				});
+																				send_question.options = options;
+																			}
+																			var answers = new Array();
+																			var answer = {};
+																			q.answers.forEach(function(a) {
+																				answer = {
+																					type	: a.type,
+																					index	: a.index,
+																					text	: a.text,
+																					tf		: a.tf,
+																				};
+																				if(a.group && a.group.length > 0) {
+																					answer.group = a.group;
+																				}
+																			});
+																			answers.push(answer);
+																			send_question.answers = answers;
+																			send_questions.push(send_question);
 																		}
 																	});
-																	send_questionnarie.push({
-																		type: quest.type,
-																		begin: quest.begin,
-																		questions: send_questions
-																	});
+																	send_questionnarie = {
+																		type					: questionnarie.type,
+																		begin					: questionnarie.begin,
+																		minimum				: questionnarie.minimu,
+																		repeatIfFail	: questionnarie.repeatIfFail,
+																		repeatIfPass	: questionnarie.repeatIfPass,
+																		w							: questionnarie.w,
+																		questions			: send_questions
+																	};
 																}
+																send_content.questionnarie = send_questionnarie;
+															}
+															if(block.tasks && block.tasks.length > 0) {
+																var tasks = block.tasks;
+																var send_tasks = new Array();
+																tasks.forEach(function(task) {
+																	if(task.isVisible && status === 'published') {
+																		send_tasks.push({
+																			title: 				task.text,
+																			description: 	task.help,
+																			content: 			task.content,
+																			w: 						task.w,
+																			files:				task.files
+																		});
+																	}
+																});
+																send_content.tasks= send_tasks;
+															}
+															if(studentStatus === 'pending' && blocksPresented > blocksPending) {
+																res.status(404).json({
+																	'status': 404,
+																	'message': 'Your student status is pending and you can only have -' + blocksPending + '- free blocks'
+																});
+															} else if (studentStatus === 'remove') {
+																res.status(404).json({
+																	'status': 200,
+																	'message': 'Your student status is remove and you cannot have blocks from this course'
+																});
+															} else {
+																res.status(200).json({
+																	'status': 200,
+																	'message': send_content
+																});
+															}
+														} else {
+															res.status(404).json({
+																'status': 404,
+																'message': 'Block requested is not available (not visible nor published)'
 															});
-															send_content.questionnarie= send_questionnarie;
 														}
-														if(block.tasks && block.tasks.length > 0) {
-															var tasks = block.tasks;
-															var send_tasks = new Array();
-															tasks.forEach(function(task) {
-																if(task.isVisible && status === 'published') {
-																	send_tasks.push({
-																		title: 				task.text,
-																		description: 	task.help,
-																		content: 			task.content,
-																		w: 						task.w,
-																		files:				task.files
-																	});
-																}
-															});
-															send_content.tasks= send_tasks;
-														}
-														res.status(200).json({
-															'status': 200,
-															'message': send_content
-														});
 													} else {
 														res.status(404).json({
 															'status': 404,
-															'message': 'Block requested is not available (not visible nor published)'
+															'message': 'Block requested is not found'
 														});
 													}
-												} else {
-													res.status(404).json({
-														'status': 404,
-														'message': 'Block requested is not found'
-													});
-												}
-											})
-											.catch((err) => {
-												sendError(res,err,'nextBlock.Group -- Finding Block --');
+												})
+												.catch((err) => {
+													sendError(res,err,'nextBlock.Group -- Finding Block --');
+												});
+										} else {
+											res.status(404).json({
+												'status': 404,
+												'message': 'Course requested is not found'
 											});
-									} else {
-										res.status(404).json({
-											'status': 404,
-											'message': 'Course requested is not found'
-										});
-									}
+										}
 
-								})
-								.catch((err) => {
-									sendError(res,err,'nextBlock.Group -- Finding Course --');
+									})
+									.catch((err) => {
+										sendError(res,err,'nextBlock.Group -- Finding Course --');
+									});
+							} else {
+								res.status(404).json({
+									'status': 404,
+									'message': 'You do not belong to this group. Please contact your administrator'
 								});
+							}
 						} else {
 							res.status(404).json({
 								'status': 404,
-								'message': 'You do not belong to this group. Please contact your administrator'
+								'message': 'Group requested not found. Please contact your administrator'
 							});
 						}
 					})

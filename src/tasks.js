@@ -8,6 +8,10 @@ const Schema = mongoose.Schema;
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 const TaskSchema = new Schema ({
+	org: {
+		type: Schema.Types.ObjectId,
+		ref: 'orgs'
+	},
 	title: {
 		type: String,
 		required: true
@@ -48,6 +52,6 @@ const TaskSchema = new Schema ({
 	perm: {PermissionsSchema}
 });
 
-//const Task = mongoose.model('tasks', TaskSchema);
-//module.exports = Task;
+const Tasks = mongoose.model('tasks', TaskSchema);
+module.exports = Tasks;
 module.exports = TaskSchema;
