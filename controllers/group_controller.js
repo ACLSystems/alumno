@@ -724,7 +724,7 @@ module.exports = {
 																		type					: questionnarie.type,
 																		begin					: questionnarie.begin,
 																		minimum				: questionnarie.minimu,
-																		numAttempts		: questionnarie.numAttempts,
+																		maxAttempts		: questionnarie.maxAttempts,
 																		attempts			: numAttempts,
 																		w							: questionnarie.w,
 																		questions			: send_questions
