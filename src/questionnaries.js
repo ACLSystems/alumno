@@ -102,13 +102,7 @@ const QuestionnarieSchema = new Schema ({
 		max: [100,'Maximum value is 100'],
 		default: 60
 	},
-	repeatIfFail: {
-		type: Number,
-		min: [0,'Minimum value is 0'],
-		max: [5,'Maximum value is 5'],
-		default: 5
-	},
-	repeatIfPass: {
+	numAttempts: {
 		type: Number,
 		min: [0,'Minimum value is 0'],
 		max: [5,'Maximum value is 5'],
