@@ -669,12 +669,16 @@ module.exports = {
 																var questionnarie = block.questionnarie;
 																var send_questionnarie = {};
 																var numAttempts = 0;
+																var lastGrade = 0;
 																if(questionnarie.isVisible) {
 																	grades.forEach(function(grade) {
 																		const blockString = grade.block + '';
 																		if(blockString === block._id) {
 																			if(grade.quests && grade.quests.attempts) {
 																				numAttempts = grade.quests.attempts.length;
+																			}
+																			if(grade.quests && grade.quests.grade) {
+																				lastGrade = grade.quests.grade;
 																			}
 																		}
 																	});
@@ -723,9 +727,10 @@ module.exports = {
 																	send_questionnarie = {
 																		type					: questionnarie.type,
 																		begin					: questionnarie.begin,
-																		minimum				: questionnarie.minimu,
+																		minimum				: questionnarie.minimum,
 																		maxAttempts		: questionnarie.maxAttempts,
 																		attempts			: numAttempts,
+																		lastGrade			: lastGrade,
 																		w							: questionnarie.w,
 																		questions			: send_questions
 																	};
