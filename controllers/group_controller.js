@@ -7,7 +7,7 @@ const Group = require('../src/groups');
 const Block = require('../src/blocks');
 const Err = require('../controllers/err500_controller');
 //const permissions = require('../shared/permissions');
-require('winston-daily-rotate-file');
+//require('winston-daily-rotate-file');
 
 /*
 var transport = new(winston.transports.DailyRotateFile) ({
@@ -584,6 +584,8 @@ module.exports = {
 														var prevblockid = '';
 														var nextblockid = '';
 														var grades = {};
+														var attempts = new Array();
+														const today = new Date();
 														if(group.roster[studentIndex].grades) {
 															grades = group.roster[studentIndex].grades;
 															var myGrade = {};
@@ -602,6 +604,8 @@ module.exports = {
 																	};
 																	if(quests.length > 0) {
 																		myGrade.quests = quests;
+																		attempts.push(today);
+																		myGrade.quests.attempts = attempts;
 																	}
 																	grades.push(myGrade);
 																	blocksPresented++;
@@ -615,6 +619,8 @@ module.exports = {
 																}];
 																if(quests.length > 0) {
 																	grades.quests = quests;
+																	attempts.push(today);
+																	myGrade.quests.attempts = attempts;
 																}
 																blocksPresented++;
 															}
@@ -662,7 +668,16 @@ module.exports = {
 															if(block.questionnarie) {
 																var questionnarie = block.questionnarie;
 																var send_questionnarie = {};
+																var numAttempts = 0;
 																if(questionnarie.isVisible) {
+																	grades.forEach(function(grade) {
+																		const blockString = grade.block + '';
+																		if(blockString === block._id) {
+																			if(grade.quests && grade.quests.attempts) {
+																				numAttempts = grade.quests.attempts.length;
+																			}
+																		}
+																	});
 																	var questions = questionnarie.questions;
 																	var send_questions = new Array();
 																	questions.forEach(function(q) {
@@ -711,6 +726,7 @@ module.exports = {
 																		minimum				: questionnarie.minimu,
 																		repeatIfFail	: questionnarie.repeatIfFail,
 																		repeatIfPass	: questionnarie.repeatIfPass,
+																		attempts			: numAttempts,
 																		w							: questionnarie.w,
 																		questions			: send_questions
 																	};

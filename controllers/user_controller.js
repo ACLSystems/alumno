@@ -1,16 +1,17 @@
-const winston = require('winston');
+//const winston = require('winston');
 const User = require('../src/users');
 const Org = require('../src/orgs');
 const OrgUnit = require('../src/orgUnits');
 const generate = require('nanoid/generate');
 //const moment = require('moment');
+const Err = require('../controllers/err500_controller');
 const permissions = require('../shared/permissions');
 const mailjet = require('../shared/mailjet');
-require('winston-daily-rotate-file');
+//require('winston-daily-rotate-file');
 
 const url = 'https://alumno.sloppy.zone/api/user/confirmuser?';
 
-
+/*
 var transport = new(winston.transports.DailyRotateFile) ({
 	filename: './logs/log',
 	datePattern: 'yyyy-MM-dd.',
@@ -24,6 +25,7 @@ var logger = new(winston.Logger) ({
 		transport
 	]
 });
+*/
 
 module.exports = {
 	//register(req, res, next) {
@@ -114,11 +116,11 @@ module.exports = {
 														});
 													})
 													.catch((err) => {
-														sendError(res,err,'register -- Sending Mail --');
+														Err.sendError(res,err,'user_controller','register -- Sending Mail --');
 													});
 											})
 											.catch((err) => {
-												sendError(res,err,'register -- Saving User validation String --');
+												Err.sendError(res,err,'user_controller','register -- Saving User validation String --');
 											});
 									})
 									.catch((err) => {
@@ -165,11 +167,11 @@ module.exports = {
 																			'status': 201,
 																			'message': 'Register was sucessfully done, but email was not send'
 																		});
-																		sendError(res,err,'register -- Sending Mail --',true);
+																		Err.sendError(res,err,'user_controller','register -- Sending Mail --',true);
 																	});
 															})
 															.catch((err) => {
-																sendError(res,err,'register -- Saving User validation String --');
+																Err.sendError(res,err,'user_controller','register -- Saving User validation String --');
 															});
 													} else {
 														res.status(406).json({
@@ -179,22 +181,22 @@ module.exports = {
 													}
 												})
 												.catch((err) => {
-													sendError(res,err,'register -- Finding User --');
+													Err.sendError(res,err,'user_controller','register -- Finding User --');
 												});
 										} else {
-											sendError(res,err,'register -- User create --');
+											Err.sendError(res,err,'user_controller','register -- User create --');
 										}
 									});
 								// User Create
 							}
 						})
 						.catch((err) => {
-							sendError(res,err,'register -- Finding orgUnit --');
+							Err.sendError(res,err,'user_controller','register -- Finding orgUnit --');
 						});
 				}
 			})
 			.catch((err) => {
-				sendError(res,err,'register -- Finding org --');
+				Err.sendError(res,err,'user_controller','register -- Finding org --');
 			});
 	},
 
@@ -213,7 +215,7 @@ module.exports = {
 							});
 						})
 						.catch((err) => {
-							sendError(res,err,'confirmUser -- Saving User Status --');
+							Err.sendError(res,err,'user_controller','confirmUser -- Saving User Status --');
 						});
 				} else {
 					res.status(406).json({
@@ -223,7 +225,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				sendError(res,err,'confirmUser -- Finding Email --');
+				Err.sendError(res,err,'user_controller','confirmUser -- Finding Email --');
 			});
 	},
 
@@ -272,11 +274,11 @@ module.exports = {
 						}
 					})
 					.catch((err) => {
-						sendError(res,err,'getDetails -- Finding User --');
+						Err.sendError(res,err,'user_controller','getDetails -- Finding User --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'getDetails -- Finding key User --');
+				Err.sendError(res,err,'user_controller','getDetails -- Finding key User --');
 			});
 	},
 
@@ -345,7 +347,7 @@ module.exports = {
 							}
 						})
 						.catch((err) => {
-							sendError(res,err,'getDetails -- Finding User --');
+							Err.sendError(res,err,'user_controller','getDetails -- Finding User --');
 						});
 				} else {
 					res.status(403).json({
@@ -355,7 +357,7 @@ module.exports = {
 				}
 			}) //key_user
 			.catch((err) => {
-				sendError(res,err,'getDetails -- Finding key User --');
+				Err.sendError(res,err,'user_controller','getDetails -- Finding key User --');
 			});
 	},
 
@@ -394,7 +396,7 @@ module.exports = {
 										if(userProps.roles.isInstructor !== undefined ) { user.roles.isInstructor = userProps.roles.isInstructor; }
 										if(userProps.roles.isSupervisor  !== undefined ) { user.roles.isSupervisor = userProps.roles.isSupervisor; }
 										user.save().catch((err) => {
-											sendError(res,err,'setRoles -- Saving User--');
+											Err.sendError(res,err,'user_controller','setRoles -- Saving User--');
 										});
 										res.status(200).json({
 											'status': 200,
@@ -410,7 +412,7 @@ module.exports = {
 							}
 						})
 						.catch((err) => {
-							sendError(res,err,'setRoles -- Finding User to set--');
+							Err.sendError(res,err,'user_controller','setRoles -- Finding User to set--');
 						});
 				} else {
 					res.status(403).json({
@@ -420,7 +422,7 @@ module.exports = {
 				}
 			}) //key_user
 			.catch((err) => {
-				sendError(res,err,'setRoles -- Finding key User --');
+				Err.sendError(res,err,'user_controller','setRoles -- Finding key User --');
 			});
 	},
 
@@ -449,7 +451,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				sendError(res,err,'validateEmail -- Finding email --');
+				Err.sendError(res,err,'user_controller','validateEmail -- Finding email --');
 			});
 	},
 
@@ -471,7 +473,7 @@ module.exports = {
 								});
 							})
 							.catch((err) => {
-								sendError(res,err,'passwordRecovery -- Saving User --');
+								Err.sendError(res,err,'user_controller','passwordRecovery -- Saving User --');
 							});
 					} else {
 						res.status(404).json({
@@ -488,7 +490,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				sendError(res,err,'passwordRecovery -- Finding user --');
+				Err.sendError(res,err,'user_controller','passwordRecovery -- Finding user --');
 			});
 	},
 
@@ -514,7 +516,7 @@ module.exports = {
 							const result = permissions.access(key_user,user,'user');
 							if(result.canModify) {
 								user.save().catch((err) => {
-									sendError(res,err,'passwordChange -- Saving User--');
+									Err.sendError(res,err,'user_controller','passwordChange -- Saving User--');
 								});
 								res.status(200);
 								res.json({
@@ -535,11 +537,11 @@ module.exports = {
 						}
 					})
 					.catch((err) => {
-						sendError(res,err,'passwordChange -- Finding User --');
+						Err.sendError(res,err,'user_controller','passwordChange -- Finding User --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'passwordChange -- Finding key User --');
+				Err.sendError(res,err,'user_controller','passwordChange -- Finding key User --');
 			});
 	},
 
@@ -569,7 +571,7 @@ module.exports = {
 							};
 							user.mod.push(mod);
 							user.save().catch((err) => {
-								sendError(res,err,'modify -- Saving User--');
+								Err.sendError(res,err,'user_controller','modify -- Saving User--');
 							});
 							res.status(200);
 							res.json({
@@ -585,11 +587,11 @@ module.exports = {
 						}
 					})
 					.catch((err) => {
-						sendError(res,err,'modify -- Finding User to modify --');
+						Err.sendError(res,err,'user_controller','modify -- Finding User to modify --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'modify -- Finding Key User --');
+				Err.sendError(res,err,'user_controller','modify -- Finding Key User --');
 			});
 	}, // Modify
 
@@ -642,7 +644,7 @@ module.exports = {
 							});
 						})
 						.catch((err) => {
-							sendError(res,err,'list -- Finding Users list (isOrg) --');
+							Err.sendError(res,err,'user_controller','list -- Finding Users list (isOrg) --');
 						});
 				}
 				if(key_user.roles.isAdmin) {
@@ -696,11 +698,11 @@ module.exports = {
 										}
 									})
 									.catch((err) => {
-										sendError(res,err,'list -- Finding Users list (isAdmin) --');
+										Err.sendError(res,err,'user_controller','list -- Finding Users list (isAdmin) --');
 									});
 							})
 							.catch((err) => {
-								sendError(res,err,'list -- Finding Org --');
+								Err.sendError(res,err,'user_controller','list -- Finding Org --');
 							});
 					} else {
 						res.status(406).json({
@@ -711,7 +713,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				sendError(res,err,'list -- Finding Key User --');
+				Err.sendError(res,err,'user_controller','list -- Finding Key User --');
 			});
 	}, //list
 
@@ -733,7 +735,7 @@ module.exports = {
 								});
 							})
 							.catch((err) => {
-								sendError(res,err,'list -- Finding Org isAdmin --');
+								Err.sendError(res,err,'user_controller','list -- Finding Org isAdmin --');
 							});
 					} else {
 						res.status(406).json({
@@ -754,12 +756,12 @@ module.exports = {
 							});
 						})
 						.catch((err) => {
-							sendError(res,err,'list -- Finding Org isOrg --');
+							Err.sendError(res,err,'user_controller','list -- Finding Org isOrg --');
 						});
 				}
 			})
 			.catch((err) => {
-				sendError(res,err,'total -- Finding Key User --');
+				Err.sendError(res,err,'user_controller','total -- Finding Key User --');
 			});
 	}
 };
@@ -776,7 +778,9 @@ function properCase(obj) {
 	return newName;
 }
 
-function sendError(res, err, section, send_status) {
+/*
+
+function Err.sendError(res, err, section, send_status) {
 	logger.info('User controller -- Section: ' + section + '----');
 	logger.info(err);
 	if(!send_status) {
@@ -788,3 +792,4 @@ function sendError(res, err, section, send_status) {
 	}
 	return;
 }
+*/
