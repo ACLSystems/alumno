@@ -79,6 +79,14 @@ const CoursesSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'blocks'
 	}],
+	currentSection	: {
+		type: Number,
+		default: 1
+	},
+	nextNumber	: {
+		type: Number,
+		default: 0
+	},
 	status: {
 		type: String,
 		enum: ['draft','published'],

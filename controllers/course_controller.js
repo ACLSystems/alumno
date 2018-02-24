@@ -275,20 +275,26 @@ module.exports = {
 				Course.findOne(queryCourse)
 					.then((course) => {
 						if(course) {
-							var order = course.blocks.length;
+							var order 		= course.blocks.length;
+							var section 	= course.currentSection;
+							var number 		= course.nextNumber;
 							var block 		= new Block;
 							block.org 		= key_user.org._id;
 							block.code 		= req.body.code;
 							block.type 		= req.body.type;
 							block.title 	= req.body.title;
-							block.section = req.body.section;
-							block.number 	= req.body.number;
+							if(req.body.newSection){
+								section++;
+								number = 0;
+							}
+							block.number 	= number;
+							block.section = section;
 							block.order 	= order;
 							block.content = req.body.content;
 							if(req.body.media) {
 								block.media = parseArray(req.body.media);
 							}
-							block.status = 'draft';
+							block.status	= 'draft';
 							block.version = 1;
 							if(req.body.keywords) {
 								block.keywords = parseArray(req.body.keywords);
@@ -314,6 +320,8 @@ module.exports = {
 										course.blocks.push(block._id);
 										let desc = 'Course modification - Adding block ' + block.code;
 										course.mod.push(generateMod(key_user.name,desc));
+										course.currentSection = section;
+										course.nextNumber			= number + 1;
 										course.save()
 											.then(() => {
 												res.status(201).json({
@@ -336,6 +344,7 @@ module.exports = {
 										sendError(res,err,'createBlock -- Saving Block --');
 									}
 								});
+							// aquí
 						} else {
 							res.status(404).json({
 								'status': 404,
@@ -1002,7 +1011,19 @@ module.exports = {
 	}, // modifyBlock
 
 
-	moveBlock(req,res) { // mover bloque de orden de aparición
+	moveBlock(req,res) { // mover orden de aparición de los bloques
+		// Paso 1. 	Acomodar el orden general de los bloques (campo Order)
+		//				 	aquí se necesitan refid y blockid para acomodar
+		// Paso 2.	Actualizar el orden de la sección que se vió afectada
+		//					2.1 Actualizar el bloque nuevo con el número de sección
+		//							al que se acaba de mudar
+		//							blockid.section = refid.section
+		//							La sección ahora tendrá más bloques
+		//					2.2	Actualizar el orden de las secciones (campo Number)
+		//							Hacer recorrido por cada sección para actualizar.
+		//							Si todo está correctamente definido el "order"
+		//							define el orden general y solo hay que actualizar el
+		//							orden en como aparecen en cada sección.
 		const key = req.headers.key;
 		const courseid			= req.body.courseid;
 		const blockid				= req.body.blockid;
@@ -1016,9 +1037,12 @@ module.exports = {
 							var blocks = course.blocks;
 							var refblockIndex = -1;
 							var blockIndex = -1;
-							if(refblockid === 'zero') {
-								refblockIndex = 0;
-							} else {
+							// buscar el indice del bloque referencia
+							// en el curso hay un campo (blocks) con un arreglo de IDs de los bloques en el orden de aparición
+							// el orden de los bloques en este campo debe coincidir con el "order" del bloque
+							if(refblockid === 'zero') { // Si queremos poner el bloque en el order 0 (al principio de todo)
+								refblockIndex = 0;				// le ponemos el string "zero". y con esto ajustamos el índice
+							} else {										// del bloque referencia en 0. Y si no, buscamos el índice
 								refblockIndex = blocks.findIndex(function(elem) {return elem + '' === refblockid;});
 							}
 							if(refblockIndex === -1) {
@@ -1028,14 +1052,16 @@ module.exports = {
 								});
 								return;
 							}
+							// ahora buscamos el índice del bloque queremos mover
 							blockIndex = blocks.findIndex(function(elem) {return elem + '' === blockid;});
 							if(blockIndex === -1) {
 								res.status(404).json({
 									'status': 404,
-									'message': 'Block to move -' + blockid + '- not found'
+									'message': 'Block -' + blockid + '- not found'
 								});
 								return;
 							}
+							// hasta aquí, ya tenemos ambos indices ahora acomodamos el arreglo
 							blocks.splice(refblockIndex,0,blocks[blockIndex]);
 							if(refblockIndex < blockIndex ) {
 								blocks.splice(blockIndex + 1,1);
@@ -1043,14 +1069,62 @@ module.exports = {
 							if (refblockIndex > blockIndex) {
 								blocks.splice(blockIndex,1);
 							}
-							var i = 0;
-							blocks.forEach(function(block) {
-								Block.findByIdAndUpdate(block,{$set: {order: i}})
-									.catch((err) => {
-										sendError(res,err,'moveBlock -- Saving course --');
+							// realizar el cambio de sección para blockid
+							// buscar bloque refid y solo traernos la sección y se la pegamos
+							// a blockid
+							Block.find({_id: {$in: blocks}},{section:1, number:1, order: 1})
+								.then((dbBlocks) => {
+									var order = 0;
+									var section = 1;
+									var number = 0;
+									var refsection = 0;
+									dbBlocks.forEach(function(block) {
+										if(refblockid === block._id + '') {
+											refsection = block.section;
+										}
 									});
-								i++;
-							});
+									//console.log('Course blocks: '+ blocks);
+									//console.log('DBBlocks: '+JSON.stringify(dbBlocks,null,2));
+									var newDBblock = {};
+									blocks.forEach(function(block) { // y actualizamos order en los bloques
+										dbBlocks.forEach(function(dbBlock) {
+											if(dbBlock._id +'' === block + '') {
+												newDBblock = {
+													_id: dbBlock._id,
+													section: dbBlock.section,
+													number: dbBlock.number,
+													order: dbBlock.order
+												};
+											}
+											return;
+										});
+										if(blockid +'' === newDBblock._id +'') {
+											newDBblock.section = refsection;
+										}
+										// 	si encontramos el bloque que se movió
+										//		le ponemos la sección del bloque referencia
+										// 		antes de que se corrijan las secciones
+										if(section < newDBblock.section) {
+											section++;
+											number=0;
+										} // 	si cambiamos de seccion entonces
+										//		actualizamos bucle de números
+										Block.findByIdAndUpdate(block,{$set: {
+											section	: section,
+											number	: number,
+											order		: order
+										}})
+											.catch((err) => {
+												sendError(res,err,'moveBlock -- ForEach saving blocks --');
+											});
+										number++;
+										order++;
+									});
+
+								})
+								.catch((err) => {
+									sendError(res,err,'moveBlock -- Finding ref block --');
+								});
 							course.blocks = blocks;
 							course.save()
 								.catch((err) => {
@@ -1059,8 +1133,8 @@ module.exports = {
 							res.status(200).json({
 								'status': 200,
 								'message': {
-									'blocksNum': blocks.length,
-									'blocks': blocks
+									'blocksNum'	: blocks.length,
+									'blocks'		: blocks
 								}
 							});
 						} else {

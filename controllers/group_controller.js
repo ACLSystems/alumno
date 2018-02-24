@@ -355,13 +355,14 @@ module.exports = {
 												blocks.forEach(function(block) {
 													if(block.isVisible && block.status === 'published') {
 														var send_block = {
-															id: 						block._id,
-															title: 					block.title,
-															section: 				block.section,
-															number: 				block.number,
-															track:					false,
-															questionnarie: 	false,
-															task:						false
+															id							: block._id,
+															title						: block.title,
+															section					: block.section,
+															number					: block.number,
+															order						: block.order,
+															track						:	false,
+															questionnarie		: false,
+															task						:	false
 														};
 														if(block.questionnarie) {
 															send_block.questionnarie = true;

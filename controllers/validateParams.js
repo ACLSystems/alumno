@@ -526,6 +526,7 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1434: Block type must be one of the next strings: text, textVideo, video, task or questionnarie'
 			});
+		/*
 		} else if (req.body.section === undefined) {
 			res.status(406).json({
 				'status': 406,
@@ -547,6 +548,7 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1438: Please, Block status must be one of the next strings: draft or published'
 			});
+		*/
 		} else {
 			next();
 		}
