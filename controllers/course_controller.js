@@ -669,7 +669,6 @@ module.exports = {
 								questions: req.body.questionnarie.questions,
 								version: 1,
 								keywords: req.body.questionnarie.keywords,
-								isVisible: true,
 								own: {
 									user: key_user.name,
 									org: key_user.org.name,

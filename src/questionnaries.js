@@ -71,7 +71,10 @@ const QuestionSchema = new Schema ({
 	},
 	options: [OptionSchema],
 	answers: [AnswerSchema],
-	isVisible: Boolean,
+	isVisible: {
+		type: Boolean,
+		default: true
+	},
 	w: {
 		type: Number,
 		min: [0,'Minimum value is 0'],
@@ -120,7 +123,10 @@ const QuestionnarieSchema = new Schema ({
 		min: [1, 'Questionnarie version cannot be less than 1']
 	},
 	keywords: [String],
-	isVisible: Boolean,
+	isVisible: {
+		type: Boolean,
+		default: true
+	},
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema
