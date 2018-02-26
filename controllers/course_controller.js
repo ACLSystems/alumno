@@ -609,6 +609,7 @@ module.exports = {
 				if(course) {
 					if(course.isVisible || course.status === 'published') {
 						Block.find({ _id: { $in: course.blocks }})
+							.sort({order:1})
 							.then((blocks) => {
 								var send_blocks = new Array();
 								blocks.forEach(function(block) {
@@ -1166,6 +1167,7 @@ module.exports = {
 						course.save()
 							.then((course) => {
 								Block.find({_id: {$in: course.blocks}})
+									.sort({order:1})
 									.then((blocks) => {
 										var status = 'ok';
 										var details = new Array();
@@ -1266,19 +1268,19 @@ function prettyCourse(course) {
 
 function prettyGetBlockBy(obj){
 	return {
-		id: 			obj._id,
-		org: 			obj.org,
-		code: 		obj.code,
-		type: 		obj.type,
-		title: 		obj.title,
-		section: 	obj.section,
-		number: 	obj.number,
-		order: 		obj.order,
-		content: 	obj.content,
-		keywords: obj.keywords,
-		tasks: 		obj.tasks,
-		version: 	obj.version,
-		media: 		obj.media,
+		id						: obj._id,
+		org						: obj.org,
+		code					: obj.code,
+		type 					: obj.type,
+		title					: obj.title,
+		section				: obj.section,
+		number				: obj.number,
+		order					: obj.order,
+		content				: obj.content,
+		keywords			: obj.keywords,
+		tasks					: obj.tasks,
+		version				: obj.version,
+		media					: obj.media,
 		questionnaries: prettyQuests(obj)
 	};
 }
