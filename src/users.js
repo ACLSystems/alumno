@@ -69,6 +69,9 @@ const PersonSchema = new Schema ({
 	genre: {
 		type: String,
 		enum: ['male', 'female']
+	},
+	alias: {
+		type: String
 	}
 
 });
@@ -80,6 +83,10 @@ PersonSchema.pre('save', function(next) {
 	var birthDate = moment.utc(this.birthDate);
 	this.birthDate = birthDate.toDate();
 	next();
+});
+
+PersonSchema.virtual('fullName').get(function () {
+	return this.name + ' ' + this.fatherName + this.motherName;
 });
 
 module.exports = PersonSchema;

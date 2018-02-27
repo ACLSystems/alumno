@@ -39,6 +39,7 @@
     "node-mailjet": "^3.2.1",
     "nodemon": "1.14.11",
     "randomatic": "3.0.0",
+    "time-ago": "^0.2.1",
     "winston": "2.4.0",
     "winston-daily-rotate-file": "1.7.2"
   },

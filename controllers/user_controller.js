@@ -31,8 +31,9 @@ module.exports = {
 	//register(req, res, next) {
 	register(req, res) {
 		var key = '';
-		if(req.headers.key) {
-			key = req.headers.key;
+		const key_user 	= res.locals.user;
+		if(res.locals.user && res.locals.user.name) {
+			key = key_user.name;
 		} else {
 			key = req.body.name;
 		}
@@ -231,199 +232,175 @@ module.exports = {
 
 	//getDetails(req, res, next) {
 	getDetails(req, res) {
-		const key = req.headers.key;
+		const key_user = res.locals.user;
 		const username = req.query.name;
-		User.findOne({ name: key })
+		User.findOne({ name: username })
 			.populate('org','name')
-			.populate('orgUnit','name')
-			.then((key_user) => {
-				User.findOne({ name: username })
-					.populate('org','name')
-					.populate('orgUnit', 'name')
-					.then((user) => {
-						if (!user) {
-							res.status(404).json({
-								'status': 404,
-								'message': 'User -' + username + '- does not exist'
-							});
-						} else {
-							const result = permissions.access(key_user,user,'user');
-							//console.log(result); // eslint-disable-line
-							if(result.canRead) {
-								var send_user = {
-									name: user.name,
-									org: user.org.name,
-									orgUnit: user.orgUnit.name,
-								};
-								if(user.person) {
-									send_user.person = {
-										name: user.person.name,
-										fatherName: user.person.father,
-										motherName: user.person.motherName,
-										email: user.person.email,
-										birthDate: user.person.birthDate
-									};
-								}
-								res.status(200).json(send_user);
-							} else {
-								res.status(403).json({
-									'status': 403,
-									'message': 'User ' + key_user.name + ' not authorized on user ' + user.name
-								});
-							}
-						}
-					})
-					.catch((err) => {
-						Err.sendError(res,err,'user_controller','getDetails -- Finding User --');
+			.populate('orgUnit', 'name')
+			.then((user) => {
+				if (!user) {
+					res.status(404).json({
+						'status': 404,
+						'message': 'User -' + username + '- does not exist'
 					});
+				} else {
+					const result = permissions.access(key_user,user,'user');
+					//console.log(result); // eslint-disable-line
+					if(result.canRead) {
+						var send_user = {
+							name: user.name,
+							org: user.org.name,
+							orgUnit: user.orgUnit.name,
+						};
+						if(user.person) {
+							send_user.person = {
+								name: user.person.name,
+								fatherName: user.person.father,
+								motherName: user.person.motherName,
+								email: user.person.email,
+								birthDate: user.person.birthDate
+							};
+						}
+						res.status(200).json(send_user);
+					} else {
+						res.status(403).json({
+							'status': 403,
+							'message': 'User ' + key_user.name + ' not authorized on user ' + user.name
+						});
+					}
+				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'user_controller','getDetails -- Finding key User --');
+				Err.sendError(res,err,'user_controller','getDetails -- Finding User --');
 			});
 	},
 
 	getRoles(req, res) {
-		const key = req.headers.key;
-		const username = req.headers['name'] || (req.query && req.query.name);
-		User.findOne({ name: key })
-			.populate('org','name')
-			.populate('orgUnit','name')
-			.then((key_user) => {
-				if(key_user.roles.isAdmin || (key_user.roles.isOrg)) {
-					User.findOne({ name: username })
-						.populate('org','name')
-						.populate('orgUnit', 'name')
-						.then((user) => {
-							if (!user) {
-								res.status(404).json({
-									'status': 404,
-									'message': 'User -' + username + '- does not exist'
+		const key_user = res.locals.user;
+		const username = req.query.name;
+		if(key_user.roles.isAdmin || (key_user.roles.isOrg)) {
+			User.findOne({ name: username })
+				.populate('org','name')
+				.populate('orgUnit', 'name')
+				.then((user) => {
+					if (!user) {
+						res.status(404).json({
+							'status': 404,
+							'message': 'User -' + username + '- does not exist'
+						});
+					} else {
+						//console.log(key_user); // eslint-disable-line
+						//console.log(user); // eslint-disable-line
+						const result = permissions.access(key_user,user,'user');
+						if(result.canRead) {
+							var send_user = {
+								name: user.name,
+								org: user.org.name,
+								orgUnit: user.orgUnit.name,
+							};
+							if(user.roles) {
+								if(key_user.roles.isAdmin) {
+									send_user.roles = {
+										isAdmin: user.roles.isAdmin,
+										isBusiness: user.roles.isBusiness,
+										isOrg: user.roles.isOrg,
+										isOrgContent: user.roles.isOrgContent,
+										isAuthor: user.roles.isAuthor,
+										isInstructor: user.roles.isInstructor,
+										isSupervisor: user.roles.isSupervisor
+									};
+								}	else {
+									send_user.roles = {
+										isOrgContent: user.roles.isOrgContent,
+										isAuthor: user.roles.isAuthor,
+										isInstructor: user.roles.isInstructor,
+										isSupervisor: user.roles.isSupervisor
+									};
+								}
+								res.status(200).json({
+									'status' : 200,
+									'message' : send_user
 								});
 							} else {
-								//console.log(key_user); // eslint-disable-line
-								//console.log(user); // eslint-disable-line
-								const result = permissions.access(key_user,user,'user');
-								if(result.canRead) {
-									var send_user = {
-										name: user.name,
-										org: user.org.name,
-										orgUnit: user.orgUnit.name,
-									};
-									if(user.roles) {
-										if(key_user.roles.isAdmin) {
-											send_user.roles = {
-												isAdmin: user.roles.isAdmin,
-												isBusiness: user.roles.isBusiness,
-												isOrg: user.roles.isOrg,
-												isOrgContent: user.roles.isOrgContent,
-												isAuthor: user.roles.isAuthor,
-												isInstructor: user.roles.isInstructor,
-												isSupervisor: user.roles.isSupervisor
-											};
-										}	else {
-											send_user.roles = {
-												isOrgContent: user.roles.isOrgContent,
-												isAuthor: user.roles.isAuthor,
-												isInstructor: user.roles.isInstructor,
-												isSupervisor: user.roles.isSupervisor
-											};
-										}
-										res.status(200).json({
-											'status' : 200,
-											'message' : send_user
-										});
-									} else {
-										res.status(404).json({
-											'status': 404,
-											'message': 'Something is wrong: User ' + user.name + ' has no roles (what!!!?). Please check with Administrator'
-										});
-									}
-								} else {
-									res.status(403).json({
-										'status': 403,
-										'message': 'User ' + key + ' not authorized'
-									});
-								}
+								res.status(404).json({
+									'status': 404,
+									'message': 'Something is wrong: User ' + user.name + ' has no roles (what!!!?). Please check with Administrator'
+								});
 							}
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'user_controller','getDetails -- Finding User --');
-						});
-				} else {
-					res.status(403).json({
-						'status': 403,
-						'message': 'Only admins can view or change roles'
-					});
-				}
-			}) //key_user
-			.catch((err) => {
-				Err.sendError(res,err,'user_controller','getDetails -- Finding key User --');
+						} else {
+							res.status(403).json({
+								'status': 403,
+								'message': 'User ' + key_user.name + ' not authorized'
+							});
+						}
+					}
+				})
+				.catch((err) => {
+					Err.sendError(res,err,'user_controller','getDetails -- Finding User --');
+				});
+		} else {
+			res.status(403).json({
+				'status': 403,
+				'message': 'Only admins can view or change roles'
 			});
+		}
 	},
 
 	setRoles(req, res) {
-		const key = req.headers.key;
+		const key_user = res.locals.user;
 		const userProps = req.body;
-		User.findOne({ name: key })
-			.populate('org','name')
-			.populate('orgUnit','name')
-			.then((key_user) => {
-				if(key_user.roles.isAdmin || (key_user.roles.isOrg)) {
-					User.findOne({ name: userProps.name })
-						.populate('org','name')
-						.populate('orgUnit', 'name')
-						.then((user) => {
-							if (!user) {
-								res.status(404).json({
-									'status': 404,
-									'message': 'User -' + userProps.name + '- does not exist'
+		if(key_user.roles.isAdmin || (key_user.roles.isOrg)) {
+			User.findOne({ name: userProps.name })
+				.populate('org','name')
+				.populate('orgUnit', 'name')
+				.then((user) => {
+					if (!user) {
+						res.status(404).json({
+							'status': 404,
+							'message': 'User -' + userProps.name + '- does not exist'
+						});
+					} else {
+						if(key_user.org.name === user.org.name && !key_user.roles.isAdmin) {
+							res.status(406).json({
+								'status': 406,
+								'message': 'User ' + key_user.name + ' cannot modify roles for ' + user.name + '. They do not belong the same org.'
+							});
+						} else {
+							if(user.roles) {
+								if(key_user.roles.isAdmin) {
+									if(userProps.roles.isAdmin !== undefined ) { user.roles.isAdmin = userProps.roles.isAdmin; }
+									if(userProps.roles.isOrg !== undefined ) { user.roles.isOrg = userProps.roles.isOrg; }
+									if(userProps.roles.isBusiness !== undefined ) { user.roles.isBusiness = userProps.roles.isBusiness; }
+								}
+								if(userProps.roles.isOrgContent !== undefined ) { user.roles.isOrgContent = userProps.roles.isOrgContent; }
+								if(userProps.roles.isAuthor !== undefined ) { user.roles.isAuthor = userProps.roles.isAuthor; }
+								if(userProps.roles.isInstructor !== undefined ) { user.roles.isInstructor = userProps.roles.isInstructor; }
+								if(userProps.roles.isSupervisor  !== undefined ) { user.roles.isSupervisor = userProps.roles.isSupervisor; }
+								user.save().catch((err) => {
+									Err.sendError(res,err,'user_controller','setRoles -- Saving User--');
+								});
+								res.status(200).json({
+									'status': 200,
+									'message': 'Roles for ' + user.name + ' have been modified'
 								});
 							} else {
-								if(key_user.org.name === user.org.name && !key_user.roles.isAdmin) {
-									res.status(406).json({
-										'status': 406,
-										'message': 'User ' + key_user.name + ' cannot modify roles for ' + user.name + '. They do not belong the same org.'
-									});
-								} else {
-									if(user.roles) {
-										if(key_user.roles.isAdmin) {
-											if(userProps.roles.isAdmin !== undefined ) { user.roles.isAdmin = userProps.roles.isAdmin; }
-											if(userProps.roles.isOrg !== undefined ) { user.roles.isOrg = userProps.roles.isOrg; }
-											if(userProps.roles.isBusiness !== undefined ) { user.roles.isBusiness = userProps.roles.isBusiness; }
-										}
-										if(userProps.roles.isOrgContent !== undefined ) { user.roles.isOrgContent = userProps.roles.isOrgContent; }
-										if(userProps.roles.isAuthor !== undefined ) { user.roles.isAuthor = userProps.roles.isAuthor; }
-										if(userProps.roles.isInstructor !== undefined ) { user.roles.isInstructor = userProps.roles.isInstructor; }
-										if(userProps.roles.isSupervisor  !== undefined ) { user.roles.isSupervisor = userProps.roles.isSupervisor; }
-										user.save().catch((err) => {
-											Err.sendError(res,err,'user_controller','setRoles -- Saving User--');
-										});
-										res.status(200).json({
-											'status': 200,
-											'message': 'Roles for ' + user.name + ' have been modified'
-										});
-									} else {
-										res.status(404).json({
-											'status': 404,
-											'message': 'Something is wrong: User ' + user.name + ' has no roles (what!!!?). Please check with Administrator'
-										});
-									}
-								}
+								res.status(404).json({
+									'status': 404,
+									'message': 'Something is wrong: User ' + user.name + ' has no roles (what!!!?). Please check with Administrator'
+								});
 							}
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'user_controller','setRoles -- Finding User to set--');
-						});
-				} else {
-					res.status(403).json({
-						'status': 403,
-						'message': 'Only admins can view or change roles'
-					});
-				}
-			}) //key_user
-			.catch((err) => {
-				Err.sendError(res,err,'user_controller','setRoles -- Finding key User --');
+						}
+					}
+				})
+				.catch((err) => {
+					Err.sendError(res,err,'user_controller','setRoles -- Finding User to set--');
+				});
+		} else {
+			res.status(403).json({
+				'status': 403,
+				'message': 'Only admins can view or change roles'
 			});
+		}
 	},
 
 	//validateEmail(req, res, next) {
@@ -496,107 +473,90 @@ module.exports = {
 
 	//passwordChange(req, res, next) {
 	passwordChange(req, res) {
-		const key = req.headers.key;
+		const key_user = res.locals.user;
 		const userProps = req.body;
-		User.findOne({ name: key })
-			.populate('org','name')
-			.populate('org','name')
-			.then((key_user) => {
-				User.findOne({ 'name': userProps.name })
-					.then((user) => {
-						if(user) {
-							user.admin.passwordSaved = '';
-							const date = new Date();
-							var mod = {
-								by: user.name,
-								when: date,
-								what: 'Password modified'
-							};
-							user.mod.push(mod);
-							const result = permissions.access(key_user,user,'user');
-							if(result.canModify) {
-								user.save().catch((err) => {
-									Err.sendError(res,err,'user_controller','passwordChange -- Saving User--');
-								});
-								res.status(200);
-								res.json({
-									'status': 200,
-									'message': 'Password modified'
-								});
-							} else {
-								res.status(403).json({
-									'status': 403,
-									'message': 'User ' + key + ' not authorized'
-								});
-							}
-						} else {
-							res.status(404).json({
-								'status': 404,
-								'message': 'User not found'
-							});
-						}
-					})
-					.catch((err) => {
-						Err.sendError(res,err,'user_controller','passwordChange -- Finding User --');
+		User.findOne({ 'name': userProps.name })
+			.then((user) => {
+				if(user) {
+					user.admin.passwordSaved = '';
+					const date = new Date();
+					var mod = {
+						by: user.name,
+						when: date,
+						what: 'Password modified'
+					};
+					user.mod.push(mod);
+					const result = permissions.access(key_user,user,'user');
+					if(result.canModify) {
+						user.save().catch((err) => {
+							Err.sendError(res,err,'user_controller','passwordChange -- Saving User--');
+						});
+						res.status(200);
+						res.json({
+							'status': 200,
+							'message': 'Password modified'
+						});
+					} else {
+						res.status(403).json({
+							'status': 403,
+							'message': 'User ' + key_user.name + ' not authorized'
+						});
+					}
+				} else {
+					res.status(404).json({
+						'status': 404,
+						'message': 'User not found'
 					});
+				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'user_controller','passwordChange -- Finding key User --');
+				Err.sendError(res,err,'user_controller','passwordChange -- Finding User --');
 			});
 	},
 
 	//modify(req, res, next) {
 	modify(req, res) {
-		var key = req.headers.key;
+		const key_user = res.locals.user;
 		const userProps = req.body;
 		userProps.person.name = properCase(userProps.person.name);
 		userProps.person.fatherName = properCase(userProps.person.fatherName);
 		userProps.person.motherName = properCase(userProps.person.motherName);
 		//var birthDate = moment.utc(userProps.person.birthDate);
 		//userProps.person.birthDate = birthDate.toDate();
-
-		User.findOne({ name: key })
-			.populate('org','name')
-			.populate('org','name')
-			.then((key_user) => {
-				User.findOne({ 'name': userProps.name })
-					.then((user) => {
-						const result = permissions.access(key_user,user,'user');
-						if(result.canModify) {
-							const date = new Date();
-							const mod = {
-								by: key,
-								when: date,
-								what: 'User modification'
-							};
-							user.mod.push(mod);
-							user.save().catch((err) => {
-								Err.sendError(res,err,'user_controller','modify -- Saving User--');
-							});
-							res.status(200);
-							res.json({
-								'status':200,
-								'message': 'User properties modified'
-							});
-						} else {
-							res.status(403);
-							res.json({
-								'status': 403,
-								'message': 'User ' + key + ' not authorized'
-							});
-						}
-					})
-					.catch((err) => {
-						Err.sendError(res,err,'user_controller','modify -- Finding User to modify --');
+		User.findOne({ 'name': userProps.name })
+			.then((user) => {
+				const result = permissions.access(key_user,user,'user');
+				if(result.canModify) {
+					const date = new Date();
+					const mod = {
+						by: key_user.name,
+						when: date,
+						what: 'User modification'
+					};
+					user.mod.push(mod);
+					user.save().catch((err) => {
+						Err.sendError(res,err,'user_controller','modify -- Saving User--');
 					});
+					res.status(200);
+					res.json({
+						'status':200,
+						'message': 'User properties modified'
+					});
+				} else {
+					res.status(403);
+					res.json({
+						'status': 403,
+						'message': 'User ' + key_user.name + ' not authorized'
+					});
+				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'user_controller','modify -- Finding Key User --');
+				Err.sendError(res,err,'user_controller','modify -- Finding User to modify --');
 			});
 	}, // Modify
 
 	list(req,res) {
-		const key = (req.query && req.query.x_key) || req.headers.key;
+		const key_user = res.locals.user;
 		var sort = { name: 1 };
 		var skip = 0;
 		var limit = 15;
@@ -607,162 +567,148 @@ module.exports = {
 		if(req.query.limit) { limit = parseInt( req.query.limit ); }
 		if(req.query.query) { query = JSON.parse(req.query.query); }
 		if(req.query.listing) { listing = req.query.listing; }
-		User.findOne({ name: key })
-			.populate('org')
-			.then((key_user) => {
-				if(!key_user.roles.isAdmin && key_user.roles.isOrg) {
-					query.org = key_user.org._id;
-					User.find(query)
-						.sort(sort)
-						.skip(skip)
-						.limit(limit)
-						.then((users) => {
-							let usersCount = users.length;
-							var message = '';
-							if(usersCount === 1) {
-								message = '1 user found from -' + key_user.org.name + '-';
-							} else if (usersCount === 0) {
-								message = 'no users found from -' + key_user.org.name + '-';
-							} else {
-								message = usersCount + ' users found from -' + key_user.org.name + '-';
-							}
-							var users_send = new Array();
-							users.forEach(function(user) {
-								users_send.push({
-									id: user._id,
-									name: user.name,
-									person: user.person,
-									student: user.student,
-									orgUnit: user.orgUnit
-								});
-							});
-							res.status(200).json({
-								'status': 200,
-								'message': message,
-								'usersCount': usersCount,
-								'users': users_send
-							});
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'user_controller','list -- Finding Users list (isOrg) --');
+		if(!key_user.roles.isAdmin && key_user.roles.isOrg) {
+			query.org = key_user.org._id;
+			User.find(query)
+				.sort(sort)
+				.skip(skip)
+				.limit(limit)
+				.then((users) => {
+					let usersCount = users.length;
+					var message = '';
+					if(usersCount === 1) {
+						message = '1 user found from -' + key_user.org.name + '-';
+					} else if (usersCount === 0) {
+						message = 'no users found from -' + key_user.org.name + '-';
+					} else {
+						message = usersCount + ' users found from -' + key_user.org.name + '-';
+					}
+					var users_send = new Array();
+					users.forEach(function(user) {
+						users_send.push({
+							id: user._id,
+							name: user.name,
+							person: user.person,
+							student: user.student,
+							orgUnit: user.orgUnit
 						});
-				}
-				if(key_user.roles.isAdmin) {
-					if(req.query && req.query.org) {
-						Org.findOne({ name: req.query.org })
-							.then((org) => {
-								User.find({ org: org._id })
-									.sort(sort)
-									.skip(skip)
-									.limit(limit)
-									.then((users) => {
-										//var total = 0;
-										let usersCount = users.length;
-										var message = '';
-										if(usersCount === 1) {
-											message = '1 user found from -' + org.name + '-';
-										} else if (usersCount === 0) {
-											message = 'no users found from -' + org.name + '-';
-										} else {
-											message = usersCount + ' users found from -' + org.name + '-';
-										}
-										var send_users = new Array();
-										if(listing === 'basic') {
-											users.forEach(function(u) {
-												send_users.push(u.name);
-											});
-											res.status(200).json({
-												'status': 200,
-												'message': message,
-												'usersCount': usersCount,
-												'users': send_users
-											});
-										} else if(listing === 'id') {
-											send_users = new Array();
-											users.forEach(function(u) {
-												send_users.push({name: u.name, id: u._id});
-											});
-											res.status(200).json({
-												'status': 200,
-												'message': message,
-												'usersCount': usersCount,
-												'users': send_users
-											});
-										} else {
-											res.status(200).json({
-												'status': 200,
-												'message': message,
-												'usersCount': usersCount,
-												'users': users
-											});
-										}
-									})
-									.catch((err) => {
-										Err.sendError(res,err,'user_controller','list -- Finding Users list (isAdmin) --');
+					});
+					res.status(200).json({
+						'status': 200,
+						'message': message,
+						'usersCount': usersCount,
+						'users': users_send
+					});
+				})
+				.catch((err) => {
+					Err.sendError(res,err,'user_controller','list -- Finding Users list (isOrg) --');
+				});
+		}
+		if(key_user.roles.isAdmin) {
+			if(req.query && req.query.org) {
+				Org.findOne({ name: req.query.org })
+					.then((org) => {
+						User.find({ org: org._id })
+							.sort(sort)
+							.skip(skip)
+							.limit(limit)
+							.then((users) => {
+								//var total = 0;
+								let usersCount = users.length;
+								var message = '';
+								if(usersCount === 1) {
+									message = '1 user found from -' + org.name + '-';
+								} else if (usersCount === 0) {
+									message = 'no users found from -' + org.name + '-';
+								} else {
+									message = usersCount + ' users found from -' + org.name + '-';
+								}
+								var send_users = new Array();
+								if(listing === 'basic') {
+									users.forEach(function(u) {
+										send_users.push(u.name);
 									});
+									res.status(200).json({
+										'status': 200,
+										'message': message,
+										'usersCount': usersCount,
+										'users': send_users
+									});
+								} else if(listing === 'id') {
+									send_users = new Array();
+									users.forEach(function(u) {
+										send_users.push({name: u.name, id: u._id});
+									});
+									res.status(200).json({
+										'status': 200,
+										'message': message,
+										'usersCount': usersCount,
+										'users': send_users
+									});
+								} else {
+									res.status(200).json({
+										'status': 200,
+										'message': message,
+										'usersCount': usersCount,
+										'users': users
+									});
+								}
 							})
 							.catch((err) => {
-								Err.sendError(res,err,'user_controller','list -- Finding Org --');
+								Err.sendError(res,err,'user_controller','list -- Finding Users list (isAdmin) --');
 							});
-					} else {
-						res.status(406).json({
-							'status': 406,
-							'message': 'Please provide -org- in params'
-						});
-					}
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'user_controller','list -- Finding Key User --');
-			});
+					})
+					.catch((err) => {
+						Err.sendError(res,err,'user_controller','list -- Finding Org --');
+					});
+			} else {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Please provide -org- in params'
+				});
+			}
+		}
 	}, //list
 
 	count(req,res) {
-		const key = (req.query && req.query.x_key) || req.headers.key;
-		User.findOne({ name: key })
-			.populate('org')
-			.then((key_user) => {
-				if(key_user.roles.isAdmin) {
-					if(req.query && req.query.org) {
-						Org.findOne({ name: req.query.org })
-							.then((org) => {
-								User.count({ org: org._id }, function(err,count) {
-									res.status(200).json({
-										'status': 200,
-										'message': count + ' total users found from ' + org.name,
-										'count':count
-									});
-								});
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'user_controller','list -- Finding Org isAdmin --');
+		const key_user = res.locals.user;
+		if(key_user.roles.isAdmin) {
+			if(req.query && req.query.org) {
+				Org.findOne({ name: req.query.org })
+					.then((org) => {
+						User.count({ org: org._id }, function(err,count) {
+							res.status(200).json({
+								'status': 200,
+								'message': count + ' total users found from ' + org.name,
+								'count':count
 							});
-					} else {
-						res.status(406).json({
-							'status': 406,
-							'message': 'Please provide -org- in params'
 						});
-					}
-				}
-				if(key_user.roles.isOrg && !key_user.roles.isAdmin){
-					Org.findOne({ org: key_user.org._id})
-						.then((org) => {
-							User.count({ org: key_user.org._id }, function(err,count) {
-								res.status(200).json({
-									'status': 200,
-									'message': count + ' total users found from ' + org.name,
-									'count': count
-								});
-							});
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'user_controller','list -- Finding Org isOrg --');
+					})
+					.catch((err) => {
+						Err.sendError(res,err,'user_controller','list -- Finding Org isAdmin --');
+					});
+			} else {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Please provide -org- in params'
+				});
+			}
+		}
+		if(key_user.roles.isOrg && !key_user.roles.isAdmin){
+			Org.findOne({ org: key_user.org._id})
+				.then((org) => {
+					User.count({ org: key_user.org._id }, function(err,count) {
+						res.status(200).json({
+							'status': 200,
+							'message': count + ' total users found from ' + org.name,
+							'count': count
 						});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'user_controller','total -- Finding Key User --');
-			});
+					});
+				})
+				.catch((err) => {
+					Err.sendError(res,err,'user_controller','list -- Finding Org isOrg --');
+				});
+		}
 	}
 };
 
@@ -777,19 +723,3 @@ function properCase(obj) {
 	});
 	return newName;
 }
-
-/*
-
-function Err.sendError(res, err, section, send_status) {
-	logger.info('User controller -- Section: ' + section + '----');
-	logger.info(err);
-	if(!send_status) {
-		res.status(500).json({
-			'status': 500,
-			'message': 'Error',
-			'Error': err.message
-		});
-	}
-	return;
-}
-*/

@@ -141,6 +141,8 @@ const GroupsSchema = new Schema ({
 });
 
 GroupsSchema.index( { code: 1, org: 1}, { unique: true } );
+GroupsSchema.index( { code: 1 }, { unique: false } );
 GroupsSchema.index( { name: 1, org: 1}, { unique: false} );
+
 const Groups = mongoose.model('groups', GroupsSchema);
 module.exports = Groups;

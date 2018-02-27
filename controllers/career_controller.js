@@ -22,43 +22,35 @@ var logger = new(winston.Logger) ({
 module.exports = {
 
 	create(req,res) {
-		const key = req.headers.key;
+		const key_user 	= res.locals.user;
 		var career_req = req.body;
 		var org = '';
-		User.findOne({ name: key })
-			.populate('org')
-			.populate('orgUnit')
-			.then((key_user) => {
-				if(key_user.roles.isAdmin) {
-					if(!career_req.org) {
-						res.status(406).json({
-							'status': 406,
-							'message': 'Org missing'
-						});
-						return;
-					} else {
-						org = career_req.org;
-					}
-				} else {
-					org = key_user.org._id;
-				}
-				var career = {
-					name: career_req.name,
-					longName: career_req.longName,
-					area: career_req.area,
-					isVisible: true,
-					org: org
-				};
-				Career.create(career)
-					.then((career) => {
-						res.status(200).json({
-							'status': 200,
-							'message': 'Career -' + career.name + '- was created'
-						});
-					})
-					.catch((err) => {
-						sendError(res,err,'create.Career -- Finding User --');
-					});
+		if(key_user.roles.isAdmin) {
+			if(!career_req.org) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Org missing'
+				});
+				return;
+			} else {
+				org = career_req.org;
+			}
+		} else {
+			org = key_user.org._id;
+		}
+		var career = {
+			name: career_req.name,
+			longName: career_req.longName,
+			area: career_req.area,
+			isVisible: true,
+			org: org
+		};
+		Career.create(career)
+			.then((career) => {
+				res.status(200).json({
+					'status': 200,
+					'message': 'Career -' + career.name + '- was created'
+				});
 			})
 			.catch((err) => {
 				sendError(res,err,'create.Career -- Finding User --');
@@ -66,82 +58,75 @@ module.exports = {
 	}, // create
 
 	massiveCreation(req,res) {
-		const key = req.headers.key;
+		const key_user 	= res.locals.user;
 		var careers_req = req.body;
 		var numCareers = {requested: req.body.length};
-		User.findOne({ name: key })
-			.populate('org')
-			.then((key_user) => {
-				Career.find({ org: key_user.org._id})
-					.then((careers) => {
-						var careerObj = {};
-						var car_inserted = new Array();
-						var car_updated = new Array();
-						var failed = new Array();
-						var nameStatus = 'ok';
-						var longNameStatus = 'ok';
-						var areaStatus = 'ok';
-						var status = 'ok';
-						careers_req.forEach(function(career) {
-							careerObj = careers.find(function(careerObj) {return careerObj.name === career.name;});
-							if(!careerObj) {
-								if(!career.name) {
-									nameStatus = 'Name Missing';
-									status = 'not ok';
-								}
-								if(!career.longName) {
-									longNameStatus = 'Long Name Missing';
-									status = 'not ok';
-								}
-								if(!career.area) {
-									areaStatus = 'Long Name Missing';
-									status = 'not ok';
-								}
-								if(status === 'not ok') {
-									failed.push({name: nameStatus, longName: longNameStatus, area: areaStatus});
-									nameStatus = 'ok';
-									longNameStatus = 'ok';
-									areaStatus = 'ok';
-									status = 'ok';
-								} else {
-									career.org = key_user.org._id;
-									car_inserted.push(career);
-								}
-							} else {
-								career.org = key_user.org._id;
-								car_updated.push(careerObj);
-							}
-						});
-						if(car_inserted.length > 0) {
-							Career.insertMany(car_inserted)
-								.catch((err) => {
-									sendError(res,err,'massiveCreation.Career -- insert Many --');
-								});
-							numCareers.inserted = car_inserted.length;
+		Career.find({ org: key_user.org._id})
+			.then((careers) => {
+				var careerObj = {};
+				var car_inserted = new Array();
+				var car_updated = new Array();
+				var failed = new Array();
+				var nameStatus = 'ok';
+				var longNameStatus = 'ok';
+				var areaStatus = 'ok';
+				var status = 'ok';
+				careers_req.forEach(function(career) {
+					careerObj = careers.find(function(careerObj) {return careerObj.name === career.name;});
+					if(!careerObj) {
+						if(!career.name) {
+							nameStatus = 'Name Missing';
+							status = 'not ok';
 						}
-						if(car_updated.length > 0){
-							car_updated.forEach(function(car2Up) {
-								Career.update({_id: car_updated._id}, {$set: car2Up})
-									.catch((err) => {
-										sendError(res,err,'massiveCreation.Career -- Updating --');
-									});
+						if(!career.longName) {
+							longNameStatus = 'Long Name Missing';
+							status = 'not ok';
+						}
+						if(!career.area) {
+							areaStatus = 'Long Name Missing';
+							status = 'not ok';
+						}
+						if(status === 'not ok') {
+							failed.push({name: nameStatus, longName: longNameStatus, area: areaStatus});
+							nameStatus = 'ok';
+							longNameStatus = 'ok';
+							areaStatus = 'ok';
+							status = 'ok';
+						} else {
+							career.org = key_user.org._id;
+							car_inserted.push(career);
+						}
+					} else {
+						career.org = key_user.org._id;
+						car_updated.push(careerObj);
+					}
+				});
+				if(car_inserted.length > 0) {
+					Career.insertMany(car_inserted)
+						.catch((err) => {
+							sendError(res,err,'massiveCreation.Career -- insert Many --');
+						});
+					numCareers.inserted = car_inserted.length;
+				}
+				if(car_updated.length > 0){
+					car_updated.forEach(function(car2Up) {
+						Career.update({_id: car_updated._id}, {$set: car2Up})
+							.catch((err) => {
+								sendError(res,err,'massiveCreation.Career -- Updating --');
 							});
-							numCareers.updated = car_updated.length;
-						}
-						numCareers.failed = failed.length;
-						var result = numCareers;
-						result.details = failed;
-						res.status(200).json({
-							'status': 200,
-							'message': result
-						});
-					})
-					.catch((err) => {
-						sendError(res,err,'massiveCreation.Career -- Finding Career --');
 					});
+					numCareers.updated = car_updated.length;
+				}
+				numCareers.failed = failed.length;
+				var result = numCareers;
+				result.details = failed;
+				res.status(200).json({
+					'status': 200,
+					'message': result
+				});
 			})
 			.catch((err) => {
-				sendError(res,err,'massiveCreation.Career -- Finding User --');
+				sendError(res,err,'massiveCreation.Career -- Finding Career --');
 			});
 	}, // massiveCreation
 

@@ -952,7 +952,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	// RUTAS PARA PERIODOS (TERMS) ---------------------------------------------PERIODOS (TERMS)
+	// RUTAS PARA PERIODOS (TERMS) -----------------------------------------------TERMS
 
 	case '/api/v1/orgadm/term/create':
 		if(!req.body) {  // POST
@@ -980,6 +980,58 @@ module.exports = function(req, res, next) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error -: Please, give data by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	// RUTAS PARA COMENTARIOS (DISCUSSIONS) --------------------------------------DISCUSSIONS
+
+	case '/api/v1/user/comment/create':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else if(!req.body.text) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give text comment by body to process'
+			});
+		} else if(!req.body.title && !req.body.discussion && !req.body.replyto) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give discussion title or discussion id or replyto by body to process'
+			});
+		/*
+		} else if(req.body.comment && !req.body.discussion) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give discussion id by body to process'
+			});
+
+		} else if(req.body.replyto && !req.body.comment) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give comment id by body to process'
+			});
+		*/
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/user/comment/get':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give query by query to process'
 			});
 		} else {
 			next();

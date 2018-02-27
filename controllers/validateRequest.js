@@ -93,6 +93,12 @@ module.exports = function(req, res, next) {
 
 		// Authorize the user to see if s/he can access our resources
 		Users.findOne({ name: decoded.user })
+			.populate('org','name')
+			.populate({
+				path: 'orgUnit',
+				select: 'name parent',
+			})
+			.select('-password')
 			.then((user) => {
 				//console.log(user); // eslint-disable-line
 				if (user) {
@@ -133,6 +139,7 @@ module.exports = function(req, res, next) {
 									url.indexOf('supervisor') === -1 &&
 									url.indexOf('admin') === -1 &&
 									url.indexOf('/api/v1/') !== -1)) {
+						res.locals.user = user;
 						next();
 					} else {
 						res.status(403);
@@ -184,5 +191,5 @@ function base64urlDecode(str) {
 
 function base64urlUnescape(str) {
 	str += new Array(5 - str.length % 4).join('=');
-	return str.replace(/\-/g, '+').replace(/_/g, '/');
+	return str.replace(/\-/g, '+').replace(/_/g, '/');  // eslint-disable-line
 }

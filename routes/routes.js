@@ -11,6 +11,7 @@ const GroupController = require('../controllers/group_controller');
 const FileController = require('../controllers/file_controller');
 const CareerController = require('../controllers/career_controller');
 const TermController = require('../controllers/term_controller');
+const DiscussionController = require('../controllers/discussion_controller');
 const multer = require('multer');
 const dir = '/Users/Arturo/data';
 const fileSize = 1048576;
@@ -91,6 +92,8 @@ module.exports = (app) => {
 	app.get('/api/v1/user/mygroup', GroupController.myGroup);
 	app.get('/api/v1/user/mygrades', GroupController.myGrades);
 	app.get('/api/v1/user/nextblock', GroupController.nextBlock);
+	app.post('/api/v1/user/comment/create', DiscussionController.create);
+	app.get('/api/v1/user/comment/get',DiscussionController.get);
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados
 

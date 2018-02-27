@@ -69,5 +69,6 @@ const BlocksSchema = new Schema ({
 });
 
 BlocksSchema.index( { org: 1, code: 1}, { unique: true } );
+
 const Blocks = mongoose.model('blocks', BlocksSchema);
 module.exports = Blocks;

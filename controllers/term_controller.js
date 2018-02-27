@@ -20,139 +20,124 @@ var logger = new(winston.Logger) ({
 
 module.exports = {
 	create(req,res){
-		const key = req.headers.key;
+		const key_user 	= res.locals.user;
 		var org = '';
-		User.findOne({ name: key})
-			.populate('org')
-			.then((key_user) => {
-				if(key_user.roles.isAdmin) {
-					if(!req.body.org) {
-						res.status(406).json({
-							'status': 406,
-							'message': 'Error: Org Missing'
-						});
-						return;
-					} else {
-						Org.findOne({name: req.body.org})
-							.then((org) => {
-								var term = {
-									name: req.body.name,
-									type: req.body.type,
-									isVisible: true,
-									org: org._id
-								};
-								Term.create(term)
-									.then((term) => {
-										res.status(200).json({
-											'status': 200,
-											'message': 'Term -' + term.name + '- created'
-										});
-									})
-									.catch((err) => {
-										sendError(res,err,'create.Term -- Creating Admin Term --');
-									});
+		if(key_user.roles.isAdmin) {
+			if(!req.body.org) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error: Org Missing'
+				});
+				return;
+			} else {
+				Org.findOne({name: req.body.org})
+					.then((org) => {
+						var term = {
+							name: req.body.name,
+							type: req.body.type,
+							isVisible: true,
+							org: org._id
+						};
+						Term.create(term)
+							.then((term) => {
+								res.status(200).json({
+									'status': 200,
+									'message': 'Term -' + term.name + '- created'
+								});
 							})
 							.catch((err) => {
-								sendError(res,err,'create.Term -- Finding Org --');
+								sendError(res,err,'create.Term -- Creating Admin Term --');
 							});
-					}
-				} else {
-					org = key_user.org_id;
-				}
-				var term = {
-					name: req.body.name,
-					type: req.body.type,
-					isVisible: true,
-					org: org
-				};
-				Term.create(term)
-					.then((term) => {
-						res.status(200).json({
-							'status': 200,
-							'message': 'Term -' + term.name + '- created'
-						});
 					})
 					.catch((err) => {
-						sendError(res,err,'create.Term -- Creating Org Term --');
+						sendError(res,err,'create.Term -- Finding Org --');
 					});
+			}
+		} else {
+			org = key_user.org_id;
+		}
+		var term = {
+			name: req.body.name,
+			type: req.body.type,
+			isVisible: true,
+			org: org
+		};
+		Term.create(term)
+			.then((term) => {
+				res.status(200).json({
+					'status': 200,
+					'message': 'Term -' + term.name + '- created'
+				});
 			})
 			.catch((err) => {
-				sendError(res,err,'create.Term -- Finding Key User --');
+				sendError(res,err,'create.Term -- Creating Org Term --');
 			});
-
 	}, // create
 
 	massiveCreation(req,res) {
-		const key = req.headers.key;
+		const key_user 	= res.locals.user;
 		var terms_req = req.body;
 		var numTerms = { requested: req.body.length};
-		User.findOne({ name: key})
-			.populate('org')
-			.then((key_user) => {
-				Term.find({ org: key_user.org._id})
-					.then((terms) => {
-						var termObj = {};
-						var term_inserted = new Array();
-						var term_updated = new Array();
-						var failed = new Array();
-						var nameStatus = 'ok';
-						var typeStatus = 'ok';
-						var status = 'ok';
-						terms_req.forEach(function(term) {
-							termObj = terms.find(function(termObj) { return termObj.name = term.name;});
-							if(!termObj) {
-								if(!term.name) {
-									nameStatus = 'Name missing';
-									status = 'not ok';
-								}
-								if(!term.type) {
-									typeStatus = 'Type missing';
-									status = 'not ok';
-								}
-								if(status === 'not ok') {
-									failed.push({name: nameStatus, type: typeStatus});
-									nameStatus = 'ok';
-									typeStatus = 'ok';
-									status = 'ok';
-								} else {
-									term.org = key_user.org._id;
-									term_inserted.push(term);
-								}
-							} else {
-								term.org = key_user.org._id;
-								term_updated.push(termObj);
-							}
-						});
-						if(term_inserted.length > 0 ) {
-							Term.insertMany(term_inserted)
-								.catch((err) => {
-									sendError(res,err,'massiveCreation.Term -- insert many --');
-								});
-							numTerms.inserted = term_inserted.length;
+		Term.find({ org: key_user.org._id})
+			.then((terms) => {
+				var termObj = {};
+				var term_inserted = new Array();
+				var term_updated = new Array();
+				var failed = new Array();
+				var nameStatus = 'ok';
+				var typeStatus = 'ok';
+				var status = 'ok';
+				terms_req.forEach(function(term) {
+					termObj = terms.find(function(termObj) { return termObj.name = term.name;});
+					if(!termObj) {
+						if(!term.name) {
+							nameStatus = 'Name missing';
+							status = 'not ok';
 						}
-						if(term_updated.length > 0) {
-							term_updated.forEach(function(term2Up) {
-								Term.update({_id: term_updated._id}, {$set: term2Up})
-									.catch((err) => {
-										sendError(res,err,'massiveCreation.Term -- updating terms --');
-									});
+						if(!term.type) {
+							typeStatus = 'Type missing';
+							status = 'not ok';
+						}
+						if(status === 'not ok') {
+							failed.push({name: nameStatus, type: typeStatus});
+							nameStatus = 'ok';
+							typeStatus = 'ok';
+							status = 'ok';
+						} else {
+							term.org = key_user.org._id;
+							term_inserted.push(term);
+						}
+					} else {
+						term.org = key_user.org._id;
+						term_updated.push(termObj);
+					}
+				});
+				if(term_inserted.length > 0 ) {
+					Term.insertMany(term_inserted)
+						.catch((err) => {
+							sendError(res,err,'massiveCreation.Term -- insert many --');
+						});
+					numTerms.inserted = term_inserted.length;
+				}
+				if(term_updated.length > 0) {
+					term_updated.forEach(function(term2Up) {
+						Term.update({_id: term_updated._id}, {$set: term2Up})
+							.catch((err) => {
+								sendError(res,err,'massiveCreation.Term -- updating terms --');
 							});
-							numTerms.updated = term_updated.length;
-						}
-						numTerms.failed = failed.length;
-						var result = numTerms;
-						result.details = failed;
-						res.status(200).json({
-							'status': 200,
-							'message': result
-						});
-					})
-					.catch((err) => {
-						sendError(res,err,'massiveCreation.Term -- Finding Terms --');
 					});
+					numTerms.updated = term_updated.length;
+				}
+				numTerms.failed = failed.length;
+				var result = numTerms;
+				result.details = failed;
+				res.status(200).json({
+					'status': 200,
+					'message': result
+				});
 			})
 			.catch((err) => {
-				sendError(res,err,'massiveCreation.Term -- Finding Key User --');
+				sendError(res,err,'massiveCreation.Term -- Finding Terms --');
 			});
 	}, // massiveCreation
 

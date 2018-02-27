@@ -44,6 +44,9 @@ const OrgUnitsSchema = new Schema ({
 });
 
 OrgUnitsSchema.index( { name: 1, parent: 1, org: 1}, { unique: true } );
+OrgUnitsSchema.index( { parent: 1, org: 1}, { unique: false } );
+OrgUnitsSchema.index( { type: 1, org: 1}, { unique: false } );
+OrgUnitsSchema.index( { type: 1, parent:1, org: 1}, { unique: false } );
 
 const OrgUnits = mongoose.model('orgUnits', OrgUnitsSchema);
 module.exports = OrgUnits;
