@@ -6,6 +6,7 @@ const Course = require('../src/courses');
 const Group = require('../src/groups');
 const Block = require('../src/blocks');
 const Err = require('../controllers/err500_controller');
+const TA = require('time-ago');
 //const permissions = require('../shared/permissions');
 //require('winston-daily-rotate-file');
 
@@ -388,11 +389,101 @@ module.exports = {
 			});
 	}, // mygroup
 
+	createAttempt(req,res) {
+		const key_user	= res.locals.user;
+		const groupid 	= req.body.groupid;
+		const blockid 	= req.body.blockid;
+		const answers 	= req.body.answers;
+		const grade			= req.body.grade;
+		const date = Date();
+		var quest = {
+			answers : answers,
+			grade		: grade,
+			attempt : date
+		};
+		var maxAttempts = 0;
+		Group.findById(groupid)
+			.then((group) => {
+				// ----- buscamos el número permitido de intentos
+				Block.findById(blockid)
+					.populate('questionnarie', 'maxAttempts')
+					.then((block) => {
+						maxAttempts = block.questionnarie.maxAttempts;
+						// ----------------------
+						var i = 0;
+						var studentIndex = -1;
+						group.roster.forEach(function(s) {
+							if(s.student + '' === key_user._id + '') {
+								studentIndex = i;
+							}
+							i++;
+						});
+						var grades = [];
+						var myGrade = {};
+						var k = 0;
+						if(group.roster[studentIndex].grades && group.roster[studentIndex].grades.length > 0) {
+							grades = group.roster[studentIndex].grades;
+							var len = grades.length;
+							var found = false;
+							while ((k < len) && !found) {
+								if(grades[k].block + '' === blockid) {
+									myGrade = grades[k];
+									found = true;
+								} else {
+									k++;
+								}
+							}
+							if(myGrade.quests && myGrade.quests.length > 0) {
+								if(myGrade.quests.length > maxAttempts - 1) {
+									res.status(406).json({
+										'status': 406,
+										'message': 'Max number of attempts has reached. No more attempts allowed'
+									});
+									return;
+								} else {
+									myGrade.quests.push(quest);
+								}
+							} else {
+								myGrade = {
+									block	: blockid,
+									quests: [quest],
+									track	: 100
+								};
+							}
+							group.roster[studentIndex].grades[k] = myGrade;
+						} else {
+							myGrade = {
+								block	: blockid,
+								quests: [quest],
+								track	: 100
+							};
+							group.roster[studentIndex].grades = [myGrade];
+						}
+						group.save()
+							.then(() => {
+								res.status(200).json({
+									'status': 200,
+									'message': 'Attempt saved'
+								});
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'group_controller','nextBlock -- Saving Group --');
+							});
+					})
+					.catch((err) => {
+						Err.sendError(res,err,'group_controller','nextBlock -- Finding Block --');
+					});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','nextBlock -- Finding Group --');
+			});
+
+	}, // createAttempt
+
 	myGrades(req,res){
 		const groupid		= req.query.groupid;
 		const key_user 	= res.locals.user;
 		Group.findOne({_id: groupid})
-			.populate('course')
 			.then((myGroup) => {
 				if(myGroup) {
 					var i = 0;
@@ -406,83 +497,49 @@ module.exports = {
 					var grades = new Array();
 					if (myGroup.roster[studentIndex].grades) {
 						grades = myGroup.roster[studentIndex].grades;
+					} else {
+						res.status(404).json({
+							'status': 404,
+							'message': 'Grades for groupid -' + groupid + '- not found'
+						});
+						return;
 					}
-					Course.findOne({code: myGroup.course.code, org: key_user.org._id})
-						.then((course) => {
-							if(course) {
-								if(course.isVisible || course.status === 'published') {
-									Block.find({ _id: { $in: course.blocks }})
-										.then((blocks) => {
-											var send_blocks = new Array();
-											blocks.forEach(function(block) {
-												if(block.isVisible && block.status === 'published') {
-													var send_block = {
-														id: 						block._id,
-														title: 					block.title,
-														section: 				block.section,
-														number: 				block.number,
-													};
-													var quest_grades = new Array();
-													if(block.questionnaries && block.questionnaries.length > 0) {
-														var i = 0;
-														block.questionnaries.forEach(function() {
-															grades.forEach(function(grade) {
-																if(grade.block === block._id) {
-																	quest_grades.push(grade.quests[i].grade);
-																}
-															});
-															i++;
-														});
-													}
-													var tasks_grades = new Array();
-													if(block.tasks && block.tasks.length > 0) {
-														i = 0;
-														block.tasks.forEach(function() {
-															grades.forEach(function(grade) {
-																if(grade.block === block._id) {
-																	tasks_grades.push(grade.tasks[i].grade);
-																}
-															});
-															i++;
-														});
-													}
-													send_block.quests = quest_grades;
-													send_block.tasks	= tasks_grades;
-													if(grades.length > 0) {
-														grades.forEach(function(grade) {
-															let g1 = grade.block + '';
-															let g2 = block._id + '';
-															if(g1 === g2) {
-																if(grade.track === 100) {
-																	send_block.track = true;
-																}
-															}
-														});
-													}
-													send_blocks.push(send_block);
-												}
-											});
-											res.status(200).json({
-												'status': 200,
-												'message': {
-													blockNum: send_blocks.length,
-													blocks: send_blocks
-												}
-											});
-										})
-										.catch((err) => {
-											Err.sendError(res,err,'group_controller','mygrades -- Finding blocks --');
-										});
-								} else {
-									res.status(404).json({
-										'status': 404,
-										'message': 'Course is not visible nor published yet'
+					var blocks = new Array();
+					grades.forEach(function(grade) {
+						blocks.push(grade.block);
+					});
+					var grades_send = new Array();
+					Block.find({_id: {$in: blocks}})
+						.select('type section number title')
+						.then((found_blocks) => {
+							var i=0;
+							found_blocks.forEach(function(block) {
+								var biggest = 0;
+								if(block.type === 'questionnarie' || block.type === 'task') {
+									grades[i].quests.forEach(function(q) {
+										if(q.grade > biggest) {
+											biggest = q.grade;
+										}
+									});
+									grades_send.push({
+										title					: block.title,
+										section				: block.section,
+										number				: block.number,
+										track					: grades[i].track,
+										biggestGrade 	: biggest,
+										AttemptsDone	: grades[i].quests.length,
+										lastAttempt 	:	TA.ago(grades[i].quests[grades[i].quests.length-1].attempt)
 									});
 								}
-							}
+								i++;
+							});
+							res.status(200).json({
+								'status': 200,
+								'message': grades_send
+							});
 						})
 						.catch((err) => {
-							Err.sendError(res,err,'group_controller','mygrades -- Finding Course --');
+							Err.sendError(res,err,'group_controller','mygrades -- Finding Group --');
 						});
 				} else {
 					res.status(400).json({
@@ -505,10 +562,6 @@ module.exports = {
 		const key_user = res.locals.user;
 		if(req.query.lastid) {
 			lastid = req.query.lastid;
-		}
-		var	quests			= [];
-		if(req.query.quests) {
-			quests = JSON.parse(req.query.quests);
 		}
 		//var students 		= new Array();
 		//var myStudent = -1;
@@ -540,9 +593,7 @@ module.exports = {
 											if(block) {
 												var prevblockid = '';
 												var nextblockid = '';
-												var grades = {};
-												var attempts = new Array();
-												const today = new Date();
+												var grades = [];
 												if(group.roster[studentIndex].grades) {
 													grades = group.roster[studentIndex].grades;
 													var myGrade = {};
@@ -559,11 +610,6 @@ module.exports = {
 																block: lastid,
 																track: 100
 															};
-															if(quests.length > 0) {
-																myGrade.quests = quests;
-																attempts.push(today);
-																myGrade.quests.attempts = attempts;
-															}
 															grades.push(myGrade);
 															blocksPresented++;
 														}
@@ -574,11 +620,6 @@ module.exports = {
 															block: lastid,
 															track: 100
 														}];
-														if(quests.length > 0) {
-															grades.quests = quests;
-															attempts.push(today);
-															myGrade.quests.attempts = attempts;
-														}
 														blocksPresented++;
 													}
 												}

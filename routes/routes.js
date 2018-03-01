@@ -90,6 +90,7 @@ module.exports = (app) => {
 	app.put('/api/v1/user/modify', UserController.modify);
 	app.get('/api/v1/user/mygroups', GroupController.myGroups);
 	app.get('/api/v1/user/mygroup', GroupController.myGroup);
+	app.put('/api/v1/user/createattempt', GroupController.createAttempt);
 	app.get('/api/v1/user/mygrades', GroupController.myGrades);
 	app.get('/api/v1/user/nextblock', GroupController.nextBlock);
 	app.post('/api/v1/user/comment/create', DiscussionController.create);

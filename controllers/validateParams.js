@@ -249,6 +249,37 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/user/createattempt':
+		if(!req.body) { //PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give data by body to process'
+			});
+		} else if (!req.body.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give group id by body to process'
+			});
+		} else if (!req.body.blockid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give group id by body to process'
+			});
+		} else if (!req.body.answers) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give array with answers by body to process'
+			});
+		} else if (!req.body.grade) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give grade by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/mygrades':
 		if(!req.query) {
 			res.status(406).json({
@@ -1004,19 +1035,6 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give discussion title or discussion id or replyto by body to process'
 			});
-		/*
-		} else if(req.body.comment && !req.body.discussion) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'Error -: Please, give discussion id by body to process'
-			});
-
-		} else if(req.body.replyto && !req.body.comment) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'Error -: Please, give comment id by body to process'
-			});
-		*/
 		} else {
 			next();
 		}

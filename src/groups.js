@@ -62,8 +62,8 @@ const QuestsSchema = new Schema ({
 		max: [100,'Maximum value is 100'],
 		default: 0
 	},
-	attempts: {
-		type: [Date]
+	attempt: {
+		type: Date
 	}
 });
 
@@ -94,7 +94,8 @@ const RosterSchema = new Schema ({
 	},
 	status: {
 		type: String,
-		enum: ['pending','active','finished','remove']
+		enum: ['pending','active','finished','remove'],
+		default: 'pending'
 	},
 	grades: [GradesSchema]
 });
