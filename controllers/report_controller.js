@@ -29,8 +29,10 @@ module.exports = {
 			//.project({_id:0, 'orgUnit.name':1})
 			.then((results) => {
 				var ous = new Array();
+				var total = 0;
 				results.forEach(function(ou) {
 					ous.push(ou._id);
+					total += ou.count;
 				});
 				var send_results = new Array();
 				OrgUnit.find({ _id: {$in: ous}})
@@ -55,6 +57,7 @@ module.exports = {
 							'status': 200,
 							'reportName': 'Users by OrgUnit',
 							'org'	: key_user.org.name,
+							'total': total,
 							'data': send_results
 						});
 					})
