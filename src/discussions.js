@@ -11,9 +11,9 @@ const DiscussionsSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum:['discussion','comment','reply'],
+		enum:['root','comment','reply'],
 		required: true,
-		default: 'discussion'
+		default: 'root'
 	},
 	pubtype: {
 		type: String,
@@ -21,7 +21,7 @@ const DiscussionsSchema = new Schema ({
 		required: true,
 		default: 'discussion'
 	},
-	discussion: {
+	root: {
 		type: Schema.Types.ObjectId,
 		ref: 'discussions'
 	},

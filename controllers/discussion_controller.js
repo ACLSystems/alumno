@@ -13,13 +13,13 @@ module.exports = {
 			user		: key_user._id
 		};
 		if(req.body.title){
-			commentObj.type					= 'discussion';
-			commentObj.title				= req.body.title;
-			commentObj.title				= req.body.pubtype;
+			commentObj.type			= 'root';
+			commentObj.title		= req.body.title;
+			commentObj.pubtype	= req.body.pubtype;
 		}
-		if(!req.body.title && req.body.discussion) {
-			commentObj.type 				= 'comment';
-			commentObj.discussion		= req.body.discussion;
+		if(!req.body.title && req.body.root) {
+			commentObj.type 		= 'comment';
+			commentObj.root			= req.body.root;
 		}
 		if(req.body.replyto) {
 			commentObj.type					= 'reply';
@@ -34,26 +34,24 @@ module.exports = {
 			'status': 200
 		};
 		if(commentObj.title) {
-			Discussion.findOne({type: 'discussion', title: commentObj.title, org: key_user.org._id})
+			Discussion.findOne({type: 'root', title: commentObj.title, org: key_user.org._id})
 				.then((old_disc) => {
 					if(old_disc) {
-						commentObj.discussion = old_disc._id;
+						commentObj.root 			= old_disc._id;
 						commentObj.type 			= 'comment';
-						status.message 				= 'Comment created';
-						status.discussion 		= old_disc._id;
 						delete commentObj.title;
 					}
 					Discussion.create(commentObj)
 						.then((d) => {
-							if(d.type === 'discussion') {
+							if(d.type === 'root') {
 								status.type				= d.type;
-								status.message 		= 'Discussion created';
-								status.discussion = d._id;
+								status.message 		= 'Root created';
+								status.root 			= d._id;
 							}
 							if(d.type === 'comment') {
 								status.type				= d.type;
 								status.message 		= 'Comment created';
-								status.discussion = d.discussion;
+								status.root 			= d.root;
 								status.comment		= d._id;
 							}
 							res.status(200).json(status);
@@ -63,32 +61,31 @@ module.exports = {
 						});
 				})
 				.catch((err) => {
-					Err.sendError(res,err,'discussion_controller','create -- Finding Discussion --');
+					Err.sendError(res,err,'discussion_controller','create -- Finding Root --');
 				});
 		} else {
 			Discussion.findOne({_id: commentObj.replyto})
 				.then((c) => {
 					if(c) {
-						if(c.type === 'comment') {
-							commentObj.comment = c._id;
-							commentObj.discussion = c.discussion;
-						} else if(c.type === 'discussion') {
-							commentObj.discussion = c._id;
-						} else {
-							commentObj.comment = c.comment;
-							commentObj.discussion = c.discussion;
+						if(c.type === 'comment' || c.type === 'reply') {
+							commentObj.type 			= 'reply';
+							commentObj.comment 		= c._id;
+							commentObj.root 			= c.root;
+						} else if(c.type === 'root') {
+							commentObj.root 			= c._id;
+							commentObj.type 			= 'comment';
 						}
 						Discussion.create(commentObj)
 							.then((d) => {
-								status.type				= d.type;
-								status.discussion = d.discussion;
+								status.type					= d.type;
+								status.root 				= d.root;
+								status.id						= d._id;
 								if(d.type === 'comment') {
 									status.message 		= 'Comment created';
-									status.comment		= d._id;
+
 								} else {
 									status.message 		= 'Reply created';
 									status.comment		= d.comment;
-									status.id					= d._id;
 								}
 								res.status(200).json(status);
 							})
@@ -118,7 +115,7 @@ module.exports = {
 		//var get 		= {title: 1};
 		var select 		= '';
 		if(req.query.select) {
-			select = req.query.get;
+			select = req.query.select;
 		}
 		if(req.query.order) {
 			order = parseInt(req.query.order);
