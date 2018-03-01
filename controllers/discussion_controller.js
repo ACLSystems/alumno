@@ -15,6 +15,7 @@ module.exports = {
 		if(req.body.title){
 			commentObj.type					= 'discussion';
 			commentObj.title				= req.body.title;
+			commentObj.title				= req.body.pubtype;
 		}
 		if(!req.body.title && req.body.discussion) {
 			commentObj.type 				= 'comment';
@@ -110,33 +111,39 @@ module.exports = {
 
 	get(req,res) {
 		//const key_user 	= res.locals.user;
-		const query			= req.query.query;
-		var order 	= {date: -1};
-		var skip 	= 0;
-		var limit = 15;
-		var get 	= {title: 1};
+		const query	= JSON.parse(req.query.query);
+		var order 	= -1;
+		var skip 		= 0;
+		var limit 	= 15;
+		//var get 		= {title: 1};
+		var select 		= '';
+		if(req.query.select) {
+			select = req.query.get;
+		}
 		if(req.query.order) {
-			order = req.query.order;
+			order = parseInt(req.query.order);
 		}
 		if(req.query.skip) {
-			skip = req.query.skip;
+			skip = parseInt(req.query.skip);
 		}
 		if(req.query.limit) {
-			limit = req.query.limit;
+			limit = parseInt(req.query.limit);
 		}
-		Discussion.find(query,get)
-			.populate('user')
-			.sort(order)
+		var qOrder 	= {date: order};
+		Discussion.find(query)
+			.select(select)
+			.populate('user', 'person')
+			.sort(qOrder)
 			.skip(skip)
 			.limit(limit)
 			.then((discussions) => {
 				if(discussions || discussions.length > 0) {
 					var discs_send = new Array();
 					discussions.forEach(function(disc) {
-						var disc_send = {};
-						const vars = ['title','discussion','comment','replyTo','block','group','course'];
-						disc_send.text = disc.text;
-						disc_send.type = disc.type;
+						var disc_send = {
+							id: disc._id
+						};
+						const vars = ['text','type','title','discussion','comment','replyto','block','group','course'];
 						vars.forEach(function(evar) {
 							if(disc[evar]){
 								disc_send[evar] = disc[evar];
@@ -148,9 +155,8 @@ module.exports = {
 						} else {
 							disc_send.user = disc.user.person.fullName;
 						}
-
+						discs_send.push(disc_send);
 					});
-					discs_send.push(discs_send);
 					res.status(200).json({
 						'status': 200,
 						'message': discs_send

@@ -86,7 +86,7 @@ PersonSchema.pre('save', function(next) {
 });
 
 PersonSchema.virtual('fullName').get(function () {
-	return this.name + ' ' + this.fatherName + this.motherName;
+	return this.name + ' ' + this.fatherName + ' ' + this.motherName;
 });
 
 module.exports = PersonSchema;

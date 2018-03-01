@@ -515,11 +515,17 @@ module.exports = {
 							var i=0;
 							found_blocks.forEach(function(block) {
 								var biggest = 0;
+								var attempts = new Array();
 								if(block.type === 'questionnarie' || block.type === 'task') {
 									grades[i].quests.forEach(function(q) {
 										if(q.grade > biggest) {
 											biggest = q.grade;
 										}
+										attempts.push({
+											answers : q.answers,
+											grade		: q.grade,
+											date		: q.attempt
+										});
 									});
 									grades_send.push({
 										title					: block.title,
@@ -528,7 +534,8 @@ module.exports = {
 										track					: grades[i].track,
 										biggestGrade 	: biggest,
 										AttemptsDone	: grades[i].quests.length,
-										lastAttempt 	:	TA.ago(grades[i].quests[grades[i].quests.length-1].attempt)
+										lastAttempt 	:	TA.ago(grades[i].quests[grades[i].quests.length-1].attempt),
+										historical		: attempts
 									});
 								}
 								i++;
