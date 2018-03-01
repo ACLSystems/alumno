@@ -9,8 +9,9 @@ module.exports = {
 		User.count({org: key_user.org})
 			.then((count) => {
 				res.status(200).json({
-					'status': 200,
+					'status'		: 200,
 					'reportName': 'Total Org Users',
+					'org'				: key_user.org.name,
 					'totalUsers': count
 				});
 			})
@@ -53,6 +54,7 @@ module.exports = {
 						res.status(200).json({
 							'status': 200,
 							'reportName': 'Users by OrgUnit',
+							'org'	: key_user.org.name,
 							'data': send_results
 						});
 					})
