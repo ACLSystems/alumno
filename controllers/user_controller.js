@@ -709,6 +709,22 @@ module.exports = {
 					Err.sendError(res,err,'user_controller','list -- Finding Org isOrg --');
 				});
 		}
+	}, // count
+
+	myRoles(req,res) {
+		const key_user = res.locals.user;
+		res.status(200).json({
+			'status'			: 200,
+			'message'			: {
+				'isAdmin'				: key_user.roles.isAdmin,
+				'isBusines'			: key_user.roles.isBusiness,
+				'isOrg'					: key_user.roles.isOrg,
+				'isOrgContent'	: key_user.roles.isOrgContent,
+				'isAuthor'			: key_user.roles.isAuthor,
+				'isSupervisor'	: key_user.roles.isSupervisor,
+				'isInstructor'	: key_user.roles.isInstructor
+			}
+		});
 	}
 };
 

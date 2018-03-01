@@ -86,6 +86,7 @@ module.exports = (app) => {
 
 	// Rutas para usuarios
 
+	app.get('/api/v1/user/myroles', UserController.myRoles);
 	app.get('/api/v1/user/getdetails', UserController.getDetails);
 	app.put('/api/v1/user/passwordchange', UserController.passwordChange);
 	app.put('/api/v1/user/modify', UserController.modify);

@@ -81,6 +81,10 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/user/myroles':
+		next();
+		break;
+
 	case '/api/user/confirm':
 		if(!req.query) {
 			res.status(406).json({
