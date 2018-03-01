@@ -465,6 +465,14 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/orgadm/report/totalusers':
+		next();
+		break;
+
+	case '/api/v1/orgadm/report/usersbyou':
+		next();
+		break;
+
 	// RUTAS PARA UNIDADES ORGANIZACIONALES --------------------------------------UNIDADES ORGANIZACIONALES
 
 	case '/api/orgunit/list':

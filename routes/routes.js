@@ -12,6 +12,7 @@ const FileController = require('../controllers/file_controller');
 const CareerController = require('../controllers/career_controller');
 const TermController = require('../controllers/term_controller');
 const DiscussionController = require('../controllers/discussion_controller');
+const ReportController = require('../controllers/report_controller');
 const multer = require('multer');
 const dir = '/Users/Arturo/data';
 const fileSize = 1048576;
@@ -149,6 +150,8 @@ module.exports = (app) => {
 	app.post('/api/v1/orgadm/career/massivecreate', CareerController.massiveCreation);
 	app.post('/api/v1/orgadm/term/create', TermController.create);
 	app.post('/api/v1/orgadm/term/massivecreate', TermController.massiveCreation);
+	app.get('/api/v1/orgadm/report/totalusers', ReportController.totalUsers);
+	app.get('/api/v1/orgadm/report/usersbyou', ReportController.usersByOrgUnit);
 
 
 };
