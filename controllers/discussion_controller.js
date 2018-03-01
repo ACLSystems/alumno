@@ -137,20 +137,20 @@ module.exports = {
 				if(discussions || discussions.length > 0) {
 					var discs_send = new Array();
 					discussions.forEach(function(disc) {
-						var disc_send = {
-							id: disc._id
-						};
-						const vars = ['text','type','title','discussion','comment','replyto','block','group','course'];
+						var disc_send = {};
+						const vars = ['title','text','type','pubtype','root','comment','replyto','block','group','course'];
 						vars.forEach(function(evar) {
 							if(disc[evar]){
 								disc_send[evar] = disc[evar];
 							}
 						});
-						disc_send.date = TA.ago(disc.date);
+						disc_send.id 			= disc._id;
+						disc_send.when 		= TA.ago(disc.date);
+						disc_send.date 		= disc.date;
 						if(disc.user.person.alias) {
-							disc_send.user = disc.user.person.alias;
+							disc_send.user 	= disc.user.person.alias;
 						} else {
-							disc_send.user = disc.user.person.fullName;
+							disc_send.user 	= disc.user.person.fullName;
 						}
 						discs_send.push(disc_send);
 					});
