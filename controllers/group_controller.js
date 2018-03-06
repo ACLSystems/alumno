@@ -595,7 +595,7 @@ module.exports = {
 											});
 										}
 									});
-									if(grades[i].quests[grades[i].quests.length-1].attempt) {
+									if(grades[i].quests[grades[i].quests.length-1].lenght > 0) {
 										grades_send.push({
 											title					: block.title,
 											section				: block.section,
