@@ -591,7 +591,7 @@ module.exports = {
 											});
 										} else {
 											attempts.push({
-												grade: 'No grade yet'
+												grade: 0
 											});
 										}
 									});
