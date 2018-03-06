@@ -159,7 +159,8 @@ module.exports = {
 						version: 			course.version,
 						status: 			course.status,
 						price: 				course.price,
-						author: 			course.author
+						author: 			course.author,
+						numBlocks: 		course.numBlocks
 					});
 				});
 				res.status(200).json({

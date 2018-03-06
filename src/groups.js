@@ -3,10 +3,10 @@ const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const OwnerSchema = require('./owner');
 const PermissionsSchema = require('./permissions');
-//const BlocksSchema = require('./blocks');
-//const CoursesSchema = require('./courses');
-//const OrgsSchema = require('./orgs');
-//const OrgUnitsSchema = require('./orgUnits');
+//const Course = require('./courses');
+//const Block = require('./blocks');
+//const Orgs = require('./orgs');
+//const OrgUnits = require('./orgUnits');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
@@ -140,6 +140,29 @@ const GroupsSchema = new Schema ({
 	perm: PermissionsSchema,
 	admin: AdminSchema
 });
+
+GroupsSchema.virtual('numStudents').get(function() {
+	if(this.roster) {
+		return this.roster.length;
+	} else {
+		return 0;
+	}
+});
+
+/*
+GroupsSchema.virtual('numBlocks').get(() => new Promise((resolve, reject) => {
+	Course.findById(this.course)
+		.then((c) => {
+			if(c) {
+				console.log(c.numBlocks); // eslint-disable-line
+				resolve(c.numBlocks);
+			} else {
+				resolve('not found');
+			}
+		})
+		.catch(reject('error'));
+}));
+*/
 
 GroupsSchema.index( { code: 1, org: 1}, { unique: true } );
 GroupsSchema.index( { code: 1 }, { unique: false } );

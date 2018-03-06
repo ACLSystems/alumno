@@ -86,6 +86,60 @@ module.exports = {
 			});
 	}, // create
 
+	list(req,res) {
+		const key_user 	= res.locals.user;
+		var query = {org: key_user.org._id};
+		if(req.query.ou) {
+			query.orgUnit = req.query.ou;
+		}
+		Group.find(query)
+			.populate('course')
+			.populate('instructor')
+			.populate('org', 'name')
+			.populate('orgUnit', 'name longName')
+			.populate('roster.student')
+			.then((groups) => {
+				var send_groups = new Array();
+				groups.forEach(function(group) {
+					var send_group = {
+						code				: group.code,
+						name				: group.name,
+						course			: group.course.title,
+						coursecode	: group.course.code,
+						numBlocks		: group.course.numBlocks,
+						orgUnit 		: group.orgUnit.name,
+						orgUnitName	: group.orgUnit.longName,
+						instructor	: group.instructor.person.fullName,
+						beginDate		: group.beginDate,
+						endDate			: group.endDate,
+						numStudents : group.numStudents
+					};
+					var send_students = new Array();
+					group.roster.forEach(function(s) {
+						send_students.push({
+							fullName: s.student.person.fullName
+						});
+					});
+					send_group.students = send_students;
+					send_groups.push(send_group);
+				});
+				if(send_groups.length > 0) {
+					res.status(200).json({
+						'status': 200,
+						'message': send_groups
+					});
+				} else {
+					res.status(404).json({
+						'status': 404,
+						'message': 'No groups found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','create -- Finding Course --');
+			});
+	},
+
 	createRoster(req,res){
 		const key_user 	= res.locals.user;
 		var roster = req.body;
@@ -263,8 +317,9 @@ module.exports = {
 						groupid: 				group._id,
 						name: 					group.name,
 						course: 				group.course.title,
-						courseCode: 		group.course.code,
 						courseid: 			group.course._id,
+						courseCode: 		group.course.code,
+						courseBlocks:		group.course.numBlocks,
 						instructor: 		group.instructor.person.name + ' ' + group.instructor.person.fatherName,
 						beginDate: 			group.beginDate,
 						endDate: 				group.endDate,
@@ -356,7 +411,9 @@ module.exports = {
 											'status': 200,
 											'message': {
 												myStatus: myGroup.roster[studentIndex].status,
-												blockNum: send_blocks.length,
+												//blockNum: send_blocks.length,
+												blockNum: myGroup.course.numBlocks,
+												otherNum: myGroup.numBlocks,
 												blocks	: send_blocks
 											}
 										});
@@ -525,25 +582,42 @@ module.exports = {
 										if(q.grade < lowest) {
 											lowest 	= q.grade;
 										}
-										attempts.push({
-											answers : q.answers,
-											grade		: q.grade,
-											when		: TA.ago(q.attempt),
-											date		: q.attempt
+										if(q.attempt) {
+											attempts.push({
+												answers : q.answers,
+												grade		: q.grade,
+												when		: TA.ago(q.attempt),
+												date		: q.attempt
+											});
+										} else {
+											attempts.push({
+												grade: 'No grade yet'
+											});
+										}
+									});
+									if(grades[i].quests[grades[i].quests.length-1].attempt) {
+										grades_send.push({
+											title					: block.title,
+											section				: block.section,
+											number				: block.number,
+											track					: grades[i].track,
+											biggestGrade 	: biggest,
+											lowestGrade		: lowest,
+											AttemptsDone	: grades[i].quests.length,
+											lastAttempt 	:	TA.ago(grades[i].quests[grades[i].quests.length-1].attempt),
+											date					: grades[i].quests[grades[i].quests.length-1].attempt,
+											historical		: attempts
 										});
-									});
-									grades_send.push({
-										title					: block.title,
-										section				: block.section,
-										number				: block.number,
-										track					: grades[i].track,
-										biggestGrade 	: biggest,
-										lowestGrade		: lowest,
-										AttemptsDone	: grades[i].quests.length,
-										lastAttempt 	:	TA.ago(grades[i].quests[grades[i].quests.length-1].attempt),
-										date					: grades[i].quests[grades[i].quests.length-1].attempt,
-										historical		: attempts
-									});
+									} else {
+										grades_send.push({
+											title					: block.title,
+											section				: block.section,
+											number				: block.number,
+											track					: grades[i].track,
+											biggestGrade 	: biggest,
+											lowestGrade		: lowest
+										});
+									}
 								}
 								i++;
 							});
@@ -827,8 +901,13 @@ module.exports = {
 	}, // nextBlock
 
 	test(req,res) {
-		var message = 'Mensaje de prueba';
-		Err.sendError(res,message,'group_controller','test -- testing email --');
+		//var message = 'Mensaje de prueba';
+		res.status(200).json({
+			'url': process.env.LIBRETA_URI,
+			'public': process.env.MJ_APIKEY_PUBLIC,
+			'private': process.env.MJ_APIKEY_PRIVATE
+		});
+		//Err.sendError(res,message,'group_controller','test -- testing email --');
 	}
 };
 

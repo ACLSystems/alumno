@@ -71,7 +71,7 @@ module.exports = (app) => {
 	app.post('/api/user/register', UserController.register);
 	app.get('/api/user/near', OrgUnitController.index);
 	app.get('/api/user/confirm', UserController.confirm);
-	app.get('/api/user/validateEmail', UserController.validateEmail);
+	app.get('/api/user/validateemail', UserController.validateEmail);
 	app.get('/api/help', HelpController.help);
 	app.get('/api/errorcodes',ErrorMessController.errorCodes);
 	app.get('/api/orgunit/list', OrgUnitController.publiclist);
@@ -103,6 +103,7 @@ module.exports = (app) => {
 	// Rutas para roles de 'isInstructor'
 
 	app.post('/api/v1/instructor/group/create', GroupController.create);
+	app.get('/api/v1/instructor/group/list', GroupController.list);
 	app.put('/api/v1/instructor/group/createroster', GroupController.createRoster);
 	app.get('/api/v1/instructor/group/listroster', GroupController.listRoster);
 	app.post('/api/v1/instructor/group/addstudent', GroupController.addStudent);

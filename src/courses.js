@@ -94,6 +94,14 @@ const CoursesSchema = new Schema ({
 	}
 });
 
+CoursesSchema.virtual('numBlocks').get(function() {
+	if(this.blocks){
+		return this.blocks.length;
+	}	else {
+		return 0;
+	}
+});
+
 CoursesSchema.index( { code: 1, org: 1}, { unique: true } );
 CoursesSchema.index( { categories: 1, org: 1 }, { unique: false } );
 CoursesSchema.index( { keyworkds: 1, org: 1 }, { unique: false } );

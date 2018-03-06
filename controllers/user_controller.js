@@ -9,7 +9,7 @@ const permissions = require('../shared/permissions');
 const mailjet = require('../shared/mailjet');
 //require('winston-daily-rotate-file');
 
-const url = 'https://alumno.sloppy.zone/api/user/confirmuser?';
+const url = process.env.LIBRETA_URI;
 
 /*
 var transport = new(winston.transports.DailyRotateFile) ({
@@ -107,7 +107,7 @@ module.exports = {
 										user.admin.adminCreate = false;
 										user.save()
 											.then((user) => {
-												const link = url + 'email=' + user.person.email + '&token=' + user.admin.validationString;
+												const link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email;
 												mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',310518,link)
 													.then(() => {
 														res.status(201).json({
@@ -206,22 +206,29 @@ module.exports = {
 		const token = req.query.token;
 		User.findOne({'person.email': email})
 			.then((user) => {
-				if(token === user.admin.validationString){
-					user.admin.isVerified = true;
-					user.save()
-						.then(() => {
-							res.status(200).json({
-								'status': 200,
-								'message': 'User -'+ user.person.email + '- verified'
+				if(user) {
+					if(token === user.admin.validationString){
+						user.admin.isVerified = true;
+						user.save()
+							.then(() => {
+								res.status(200).json({
+									'status': 200,
+									'message': 'User -'+ user.person.email + '- verified'
+								});
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'user_controller','confirmUser -- Saving User Status --');
 							});
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'user_controller','confirmUser -- Saving User Status --');
+					} else {
+						res.status(406).json({
+							'status': 406,
+							'message': 'Token is not valid. Please verify'
 						});
+					}
 				} else {
-					res.status(406).json({
-						'status': 406,
-						'message': 'Token is not valid. Please verify'
+					res.status(404).json({
+						'status': 404,
+						'message': 'User -'+ user.person.email + '- not found'
 					});
 				}
 			})
@@ -405,19 +412,20 @@ module.exports = {
 
 	//validateEmail(req, res, next) {
 	validateEmail(req, res) {
-		const email = (req.body && req.body.email);
+		const email = req.query.email;
 		User.findOne({ 'person.email': email})
 			.then((user) => {
 				if(user) {
 					var emailID = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
 					user.admin.recoverString = emailID;
-					const link = url + 'email=' + user.person.email + '&token=' + user.admin.validationString;
+					const link = url + '/recover/' + user.admin.recoverString + '/' + user.person.email;
 					mailjet.sendMail(user.person.email, user.person.name, 'Solicitud de recuperación de contraseña',311647,link);
 					user.save();
 					res.status(200).json({
 						'status': 200,
 						'message': 'Email found',
-						'id': emailID
+						'id': emailID,
+						'link': link
 					});
 				} else {
 					res.status(404);

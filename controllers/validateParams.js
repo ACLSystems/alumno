@@ -902,6 +902,10 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/instructor/group/list':
+		next();
+		break;
+
 	case '/api/v1/instructor/group/createroster':
 		if(!req.body) {  // PUT
 			res.status(406).json({

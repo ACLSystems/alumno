@@ -49,6 +49,10 @@ const BlocksSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'tasks'
 	}],
+	resources: [{
+		type: Schema.Types.ObjectId,
+		ref: 'resources'
+	}],
 	status: {
 		type: String,
 		enum: ['draft','published'],
