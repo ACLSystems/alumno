@@ -613,9 +613,7 @@ module.exports = {
 											title					: block.title,
 											section				: block.section,
 											number				: block.number,
-											track					: grades[i].track,
-											biggestGrade 	: biggest,
-											lowestGrade		: lowest
+											track					: grades[i].track
 										});
 									}
 								}
