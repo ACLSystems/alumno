@@ -831,6 +831,26 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/author/course/setblockorder':
+		if(!req.body) {  // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1455: Please, give data by body to process'
+			});
+		} else if (!req.body.blockid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1456: Please, give block id by body to process'
+			});
+		} else if (!req.body.section && ! req.body.number) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1456: Please, give section and number by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
 
 	case '/api/v1/author/course/makeavailable':
 		if(!req.body) {  // GET

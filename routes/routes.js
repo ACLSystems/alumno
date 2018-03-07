@@ -110,23 +110,24 @@ module.exports = (app) => {
 
 	// Rutas para roles de 'isAuthor'
 
-	app.get('/api/v1/course/listcategories', CourseController.listCategories);
-	app.get('/api/v1/course/listcourses', CourseController.listCourses);
+	app.get ('/api/v1/course/listcategories', CourseController.listCategories);
+	app.get ('/api/v1/course/listcourses', CourseController.listCourses);
 	app.post('/api/v1/author/course/create', CourseController.create);
 	app.post('/api/v1/author/course/createblock', CourseController.createBlock);
-	app.put('/api/v1/author/course/modifyblock', CourseController.modifyBlock);
-	app.get('/api/v1/author/course/getblock', CourseController.getBlock);
-	app.get('/api/v1/author/course/getblocklist', CourseController.getBlocklist);
-	app.get('/api/v1/author/course/getblockby', CourseController.getBlockBy);
-	app.get('/api/v1/author/course/get', CourseController.get);
+	app.put ('/api/v1/author/course/modifyblock', CourseController.modifyBlock);
+	app.get ('/api/v1/author/course/getblock', CourseController.getBlock);
+	app.get ('/api/v1/author/course/getblocklist', CourseController.getBlocklist);
+	app.get ('/api/v1/author/course/getblockby', CourseController.getBlockBy);
+	app.get ('/api/v1/author/course/get', CourseController.get);
 	app.post('/api/v1/author/course/createquestionnarie', CourseController.createQuestionnarie);
-	app.get('/api/v1/author/course/getquestionnarie', CourseController.getQuestionnarie);
+	app.get ('/api/v1/author/course/getquestionnarie', CourseController.getQuestionnarie);
 	app.post('/api/v1/author/course/addquestions', CourseController.addQuestions);
-	app.put('/api/v1/author/course/modify', CourseController.modify);
-	app.put('/api/v1/author/course/moveblock', CourseController.moveBlock);
-	app.put('/api/v1/author/course/makeavailable', CourseController.makeAvailable);
+	app.put ('/api/v1/author/course/modify', CourseController.modify);
+	app.put ('/api/v1/author/course/moveblock', CourseController.moveBlock);
+	app.put	('/api/v1/author/course/setblockorder', CourseController.setBlockOrder);
+	app.put ('/api/v1/author/course/makeavailable', CourseController.makeAvailable);
 	app.post('/api/v1/author/file/upload', upload.single('file'), FileController.upload);
-	app.get('/api/v1/author/file/download', FileController.download);
+	app.get ('/api/v1/author/file/download', FileController.download);
 
 	// Rutas para roles de 'isAdmin'
 

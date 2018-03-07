@@ -1044,6 +1044,29 @@ module.exports = {
 			});
 	}, // moveBlock
 
+	setBlockOrder(req,res) {
+		const blockid			= req.body.blockid;
+		const section			=	req.body.section;
+		const number			=	req.body.number;
+		Block.findById(blockid)
+			.then((block) => {
+				block.section = section;
+				block.number 	= number;
+				block.save()
+					.then(() => {
+						res.status(200).json({
+							'status': 200,
+							'message': 'block saved'
+						});
+					})
+					.catch((err) => {
+						sendError(res,err,'setBlockOrder -- Saving block --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'setBlockOrder -- Searching block --');
+			});
+	}, //setBlockOrder
 
 	makeAvailable(req,res) { // pone disponible el curso y los bloques del curso
 		//const key_user 	= res.locals.user;

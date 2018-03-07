@@ -24,3 +24,11 @@ console.log(JSON.stringify(array));
 array.splice(1,0,elem3);
 
 console.log(JSON.stringify(array));
+
+array.splice(3,0,elem3);
+
+console.log(JSON.stringify(array));
+
+array.splice(1,1);
+
+console.log(JSON.stringify(array));
