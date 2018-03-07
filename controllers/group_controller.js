@@ -596,19 +596,20 @@ module.exports = {
 										}
 									///
 									});
-									if(grades[i].quests.length > 0) {
-										grades_send.push({
-											title					: block.title,
-											section				: block.section,
-											number				: block.number,
-											track					: grades[i].track,
-											biggestGrade 	: biggest,
-											lowestGrade		: lowest,
-											AttemptsDone	: grades[i].quests.length,
-											lastAttempt 	:	TA.ago(grades[i].quests[grades[i].quests.length-1].attempt),
-											date					: grades[i].quests[grades[i].quests.length-1].attempt,
-											historical		: attempts
-										});
+									//if(grades[i].quests.length > 0) {
+									grades_send.push({
+										title					: block.title,
+										section				: block.section,
+										number				: block.number,
+										track					: grades[i].track,
+										biggestGrade 	: biggest,
+										lowestGrade		: lowest,
+										AttemptsDone	: grades[i].quests.length,
+										lastAttempt 	:	TA.ago(grades[i].quests[grades[i].quests.length-1].attempt),
+										date					: grades[i].quests[grades[i].quests.length-1].attempt,
+										historical		: attempts
+									});
+									/*
 									} else {
 										grades_send.push({
 											title					: block.title,
@@ -617,6 +618,7 @@ module.exports = {
 											track					: grades[i].track
 										});
 									}
+									*/
 								}
 								i++;
 							});
