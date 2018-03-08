@@ -821,11 +821,13 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1456: Please, give reference block id to move or \'zero\' to move block to top by body to process'
 			});
+			/*
 		} else if(req.body.refblockid === req.body.blockid) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1456: blockid and refblockid must be different. Move to the same place?'
 			});
+			*/
 		} else {
 			next();
 		}
