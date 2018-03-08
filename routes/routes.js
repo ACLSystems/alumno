@@ -121,6 +121,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/author/course/get', CourseController.get);
 	app.post('/api/v1/author/course/createquestionnarie', CourseController.createQuestionnarie);
 	app.get ('/api/v1/author/course/getquestionnarie', CourseController.getQuestionnarie);
+	app.put ('/api/v1/author/course/removequestionnarie', CourseController.removeQuestionnarie);
 	app.post('/api/v1/author/course/addquestions', CourseController.addQuestions);
 	app.put ('/api/v1/author/course/modify', CourseController.modify);
 	app.put ('/api/v1/author/course/moveblock', CourseController.moveBlock);

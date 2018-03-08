@@ -908,6 +908,45 @@ module.exports = {
 			});
 	}, // modifyBlock
 
+	removeQuestionnarie(req,res) {
+		const blockid = req.body.id;
+		Block.findById(blockid)
+			.then((block) => {
+				if(block) {
+					if(block.questionnarie) {
+						Questionnarie.remove({_id:block.questionnarie})
+							.then(() => {
+								Block.update({_id:block._id},{$unset: {questionnarie: 1}})
+									.then(() => {
+										res.status(200).json({
+											'status': 200,
+											'message': 'Questionnarie deleted'
+										});
+									})
+									.catch((err) => {
+										sendError(res,err,'removeQuestionnarie -- Saving block --');
+									});
+							})
+							.catch((err) => {
+								sendError(res,err,'removeQuestionnarie -- deleting questionnarie --');
+							});
+					} else {
+						res.status(404).json({
+							'status': 404,
+							'message': 'Block -' + blockid + '- has not questionnarie'
+						});
+					}
+				} else {
+					res.status(404).json({
+						'status': 404,
+						'message': 'Block -' + blockid + '- not found'
+					});
+				}
+			})
+			.catch((err) => {
+				sendError(res,err,'removeQuestionnarie -- Searching block --');
+			});
+	}, // removeQuestionnarie
 
 	moveBlock(req,res) { // mover orden de aparición de los bloques
 		// Paso 1. 	Acomodar el orden general de los bloques (campo Order)
