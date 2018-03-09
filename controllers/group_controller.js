@@ -524,15 +524,15 @@ module.exports = {
 								});
 							})
 							.catch((err) => {
-								Err.sendError(res,err,'group_controller','nextBlock -- Saving Group --');
+								Err.sendError(res,err,'group_controller','createAttempt -- Saving Group --');
 							});
 					})
 					.catch((err) => {
-						Err.sendError(res,err,'group_controller','nextBlock -- Finding Block --');
+						Err.sendError(res,err,'group_controller','createAttempt -- Finding Block --');
 					});
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'group_controller','nextBlock -- Finding Group --');
+				Err.sendError(res,err,'group_controller','createAttempt -- Finding Group --');
 			});
 
 	}, // createAttempt
@@ -779,6 +779,7 @@ module.exports = {
 																	if(q.footerShow) 	{send_question.footerShow = q.footerShow;}
 																	if(q.type) 				{send_question.type = q.type;}
 																	if(q.w) 					{send_question.w = q.w;}
+																	if(q.label)				{send_question.label = q.label;}
 																	if(q.text) 				{send_question.text = q.text;}
 																	if(q.help) 				{send_question.help = q.help;}
 																	if(q.group && q.group.length > 0) 	{send_question.group = q.group;}

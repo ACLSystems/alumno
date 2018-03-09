@@ -49,6 +49,9 @@ const QuestionSchema = new Schema ({
 		type: Boolean,
 		default: false
 	},
+	label: {
+		type: String
+	},
 	text: {
 		type: String
 	},

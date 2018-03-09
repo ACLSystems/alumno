@@ -292,8 +292,8 @@ module.exports = {
 							const result = permissions.access(key_user,course,'content');
 							if(course.own.user === key_user.name || result.canModify ) {
 								course.blocks.push(block._id);
-								let desc = 'Course modification - Adding block ' + block.code;
-								course.mod.push(generateMod(key_user.name,desc));
+								//let desc = 'Course modification - Adding block ' + block.code;
+								//course.mod.push(generateMod(key_user.name,desc));
 								course.currentSection = section;
 								course.nextNumber			= number + 1;
 								course.save()
