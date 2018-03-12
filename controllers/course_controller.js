@@ -491,7 +491,11 @@ module.exports = {
 				if(course) {
 					const result = permissions.access(key_user,course,'content');
 					if(result.canRead) {
-						Block.find({ _id: { $in: course.blocks }})
+						var block_query = {_id: {$in: course.blocks}};
+						if(req.query.section) {
+							block_query.section = req.query.section;
+						}
+						Block.find(block_query)
 							.sort({order:1})
 							.then((blocks) => {
 								var send_blocks = new Array();
