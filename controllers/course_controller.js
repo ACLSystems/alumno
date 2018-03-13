@@ -4,7 +4,7 @@ const Course				= require('../src/courses');
 const Category			= require('../src/categories');
 const Block					= require('../src/blocks');
 const Questionnarie = require('../src/questionnaries');
-//const Task = require('../src/tasks');
+const Task 					= require('../src/tasks');
 const permissions 	= require('../shared/permissions');
 const Org						= require('../src/orgs');
 
@@ -801,6 +801,91 @@ module.exports = {
 				sendError(res,err,'addQuestion -- Searching questionnarie --');
 			});
 	}, // addQuestions
+
+	createTasks(req,res) { // crea un conjunto de tareas asociadas a un bloque
+		const key_user 	= res.locals.user;
+		var queryBlock = {};
+		if(req.body.id) {
+			queryBlock = { _id: req.body.id};
+		} else if(req.body.code) {
+			queryBlock = { code: req.body.code, org: key_user.org._id };
+		}
+		Block.findOne(queryBlock)
+			.then((block) => {
+				if(block) {
+					var date = new Date();
+					var task = new Task;
+					task.items 		= req.body.tasks;
+					task.org 			= key_user.org._id;
+					task.orgUnit 	= key_user.orgUnit._id;
+					task.version 	= 1;
+					task.own 			=  {
+						user: key_user.name,
+						org: key_user.org.name,
+						orgUnit: key_user.orgUnit.name
+					};
+					task.mod			= [{
+						by: key_user.name,
+						when: date,
+						what: 'Questionnarie creation'
+					}];
+					task.perm 		= {
+						users: [{
+							name: key_user.name,
+							canRead: true,
+							canModify: true,
+							canSec: true
+						}],
+						roles: [{
+							name: 'isOrgContent',
+							canRead: true,
+							canModify: true,
+							canSec: true
+						}],
+						orgs: [{
+							name: key_user.org.name,
+							canRead: true,
+							canModify: false,
+							canSec: false
+						}],
+						orgUnits: [{
+							name: key_user.orgUnit.name,
+							canRead: true,
+							canModify: true,
+							canSec: false
+						}]
+					};
+					task.save()
+						.then((task) => {
+							block.task = task._id;
+							block.type = 'task';
+							block.save()
+								.then(() => {
+									res.status(200).json({
+										'status': 200,
+										'message': 'tasks created at block -' + block._id +'-'
+									});
+								})
+								.catch((err) => {
+									sendError(res,err,'createTasks -- Saving Block --');
+								});
+						})
+						.catch((err) => {
+							sendError(res,err,'createTasks -- Saving single task --');
+						});
+
+
+				} else {
+					res.status(404).json({
+						'status': 404,
+						'message': 'Error 1458: Block requested not found'
+					});
+				}
+			})
+			.catch((err) => {
+				sendError(res,err,'createTaks -- Searching Block --');
+			});
+	}, // createTasks
 
 	modify(req,res) {  // modificar propiedades del curso
 		const key_user 	= res.locals.user;

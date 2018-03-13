@@ -678,6 +678,7 @@ module.exports = {
 									var blocks = course.blocks;
 									Block.findById(blockid)	// Buscar el bloque solicitado
 										.populate('questionnarie')
+										.populate('task')
 										.then((block) => {
 											if(block) {
 												var prevblockid = '';
@@ -752,7 +753,7 @@ module.exports = {
 													if(block.type === 'textVideo' && block.begin) {
 														send_content.blockBegin = true;
 													}
-													if(block.questionnarie) {
+													if(block.type === 'questionnarie' && block.questionnarie) {
 														var questionnarie = block.questionnarie;
 														var send_questionnarie = {};
 														var numAttempts = 0;
@@ -825,21 +826,21 @@ module.exports = {
 														}
 														send_content.questionnarie = send_questionnarie;
 													}
-													if(block.tasks && block.tasks.length > 0) {
-														var tasks = block.tasks;
-														var send_tasks = new Array();
-														tasks.forEach(function(task) {
-															if(task.isVisible && status === 'published') {
-																send_tasks.push({
-																	title: 				task.text,
-																	description: 	task.help,
-																	content: 			task.content,
-																	w: 						task.w,
-																	files:				task.files
-																});
-															}
+													if(block.type === 'task' && block.task) {
+														var task = block.task;
+														var send_items = new Array();
+														task.items.forEach(function(item) {
+															var send_item={
+																text: item.text,
+																type: item.type
+															};
+															if(item.header) {send_item.header = item.header;}
+															if(item.footer) {send_item.footer = item.footer;}
+															if(item.label) 	{send_item.label	= item.label; }
+															if(item.files && item.files.length > 0) 	{send_item.files 	= item.files;	}
+															send_items.push(send_item);
 														});
-														send_content.tasks= send_tasks;
+														send_content.tasks= send_items;
 													}
 													if(studentStatus === 'pending' && blocksPresented > blocksPending) {
 														res.status(404).json({

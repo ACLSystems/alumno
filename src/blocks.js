@@ -45,10 +45,10 @@ const BlocksSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'questionnaries'
 	},
-	tasks: [{
+	task: {
 		type: Schema.Types.ObjectId,
 		ref: 'tasks'
-	}],
+	},
 	resources: [{
 		type: Schema.Types.ObjectId,
 		ref: 'resources'

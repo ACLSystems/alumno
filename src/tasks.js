@@ -7,20 +7,24 @@ const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
-const TaskSchema = new Schema ({
-	org: {
-		type: Schema.Types.ObjectId,
-		ref: 'orgs'
+const ItemSchema = new Schema ({
+	header: {
+		type: String
 	},
-	title: {
+	footer: {
+		type: String
+	},
+	text: {
 		type: String,
 		required: true
 	},
-	description: {
+	label: {
 		type: String
 	},
-	content: {
-		type: String
+	type: {
+		type: String,
+		enum: ['file','text','textarea'],
+		required: true
 	},
 	files: {
 		type: [String]
@@ -30,11 +34,25 @@ const TaskSchema = new Schema ({
 		min: [0,'Minimum value is 0'],
 		max: [100,'Maximum value is 100'],
 		default: 1
+	}
+});
+
+module.exports = ItemSchema;
+
+const TaskSchema = new Schema ({
+	org: {
+		type: Schema.Types.ObjectId,
+		ref: 'orgs'
 	},
+	orgUnit: {
+		type: Schema.Types.ObjectId,
+		ref: 'orgUnits'
+	},
+	items: [ItemSchema],
 	status: {
 		type: String,
 		enum: ['draft','published'],
-		default: 'draft'
+		default: 'published'
 	},
 	version: {
 		type: Number,
@@ -54,4 +72,3 @@ const TaskSchema = new Schema ({
 
 const Tasks = mongoose.model('tasks', TaskSchema);
 module.exports = Tasks;
-module.exports = TaskSchema;
