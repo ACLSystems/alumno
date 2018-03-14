@@ -908,7 +908,8 @@ module.exports = {
 		res.status(200).json({
 			'url': process.env.LIBRETA_URI,
 			'public': process.env.MJ_APIKEY_PUBLIC,
-			'private': process.env.MJ_APIKEY_PRIVATE
+			'private': process.env.MJ_APIKEY_PRIVATE,
+			'hola': 'mundo'
 		});
 		//Err.sendError(res,message,'group_controller','test -- testing email --');
 	}
