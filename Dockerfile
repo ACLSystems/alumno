@@ -28,6 +28,6 @@ EXPOSE 3050
 # Comando para arrancar nuestra aplicación
 # CMD ["npm", "start"]
 # Comando para arrancar aplicación con control de procesos (cluster)
-CMD ["pm2-docker", "index.js", "-i $PM2_INSTANCES"]
+CMD ["pm2-docker", "index.js", "-i 1"]
 
 # Aplicación DOCKERIZADA y Clusterizada!!!
