@@ -2,4 +2,4 @@ apps:
   - script    : 'index.js'
     name      : 'APP'
     exec_mode : 'cluster'
-    instances : 2
+    instances : 4
