@@ -28,6 +28,7 @@
 *.log
 *.sql
 *.sqlite
+/bkp/*
 
 # OS generated files #
 ######################

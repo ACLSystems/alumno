@@ -4,7 +4,7 @@ FROM node:latest
 # Creamos el directorio donde residirá la aplicación
 RUN mkdir -p /usr/src/app
 
-# Creamos el directorio para datos 
+# Creamos el directorio para datos
 RUN mkdir -p /usr/src/data
 
 # Indicamos el directorio de trabajo, que es el que acabamos de crear
@@ -16,6 +16,9 @@ COPY package.json /usr/src/app
 # Le decimos a NPM que instale todo lo que necesitamos
 RUN npm install
 
+# Le decimos a NPM que instale PM2
+RUN npm install pm2 -g
+
 # Copiamos la aplicacion
 COPY . /usr/src/app
 
@@ -23,7 +26,8 @@ COPY . /usr/src/app
 EXPOSE 3050
 
 # Comando para arrancar nuestra aplicación
-CMD ["npm", "start"]
+# CMD ["npm", "start"]
+# Comando para arrancar aplicación con control de procesos (cluster)
+CMD ["pm2-docker", "index.js", ,"-i", "$PM2_INSTANCES"]
 
-
-# Aplicación DOCKERIZADA!!!
+# Aplicación DOCKERIZADA y Clusterizada!!!

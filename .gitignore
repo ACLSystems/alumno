@@ -25,6 +25,7 @@
 /logs/*
 /ssl/*
 /data/*
+/bkp/*
 /config/secret.js
 /config/newpass.js
 *.log
