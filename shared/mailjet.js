@@ -20,8 +20,19 @@ exports.sendMail = function(toEmail,toName,subject,templateID,link,errNum,contro
 			],
 			'TemplateID': templateID,
 			'TemplateLanguage': true,
-			'Subject': subject
+			'Subject': subject,
+			'TemplateErrorDeliver': true,
+			'TemplateErrorReporting': {
+				'Email': 'arturocastro@aclsystems.mx',
+				'Name': 'Air traffic control'
+			}
 		};
+	if(templateID === 310518) {
+		mail_message.Variables = {
+			'Nombre': toName,
+			'confirmation_link': link
+		};
+	}
 	if(templateID === 311647) {
 		mail_message.Variables = {
 			'Nombre': toName,
