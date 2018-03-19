@@ -1,12 +1,5 @@
-// Esquema para modelar grupos
+// Esquema para modelar rosters
 const mongoose = require('mongoose');
-const ModSchema = require('./modified');
-const OwnerSchema = require('./owner');
-const PermissionsSchema = require('./permissions');
-//const Course = require('./courses');
-//const Block = require('./blocks');
-//const Orgs = require('./orgs');
-//const OrgUnits = require('./orgUnits');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
@@ -97,36 +90,11 @@ const RosterSchema = new Schema ({
 		enum: ['pending','active','finished','remove'],
 		default: 'pending'
 	},
-	grades: [GradesSchema]
-});
-
-module.exports = RosterSchema;
-
-const GroupsSchema = new Schema ({
-	code: {
-		type: String,
-		required: true
-	},
-	name: {
-		type: String,
-		required: true
-	},
-	course: {
+	grades: [GradesSchema],
+	group: {
 		type: Schema.Types.ObjectId,
-		ref: 'courses'
+		ref: 'groups'
 	},
-	instructor: {
-		type: Schema.Types.ObjectId,
-		ref: 'users'
-	},
-	roster: [RosterSchema],
-	beginDate: {
-		type: Date
-	},
-	endDate: {
-		type: Date
-	},
-	dates: [DatesSchema],
 	org: {
 		type: Schema.Types.ObjectId,
 		ref: 'orgs'
@@ -135,23 +103,15 @@ const GroupsSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'orgUnits'
 	},
-	own: OwnerSchema,
-	mod: [ModSchema],
-	perm: PermissionsSchema,
-	admin: AdminSchema
 });
 
-GroupsSchema.virtual('numStudents').get(function() {
-	if(this.roster) {
-		return this.roster.length;
-	} else {
-		return 0;
-	}
-});
+RosterSchema.index( {org: 1								},{unique: false} );
+RosterSchema.index( {group: 1							},{unique: false}	);
+RosterSchema.index( {orgUnit: 1						},{unique: false} );
+RosterSchema.index( {student: 1						},{unique: false}	);
+RosterSchema.index( {org: 1, orgUnit: 1		},{unique: false} );
+RosterSchema.index( {student: 1, group: 1	},{unique: true	}	);
+const Rosters = mongoose.model('rosters', RosterSchema);
+module.exports = Rosters;
 
-GroupsSchema.index( { code: 1, org: 1}, { unique: true } );
-GroupsSchema.index( { code: 1 }, { unique: false } );
-GroupsSchema.index( { name: 1, org: 1}, { unique: false} );
-
-const Groups = mongoose.model('groups', GroupsSchema);
-module.exports = Groups;
+//module.exports = RosterSchema;
