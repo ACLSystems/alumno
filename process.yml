@@ -1,5 +1,5 @@
 apps:
   - script    : 'index.js'
-    name      : 'APP'
+    name      : 'Alumno'
     exec_mode : 'cluster'
     instances : 4
