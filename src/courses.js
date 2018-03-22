@@ -102,6 +102,7 @@ CoursesSchema.virtual('numBlocks').get(function() {
 	}
 });
 
+
 CoursesSchema.index( { code: 1, org: 1}, { unique: true } );
 CoursesSchema.index( { categories: 1, org: 1 }, { unique: false } );
 CoursesSchema.index( { keyworkds: 1, org: 1 }, { unique: false } );

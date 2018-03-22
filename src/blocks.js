@@ -49,10 +49,37 @@ const BlocksSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'tasks'
 	},
+	wq: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	wt: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	w: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
 	resources: [{
 		type: Schema.Types.ObjectId,
 		ref: 'resources'
 	}],
+	duration: {
+		type: Number,
+		min: [0, 'Block duration cannot be less than 0'],
+		default: 0
+	},
+	durationUnits: {
+		type: String,
+		enum: ['s', 'm', 'h', 'd', 'w', 'mo', 'y']
+	},
 	status: {
 		type: String,
 		enum: ['draft','published'],
@@ -70,6 +97,10 @@ const BlocksSchema = new Schema ({
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema
+});
+
+BlocksSchema.virtual('wTotal').get(function() {
+	return this.wq + this.wt;
 });
 
 BlocksSchema.index( { org: 1, code: 1}, { unique: true } );

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const OwnerSchema = require('./owner');
 const PermissionsSchema = require('./permissions');
+//const RosterSchema = require('./roster');
 //const Course = require('./courses');
 //const Block = require('./blocks');
 //const Orgs = require('./orgs');
@@ -37,6 +38,7 @@ const DatesSchema = new Schema ({
 
 module.exports = DatesSchema;
 
+/*   Todo este esquema se muda a RosterSchema
 const TasksSchema = new Schema ({
 	file: {
 		type: String
@@ -101,6 +103,7 @@ const RosterSchema = new Schema ({
 });
 
 module.exports = RosterSchema;
+*/
 
 const GroupsSchema = new Schema ({
 	code: {
@@ -119,7 +122,14 @@ const GroupsSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'users'
 	},
-	roster: [RosterSchema],
+	roster: [{
+		type: Schema.Types.ObjectId,
+		ref: 'rosters'
+	}],
+	students: [{
+		type: Schema.Types.ObjectId,
+		ref: 'users'
+	}],
 	beginDate: {
 		type: Date
 	},
@@ -135,15 +145,33 @@ const GroupsSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'orgUnits'
 	},
+	minGrade: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 60
+	},
+	minTrack: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 60
+	},
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema,
 	admin: AdminSchema
 });
 
+GroupsSchema.pre('save', function(next) {
+	this.students = this.roster;
+	next();
+});
+
+
 GroupsSchema.virtual('numStudents').get(function() {
 	if(this.roster) {
-		return this.roster.length;
+		return this.students.length;
 	} else {
 		return 0;
 	}

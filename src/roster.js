@@ -4,32 +4,6 @@ const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
-const AdminSchema = new Schema({
-	blocksPending: {
-		type: Number,
-		min: [0,'Minimum value is 0'],
-		max: [1000,'Maximum value is 1000'],
-		default: 2
-	}
-});
-
-module.exports = AdminSchema;
-
-const DatesSchema = new Schema ({
-	block: {
-		type: Schema.Types.ObjectId,
-		ref: 'blocks'
-	},
-	beginDate: {
-		type: Date
-	},
-	endDate: {
-		type: Date
-	}
-});
-
-module.exports = DatesSchema;
-
 const TasksSchema = new Schema ({
 	file: {
 		type: String
@@ -74,8 +48,77 @@ const GradesSchema = new Schema ({
 		min: [0,'Minimum value is 0'],
 		max: [100,'Maximum value is 100'],
 		default: 0
+	},
+	maxGradeQ: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	lastAttemptQ: {
+		type: Date
+	},
+	gradeT: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	wq: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	wt: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	w: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	finalGrade: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
 	}
+});
 
+GradesSchema.pre('save', function(next) {
+	if(this.quests.length > 0) {
+		var lastGrade = this.maxGradeQ;
+		var lastDate  = this.lastAttemptQ;
+		if(this.quests && this.quests.length > 0) {
+			this.quests.forEach(function(q) {
+				if(q.grade > lastGrade) {
+					lastGrade = q.grade;
+					lastDate	= q.attempt;
+				}
+			});
+			this.maxGradeQ		= lastGrade;
+			this.lastAttemptQ	= lastDate;
+		}
+		if(this.wTotal > 0 && this.track === 100) {
+			this.finalGrade = ((this.wq * this.maxGradeQ)+(this.wt*this.gradeT));
+		} else {
+			this.finalGrade = 0;
+		}
+	}
+	next();
+});
+
+GradesSchema.virtual('wTotal').get(function() {
+	return this.wq + this.wt;
+});
+
+GradesSchema.virtual('numAttempts').get(function() {
+	return this.quests.length;
 });
 
 module.exports = GradesSchema;
@@ -103,6 +146,59 @@ const RosterSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'orgUnits'
 	},
+	finalGrade: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	track:{
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	minGrade: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 60
+	},
+	minTrack: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 60
+	},
+	pass: {
+		type: Boolean,
+		defaul: false
+	}
+});
+
+RosterSchema.pre('save', function(next) {
+	var grades = this.grades;
+	var fg = 0;
+	var i = 0;
+	var w = 0;
+	var track = 0;
+	grades.forEach(function(g) {
+		fg = fg + (g.finalGrade * g.w);
+		track = track + g.track;
+		if(g.w > 0) {
+			w++;
+		}
+		i++;
+	});
+
+	if(w > 0) { this.finalGrade = parseInt(fg/w); }
+	this.track = parseInt(track / i);
+
+	if(this.finalGrade > this.minGrade && this.track > this.minTrack) {
+		this.pass = true;
+	}
+
+	next();
 });
 
 RosterSchema.index( {org: 1								},{unique: false} );
