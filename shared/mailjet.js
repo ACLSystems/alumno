@@ -5,7 +5,7 @@ const request = mailjet.post('send', {'version': 'v3.1'});
 const fromEmail = 'soporte@superatemexico.com';
 const fromName = 'Superate Mexico';
 
-exports.sendMail = function(toEmail,toName,subject,templateID,link,errNum,controller,message) {
+exports.sendMail = function(toEmail,toName,subject,templateID,param1,param2,param3,param4) {
 	var mail_message =
 		{
 			'From': {
@@ -27,23 +27,30 @@ exports.sendMail = function(toEmail,toName,subject,templateID,link,errNum,contro
 				'Name': 'Air traffic control'
 			}
 		};
-	if(templateID === 310518) {
+	if(templateID === 310518 || templateID === 339990) { // Plantilla para enviar registro de usuario
 		mail_message.Variables = {
 			'Nombre': toName,
-			'confirmation_link': link
+			'confirmation_link':param1 // link
 		};
 	}
-	if(templateID === 311647) {
+	if(templateID === 311647) {			// Plantilla para recuperación de contraseña
 		mail_message.Variables = {
 			'Nombre': toName,
-			'confirmation_link': link
+			'confirmation_link':param1 // link
 		};
 	}
-	if(templateID === 321554) {
+	if(templateID === 339994) {	// Plantilla para notificar registro de alumno en grupo
 		mail_message.Variables = {
-			'errNum': errNum,
-			'controller': controller,
-			'message': message
+			'Nombre': toName,
+			'confirmation_link':param1, // link
+			'curso':  param2 						// curso
+		};
+	}
+	if(templateID === 321554) { // Plantilla para reportar errores 500 en el API
+		mail_message.Variables = {
+			'errNum': param2,						// errNum
+			'controller': param3,				// controller
+			'message': param4						// message
 		};
 	}
 	return new Promise(function(resolve,reject) {
