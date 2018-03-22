@@ -157,6 +157,10 @@ const GroupsSchema = new Schema ({
 		max: [100,'Maximum value is 100'],
 		default: 60
 	},
+	isActive: {
+		type: Boolean,
+		default: true
+	},
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema,
