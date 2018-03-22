@@ -487,39 +487,37 @@ module.exports = {
 			query = { _id: req.query.id};
 		}
 		Course.findOne(query)
+			.populate({
+				path: 'blocks',
+				select: 'code type title section number order status isVisible',
+				options: { sort: {order: 1} }
+			})
 			.then((course) => {
 				if(course) {
 					const result = permissions.access(key_user,course,'content');
 					if(result.canRead) {
-						var block_query = {_id: {$in: course.blocks}};
-						if(req.query.section) {
-							block_query.section = req.query.section;
-						}
-						Block.find(block_query)
-							.sort({order:1})
-							.then((blocks) => {
-								var send_blocks = new Array();
-								blocks.forEach(function(block) {
-									send_blocks.push({
-										id: 						block._id,
-										code: 					block.code,
-										type: 					block.type,
-										title: 					block.title,
-										section: 				block.section,
-										number: 				block.number,
-										order: 					block.order,
-										status: 				block.status,
-										isVisible: 			block.isVisible
-									});
-								});
-								res.status(200).json({
-									'status': 200,
-									'message': {
-										blockNum: send_blocks.length,
-										blocks: send_blocks
-									}
-								});
+						var send_blocks = new Array();
+						const blocks = course.blocks;
+						blocks.forEach(function(block) {
+							send_blocks.push({
+								id: 						block._id,
+								code: 					block.code,
+								type: 					block.type,
+								title: 					block.title,
+								section: 				block.section,
+								number: 				block.number,
+								order: 					block.order,
+								status: 				block.status,
+								isVisible: 			block.isVisible
 							});
+						});
+						res.status(200).json({
+							'status': 200,
+							'message': {
+								blockNum: send_blocks.length,
+								blocks: send_blocks
+							}
+						});
 					} else {
 						res.status(406).json({
 							'status': 406,

@@ -343,11 +343,13 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1781: Please, give groupid by query to process'
 			});
+		/*
 		} else if(!req.query.courseid) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1781: Please, give courseid by query to process'
 			});
+		*/
 		} else if(!req.query.blockid) {
 			res.status(406).json({
 				'status': 406,
