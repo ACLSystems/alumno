@@ -213,6 +213,7 @@ module.exports = {
 				if(user) {
 					if(token === user.admin.validationString){
 						user.admin.isVerified = true;
+						user.admin.validationString = '';
 						user.save()
 							.then(() => {
 								res.status(200).json({
