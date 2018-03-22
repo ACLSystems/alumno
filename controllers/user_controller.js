@@ -98,7 +98,7 @@ module.exports = {
 								};
 								userProps.mod = new Array();
 								userProps.mod.push(mod);
-								if(userProps.student.type === 'internal') {
+								if(userProps.student && userProps.student.type === 'internal') {
 									delete userProps.student.external;
 									delete userProps.student.origin;
 								}
