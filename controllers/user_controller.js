@@ -36,10 +36,18 @@ module.exports = {
 		const key_user 	= res.locals.user;
 		if(res.locals.user && res.locals.user.name) {
 			key = key_user.name;
+			//console.log('key: '+ key_user.name);
 		} else {
 			key = req.body.name;
+			//console.log('req: '+ req.body.name);
 		}
+
+
 		var userProps = req.body;
+		var adminCreate = false;
+		if(userProps.name !== key) {
+			adminCreate = true;
+		}
 		if(userProps.name !== userProps.person.email) { // que el nombre de usuario sera igual a su correo
 			userProps.name = userProps.person.email;
 		}
@@ -66,7 +74,7 @@ module.exports = {
 									passwordSaved: '',
 									adminCreate: false
 								};
-								if(userProps.name !== key) {
+								if(adminCreate) {
 									admin.adminCreate = true;
 								}
 								userProps.admin = admin;
@@ -106,12 +114,14 @@ module.exports = {
 								User.create(userProps)
 									.then((user) => {
 										user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
-										user.admin.adminCreate = false;
 										user.save()
 											.then((user) => {
-												const link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email;
+												var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email;
 												var templateId = template_user;
-												if(user.admin.adminCreate) {templateId = template_user_admin;}
+												if(adminCreate) {
+													link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
+													templateId = template_user_admin;
+												}
 												mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
 													.then(() => {
 														res.status(201).json({
@@ -159,7 +169,7 @@ module.exports = {
 														user.save()
 															.then((user) => {
 																const link = url + 'email=' + user.person.email + '&token=' + user.admin.validationString;
-																mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',310518,link)
+																mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',template_user,link)
 																	.then(() => {
 																		res.status(201).json({
 																			'status': 201,
@@ -206,20 +216,35 @@ module.exports = {
 	},
 
 	confirm(req,res) {
-		const email = req.query.email;
-		const token = req.query.token;
+		const email 		= req.query.email;
+		const token 		= req.query.token;
+		var password		= 'empty';
+		if(req.query.password) {
+			password  = req.query.password;
+		}
+		console.log(password);
 		User.findOne({'person.email': email})
 			.then((user) => {
 				if(user) {
 					if(token === user.admin.validationString){
 						user.admin.isVerified = true;
 						user.admin.validationString = '';
+						user.admin.adminCreate = false;
+						user.admin.passwordSaved = '';
+						if(password !== 'empty'){ user.password = password; }
 						user.save()
 							.then(() => {
-								res.status(200).json({
-									'status': 200,
-									'message': 'User -'+ user.person.email + '- verified'
-								});
+								if(password === 'empty'){
+									res.status(200).json({
+										'status': 200,
+										'message': 'User -'+ user.person.email + '- verified'
+									});
+								} else {
+									res.status(200).json({
+										'status': 200,
+										'message': 'User -'+ user.person.email + '- verified and password changed'
+									});
+								}
 							})
 							.catch((err) => {
 								Err.sendError(res,err,'user_controller','confirmUser -- Saving User Status --');

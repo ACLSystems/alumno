@@ -81,6 +81,62 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/admin/user/register':
+		if(!req.body){
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1700: Please, give data by body to process'
+			});
+		} else if(!req.body.name) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1701: Please give user name'
+			});
+		} else if (!req.body.org) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1702: Please give org'
+			});
+		} else if(!req.body.orgUnit){
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1703: Please give orgUnit'
+			});
+		} else if(!req.body.password) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1704: Please give password for ' + req.body.name
+			});
+		} else if(!req.body.person){
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1705: Please give person details for ' + req.body.name + '. If you send a JSON like { "person.name" : "myName" } , please re-write to  {"person": { "name": "myName"}} in order to process'
+			});
+		} else if(!req.body.person.name) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1706: Please give person name for ' + req.body.name
+			});
+		} else if(!req.body.person.fatherName) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1707: Please give person fatherName for ' + req.body.name
+			});
+		} else if(!req.body.person.motherName) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1708: Please give person motherName for ' + req.body.name
+			});
+		} else if(!req.body.person.email){
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1709: Please give person email for ' + req.body.name
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/myroles':
 		next();
 		break;
