@@ -1,5 +1,5 @@
 module.exports = {
 	app: 'alumno',
-	version: '1.0.2.0',
+	version: '1.0.1.38',
 	description: 'Adding APIs for reporting'
 };
