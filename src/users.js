@@ -208,7 +208,8 @@ const UserSchema = new Schema ({
 	admin: AdmUsrSchema,
 	geometry: PointSchema,
 	address: AddressSchema,
-	student: StudentSchema
+	student: StudentSchema,
+	corporate: CorporateSchema
 });
 
 // Middleware ------------------------------------------------------------------
