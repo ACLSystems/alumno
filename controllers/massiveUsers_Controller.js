@@ -5,6 +5,9 @@ const OrgUnit = require('../src/orgUnits');
 //const generate = require('nanoid/generate');
 //const moment = require('moment');
 const bcrypt = require('bcrypt-nodejs');
+const mailjet = require('../shared/mailjet');
+const generate = require('nanoid/generate');
+const Err = require('../controllers/err500_controller');
 require('winston-daily-rotate-file');
 
 var transport = new(winston.transports.DailyRotateFile) ({
@@ -20,6 +23,11 @@ var logger = new(winston.Logger) ({
 		transport
 	]
 });
+
+const url 								= process.env.LIBRETA_URI;
+const template_user				= 310518; // plantilla para el usuario que se registra por su cuenta
+const template_user_admin = 339990; // plantilla para el usuario que es registrado por el administrador
+
 
 module.exports = {
 	//massiveRegister(req,res,next) {
@@ -162,10 +170,33 @@ module.exports = {
 											});
 										});
 										if(usersToInsert) {
+											usersToInsert.forEach(function(usersToInsert){
+												User.create(usersToInsert)
+													.then((user) => {
+														user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
+														user.save()
+															.then((user) => {
+																var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
+																var templateId = template_user_admin;
+																mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
+																	.catch((err) => {
+																		Err.sendError(res,err,'massiveUser_controller','register -- Sending Mail --');
+																	});
+															})
+															.catch((err) => {
+																sendError(res,err,'Saving each');
+															});
+													})
+													.catch((err) => {
+														sendError(res,err,'Insert Many');
+													});
+											});
+											/*
 											User.insertMany(usersToInsert)
 												.catch((err) => {
 													sendError(res,err,'Insert Many');
 												});
+												*/
 											numUsers.inserted = usersToInsert.length;
 										}
 										if(usersToUpdate) {
