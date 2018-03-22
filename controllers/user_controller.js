@@ -222,7 +222,6 @@ module.exports = {
 		if(req.query.password) {
 			password  = req.query.password;
 		}
-		console.log(password);
 		User.findOne({'person.email': email})
 			.then((user) => {
 				if(user) {
