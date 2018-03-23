@@ -222,7 +222,7 @@ module.exports = {
 		if(req.query.password) {
 			password  = req.query.password;
 		}
-		User.findOne({'person.email': email})
+		User.findOne({name: email})
 			.then((user) => {
 				if(user) {
 					if(token === user.admin.validationString){
@@ -257,7 +257,7 @@ module.exports = {
 				} else {
 					res.status(404).json({
 						'status': 404,
-						'message': 'User -'+ user.person.email + '- not found'
+						'message': 'Email -'+ email + '- not found'
 					});
 				}
 			})
