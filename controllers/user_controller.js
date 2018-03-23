@@ -3,6 +3,7 @@ const User = require('../src/users');
 const Org = require('../src/orgs');
 const OrgUnit = require('../src/orgUnits');
 const generate = require('nanoid/generate');
+const bcrypt = require('bcrypt-nodejs');
 //const moment = require('moment');
 const Err = require('../controllers/err500_controller');
 const permissions = require('../shared/permissions');
@@ -229,8 +230,8 @@ module.exports = {
 						user.admin.isVerified = true;
 						user.admin.validationString = '';
 						user.admin.adminCreate = false;
-						user.admin.passwordSaved = '';
-						if(password !== 'empty'){ user.password = password; }
+						user.admin.passwordSaved = 'saved';
+						if(password !== 'empty'){ user.password = encryptPass(password); }
 						user.save()
 							.then(() => {
 								if(password === 'empty'){
@@ -473,12 +474,12 @@ module.exports = {
 		const email = (req.body && req.body.email);
 		const emailID = (req.body && req.body.emailID);
 		const password = (req.body && req.body.password);
-		User.findOne({ 'person.email': email})
+		User.findOne({ name: email})
 			.then((user) => {
 				if(user) {
 					if(emailID === user.admin.recoverString) {
 						user.admin.recoverString = '';
-						user.password = password;
+						user.password = encryptPass(password);
 						user.save()
 							.then(() => {
 								res.status(200).json({
@@ -511,11 +512,12 @@ module.exports = {
 	//passwordChange(req, res, next) {
 	passwordChange(req, res) {
 		const key_user = res.locals.user;
-		const userProps = req.body;
-		User.findOne({ 'name': userProps.name })
+		const password = req.body.password;
+		User.findById(key_user._id)
 			.then((user) => {
 				if(user) {
-					user.admin.passwordSaved = '';
+					user.admin.passwordSaved = 'saved';
+					user.password = encryptPass(password);
 					const date = new Date();
 					var mod = {
 						by: user.name,
@@ -523,22 +525,26 @@ module.exports = {
 						what: 'Password modified'
 					};
 					user.mod.push(mod);
-					const result = permissions.access(key_user,user,'user');
-					if(result.canModify) {
-						user.save().catch((err) => {
+					//const result = permissions.access(key_user,user,'user');
+					//if(result.canModify) {
+					user.save()
+						.then (() => {
+							res.status(200).json({
+								'status': 200,
+								'message': 'Password for user -' + key_user.name + '- modified'
+							});
+						})
+						.catch((err) => {
 							Err.sendError(res,err,'user_controller','passwordChange -- Saving User--');
 						});
-						res.status(200);
-						res.json({
-							'status': 200,
-							'message': 'Password modified'
-						});
+					/*
 					} else {
 						res.status(403).json({
 							'status': 403,
 							'message': 'User ' + key_user.name + ' not authorized'
 						});
 					}
+					*/
 				} else {
 					res.status(404).json({
 						'status': 404,
@@ -766,8 +772,9 @@ module.exports = {
 
 	encrypt(req, res){
 		//const key_user 	= res.locals.user;
-		const user			= req.query.user;
-		User.findOne({name: user})
+		const username			= req.query.username;
+		console.log(username);
+		User.findOne({name: username})
 			.then((user)  => {
 				if(user) {
 					user.password = encryptPass(user.password);

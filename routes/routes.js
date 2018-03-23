@@ -65,22 +65,23 @@ module.exports = (app) => {
 
 	// Rutas que cualquiera puede acceder
 
-	app.get ('/', 												GetNothing.greeting);
-	app.post('/login', 										auth.login);
-	app.post('/api/test', 								GroupController.test);
-	app.post('/api/user/register', 				UserController.register);
-	app.get ('/api/user/near', 						OrgUnitController.index);
-	app.get ('/api/user/confirm', 				UserController.confirm);
-	app.get ('/api/user/validateemail',		UserController.validateEmail);
-	app.get ('/api/help',									HelpController.help);
-	app.get ('/api/errorcodes',						ErrorMessController.errorCodes);
-	app.get ('/api/orgunit/list',					OrgUnitController.publiclist);
-	app.get ('/api/career/list',					CareerController.list);
-	app.get ('/api/career/listareas',			CareerController.listAreas);
-	app.get ('/api/term/list', 						TermController.list);
-	app.get ('/api/term/listtypes', 			TermController.listTypes);
-	app.get ('/api/course/getblocklist',	CourseController.getBlocklistStudents);
-	app.get ('/api/course/list', 					CourseController.listCoursesStudents);
+	app.get ('/', 													GetNothing.greeting);
+	app.post('/login', 											auth.login);
+	app.post('/api/test', 									GroupController.test);
+	app.post('/api/user/register', 					UserController.register);
+	app.get ('/api/user/near', 							OrgUnitController.index);
+	app.get ('/api/user/confirm', 					UserController.confirm);
+	app.get ('/api/user/validateemail',			UserController.validateEmail);
+	app.put ('/api/user/passwordrecovery',	UserController.passwordRecovery);
+	app.get ('/api/help',										HelpController.help);
+	app.get ('/api/errorcodes',							ErrorMessController.errorCodes);
+	app.get ('/api/orgunit/list',						OrgUnitController.publiclist);
+	app.get ('/api/career/list',						CareerController.list);
+	app.get ('/api/career/listareas',				CareerController.listAreas);
+	app.get ('/api/term/list', 							TermController.list);
+	app.get ('/api/term/listtypes', 				TermController.listTypes);
+	app.get ('/api/course/getblocklist',		CourseController.getBlocklistStudents);
+	app.get ('/api/course/list', 						CourseController.listCoursesStudents);
 
 	// Rutas que pueden acceder solo usuarios autenticados
 
@@ -142,7 +143,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/admin/org/getdetailsadmin', OrgController.getDetailsAdmin);
 	app.get ('/api/v1/admin/user/getroles', 			UserController.getRoles);
 	app.put ('/api/v1/admin/user/setroles', 			UserController.setRoles);
-	app.get ('/api/v1/admin/user/encrypt', 				UserController.setRoles);
+	app.get ('/api/v1/admin/user/encrypt', 				UserController.encrypt);
 
 	// Rutas para roles de 'isOrg'
 

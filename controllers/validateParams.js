@@ -143,10 +143,10 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1700: Please, give data by query to process'
 			});
-		} else if(!req.query.name) {
+		} else if(!req.query.user) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1701: Please give user name'
+				'message': 'Error 1701: Please give user'
 			});
 		} else {
 			next();
@@ -204,6 +204,7 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
+
 	case '/api/user/validateemail':
 		if(!req.query.email) {
 			res.status(406).json({
@@ -214,21 +215,38 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
-	case '/api/v1/user/passwordchange':
-		if(!req.body) {
+
+	case '/api/user/passwordrecovery':
+		if(!req.body.email) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1750: Please, give data by query to process'
+				'message': 'Error 1740: Please, give user email to process'
 			});
-		} else if(!req.body.name) {
+		} else if(!req.body.emailID) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1751: Please, give user name by query to process'
+				'message': 'Error 1731: Please, give user name by query or by header to process'
 			});
 		} else if(!req.body.password) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1752: Please, give user password by query to process'
+				'message': 'Error 1731: Please, give user name by query or by header to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/user/passwordchange':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1750: Please, give data by body to process'
+			});
+		} else if(!req.body.password) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1752: Please, give user password by body to process'
 			});
 		} else {
 			next();
