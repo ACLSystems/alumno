@@ -762,6 +762,35 @@ module.exports = {
 				'isInstructor'	: key_user.roles.isInstructor
 			}
 		});
+	}, // myRoles
+
+	encrypt(req, res){
+		//const key_user 	= res.locals.user;
+		const user			= req.query.user;
+		User.findOne({name: user})
+			.then((user)  => {
+				if(user) {
+					user.password = encryptPass(user.password);
+					user.save()
+						.then(() => {
+							res.status(200).json({
+								'status': 200,
+								'message': 'Password encrypted'
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'encrypt','list -- Saving User --');
+						});
+				} else {
+					res.status(404).json({
+						'status': 404,
+						'message': 'User -' + user + '- not found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'encrypt','list -- Finding User --');
+			});
 	}
 };
 
@@ -775,4 +804,10 @@ function properCase(obj) {
 		if(i === arrayLength) { newName += word; } else { newName += word + ' '; }
 	});
 	return newName;
+}
+
+function encryptPass(obj) {
+	var salt = bcrypt.genSaltSync(10);
+	obj = bcrypt.hashSync(obj, salt);
+	return obj;
 }

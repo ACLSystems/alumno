@@ -137,6 +137,22 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/admin/user/encrypt':
+		if(!req.query){
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1700: Please, give data by query to process'
+			});
+		} else if(!req.query.name) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1701: Please give user name'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/myroles':
 		next();
 		break;

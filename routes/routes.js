@@ -142,6 +142,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/admin/org/getdetailsadmin', OrgController.getDetailsAdmin);
 	app.get ('/api/v1/admin/user/getroles', 			UserController.getRoles);
 	app.put ('/api/v1/admin/user/setroles', 			UserController.setRoles);
+	app.get ('/api/v1/admin/user/encrypt', 				UserController.setRoles);
 
 	// Rutas para roles de 'isOrg'
 
