@@ -450,6 +450,10 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/admin/user/validate':
+		next();
+		break;
+
 	// RUTAS PARA ORGANIZACIONES -------------------------------------------------ORGANIZACIONES
 
 	case '/api/v1/orgadm/user/massiveregister':
