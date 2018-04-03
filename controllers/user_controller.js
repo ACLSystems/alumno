@@ -840,6 +840,20 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'validateUsers','list -- Finding Users without OU --');
 			});
+		User.find({password: /$2a$.*/i})
+			.select('name')
+			.then((users) => {
+				if(users && users.length > 0) {
+					res.status(200).json({
+						'status': 200,
+						'usersWithUnencryptedPassword': users.length,
+						'users': users
+					});
+				} 
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'validateUsers','list -- Finding Users with unencrypted password--');
+			});
 	} // validateUsers
 };
 
