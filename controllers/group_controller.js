@@ -584,7 +584,8 @@ module.exports = {
 					});
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'group_controller','createAttempt -- Finding Roster --');
+				Err.sendError(res,err,'group_controller','createAttempt -- Finding Roster -- user: ' +
+					key_user.name + ' id: ' + key_user._id + ' groupid: ' + groupid + ' blockid: ' + blockid );
 			});
 	}, // createAttempt
 
@@ -912,21 +913,62 @@ module.exports = {
 			});
 	}, // nextBlock
 
-	/*
-	migrateGroupToRoster(req,res) {
+	usersWOGroup(req,res) {
 		const key_user	= res.locals.user;
-		Group.find({})
+		const ou 				= req.query.ou;
+		var query = {org: key_user.org};
+		if(ou) {
+			query.orgUnit = ou;
+		}
+		Group.find(query)
 			.then((groups) => {
-				groups.forEach(function(group) {
-
-				});
+				if(groups.length > 0) {
+					var usersInGroups = new Array();
+					groups.forEach(function(group) {
+						usersInGroups = usersInGroups.concat(group.students);
+					});
+					User.find(query)
+						.select('_id name')
+						.then((users) => {
+							var originalUsers = users;
+							usersInGroups.forEach(function(user) {
+								var i = 0;
+								var keep = true;
+								while (i < users.length && keep) {
+									if(users[i]._id +'' === user + '') {
+										users.splice(i,1);
+										keep = false;
+										console.log('cortando ' + user );
+									} else {
+										i++;
+									}
+								}
+							});
+							res.status(200).json({
+								'status': 200,
+								'message': {
+									orNumUsers		: originalUsers.length,
+									originalUsers : originalUsers,
+									leftNumUsers	: users.length,
+									leftUsers			: users
+								}
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'group_controller','usersWOGroup -- Finding Users --');
+						});
+				} else {
+					res.status(404).json({
+						'status': 404,
+						'message': 'Groups not found for this ou: -' + ou + '-'
+					});
+				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'group_controller','migrateGroupToRoster -- Finding Groups --');
+				Err.sendError(res,err,'group_controller','usersWOGroup -- Finding Groups --');
 			});
-	}, //migrateGroupToRoster
+	},
 
-	*/
 	test(req,res) {
 		//var message = 'Mensaje de prueba';
 		res.status(200).json({

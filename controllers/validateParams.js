@@ -1105,6 +1105,10 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/instructor/group/userswogroup':
+		next();
+		break;
+
 	// RUTAS PARA CARRERAS -------------------------------------------------------CARRERAS
 
 	case '/api/v1/orgadm/career/create':

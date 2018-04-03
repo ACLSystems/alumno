@@ -201,6 +201,10 @@ const UserSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'orgUnits'
 	},
+	report: {
+		type: Boolean,
+		default: true
+	},
 	person: PersonSchema,
 	roles: RolesSchema,
 	mod: [ModSchema],
@@ -240,6 +244,12 @@ UserSchema.methods.validatePassword = function(password, cb) {
 };
 
 // Indices ---------------------------------------------------------------------
+
+UserSchema.index( {org: 1													},{unique: false} );
+UserSchema.index( {group: 1												},{unique: false}	);
+UserSchema.index( {orgUnit: 1											},{unique: false} );
+UserSchema.index( {org: 1, orgUnit: 1							},{unique: false} );
+UserSchema.index( {org: 1, orgUnit: 1, report: 1	},{unique: false}	);
 
 
 const User = mongoose.model('users', UserSchema);

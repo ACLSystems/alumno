@@ -285,17 +285,42 @@ module.exports = {
 					//console.log(result); // eslint-disable-line
 					if(result.canRead) {
 						var send_user = {
-							name: user.name,
-							org: user.org.name,
-							orgUnit: user.orgUnit.name,
+							userid	: user._id,
+							name		: user.name,
+							org			: user.org.name,
+							orgid		: user.org._id,
+							orgUnit	: user.orgUnit.name,
+							ouid		: user.orgUnit._id
 						};
 						if(user.person) {
 							send_user.person = {
-								name: user.person.name,
-								fatherName: user.person.father,
+								name			: user.person.name,
+								fatherName: user.person.fatherName,
 								motherName: user.person.motherName,
-								email: user.person.email,
-								birthDate: user.person.birthDate
+								email			: user.person.email,
+								birthDate	: user.person.birthDate,
+								mainPhone	: user.person.mainPhone,
+								celPhone	: user.person.celPhone,
+								genre 		: user.person.genre,
+								alias			: user.person.alias
+							};
+						}
+						if(user.student){
+							send_user.student = {
+								studentid	: user.student.id,
+								career		: user.student.career,
+								term			: user.student.term,
+								isActive	: user.student.isActive,
+								type			: user.student.type
+							};
+							if(user.student.external) { send_user.student.external 	= user.student.external;}
+							if(user.student.origin	) { send_user.student.origin 		= user.student.origin;  }
+						}
+						if(user.corporate) {
+							send_user.corporate = {
+								corporateid	: user.corporate.id,
+								isActive		: user.corporate.isActive,
+								type				: user.corporate.type
 							};
 						}
 						res.status(200).json(send_user);
@@ -308,7 +333,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'user_controller','getDetails -- Finding User --');
+				Err.sendError(res,err,'user_controller','getDetails -- Finding User -- user: ' + key_user.name);
 			});
 	},
 
@@ -479,6 +504,7 @@ module.exports = {
 				if(user) {
 					if(emailID === user.admin.recoverString) {
 						user.admin.recoverString = '';
+						user.admin.isVerified = true;
 						user.password = encryptPass(password);
 						user.save()
 							.then(() => {
@@ -773,7 +799,6 @@ module.exports = {
 	encrypt(req, res){
 		//const key_user 	= res.locals.user;
 		const username			= req.query.username;
-		console.log(username);
 		User.findOne({name: username})
 			.then((user)  => {
 				if(user) {
@@ -798,8 +823,26 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'encrypt','list -- Finding User --');
 			});
-	}
+	}, // encrypt
+
+	validateUsers (req,res) {
+		User.find().exists('orgUnit', false)
+			.select('name')
+			.then((users) => {
+				if(users && users.length > 0) {
+					res.status(200).json({
+						'status': 200,
+						'usersWithoutOU': users.length,
+						'users': users
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'validateUsers','list -- Finding Users without OU --');
+			});
+	} // validateUsers
 };
+
 
 function properCase(obj) {
 	var name = new String(obj);

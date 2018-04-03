@@ -108,6 +108,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/instructor/group/createroster', GroupController.createRoster);
 	app.get ('/api/v1/instructor/group/listroster', 	GroupController.listRoster);
 	app.post('/api/v1/instructor/group/addstudent', 	GroupController.addStudent);
+	app.get ('/api/v1/instructor/group/userswogroup', GroupController.usersWOGroup);
 
 	// Rutas para roles de 'isAuthor'
 
