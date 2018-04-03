@@ -835,6 +835,7 @@ module.exports = {
 						'usersWithoutOU': users.length,
 						'users': users
 					});
+					return;
 				}
 			})
 			.catch((err) => {
@@ -849,7 +850,7 @@ module.exports = {
 						'usersWithUnencryptedPassword': users.length,
 						'users': users
 					});
-				} 
+				}
 			})
 			.catch((err) => {
 				Err.sendError(res,err,'validateUsers','list -- Finding Users with unencrypted password--');
