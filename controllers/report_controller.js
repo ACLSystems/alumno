@@ -36,6 +36,7 @@ module.exports = {
 				});
 				var send_results = new Array();
 				OrgUnit.find({ _id: {$in: ous}})
+					.where('type').equals('campus')
 					.then((ous) => {
 						results.forEach(function(rou) {
 							var i = 0;
