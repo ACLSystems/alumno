@@ -850,11 +850,16 @@ module.exports = {
 						'usersWithUnencryptedPassword': users.length,
 						'users': users
 					});
+					return;
 				}
 			})
 			.catch((err) => {
 				Err.sendError(res,err,'validateUsers','list -- Finding Users with unencrypted password--');
 			});
+		res.status(404).json({
+			'status': 404,
+			'message': 'Validation complete'
+		});
 	} // validateUsers
 };
 
