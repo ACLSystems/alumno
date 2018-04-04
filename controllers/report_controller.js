@@ -105,7 +105,7 @@ module.exports = {
 									lastGroup = roster.group.code;
 									send_roster  = {
 										//group				: roster.group.code,
-										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.name + ')',
+										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
 										finalGrade 	: roster.finalGrade,
 										track 			: roster.track,
 										pass 				: roster.pass
@@ -122,7 +122,7 @@ module.exports = {
 								} else if (lastGroup === roster.group.code) {
 									send_roster  = {
 										//group				: roster.group.code,
-										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.name + ')',
+										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
 										finalGrade 	: roster.finalGrade,
 										track 			: roster.track,
 										pass 				: roster.pass
@@ -161,7 +161,7 @@ module.exports = {
 									lastOUlong	= roster.orgUnit.longName;
 									send_roster  = {
 										//group				: roster.group.code,
-										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.name + ')',
+										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
 										finalGrade 	: roster.finalGrade,
 										track 			: roster.track,
 										pass 				: roster.pass
@@ -228,7 +228,7 @@ module.exports = {
 							lastGroup = roster.group.code;
 							send_roster  = {
 								//group				: roster.group.code,
-								student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.name + ')',
+								student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
 								finalGrade 	: roster.finalGrade,
 								track 			: roster.track,
 								pass 				: roster.pass
@@ -245,7 +245,7 @@ module.exports = {
 						} else if (lastGroup === roster.group.code) {
 							send_roster  = {
 								//group				: roster.group.code,
-								student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.name + ')',
+								student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
 								finalGrade 	: roster.finalGrade,
 								track 			: roster.track,
 								pass 				: roster.pass
@@ -281,7 +281,7 @@ module.exports = {
 							lastGroup = roster.group.code;
 							send_roster  = {
 								//group				: roster.group.code,
-								student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.name + ')',
+								student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
 								finalGrade 	: roster.finalGrade,
 								track 			: roster.track,
 								pass 				: roster.pass
