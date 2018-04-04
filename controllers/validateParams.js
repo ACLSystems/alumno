@@ -282,7 +282,7 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
-	case '/api/v1/user/setroles':
+	case '/api/v1/admin/user/setroles':
 		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
