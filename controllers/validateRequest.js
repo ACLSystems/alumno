@@ -96,7 +96,7 @@ module.exports = function(req, res, next) {
 			.populate('org','name')
 			.populate({
 				path: 'orgUnit',
-				select: 'name parent',
+				select: 'name parent type longName',
 			})
 			.select('-password')
 			.then((user) => {

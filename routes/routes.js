@@ -163,5 +163,6 @@ module.exports = (app) => {
 	app.get ('/api/v1/orgadm/report/totalusers', 				ReportController.totalUsers);
 	app.get ('/api/v1/orgadm/report/usersbyou', 				ReportController.usersByOrgUnit);
 
+	app.get ('/api/v1/supervisor/report/gradesbycampus',ReportController.gradesByCampus);
 
 };
