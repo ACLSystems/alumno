@@ -1027,6 +1027,12 @@ module.exports = {
 					}
 				}
 				item.save()
+					.then(() => {
+						res.status(200).json({
+							'status': 200,
+							'message': 'Grade touched'
+						});
+					})
 					.catch((err) => {
 						Err.sendError(res,err,'group_controller','touchGrade -- Finding Roster -- user: ' +
 							userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
