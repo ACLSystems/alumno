@@ -104,7 +104,8 @@ GradesSchema.pre('save', function(next) {
 			this.maxGradeQ		= lastGrade;
 			this.lastAttemptQ	= lastDate;
 		}
-		if(this.wTotal > 0 && this.track === 100) {
+		var wTotal = this.wq + this.wt;
+		if(wTotal > 0 && this.track === 100) {
 			this.finalGrade = ((this.wq * this.maxGradeQ)+(this.wt*this.gradeT));
 		} else {
 			this.finalGrade = 0;

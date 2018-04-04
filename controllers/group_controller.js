@@ -510,7 +510,7 @@ module.exports = {
 			grade		: grade,
 			attempt : date
 		};
-		var maxAttempts = 0;
+		var maxAttempts = 5;
 		Roster.findOne({student: key_user._id, group: groupid})
 			.populate({
 				path: 'group',
@@ -530,7 +530,9 @@ module.exports = {
 				}
 			})
 			.then((item) => {
-				maxAttempts = item.group.course.blocks[0].questionnarie.maxAttempts;
+				if(item && item.group && item.group.course && item.group.course.blocks && item.group.course.blocks > 0 && item.group.course.blocks[0].questionnarie && item.group.course.blocks[0].questionnarie.maxAttempts ) {
+					maxAttempts = item.group.course.blocks[0].questionnarie.maxAttempts;
+				}
 				var grades = [];
 				var myGrade = {};
 				var k = 0;
@@ -1002,6 +1004,39 @@ module.exports = {
 					userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
 			});
 	}, // createAttempt
+
+	touchGrade(req,res) {
+		const userid		= req.query.userid;
+		const groupid 	= req.query.groupid;
+		const blockid 	= req.query.blockid;
+		Roster.findOne({student: userid, group: groupid})
+			.then((item) => {
+				var grades = item.grades;
+				var i=0;
+				var keep = true;
+				var grade = 0;
+				while (keep) {
+					if(grades[i].block + '' === blockid) {
+						keep = false;
+						if(grades[i].quests.length > 0 && grades[i].quests[0].grade) {
+							grade = grades[i].quests[0].grade;
+							grades[i].quests[0].grade = grade;
+						}
+					} else {
+						i++;
+					}
+				}
+				item.save()
+					.catch((err) => {
+						Err.sendError(res,err,'group_controller','touchGrade -- Finding Roster -- user: ' +
+							userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
+					});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','touchGrade -- Finding Roster -- user: ' +
+					userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
+			});
+	}, //touchGrade
 
 	test(req,res) {
 		//var message = 'Mensaje de prueba';
