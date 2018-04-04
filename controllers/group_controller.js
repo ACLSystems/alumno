@@ -938,7 +938,7 @@ module.exports = {
 									if(users[i]._id +'' === user + '') {
 										users.splice(i,1);
 										keep = false;
-										console.log('cortando ' + user );
+										//console.log('cortando ' + user );
 									} else {
 										i++;
 									}
@@ -968,6 +968,40 @@ module.exports = {
 				Err.sendError(res,err,'group_controller','usersWOGroup -- Finding Groups --');
 			});
 	},
+
+	testCreateAttempt(req,res) {
+		const userid		= req.query.userid;
+		const groupid 	= req.query.groupid;
+		const blockid 	= req.query.blockid;
+		Roster.findOne({student: userid, group: groupid})
+			.populate({
+				path: 'group',
+				select: 'course',
+				populate: {
+					path: 'course',
+					select: 'blocks',
+					populate: {
+						path: 'blocks',
+						match: { _id: blockid },
+						select: 'questionnarie w wq wt',
+						populate: {
+							path: 'questionnarie',
+							select: 'maxAttempts'
+						}
+					}
+				}
+			})
+			.then((item) => {
+				res.status(200).json({
+					'status': 200,
+					'message': item
+				});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','createAttempt -- Finding Roster -- user: ' +
+					userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
+			});
+	}, // createAttempt
 
 	test(req,res) {
 		//var message = 'Mensaje de prueba';
