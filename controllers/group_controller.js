@@ -559,11 +559,8 @@ module.exports = {
 							myGrade.quests.push(quest);
 						}
 					} else {
-						myGrade = {
-							block	: blockid,
-							quests: [quest],
-							track	: 100
-						};
+						myGrade.quests 	= [quest];
+						myGrade.track		= 100;
 					}
 					item.grades[k] = myGrade;
 				} else {
@@ -572,6 +569,15 @@ module.exports = {
 						quests: [quest],
 						track	: 100
 					};
+					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
+						myGrade.w = item.group.course.blocks[0].w;
+					}
+					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
+						myGrade.wq = item.group.course.blocks[0].wq;
+					}
+					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
+						myGrade.wt = item.group.course.blocks[0].wt;
+					}
 					item.grades = [myGrade];
 				}
 				item.save()
