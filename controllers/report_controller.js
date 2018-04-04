@@ -207,7 +207,7 @@ module.exports = {
 		}
 		if(key_user.orgUnit.type === 'campus') {
 			Roster.find({ orgUnit: key_user.orgUnit._id })
-				.populate('student', 'person')
+				.populate('student', 'name person')
 				.populate('group', 'code')
 				.sort({group: 1})
 				.select('student.person finalGrade track pass')
