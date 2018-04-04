@@ -1019,7 +1019,7 @@ module.exports = {
 					if(grades[i].block + '' === blockid) {
 						keep = false;
 						if(grades[i].quests.length > 0 && grades[i].quests[0].grade) {
-							grade = grades[i].quests[0].grade;
+							grade = grades[i].quests[0].grade + 1;
 							grades[i].quests[0].grade = grade;
 						}
 					} else {
@@ -1027,14 +1027,36 @@ module.exports = {
 					}
 				}
 				item.save()
-					.then(() => {
-						res.status(200).json({
-							'status': 200,
-							'message': 'Grade touched'
-						});
+					.then((item) => {
+						grades = item.grades;
+						i=0;
+						keep = true;
+						grade = 0;
+						while (keep) {
+							if(grades[i].block + '' === blockid) {
+								keep = false;
+								if(grades[i].quests.length > 0 && grades[i].quests[0].grade) {
+									grade = grades[i].quests[0].grade - 1;
+									grades[i].quests[0].grade = grade;
+								}
+							} else {
+								i++;
+							}
+						}
+						item.save()
+							.then(() => {
+								res.status(200).json({
+									'status': 200,
+									'message': 'Grade touched'
+								});
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'group_controller','touchGrade -- Saving Roster 2 -- user: ' +
+									userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
+							});
 					})
 					.catch((err) => {
-						Err.sendError(res,err,'group_controller','touchGrade -- Finding Roster -- user: ' +
+						Err.sendError(res,err,'group_controller','touchGrade -- Saving Roster 1 -- user: ' +
 							userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
 					});
 			})
