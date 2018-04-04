@@ -267,7 +267,7 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
-	case '/api/v1/user/getroles':
+	case '/api/v1/admin/user/getroles':
 		if(!req.query) {
 			res.status(406).json({
 				'status': 406,
