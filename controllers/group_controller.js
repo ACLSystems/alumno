@@ -178,7 +178,7 @@ module.exports = {
 										track			: 0,
 										maxGradeQ : 0,
 										gradeT		: 0,
-										w					: block.wq,
+										w					: block.w,
 										wq				: block.wq,
 										wt				: block.wt
 									});

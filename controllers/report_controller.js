@@ -97,7 +97,7 @@ module.exports = {
 							var lastOUlong			= '';
 							rosters.forEach(function(roster) {
 								var send_roster = {};
-								if(lastOU === '' || lastOU !== roster.orgUnit.name) {
+								if(lastOU === '') {
 									lastOU 			= roster.orgUnit.name;
 									lastOUlong	= roster.orgUnit.longName;
 								}
@@ -105,7 +105,7 @@ module.exports = {
 									lastGroup = roster.group.code;
 									send_roster  = {
 										//group				: roster.group.code,
-										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName,
+										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.name + ')',
 										finalGrade 	: roster.finalGrade,
 										track 			: roster.track,
 										pass 				: roster.pass
@@ -157,6 +157,8 @@ module.exports = {
 									studentsPassed = 0;
 									send_group 		= new Array();
 									lastGroup = roster.group.code;
+									lastOU 			= roster.orgUnit.name;
+									lastOUlong	= roster.orgUnit.longName;
 									send_roster  = {
 										//group				: roster.group.code,
 										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.name + ')',
