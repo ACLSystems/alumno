@@ -645,6 +645,13 @@ module.exports = {
 					Questionnarie.create(questionnarie)
 						.then((quest) => {
 							block.questionnarie = quest._id;
+							block.type = 'questionnarie';
+							if(req.body.w === 1) {
+								block.w === 1;
+							}
+							if(req.body.wq === 1) {
+								block.wq === 1;
+							}
 							block.save()
 								.then(() => {
 									res.status(200).json({

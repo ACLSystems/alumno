@@ -773,6 +773,16 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1440: Please, give file to process'
 			});
+		} else if (!req.query.dir1) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1432: Please, give dir1 by query to process'
+			});
+		} else if (!req.query.dir2) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1432: Please, give dir2 by query to process'
+			});
 		} else {
 			next();
 		}

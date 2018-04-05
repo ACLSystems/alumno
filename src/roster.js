@@ -16,6 +16,10 @@ const TasksSchema = new Schema ({
 		min: [0,'Minimum value is 0'],
 		max: [100,'Maximum value is 100'],
 		default: 0
+	},
+	date: {
+		type: Date,
+		default: Date.now
 	}
 });
 
@@ -30,7 +34,8 @@ const QuestsSchema = new Schema ({
 		default: 0
 	},
 	attempt: {
-		type: Date
+		type: Date,
+		default: Date.now
 	}
 });
 
@@ -106,7 +111,7 @@ GradesSchema.pre('save', function(next) {
 		}
 		var wTotal = this.wq + this.wt;
 		if(wTotal > 0 && this.track === 100) {
-			this.finalGrade = ((this.wq * this.maxGradeQ)+(this.wt*this.gradeT));
+			this.finalGrade = (((this.wq * this.maxGradeQ)+(this.wt*this.gradeT))/(wTotal));
 		} else {
 			this.finalGrade = 0;
 		}

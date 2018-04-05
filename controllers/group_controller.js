@@ -597,6 +597,91 @@ module.exports = {
 			});
 	}, // createAttempt
 
+	saveTask(req,res) {
+		const key_user	= res.locals.user;
+		const groupid 	= req.body.groupid;
+		const blockid 	= req.body.blockid;
+		const file 			= req.body.file;
+		const text			= req.body.text;
+		var task = {
+			file 		: file,
+			text		: text
+		};
+		Roster.findOne({student: key_user._id, group: groupid})
+			.populate({
+				path: 'group',
+				select: 'course',
+				populate: {
+					path: 'course',
+					select: 'blocks',
+					populate: {
+						path: 'blocks',
+						match: { _id: blockid },
+						select: 'task w wq wt',
+						populate: {
+							path: 'task',
+							select: 'items'
+						}
+					}
+				}
+			})
+			.then((item) => {
+				var grades = [];
+				var myGrade = {};
+				var k = 0;
+				if(item.grades.length > 0) {
+					grades = item.grades;
+					var len = grades.length;
+					var found = false;
+					while ((k < len) && !found) {
+						if(grades[k].block + '' === blockid) {
+							myGrade = grades[k];
+							found = true;
+						} else {
+							k++;
+						}
+					}
+					if(myGrade.tasks && myGrade.tasks.length > 0) {
+						myGrade.tasks.push(task);
+					} else {
+						myGrade.tasks 	= [task];
+						myGrade.track		= 100;
+					}
+					item.grades[k] = myGrade;
+				} else {
+					myGrade = {
+						block	: blockid,
+						tasks: [task],
+						track	: 100
+					};
+					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
+						myGrade.w = item.group.course.blocks[0].w;
+					}
+					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
+						myGrade.wq = item.group.course.blocks[0].wq;
+					}
+					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
+						myGrade.wt = item.group.course.blocks[0].wt;
+					}
+					item.grades = [myGrade];
+				}
+				item.save()
+					.then(() => {
+						res.status(200).json({
+							'status': 200,
+							'message': 'task saved'
+						});
+					})
+					.catch((err) => {
+						Err.sendError(res,err,'group_controller','saveTask -- Saving Roster --');
+					});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','saveTask -- Finding Roster -- user: ' +
+					key_user.name + ' id: ' + key_user._id + ' groupid: ' + groupid + ' blockid: ' + blockid );
+			});
+	}, //saveTask
+
 	myGrades(req,res){
 		const groupid		= req.query.groupid;
 		const key_user 	= res.locals.user;
@@ -1025,7 +1110,7 @@ module.exports = {
 					if(grades[i].block + '' === blockid) {
 						keep = false;
 						if(grades[i].quests.length > 0 && grades[i].quests[0].grade) {
-							grade = grades[i].quests[0].grade + 1;
+							grade = parseInt(grades[i].quests[0].grade + 1);
 							grades[i].quests[0].grade = grade;
 						}
 					} else {
@@ -1042,7 +1127,7 @@ module.exports = {
 							if(grades[i].block + '' === blockid) {
 								keep = false;
 								if(grades[i].quests.length > 0 && grades[i].quests[0].grade) {
-									grade = grades[i].quests[0].grade - 1;
+									grade = parseInt(grades[i].quests[0].grade - 1);
 									grades[i].quests[0].grade = grade;
 								}
 							} else {
