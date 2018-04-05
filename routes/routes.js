@@ -56,6 +56,7 @@ module.exports = (app) => {
 	app.all	('/api/v1/user/*', 							[require('../controllers/validateParams')]);
 	app.all	('/api/v1/course/*', 						[require('../controllers/validateParams')]);
 	app.all	('/api/v1/author/course/*', 		[require('../controllers/validateParams')]);
+	app.all	('/api/v1/author/file/*', 			[require('../controllers/validateParams')]);
 	app.all	('/api/v1/instructor/group/*',	[require('../controllers/validateParams')]);
 	app.all	('/api/v1/orgadm/*', 						[require('../controllers/validateParams')]);
 	app.all	('/api/orgunit/*', 							[require('../controllers/validateParams')]);
