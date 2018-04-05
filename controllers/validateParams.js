@@ -3,6 +3,8 @@
 module.exports = function(req, res, next) {
 	var url = req.url;
 	const indexurl = url.indexOf('?');
+	const dir = process.env.ORDIR;
+	const fs = require('fs');
 	if(indexurl !== -1){
 		url = url.substring(0,indexurl);
 	}
@@ -768,7 +770,12 @@ module.exports = function(req, res, next) {
 
 
 	case '/api/v1/author/file/upload':
-		if(!req.file) {  // POST
+		if(!fs.existsSync(dir)) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Directory ' + dir + ' not found. Please contact Admin'
+			});
+		} else if(!req.file) {  // POST
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1440: Please, give file to process'
