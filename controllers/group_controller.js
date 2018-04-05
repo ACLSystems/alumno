@@ -562,6 +562,21 @@ module.exports = {
 						myGrade.quests 	= [quest];
 						myGrade.track		= 100;
 					}
+					if(myGrade.w === 0) {
+						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w === 1) {
+							myGrade.w = 1;
+						}
+					}
+					if(myGrade.wq === 0) {
+						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq === 1) {
+							myGrade.wq = 1;
+						}
+					}
+					if(myGrade.wt === 0) {
+						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt === 1) {
+							myGrade.wt = 1;
+						}
+					}
 					item.grades[k] = myGrade;
 				} else {
 					myGrade = {
@@ -569,14 +584,14 @@ module.exports = {
 						quests: [quest],
 						track	: 100
 					};
-					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
-						myGrade.w = item.group.course.blocks[0].w;
+					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w === 1) {
+						myGrade.w = 1;
 					}
-					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
-						myGrade.wq = item.group.course.blocks[0].wq;
+					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq === 1) {
+						myGrade.wq = 1;
 					}
-					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
-						myGrade.wt = item.group.course.blocks[0].wt;
+					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt === 1) {
+						myGrade.wt = 1;
 					}
 					item.grades = [myGrade];
 				}
