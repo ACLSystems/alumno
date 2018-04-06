@@ -135,6 +135,7 @@ module.exports = (app) => {
 	app.put	('/api/v1/author/course/setblockorder', 			CourseController.setBlockOrder);
 	app.put ('/api/v1/author/course/makeavailable', 			CourseController.makeAvailable);
 	app.post('/api/v1/author/course/createresource', 			CourseController.createResource);
+	app.put ('/api/v1/author/course/modifyresource',			CourseController.modifyResource);
 	app.get ('/api/v1/author/course/getresource', 				CourseController.getResource);
 	app.post('/api/v1/author/file/upload', 								upload.single('file'), FileController.upload);
 	app.get ('/api/v1/author/file/download', 							FileController.download);

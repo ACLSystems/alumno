@@ -786,7 +786,8 @@ module.exports = {
 						course.resources.forEach(function(resource) {
 							send_resources.push({
 								title			: resource.title,
-								content		: resource.content
+								content		: resource.content,
+								embedded	: resource.embedded
 							});
 						});
 						res.status(200).json({

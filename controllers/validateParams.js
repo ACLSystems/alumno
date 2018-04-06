@@ -810,6 +810,11 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1441: Please, give data by body to process'
 			});
+		} else if (!req.body.courseid && !req.body.coursecode) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1442: Please, give courseid or coursecode by body to process'
+			});
 		} else if (!req.body.title && !req.body.content) {
 			res.status(406).json({
 				'status': 406,
@@ -826,16 +831,31 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1441: Please, give data by query to process'
 			});
-		} else if (!req.body.id) {
+		} else if (!req.query.id && !req.query.code) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1442: Please, give course id (id) by query to process'
+				'message': 'Error 1442: Please, give course id or course code by query to process'
 			});
 		} else {
 			next();
 		}
 		break;
 
+	case '/api/v1/author/course/modifyresource':
+		if(!req.body) {  // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1441: Please, give data by body to process'
+			});
+		} else if (!req.body.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1442: Please, give resource id by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
 
 	case '/api/v1/author/course/getblock':
 		if(!req.query) {  // GET

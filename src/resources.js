@@ -15,6 +15,9 @@ const ResourceSchema = new Schema({
 	content: {
 		type: String
 	},
+	embedded: {
+		type: String
+	},
 	status: {
 		type: String,
 		enum: ['draft','published'],

@@ -912,19 +912,20 @@ module.exports = {
 					resource.org 			= key_user.org._id;
 					resource.content 	= req.body.content;
 					resource.title 		= req.body.title;
+					resource.embedded	= req.body.embedded;
 					resource.status		= 'draft';
 					resource.own = {
 						user: key_user.name,
 						org: key_user.org.name,
 						orgUnit: key_user.orgUnit.name
 					};
-					resource.mod = generateMod(key_user.name,'Block creation');
+					resource.mod = generateMod(key_user.name,'Resource creation');
 					resource.perm = generatePerm(key_user.name,key_user.org.name,key_user.orgUnit.name);
 					resource.save()
 						.then((resource) => {
 							const result = permissions.access(key_user,course,'content');
 							if(course.own.user === key_user.name || result.canModify ) {
-								course.blocks.push(resource._id);
+								course.resources.push(resource._id);
 								course.save()
 									.then(() => {
 										res.status(201).json({
@@ -962,10 +963,17 @@ module.exports = {
 
 	getResource(req,res) {
 		//const key_user 	= res.locals.user;
-		Course.findById(req.body.id)
+		var query = {};
+		if(req.query.code) {
+			query = {code: req.query.code};
+		}
+		if(req.query.id) {
+			query = {_id: req.query.id};
+		}
+		Course.findOne(query)
 			.populate({
 				path: 'resources',
-				select: 'title content status'
+				select: 'title content status isVisible embedded'
 			})
 			.select('code title resources')
 			.then((course) => {
@@ -974,10 +982,12 @@ module.exports = {
 						var send_resources = new Array();
 						course.resources.forEach(function(resource) {
 							send_resources.push({
-								title			: resource.title,
-								content		: resource.content,
-								status		: resource.status,
-								isVisible : resource.isVisible
+								resourceid	: resource._id,
+								title				: resource.title,
+								content			: resource.content,
+								embedded		: resource.embedded,
+								status			: resource.status,
+								isVisible 	: resource.isVisible
 							});
 						});
 						res.status(200).json({
@@ -1002,6 +1012,40 @@ module.exports = {
 				sendError(res,err,'getResourceAuthor -- Searching Course --');
 			});
 	}, //getResource
+
+	modifyResource(req,res) {
+		const key_user 	= res.locals.user;
+		Resource.findById(req.body.id)
+			.then((resource) => {
+				if(resource) {
+					if(req.body.content		) {resource.content 		= req.body.content;		}
+					if(req.body.title			) {resource.title 			= req.body.title;			}
+					if(req.body.embedded	) {resource.embedded		= req.body.embedded;	}
+					if(req.body.status		) {resource.status			= req.body.status;		}
+					if(req.body.isVisible	) {resource.isVisible		= req.body.isVisible;	}
+					resource.mod.push(generateMod(key_user.name,'Resource Modification'));
+					resource.save()
+						.then(() => {
+							res.status(201).json({
+								'status': 200,
+								'message': 'Resource -' + resource.title + '- was modified.'
+							});
+						})
+						.catch((err) => {
+							sendError(res,err,'modifyResource -- Saving Resource --');
+						});
+					// aquí
+				} else {
+					res.status(404).json({
+						'status': 404,
+						'message': 'Resource not found'
+					});
+				}
+			})
+			.catch((err) => {
+				sendError(res,err,'modifyResource -- Searching Resource --');
+			});
+	}, // modifyResource
 
 	modify(req,res) {  // modificar propiedades del curso
 		const key_user 	= res.locals.user;
