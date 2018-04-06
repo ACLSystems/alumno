@@ -26,8 +26,14 @@ const ResourceSchema = new Schema({
 	},
 	own: OwnerSchema,
 	mod: [ModSchema],
-	perm: PermissionsSchema
+	perm: PermissionsSchema,
+	org: {
+		type: Schema.Types.ObjectId,
+		ref: 'orgs'
+	},
 });
+
+ResourceSchema.index( { title: 1, org: 1}, { unique: true } );
 
 const Resources = mongoose.model('resources', ResourceSchema);
 module.exports = Resources;

@@ -761,6 +761,57 @@ module.exports = {
 			});
 	}, // myGrades
 
+	getResource(req,res) {
+		const key_user 	= res.locals.user;
+		const groupid		= req.query.groupid;
+		Roster.findOne({student: key_user.id, group: groupid})
+			.populate({
+				path: 'group',
+				select: 'course',
+				populate: {
+					path: 'course',
+					select: 'resources code title',
+					populate: {
+						path: 'resources',
+						select: 'title content',
+						match: { status: 'published', isVisible: true}
+					}
+				}
+			})
+			.then((roster) => {
+				if(roster && roster.group && roster.group.course) {
+					var course = roster.group.course;
+					if(course.resources && course.resources.length > 0) {
+						var send_resources = new Array();
+						course.resources.forEach(function(resource) {
+							send_resources.push({
+								title			: resource.title,
+								content		: resource.content
+							});
+						});
+						res.status(200).json({
+							'status'	: 200,
+							'course'	: course.code,
+							'message'	: send_resources
+						});
+					} else {
+						res.status(404).json({
+							'status'	: 404,
+							'message'	: 'No resources found for couse -' + course.code + '-'
+						});
+					}
+				} else {
+					res.status(404).json({
+						'status'	: 404,
+						'message'	: 'Course not found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','getResource -- Searching Course --');
+			});
+	}, //getResource
+
 	nextBlock(req,res) {
 		//const key 			= req.headers.key;
 		const groupid 	= req.query.groupid;

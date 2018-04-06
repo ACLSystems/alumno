@@ -3,8 +3,6 @@
 module.exports = function(req, res, next) {
 	var url = req.url;
 	const indexurl = url.indexOf('?');
-	const dir = process.env.ORDIR;
-	const fs = require('fs');
 	if(indexurl !== -1){
 		url = url.substring(0,indexurl);
 	}
@@ -806,6 +804,38 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/author/course/createresource':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1441: Please, give data by body to process'
+			});
+		} else if (!req.body.title && !req.body.content) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1442: Please, give title and content by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/author/course/getresource':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1441: Please, give data by query to process'
+			});
+		} else if (!req.body.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1442: Please, give course id (id) by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 
 	case '/api/v1/author/course/getblock':
 		if(!req.query) {  // GET
@@ -1167,6 +1197,22 @@ module.exports = function(req, res, next) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error -: Please, give student id by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/user/getresource':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group id by query to process'
 			});
 		} else {
 			next();

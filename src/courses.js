@@ -79,6 +79,10 @@ const CoursesSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'blocks'
 	}],
+	resources: [{
+		type: Schema.Types.ObjectId,
+		ref: 'resources'
+	}],
 	currentSection	: {
 		type: Number,
 		default: 1

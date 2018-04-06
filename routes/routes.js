@@ -99,6 +99,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/user/touchgrade', 		GroupController.touchGrade);
 	app.get ('/api/v1/user/mygrades', 			GroupController.myGrades);
 	app.get ('/api/v1/user/nextblock', 			GroupController.nextBlock);
+	app.get ('/api/v1/user/getresource', 		GroupController.getResource);
 	app.post('/api/v1/user/comment/create', DiscussionController.create);
 	app.get ('/api/v1/user/comment/get',		DiscussionController.get);
 
@@ -133,6 +134,8 @@ module.exports = (app) => {
 	app.put ('/api/v1/author/course/moveblock', 					CourseController.moveBlock);
 	app.put	('/api/v1/author/course/setblockorder', 			CourseController.setBlockOrder);
 	app.put ('/api/v1/author/course/makeavailable', 			CourseController.makeAvailable);
+	app.post('/api/v1/author/course/createresource', 			CourseController.createResource);
+	app.get ('/api/v1/author/course/getresource', 				CourseController.getResource);
 	app.post('/api/v1/author/file/upload', 								upload.single('file'), FileController.upload);
 	app.get ('/api/v1/author/file/download', 							FileController.download);
 

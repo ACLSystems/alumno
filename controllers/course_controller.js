@@ -7,10 +7,9 @@ const Questionnarie = require('../src/questionnaries');
 const Task 					= require('../src/tasks');
 const permissions 	= require('../shared/permissions');
 const Org						= require('../src/orgs');
+const Resource 			= require('../src/resources');
 
-//const Org = require('../src/orgs');
 //const OrgUnit = require('../src/orgUnits');
-//const permissions = require('../shared/permissions');
 require('winston-daily-rotate-file');
 
 var transport = new(winston.transports.DailyRotateFile) ({
@@ -486,10 +485,13 @@ module.exports = {
 		if(req.query.id){
 			query = { _id: req.query.id};
 		}
+		var section1 = req.query.section1;
+		var section2 = req.query.section2;
 		Course.findOne(query)
 			.populate({
 				path: 'blocks',
-				select: 'code type title section number order status isVisible',
+				select: 'code type title section number order status isVisible w wq wt',
+				match: { section: {$gte: section1, $lte: section2}},
 				options: { sort: {order: 1} }
 			})
 			.then((course) => {
@@ -500,15 +502,18 @@ module.exports = {
 						const blocks = course.blocks;
 						blocks.forEach(function(block) {
 							send_blocks.push({
-								id: 						block._id,
-								code: 					block.code,
-								type: 					block.type,
-								title: 					block.title,
-								section: 				block.section,
-								number: 				block.number,
-								order: 					block.order,
-								status: 				block.status,
-								isVisible: 			block.isVisible
+								id				: block._id,
+								code			: block.code,
+								type			:	block.type,
+								title			:	block.title,
+								section		: block.section,
+								number		: block.number,
+								order			: block.order,
+								status		: block.status,
+								isVisible	: block.isVisible,
+								w					: block.w,
+								wq				: block.wq,
+								wt				: block.wt
 							});
 						});
 						res.status(200).json({
@@ -891,6 +896,112 @@ module.exports = {
 				sendError(res,err,'createTaks -- Searching Block --');
 			});
 	}, // createTasks
+
+	createResource(req,res) {
+		const key_user 	= res.locals.user;
+		var queryCourse = {};
+		if(req.body.coursecode) {
+			queryCourse = { code: req.body.coursecode };
+		} else if(req.body.courseid) {
+			queryCourse = { code: req.body.courseid		};
+		}
+		Course.findOne(queryCourse)
+			.then((course) => {
+				if(course) {
+					var resource 			= new Resource;
+					resource.org 			= key_user.org._id;
+					resource.content 	= req.body.content;
+					resource.title 		= req.body.title;
+					resource.status		= 'draft';
+					resource.own = {
+						user: key_user.name,
+						org: key_user.org.name,
+						orgUnit: key_user.orgUnit.name
+					};
+					resource.mod = generateMod(key_user.name,'Block creation');
+					resource.perm = generatePerm(key_user.name,key_user.org.name,key_user.orgUnit.name);
+					resource.save()
+						.then((resource) => {
+							const result = permissions.access(key_user,course,'content');
+							if(course.own.user === key_user.name || result.canModify ) {
+								course.blocks.push(resource._id);
+								course.save()
+									.then(() => {
+										res.status(201).json({
+											'status': 200,
+											'message': 'Resource -' + resource.title + '- of course -' + course.code + '- was saved.'
+										});
+									})
+									.catch((err) => {
+										sendError(res,err,'createResource -- Relating resource, saving course --');
+									});
+							}
+						})
+						.catch((err) => {
+							if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
+								res.status(406).json({
+									'status': 406,
+									'message': 'Error 1439: Resource -' + req.body.title + '- already exists'
+								});
+							} else {
+								sendError(res,err,'createResource -- Saving Resource --');
+							}
+						});
+					// aquí
+				} else {
+					res.status(404).json({
+						'status': 404,
+						'message': 'Course not found'
+					});
+				}
+			})
+			.catch((err) => {
+				sendError(res,err,'createResource -- Searching Course --');
+			});
+	}, // createResource
+
+	getResource(req,res) {
+		//const key_user 	= res.locals.user;
+		Course.findById(req.body.id)
+			.populate({
+				path: 'resources',
+				select: 'title content status'
+			})
+			.select('code title resources')
+			.then((course) => {
+				if(course) {
+					if(course.resources && course.resources.length > 0) {
+						var send_resources = new Array();
+						course.resources.forEach(function(resource) {
+							send_resources.push({
+								title			: resource.title,
+								content		: resource.content,
+								status		: resource.status,
+								isVisible : resource.isVisible
+							});
+						});
+						res.status(200).json({
+							'status'	: 200,
+							'course'	: course.code,
+							'message'	: send_resources
+						});
+					} else {
+						res.status(404).json({
+							'status'	: 404,
+							'message'	: 'No resources found for couse -' + course.code + '-'
+						});
+					}
+				} else {
+					res.status(404).json({
+						'status'	: 404,
+						'message'	: 'Course not found'
+					});
+				}
+			})
+			.catch((err) => {
+				sendError(res,err,'getResourceAuthor -- Searching Course --');
+			});
+	}, //getResource
 
 	modify(req,res) {  // modificar propiedades del curso
 		const key_user 	= res.locals.user;

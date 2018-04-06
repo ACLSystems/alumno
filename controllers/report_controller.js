@@ -196,6 +196,7 @@ module.exports = {
 							res.status(200).json({
 								'status'	: 200,
 								state 		: key_user.orgUnit.name,
+								username	: key_user.name,
 								'message'	: send_rosters
 							});
 						})

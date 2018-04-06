@@ -78,6 +78,11 @@ const QuestionSchema = new Schema ({
 		type: Boolean,
 		default: true
 	},
+	display: [{
+		type: String,
+		enum: ['0','1'],
+		default: 1
+	}],
 	w: {
 		type: Number,
 		min: [0,'Minimum value is 0'],

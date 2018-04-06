@@ -67,10 +67,6 @@ const BlocksSchema = new Schema ({
 		max: [100,'Maximum value is 100'],
 		default: 0
 	},
-	resources: [{
-		type: Schema.Types.ObjectId,
-		ref: 'resources'
-	}],
 	duration: {
 		type: Number,
 		min: [0, 'Block duration cannot be less than 0'],
