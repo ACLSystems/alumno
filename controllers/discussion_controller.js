@@ -114,8 +114,6 @@ module.exports = {
 		var limit 			= 15;
 		//var get 			= {title: 1};
 		var select 			= '';
-		var blockExists = false;
-		var groupExists	= false;
 		if(req.query.select) {
 			select = req.query.select;
 		}
@@ -128,12 +126,6 @@ module.exports = {
 		if(req.query.limit) {
 			limit = parseInt(req.query.limit);
 		}
-		if(req.query.blockexists) {
-			blockExists = true;
-		}
-		if(req.query.groupexists) {
-			groupExists = true;
-		}
 		var qOrder 	= {date: order};
 		Discussion.find(query)
 			.select(select)
@@ -141,8 +133,6 @@ module.exports = {
 			.sort(qOrder)
 			.skip(skip)
 			.limit(limit)
-			.where('block').exists(blockExists)
-			.where('group').exists(groupExists)
 			.then((discussions) => {
 				if(discussions || discussions.length > 0) {
 					var discs_send = new Array();

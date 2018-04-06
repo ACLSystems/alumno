@@ -770,12 +770,7 @@ module.exports = function(req, res, next) {
 
 
 	case '/api/v1/author/file/upload':
-		if(!fs.existsSync(dir)) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'Directory ' + dir + ' not found. Please contact Admin'
-			});
-		} else if(!req.file) {  // POST
+		if(!req.file) {  // POST
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1440: Please, give file to process'
