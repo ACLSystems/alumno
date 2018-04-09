@@ -86,7 +86,7 @@ module.exports = {
 							match: { isActive: true },
 							populate: {
 								path: 'course',
-								select: 'code title'
+								select: 'code title duration durationUnits'
 							}
 						})
 						.populate('orgUnit', 'name longName')
@@ -97,6 +97,7 @@ module.exports = {
 							var send_group			= new Array();
 							var lastGroup				= '';
 							var lastCourse			= '';
+							var duration				= '';
 							var averageTrack		= 0;
 							var averageGrade		= 0;
 							var studentsPassed 	= 0;
@@ -109,10 +110,12 @@ module.exports = {
 								if(lastOU === '') {
 									lastOU 			= roster.orgUnit.name;
 									lastOUlong	= roster.orgUnit.longName;
+
 								}
 								if(lastGroup === '') {
-									lastGroup = roster.group.code;
-									lastCourse = roster.group.course.title;
+									lastGroup 	= roster.group.code;
+									lastCourse 	= roster.group.course.title;
+									duration		= roster.group.course.duration + roster.group.course.durationUnits;
 									send_roster  = {
 										studentName : roster.student.person.fullName,
 										username		: roster.student.name,
@@ -157,6 +160,7 @@ module.exports = {
 										orgUnit					: '(' +lastOU + ') ' + lastOUlong,
 										group						: lastGroup,
 										course					: lastCourse,
+										duration				: duration,
 										totalStudents		: ts,
 										studentsOnTrack : at,
 										averageTrack		: averageTrack,
@@ -171,6 +175,7 @@ module.exports = {
 									send_group 		= new Array();
 									lastGroup 		= roster.group.code;
 									lastCourse 		= roster.group.course.title;
+									duration			= roster.group.course.duration + roster.group.course.durationUnits;
 									lastOU 				= roster.orgUnit.name;
 									lastOUlong		= roster.orgUnit.longName;
 									send_roster  	= {
@@ -200,6 +205,7 @@ module.exports = {
 								orgUnit					: '(' +lastOU + ') ' + lastOUlong,
 								group						: lastGroup,
 								course					: lastCourse,
+								duration				: duration,
 								totalStudents		: ts,
 								studentsOnTrack : at,
 								averageTrack		: averageTrack,
@@ -226,7 +232,15 @@ module.exports = {
 		if(key_user.orgUnit.type === 'campus') {
 			Roster.find({ orgUnit: key_user.orgUnit._id })
 				.populate('student', 'name person')
-				.populate('group', 'code')
+				.populate({
+					path: 'group',
+					select: 'code course',
+					match: { isActive: true },
+					populate: {
+						path: 'course',
+						select: 'code title duration durationUnits'
+					}
+				})
 				.sort({group: 1})
 				.select('student.person finalGrade track pass')
 				.then((rosters)  => {
@@ -234,6 +248,7 @@ module.exports = {
 					var send_group			= new Array();
 					var lastGroup				= '';
 					var lastCourse			= '';
+					var duration				= '';
 					var averageTrack		= 0;
 					var averageGrade		= 0;
 					var studentsPassed 	= 0;
@@ -242,8 +257,9 @@ module.exports = {
 					rosters.forEach(function(roster) {
 						var send_roster = {};
 						if(lastGroup === '') {
-							lastGroup = roster.group.code;
-							lastCourse = roster.group.course.title;
+							lastGroup 	= roster.group.code;
+							lastCourse 	= roster.group.course.title;
+							duration		= roster.group.course.duration + roster.group.course.durationUnits;
 							send_roster  = {
 								studentName : roster.student.person.fullName,
 								username		: roster.student.name,
@@ -287,6 +303,7 @@ module.exports = {
 							send_rosters.push({
 								group						: lastGroup,
 								course					: lastCourse,
+								duration				: duration,
 								totalStudents		: ts,
 								studentsOnTrack : at,
 								averageTrack		: averageTrack,
@@ -299,8 +316,9 @@ module.exports = {
 							ts = 0;
 							studentsPassed = 0;
 							send_group 		= new Array();
-							lastGroup = roster.group.code;
-							lastCourse = roster.group.course.title;
+							lastGroup 	= roster.group.code;
+							lastCourse 	= roster.group.course.title;
+							duration		= roster.group.course.duration + roster.group.course.durationUnits;
 							send_roster  = {
 								studentName : roster.student.person.fullName,
 								username		: roster.student.name,
@@ -328,6 +346,7 @@ module.exports = {
 					send_rosters.push({
 						group						: lastGroup,
 						course					: lastCourse,
+						duration				: duration,
 						totalStudents		: ts,
 						studentsOnTrack : at,
 						averageTrack		: averageTrack,
