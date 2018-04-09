@@ -877,16 +877,19 @@ module.exports = {
 					const now				= new Date();
 					var 	ok				= true;
 					var 	cause 		= '';
+					var		causeSP		= '';
 					var 	save 			= false;
 					//var 	new_date	= new Date();
 					if(item.group.presentBlockBy && item.group.presentBlockBy === 'dates'){
 						if(item.group.beginDate && item.group.beginDate > now ) {
 							ok 		= false;
 							cause = 'Course will begin at ' + item.group.beginDate;
+							causeSP = 'El curso comenzará el ' + item.group.beginDate;
 						} else
 						if(item.group.endDate && item.group.endDate < now) {
 							ok 		= false;
 							cause = 'Course ended at ' + item.group.endDate;
+							causeSP = 'El curso terminó el ' + item.group.endDate;
 						}
 					}
 
@@ -942,13 +945,16 @@ module.exports = {
 							save = true;
 						}
 					}
+					const sectionDisp = section + 1;
 					if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].beginDate && item.sections[section].beginDate > now) {
 						ok = false;
-						cause = 'Section '+ section +' will begin at ' + item.sections[section].beginDate;
+						cause = 'Section '+ sectionDisp +' will begin at ' + item.sections[section].beginDate;
+						causeSP = 'La sección '+ sectionDisp +' comenzará el ' + item.sections[section].beginDate;
 					}
 					if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].endDate && item.sections[section].endDate < now) {
 						ok = false;
-						cause = 'Section '+ section +' was closed at ' + item.sections[section].endDate;
+						cause = 'Section '+ sectionDisp +' was closed at ' + item.sections[section].endDate;
+						causeSP = 'La sección '+ sectionDisp +' terminó el ' + item.sections[section].endDate;
 					}
 					if(item.sections) {
 						if(item.sections[lastSection]) {
@@ -1171,7 +1177,8 @@ module.exports = {
 					} else { // if(ok)
 						res.status(404).json({
 							'status': 404,
-							'message': 'Block cannot be displayed because: ' + cause
+							'message': 'Block cannot be displayed because: ' + cause,
+							'messageUser': 'El bloque no puede presentarse debido a: ' + causeSP
 						});
 					}
 				} else {
