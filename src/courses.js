@@ -85,7 +85,7 @@ const CoursesSchema = new Schema ({
 	}],
 	currentSection	: {
 		type: Number,
-		default: 1
+		default: 0
 	},
 	nextNumber	: {
 		type: Number,

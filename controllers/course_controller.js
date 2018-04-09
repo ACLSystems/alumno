@@ -1278,7 +1278,7 @@ module.exports = {
 					Block.find({_id: {$in: blocks}},{section:1, number:1, order: 1})
 						.then((dbBlocks) => {
 							var order = 0;
-							var section = 1;
+							var section = 0; // antes de considerar el bloque 0.0 este parámetro estaba en 1
 							var number = 0;
 							var refsection = 0;
 							dbBlocks.forEach(function(block) {

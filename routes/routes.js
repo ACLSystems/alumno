@@ -50,17 +50,18 @@ module.exports = (app) => {
 	// Only the requests that start with /api/v1/* will be checked for the token.
 	// Any URL's that do not follow the below pattern should be avoided unless you
 	// are sure that authentication is not needed
-	app.all	('/api/v1/*', 									[require('../controllers/validateRequest')]);
-	app.all	('/api/user/*', 								[require('../controllers/validateParams')]);
-	app.get ('/api/errorcodes',							[require('../controllers/validateParams')]);
-	app.all	('/api/v1/user/*', 							[require('../controllers/validateParams')]);
-	app.all	('/api/v1/course/*', 						[require('../controllers/validateParams')]);
-	app.all	('/api/v1/author/course/*', 		[require('../controllers/validateParams')]);
+	app.all	('/api/v1/*', 												[require('../controllers/validateRequest')]);
+	app.all	('/api/user/*', 											[require('../controllers/validateParams')]);
+	app.get ('/api/errorcodes',										[require('../controllers/validateParams')]);
+	app.all	('/api/v1/user/*', 										[require('../controllers/validateParams')]);
+	app.all	('/api/v1/course/*', 									[require('../controllers/validateParams')]);
+	app.all	('/api/v1/author/course/*', 					[require('../controllers/validateParams')]);
 	//app.all	('/api/v1/author/file/*', 			[require('../controllers/validateParams')]);
-	app.all	('/api/v1/instructor/group/*',	[require('../controllers/validateParams')]);
-	app.all	('/api/v1/orgadm/*', 						[require('../controllers/validateParams')]);
-	app.all	('/api/orgunit/*', 							[require('../controllers/validateParams')]);
-	app.all	('/api/course/*', 							[require('../controllers/validateParams')]);
+	app.all	('/api/v1/instructor/group/*',				[require('../controllers/validateParams')]);
+	app.all	('/api/v1/orgadm/*', 									[require('../controllers/validateParams')]);
+	app.all	('/api/orgunit/*', 										[require('../controllers/validateParams')]);
+	app.all	('/api/course/*', 										[require('../controllers/validateParams')]);
+	app.all ('/api/v1/supervisor/user/getdetails',[require('../controllers/validateParams')]);
 
 	// RUTAS ---------------------------------------------------------------------------------
 
@@ -170,6 +171,9 @@ module.exports = (app) => {
 	app.get ('/api/v1/orgadm/report/totalusers', 				ReportController.totalUsers);
 	app.get ('/api/v1/orgadm/report/usersbyou', 				ReportController.usersByOrgUnit);
 
+	// Rutas para roles de 'isSupervisor'
+
 	app.get ('/api/v1/supervisor/report/gradesbycampus',ReportController.gradesByCampus);
+	app.get ('/api/v1/supervisor/user/getdetails',			UserController.getDetailsSuper);
 
 };

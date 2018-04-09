@@ -76,6 +76,10 @@ const GroupsSchema = new Schema ({
 		min: [0,'Minimum value is 0'],
 		default: 0
 	},
+	lapseBlocks: [{
+		type: Number,
+		min: [0,'Minimum value is 0']
+	}],
 	org: {
 		type: Schema.Types.ObjectId,
 		ref: 'orgs'

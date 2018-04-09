@@ -80,7 +80,11 @@ module.exports = {
 				.then((ous) => {
 					Roster.find({ orgUnit: {$in: ous} })
 						.populate('student', 'person')
-						.populate('group', 'code')
+						.populate({
+							path: 'group',
+							select: 'code',
+							match: { isActive: true }
+						})
 						.populate('orgUnit', 'name longName')
 						.sort({orgUnit: 1, group: 1})
 						.select('student.person finalGrade track pass')

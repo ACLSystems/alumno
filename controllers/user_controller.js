@@ -335,7 +335,67 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'user_controller','getDetails -- Finding User -- user: ' + key_user.name);
 			});
-	},
+	}, // getDetails
+
+	getDetailsSuper(req, res) {
+		const key_user = res.locals.user;
+		const username = req.query.username;
+		User.findOne({ name: username })
+			.populate('org','name')
+			.populate('orgUnit', 'name longName')
+			.then((user) => {
+				if (!user) {
+					res.status(404).json({
+						'status': 404,
+						'message': 'User -' + username + '- does not exist'
+					});
+				} else {
+					//const result = permissions.access(key_user,user,'user');
+					//console.log(result); // eslint-disable-line
+					var send_user = {
+						username		: user.name,
+						org					: user.org.name,
+						orgUnit			: user.orgUnit.name,
+						orgUnitLong	: user.orgUnit.longName
+					};
+					if(user.person) {
+						send_user.person = {
+							name			: user.person.name,
+							fatherName: user.person.fatherName,
+							motherName: user.person.motherName,
+							email			: user.person.email,
+							birthDate	: user.person.birthDate,
+							mainPhone	: user.person.mainPhone,
+							celPhone	: user.person.celPhone,
+							genre 		: user.person.genre,
+							alias			: user.person.alias
+						};
+					}
+					if(user.student){
+						send_user.student = {
+							studentid	: user.student.id,
+							career		: user.student.career,
+							term			: user.student.term,
+							isActive	: user.student.isActive,
+							type			: user.student.type
+						};
+						if(user.student.external) { send_user.student.external 	= user.student.external;}
+						if(user.student.origin	) { send_user.student.origin 		= user.student.origin;  }
+					}
+					if(user.corporate) {
+						send_user.corporate = {
+							corporateid	: user.corporate.id,
+							isActive		: user.corporate.isActive,
+							type				: user.corporate.type
+						};
+					}
+					res.status(200).json(send_user);
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','getDetails -- Finding User -- user: ' + key_user.name);
+			});
+	}, // getDetails
 
 	getRoles(req, res) {
 		const key_user = res.locals.user;

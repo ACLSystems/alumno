@@ -484,8 +484,16 @@ module.exports = {
 								}
 							}
 						});
-						if(block.duration) {
-							new_block.duration = block.duration + block.durationUnits;
+						if(block.number === 0) {
+							if(block.duration) {
+								new_block.duration = block.duration + block.durationUnits;
+							}
+							if(item.sections && item.sections.length > 0 && item.sections[block.section - 1] && item.sections[block.section - 1].beginDate) {
+								new_block.beginDate = item.sections[block.section - 1].beginDate;
+							}
+							if(item.sections && item.sections.length > 0 && item.sections[block.section - 1] && item.sections[block.section - 1].endDate) {
+								new_block.endDate = item.sections[block.section - 1].endDate;
+							}
 						}
 						if(block.questionnarie) {
 							new_block.questionnarie = true;
@@ -499,6 +507,8 @@ module.exports = {
 						'status': 200,
 						'message': {
 							student		: key_user.person.fullName,
+							studentid	: key_user._id,
+							roster		: item._id,
 							myStatus	: myStatus,
 							track			: parseInt(item.track) + '%',
 							blockNum	: item.group.course.numBlocks,
@@ -849,7 +859,7 @@ module.exports = {
 		Roster.findOne({student: key_user._id, group: groupid})
 			.populate([{
 				path: 'group',
-				select: 'course code admin presentBlockBy beginDate endDate dates lapse',
+				select: 'course code admin presentBlockBy beginDate endDate dates lapse lapseBlocks',
 				populate: [{
 					path: 'course',
 					match: { isVisible: true, status: 'published'},
@@ -918,15 +928,15 @@ module.exports = {
 							if(blockString === lastid) {
 								//myGrade = grade.block;
 								lastIndex 	= i;
-								lastSection = grade.block.section - 1;
-								nextSection = grade.block.section;
+								lastSection = grade.block.section;
+								nextSection = grade.block.section + 1;
 							}
 							if(blockString === blockid) {
 								currentBlockGrade = grade.maxGradeQ;
 								lastAttempt				= grade.lastAttemptQ;
 								numAttempts				= grade.numAttempts;
 								track 						= grade.track;
-								section 					= grade.block.section -1 ;
+								section 					= grade.block.section;
 							}
 							i++;
 						}); // grades.forEach
@@ -945,7 +955,7 @@ module.exports = {
 							save = true;
 						}
 					}
-					const sectionDisp = section + 1;
+					const sectionDisp = section;
 					if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].beginDate && item.sections[section].beginDate > now) {
 						ok = false;
 						cause = 'Section '+ sectionDisp +' will begin at ' + item.sections[section].beginDate;
@@ -962,7 +972,11 @@ module.exports = {
 								item.sections[lastSection].viewed = now;
 								if(item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){
 									if(item.sections[nextSection]) {
-										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
+										if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[section]){
+											item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[section]);
+										} else if(item.group.lapse){
+											item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
+										}
 										if(item.sections[lastSection].endDate){
 											delete item.sections[lastSection].endDate;
 										}
@@ -1049,7 +1063,6 @@ module.exports = {
 										blockTitle				: block.title,
 										blockSection			:	block.section,
 										blockNumber				: block.number,
-										blockDuration			: '0h',
 										blockContent			:	block.content,
 										blockMedia				: block.media,
 										blockMinimumTime	: block.defaultmin,
@@ -1062,6 +1075,9 @@ module.exports = {
 									};
 									if(block.type === 'textVideo' && block.begin) {
 										send_block.blockBegin = true;
+									}
+									if(item.sections.length > 0 && item.sections[section] && item.sections[section].viewed) {
+										send_block.blockUnitBeginning = item.sections[section].viewed;
 									}
 									if(track > 0) {
 										send_block.blockTrack = true;
