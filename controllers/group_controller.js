@@ -651,7 +651,8 @@ module.exports = {
 		const text			= req.body.text;
 		var task = {
 			file 		: file,
-			text		: text
+			text		: text,
+			date		: new Date()
 		};
 		Roster.findOne({student: key_user._id, group: groupid})
 			.populate({

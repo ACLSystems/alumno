@@ -82,16 +82,21 @@ module.exports = {
 						.populate('student', 'person')
 						.populate({
 							path: 'group',
-							select: 'code',
-							match: { isActive: true }
+							select: 'code course',
+							match: { isActive: true },
+							populate: {
+								path: 'course',
+								select: 'code title'
+							}
 						})
 						.populate('orgUnit', 'name longName')
 						.sort({orgUnit: 1, group: 1})
-						.select('student.person finalGrade track pass')
+						.select('student.person finalGrade track pass passDate')
 						.then((rosters)  => {
 							var send_rosters 		= new Array();
 							var send_group			= new Array();
 							var lastGroup				= '';
+							var lastCourse			= '';
 							var averageTrack		= 0;
 							var averageGrade		= 0;
 							var studentsPassed 	= 0;
@@ -107,12 +112,14 @@ module.exports = {
 								}
 								if(lastGroup === '') {
 									lastGroup = roster.group.code;
+									lastCourse = roster.group.course.title;
 									send_roster  = {
-										//group				: roster.group.code,
-										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
+										studentName : roster.student.person.fullName,
+										username		: roster.student.name,
 										finalGrade 	: roster.finalGrade,
 										track 			: roster.track,
-										pass 				: roster.pass
+										pass 				: roster.pass,
+										passDate		: roster.passDate
 									};
 									if(roster.track > 0) {
 										averageTrack = averageTrack + roster.track;
@@ -125,8 +132,8 @@ module.exports = {
 									ts++;
 								} else if (lastGroup === roster.group.code) {
 									send_roster  = {
-										//group				: roster.group.code,
-										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
+										studentName : roster.student.person.fullName,
+										username		: roster.student.name,
 										finalGrade 	: roster.finalGrade,
 										track 			: roster.track,
 										pass 				: roster.pass,
@@ -149,6 +156,7 @@ module.exports = {
 									send_rosters.push({
 										orgUnit					: '(' +lastOU + ') ' + lastOUlong,
 										group						: lastGroup,
+										course					: lastCourse,
 										totalStudents		: ts,
 										studentsOnTrack : at,
 										averageTrack		: averageTrack,
@@ -161,12 +169,13 @@ module.exports = {
 									ts = 0;
 									studentsPassed = 0;
 									send_group 		= new Array();
-									lastGroup = roster.group.code;
-									lastOU 			= roster.orgUnit.name;
-									lastOUlong	= roster.orgUnit.longName;
-									send_roster  = {
-										//group				: roster.group.code,
-										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
+									lastGroup 		= roster.group.code;
+									lastCourse 		= roster.group.course.title;
+									lastOU 				= roster.orgUnit.name;
+									lastOUlong		= roster.orgUnit.longName;
+									send_roster  	= {
+										studentName : roster.student.person.fullName,
+										username		: roster.student.name,
 										finalGrade 	: roster.finalGrade,
 										track 			: roster.track,
 										pass 				: roster.pass
@@ -190,6 +199,7 @@ module.exports = {
 							send_rosters.push({
 								orgUnit					: '(' +lastOU + ') ' + lastOUlong,
 								group						: lastGroup,
+								course					: lastCourse,
 								totalStudents		: ts,
 								studentsOnTrack : at,
 								averageTrack		: averageTrack,
@@ -223,6 +233,7 @@ module.exports = {
 					var send_rosters 		= new Array();
 					var send_group			= new Array();
 					var lastGroup				= '';
+					var lastCourse			= '';
 					var averageTrack		= 0;
 					var averageGrade		= 0;
 					var studentsPassed 	= 0;
@@ -232,12 +243,14 @@ module.exports = {
 						var send_roster = {};
 						if(lastGroup === '') {
 							lastGroup = roster.group.code;
+							lastCourse = roster.group.course.title;
 							send_roster  = {
-								//group				: roster.group.code,
-								student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
+								studentName : roster.student.person.fullName,
+								username		: roster.student.name,
 								finalGrade 	: roster.finalGrade,
 								track 			: roster.track,
-								pass 				: roster.pass
+								pass 				: roster.pass,
+								passDate		: roster.passDate
 							};
 							if(roster.track > 0) {
 								averageTrack = averageTrack + roster.track;
@@ -250,11 +263,12 @@ module.exports = {
 							ts++;
 						} else if (lastGroup === roster.group.code) {
 							send_roster  = {
-								//group				: roster.group.code,
-								student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
+								studentName : roster.student.person.fullName,
+								username		: roster.student.name,
 								finalGrade 	: roster.finalGrade,
 								track 			: roster.track,
-								pass 				: roster.pass
+								pass 				: roster.pass,
+								passDate		: roster.passDate
 							};
 							if(roster.track > 0) {
 								averageTrack = averageTrack + roster.track;
@@ -272,6 +286,7 @@ module.exports = {
 							}
 							send_rosters.push({
 								group						: lastGroup,
+								course					: lastCourse,
 								totalStudents		: ts,
 								studentsOnTrack : at,
 								averageTrack		: averageTrack,
@@ -285,12 +300,14 @@ module.exports = {
 							studentsPassed = 0;
 							send_group 		= new Array();
 							lastGroup = roster.group.code;
+							lastCourse = roster.group.course.title;
 							send_roster  = {
-								//group				: roster.group.code,
-								student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
+								studentName : roster.student.person.fullName,
+								username		: roster.student.name,
 								finalGrade 	: roster.finalGrade,
 								track 			: roster.track,
-								pass 				: roster.pass
+								pass 				: roster.pass,
+								passDate		: roster.passDate
 							};
 							if(roster.track > 0) {
 								averageTrack = averageTrack + roster.track;
@@ -310,6 +327,7 @@ module.exports = {
 					}
 					send_rosters.push({
 						group						: lastGroup,
+						course					: lastCourse,
 						totalStudents		: ts,
 						studentsOnTrack : at,
 						averageTrack		: averageTrack,
