@@ -98,8 +98,8 @@ module.exports = {
 			query.orgUnit = req.query.ou;
 		}
 		Group.find(query)
-			.populate('course')
-			.populate('instructor')
+			.populate('course', 'title code numBlocks')
+			.populate('instructor', 'name person')
 			.populate('org', 'name')
 			.populate('orgUnit', 'name longName')
 			.populate('students', 'name person')
@@ -156,7 +156,8 @@ module.exports = {
 				select: 'blocks',
 				populate: {
 					path: 'blocks',
-					select: 'w wq wt'
+					select: 'section w wq wt',
+					options: { sort: {order: 1} }
 				}
 			})
 			.then((group) => {
@@ -172,6 +173,7 @@ module.exports = {
 						.then((students) => {
 							students.forEach(function(student) {
 								var grade = new Array();
+								var sec = 0;
 								blocks.forEach(function(block) {
 									grade.push({
 										block			: block._id,
@@ -182,7 +184,21 @@ module.exports = {
 										wq				: block.wq,
 										wt				: block.wt
 									});
+									if(block.section !== sec) {
+										sec++;
+									}
 								});
+								var sections = new Array();
+								var j = 0;
+								while (j < sec) {
+									var section = {};
+									if (group.presentBlockBy && group.presentBlockBy === 'dates' && group.dates && group.dates.length > 0) {
+										section.beginDate = group.dates[j].beginDate;
+										section.endDate		= group.dates[j].endDate;
+									}
+									sections.push(section);
+									j++;
+								}
 								var new_roster = new Roster({
 									student		: student,
 									status		: 'pending',
@@ -191,7 +207,8 @@ module.exports = {
 									minGrade	: group.minGrade,
 									minTrack	: group.minTrack,
 									org				: group.org,
-									orgUnit		: group.orgUnit
+									orgUnit		: group.orgUnit,
+									sections 	: sections
 								});
 								new_roster.save()
 									.then(() => {
@@ -359,12 +376,12 @@ module.exports = {
 			.populate({
 				path: 'group',
 				model: 'groups',
-				select: 'code _id name beginDate endDate',
+				select: 'code _id name beginDate endDate presentBlockBy lapse',
 				populate: [
 					{
 						path: 'course',
 						model: 'courses',
-						select: 'title _id code blocks numBlocks'
+						select: 'title _id code blocks numBlocks duration durationUnits'
 					},
 					{
 						path: 'instructor',
@@ -382,20 +399,23 @@ module.exports = {
 							lastSeenBlock = item.grades[item.grades.length - 1].block;
 						}
 						send_groups.push({
-							code: 					item.group.code,
-							groupid: 				item.group._id,
-							name: 					item.group.name,
-							course: 				item.group.course.title,
-							courseid: 			item.group.course._id,
-							courseCode: 		item.group.course.code,
-							courseBlocks:		item.group.course.numBlocks,
-							instructor: 		item.group.instructor.person.name + ' ' + item.group.instructor.person.fatherName,
-							beginDate: 			item.group.beginDate,
-							endDate: 				item.group.endDate,
-							myStatus: 			item.status,
-							track: 					item.track,
-							firstBlock: 		item.group.course.blocks[0],
-							lastSeenBlock:	lastSeenBlock
+							code						: item.group.code,
+							groupid					: item.group._id,
+							name						: item.group.name,
+							course					: item.group.course.title,
+							courseid				: item.group.course._id,
+							courseCode			: item.group.course.code,
+							courseBlocks		: item.group.course.numBlocks,
+							courseDuration	: item.group.course.duration + '' +item.group.course.durationUnits,
+							instructor			: item.group.instructor.person.name + ' ' + item.group.instructor.person.fatherName,
+							presentBlockBy	: item.group.presentBlockBy,
+							lapse						: item.group.lapse,
+							beginDate				: item.group.beginDate,
+							endDate					: item.group.endDate,
+							myStatus				: item.status,
+							track						: item.track,
+							firstBlock			: item.group.course.blocks[0],
+							lastSeenBlock		: lastSeenBlock
 						});
 					});
 					res.status(200).json({
@@ -447,14 +467,15 @@ module.exports = {
 					var new_block		= {};
 					blocks.forEach(function(block) {
 						new_block = {
-							id			: block._id,
-							title		: block.title,
-							section : block.section,
-							number	: block.number,
-							order 	: block.order,
-							track		: false,
+							id						: block._id,
+							title					: block.title,
+							section 			: block.section,
+							number				: block.number,
+							order 				: block.order,
+							type					: block.type,
+							track					: false,
 							questionnarie : false,
-							task		: false
+							task					: false
 						};
 						item.grades.forEach(function(grade) {
 							if(grade.block + '' === block._id + '') {
@@ -746,6 +767,7 @@ module.exports = {
 							track			: parseInt(item.track) + '%',
 							minTrack	: item.minTrack + '%',
 							pass			: item.pass,
+							passDate	: item.passDate,
 							blocks		: blocks
 						}
 					});
@@ -823,244 +845,335 @@ module.exports = {
 		if(req.query.lastid) {
 			lastid = req.query.lastid;
 		}
+		// buscar Roster del alumno
 		Roster.findOne({student: key_user._id, group: groupid})
-			.populate({
+			.populate([{
 				path: 'group',
-				select: 'course admin',
-				populate: {
+				select: 'course code admin presentBlockBy beginDate endDate dates lapse',
+				populate: [{
 					path: 'course',
 					match: { isVisible: true, status: 'published'},
-					select: 'blocks numBlocks'
+					select: 'blocks numBlocks code'
+				},{
+					path: 'dates',
+					select: 'beginDate endDate'
 				}
-			})
+				]
+			},
+			{
+				path: 'grades.block',
+				select: 'section'
+			}
+			])
 			.then((item) => {
 				var prevblockid = '';
 				var nextblockid = '';
 				const studentStatus = item.status;
 				const blocks = item.group.course.blocks;
+				// Existe el roster? Si no existe, quiere decir que el alumno no está enrolado a este grupo
 				if(item) {
-					Block.findById(blockid)
-						.populate(
-							[
-								{
-									path: 'questionnarie',
-									match: { isVisible: true },
-									select: 'type begin minimum maxAttempts questions w'
-								},
-								{
-									path: 'task',
-									match: { isVisible: true, status: 'published' },
-									select: 'items'
-								}
-							]
-						)
-						.then((block) => {
-							if(block) {
-								var grades = new Array();
-								var currentBlockGrade = 0;
-								var lastAttempt = 0;
-								var numAttempts = 0;
-								if(item.grades && item.grades.length > 0) {
-									grades = item.grades;
-								}
-								var blocksPresented = 0;
-								var blocksPending 	= 2;
-								if(item.group.admin && item.group.admin.blocksPending) {
-									blocksPending = item.group.admin.blocksPending;
-								}
-								if(grades.length > 0) {
-									//var myGrade = {};
-									var lastIndex = 0;
-									var i = 0;
-									var track = 0;
-									grades.forEach(function(grade) {
-										const blockString = grade.block + '';
-										if(blockString === lastid) {
-											//myGrade = grade.block;
-											lastIndex = i;
-										}
-										if(blockString === blockid) {
-											currentBlockGrade = grade.maxGradeQ;
-											lastAttempt				= grade.lastAttemptQ;
-											numAttempts				= grade.numAttempts;
-											track 						= grade.track;
-										}
-										i++;
-									});
+					// Averiguamos si el bloque debe presentarse por fecha y/o por lapso (también fecha)
+					// En todo caso, ambas fechas deben ser menores a la actual.
+					const now				= new Date();
+					var 	ok				= true;
+					var 	cause 		= '';
+					var 	save 			= false;
+					//var 	new_date	= new Date();
+					if(item.group.presentBlockBy && item.group.presentBlockBy === 'dates'){
+						if(item.group.beginDate && item.group.beginDate > now ) {
+							ok 		= false;
+							cause = 'Course will begin at ' + item.group.beginDate;
+						} else
+						if(item.group.endDate && item.group.endDate < now) {
+							ok 		= false;
+							cause = 'Course ended at ' + item.group.endDate;
+						}
+					}
 
-									if(lastid !== 'empty') {
-										grades[lastIndex].track = 100;
-									}
-									/*
-									if(Object.keys(myGrade).length === 0) { // Existe el bloque
-										if(lastid !== 'empty') {
-											console.log(myGrade);
-											myGrade.track = 100;
-											grades.push(myGrade);
-											blocksPresented++;
-										}
-									}
-									*/
-								} else { // No existe el bloque
-									if(lastid !== 'empty') {
-										grades = [{
-											block: lastid,
-											track: 100
-										}];
-										blocksPresented++;
-									}
-								}
-								item.grades = grades;
-								item.save()
-									.catch((err) => {
-										Err.sendError(res,err,'group_controller','nextBlock -- Saving item --');
-									});
-								var blockIndex 	= blocks.findIndex(blockIndex => blockIndex == blockid + '');
-								if(blockIndex === -1) {
-									res.status(404).json({
-										'status': 404,
-										'message': 'Error XXXX: Data integrity error. Block not found. Please notify administrator'
-									});
-									return;
-								} else if (blocks.length === 1) {
-									nextblockid = '';
-									prevblockid = '';
-								} else if (blockIndex === 0) {
-									nextblockid = blocks[blockIndex + 1];
-								} else if (blockIndex > 0 && blockIndex < blocks.length - 1) {
-									nextblockid = blocks[blockIndex + 1];
-									prevblockid = blocks[blockIndex - 1];
-								} else if (blockIndex === blocks.length - 1 && blockIndex !== 0) {
-									prevblockid = blocks[blockIndex - 1];
-								}
-								const send_block = {
-									blockCode				: block.code,
-									blockType				: block.type,
-									blockTitle			: block.title,
-									blockSection		:	block.section,
-									blockNumber			: block.number,
-									blockDuration		: '0h',
-									blockContent		:	block.content,
-									blockMedia			: block.media,
-									blockMinimumTime: block.defaultmin,
-									blockTrack			: false,
-									blockCurrentId	:	block._id,
-									blockPrevId			:	prevblockid,
-									blockNextId			:	nextblockid
-								};
-								if(block.type === 'textVideo' && block.begin) {
-									send_block.blockBegin = true;
-								}
-								if(track > 0) {
-									send_block.blockTrack = true;
-								}
-								if(block.duration > 0) {
-									send_block.blockDuration = block.duration + block.durationUnits;
-								}
-								if(block.type === 'questionnarie' && block.questionnarie) {
-									send_block.maxGrade			= currentBlockGrade;
-									send_block.attempts			= numAttempts;
-									if(lastAttempt === undefined) {
-										send_block.lastAttempt = 'never';
-									} else {
-										send_block.lastAttempt	= TA.ago(lastAttempt);
-									}
-									const questionnarie 		= block.questionnarie;
-									const questions 				= questionnarie.questions;
-									var send_questionnarie 	= {};
-									var send_questions = new Array();
-									questions.forEach(function(q) {
-										var send_question = {};
-										if(q.header) 			{send_question.header 		= q.header;}
-										if(q.footer) 			{send_question.footer 		= q.footer;}
-										if(q.footerShow) 	{send_question.footerShow = q.footerShow;}
-										if(q.type) 				{send_question.type 			= q.type;}
-										if(q.w) 					{send_question.w 					= q.w;}
-										if(q.label)				{send_question.label 			= q.label;}
-										if(q.text) 				{send_question.text 			= q.text;}
-										if(q.help) 				{send_question.help 			= q.help;}
-										if(q.group && q.group.length > 0) 	{send_question.group = q.group;}
-										if(q.options && q.options.length > 0) {
-											var options = new Array();
-											q.options.forEach(function(o) {
-												options.push({
-													name	: o.name,
-													value	: o.value
-												});
-											});
-											send_question.options = options;
-										}
-										var answers = new Array();
-										var answer = {};
-										q.answers.forEach(function(a) {
-											answer = {
-												type	: a.type,
-												index	: a.index,
-												text	: a.text,
-												tf		: a.tf,
-											};
-											if(a.group && a.group.length > 0) {
-												answer.group = a.group;
-											}
-										});
-										answers.push(answer);
-										send_question.answers = answers;
-										send_questions.push(send_question);
-									});
-									send_questionnarie = {
-										type					: questionnarie.type,
-										begin					: questionnarie.begin,
-										minimum				: questionnarie.minimum,
-										maxAttempts		: questionnarie.maxAttempts,
-										//attempts			: numAttempts,
-										//lastGrade			: lastGrade,
-										w							: questionnarie.w,
-										questions			: send_questions
-									};
-									send_block.questionnarie = send_questionnarie;
-								}
-								if(block.type === 'task' && block.task) {
-									var task = block.task;
-									var send_items = new Array();
-									task.items.forEach(function(item) {
-										var send_item={
-											text: item.text,
-											type: item.type
-										};
-										if(item.header) {send_item.header = item.header;}
-										if(item.footer) {send_item.footer = item.footer;}
-										if(item.label) 	{send_item.label	= item.label; }
-										if(item.files && item.files.length > 0) 	{send_item.files 	= item.files;	}
-										send_items.push(send_item);
-									});
-									send_block.tasks= send_items;
-								}
-								if(studentStatus === 'pending' && blocksPresented > blocksPending) {
-									res.status(404).json({
-										'status': 404,
-										'message': 'Your student status is pending and you can only have -' + blocksPending + '- free blocks'
-									});
-								} else if (studentStatus === 'remove') {
-									res.status(404).json({
-										'status': 200,
-										'message': 'Your student status is remove and you cannot have blocks from this course'
-									});
-								} else {
-									res.status(200).json({
-										'status': 200,
-										'message': send_block
-									});
-								}
-							} else {
-								res.status(404).json({
-									'status': 404,
-									'message': 'Block requested is not found'
-								});
+					var grades = new Array();
+					var currentBlockGrade = 0;
+					var lastAttempt = 0;
+					var numAttempts = 0;
+					var lastIndex = 0;
+					var lastSection = 0;
+					var section 		= 0;
+					var nextSection = lastSection + 1;
+					if(item.grades && item.grades.length > 0) {
+						grades = item.grades;
+					}
+					var blocksPresented = 0;
+					var blocksPending 	= 2;
+					if(item.group.admin && item.group.admin.blocksPending) {
+						blocksPending = item.group.admin.blocksPending;
+					}
+					if(grades.length > 0) {
+						//var myGrade = {};
+						var i = 0;
+						var track = 0;
+						grades.forEach(function(grade) {
+							const blockString = grade.block._id + '';
+							if(blockString === lastid) {
+								//myGrade = grade.block;
+								lastIndex 	= i;
+								lastSection = grade.block.section - 1;
+								nextSection = grade.block.section;
 							}
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'group_controller','nextBlock -- Finding Block --');
+							if(blockString === blockid) {
+								currentBlockGrade = grade.maxGradeQ;
+								lastAttempt				= grade.lastAttemptQ;
+								numAttempts				= grade.numAttempts;
+								track 						= grade.track;
+								section 					= grade.block.section -1 ;
+							}
+							i++;
+						}); // grades.forEach
+
+						if(lastid !== 'empty' && grades[lastIndex].track !== 100) {
+							grades[lastIndex].track = 100;
+							save 										= true;
+						}
+					} else { // No existe el roster del bloque (aunque sería raro porque ya se debió crear)
+						if(lastid !== 'empty') {
+							grades = [{
+								block: lastid,
+								track: 100
+							}];
+							blocksPresented++;
+							save = true;
+						}
+					}
+					if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].beginDate && item.sections[section].beginDate > now) {
+						ok = false;
+						cause = 'Section '+ section +' will begin at ' + item.sections[section].beginDate;
+					}
+					if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].endDate && item.sections[section].endDate < now) {
+						ok = false;
+						cause = 'Section '+ section +' was closed at ' + item.sections[section].endDate;
+					}
+					if(item.sections) {
+						if(item.sections[lastSection]) {
+							if(!item.sections[lastSection].viewed && lastid !== 'empty'){
+								item.sections[lastSection].viewed = now;
+								if(item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){
+									if(item.sections[nextSection]) {
+										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
+										if(item.sections[lastSection].endDate){
+											delete item.sections[lastSection].endDate;
+										}
+									} else {
+										item.sections.push({
+											beginDate	: expiresIn(now, item.group.lapse)
+										});
+									}
+								}
+								save = true;
+							}
+						} else if(lastid !== 'empty'){
+							if(item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){
+								item.sections.push({
+									viewed		: now
+								});
+								item.sections.push({
+									beginDate	: expiresIn(now, item.group.lapse)
+								});
+								save = true;
+							} else {
+								item.sections.push({
+									viewed: now
+								});
+								save = true;
+							}
+						}
+					} else if(lastid !== 'empty' && lastSection === 0){
+						item.sections = new Array();
+						item.sections.push({
+							viewed: now
 						});
+						save = true;
+					}
+					if(save) { // si el tracking ya se registró y/o no hay tracking que guardar, pues para que molestar a MongoDB
+						item.grades = grades;
+						item.save()
+							.catch((err) => {
+								Err.sendError(res,err,'group_controller','nextBlock -- Saving item --');
+							});
+					}
+					if(ok) {
+						var blockIndex 	= blocks.findIndex(blockIndex => blockIndex == blockid + '');
+						if(blockIndex === -1) {
+							res.status(404).json({
+								'status': 404,
+								'message': 'Block not found. Please check groupid and blockid. '
+							});
+							return;
+						} else if (blocks.length === 1) {
+							nextblockid = '';
+							prevblockid = '';
+						} else if (blockIndex === 0) {
+							nextblockid = blocks[blockIndex + 1];
+						} else if (blockIndex > 0 && blockIndex < blocks.length - 1) {
+							nextblockid = blocks[blockIndex + 1];
+							prevblockid = blocks[blockIndex - 1];
+						} else if (blockIndex === blocks.length - 1 && blockIndex !== 0) {
+							prevblockid = blocks[blockIndex - 1];
+						}
+						// buscar el bloque solicitado
+						Block.findById(blockid)
+							.populate(
+								[
+									{
+										path: 'questionnarie',
+										match: { isVisible: true },
+										select: 'type begin minimum maxAttempts questions w'
+									},
+									{
+										path: 'task',
+										match: { isVisible: true, status: 'published' },
+										select: 'items'
+									}
+								]
+							)
+							.then((block) => {
+								if(block) {
+									const send_block = {
+										courseCode				: item.group.course.code,
+										groupCode					: item.group.code,
+										blockCode					: block.code,
+										blockType					: block.type,
+										blockTitle				: block.title,
+										blockSection			:	block.section,
+										blockNumber				: block.number,
+										blockDuration			: '0h',
+										blockContent			:	block.content,
+										blockMedia				: block.media,
+										blockMinimumTime	: block.defaultmin,
+										blockTrack				: false,
+										blockCurrentId		:	block._id,
+										blockPrevId				:	prevblockid,
+										blockNextId				:	nextblockid,
+										studentid					: key_user._id,
+										rosterid					: item._id
+									};
+									if(block.type === 'textVideo' && block.begin) {
+										send_block.blockBegin = true;
+									}
+									if(track > 0) {
+										send_block.blockTrack = true;
+									}
+									if(block.duration > 0) {
+										send_block.blockDuration = block.duration + block.durationUnits;
+									}
+									if(block.type === 'questionnarie' && block.questionnarie) {
+										send_block.maxGrade			= currentBlockGrade;
+										send_block.attempts			= numAttempts;
+										if(lastAttempt === undefined) {
+											send_block.lastAttempt = 'never';
+										} else {
+											send_block.lastAttempt	= TA.ago(lastAttempt);
+										}
+										const questionnarie 		= block.questionnarie;
+										const questions 				= questionnarie.questions;
+										var send_questionnarie 	= {};
+										var send_questions = new Array();
+										questions.forEach(function(q) {
+											var send_question = {};
+											if(q.header) 			{send_question.header 		= q.header;			}
+											if(q.footer) 			{send_question.footer 		= q.footer;			}
+											if(q.footerShow) 	{send_question.footerShow = q.footerShow;	}
+											if(q.type) 				{send_question.type 			= q.type;				}
+											if(q.w) 					{send_question.w 					= q.w;					}
+											if(q.label)				{send_question.label 			= q.label;			}
+											if(q.text) 				{send_question.text 			= q.text;				}
+											if(q.help) 				{send_question.help 			= q.help;				}
+											if(q.display)			{send_question.display 		= q.display;		}
+											if(q.group && q.group.length > 0) 	{send_question.group = q.group;}
+											if(q.options && q.options.length > 0) {
+												var options = new Array();
+												q.options.forEach(function(o) {
+													options.push({
+														name	: o.name,
+														value	: o.value
+													});
+												});
+												send_question.options = options;
+											}
+											var answers = new Array();
+											var answer = {};
+											q.answers.forEach(function(a) {
+												answer = {
+													type	: a.type,
+													index	: a.index,
+													text	: a.text,
+													tf		: a.tf,
+												};
+												if(a.group && a.group.length > 0) {
+													answer.group = a.group;
+												}
+											});
+											answers.push(answer);
+											send_question.answers = answers;
+											send_questions.push(send_question);
+										});
+										send_questionnarie = {
+											type					: questionnarie.type,
+											begin					: questionnarie.begin,
+											minimum				: questionnarie.minimum,
+											maxAttempts		: questionnarie.maxAttempts,
+											//attempts			: numAttempts,
+											//lastGrade			: lastGrade,
+											w							: questionnarie.w,
+											questions			: send_questions
+										};
+										send_block.questionnarie = send_questionnarie;
+									}
+									if(block.type === 'task' && block.task) {
+										var task = block.task;
+										var send_items = new Array();
+										task.items.forEach(function(item) {
+											var send_item={
+												text: item.text,
+												type: item.type
+											};
+											if(item.header) {send_item.header = item.header;}
+											if(item.footer) {send_item.footer = item.footer;}
+											if(item.label) 	{send_item.label	= item.label; }
+											if(item.files && item.files.length > 0) 	{send_item.files 	= item.files;	}
+											send_items.push(send_item);
+										});
+										send_block.tasks= send_items;
+									}
+									if(studentStatus === 'pending' && blocksPresented > blocksPending) {
+										res.status(404).json({
+											'status': 404,
+											'message': 'Your student status is pending and you can only have -' + blocksPending + '- free blocks'
+										});
+									} else if (studentStatus === 'remove') {
+										res.status(404).json({
+											'status': 200,
+											'message': 'Your student status is remove and you cannot have blocks from this course'
+										});
+									} else {
+										res.status(200).json({
+											'status': 200,
+											'message': send_block
+										});
+									}
+								} else { // if(block)
+									res.status(404).json({
+										'status': 404,
+										'message': 'Block requested is not found'
+									});
+								}
+							}) // then((block))
+							.catch((err) => {
+								Err.sendError(res,err,'group_controller','nextBlock -- Finding Block --');
+							});
+					} else { // if(ok)
+						res.status(404).json({
+							'status': 404,
+							'message': 'Block cannot be displayed because: ' + cause
+						});
+					}
 				} else {
 					res.status(404).json({
 						'status': 404,
@@ -1240,3 +1353,9 @@ module.exports = {
 
 
 // Private Functions -----------------------------------------------------------
+
+
+function expiresIn(date, numDays) {
+	var dateObj = new Date(date);
+	return dateObj.setDate(dateObj.getDate() + numDays);
+}

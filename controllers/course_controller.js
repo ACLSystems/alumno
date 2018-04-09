@@ -148,18 +148,19 @@ module.exports = {
 				var send_courses = new Array();
 				courses.forEach(function(course) {
 					send_courses.push({
-						id: 					course._id,
-						title: 				course.title,
-						code: 				course.code,
-						image: 				course.image,
-						description: 	course.description,
-						categories: 	course.categories,
-						isVisible: 		course.isVisible,
-						version: 			course.version,
-						status: 			course.status,
-						price: 				course.price,
-						author: 			course.author,
-						numBlocks: 		course.numBlocks
+						id					: course._id,
+						title				: course.title,
+						code				: course.code,
+						image				: course.image,
+						description	: course.description,
+						categories	: course.categories,
+						isVisible		: course.isVisible,
+						version			: course.version,
+						status			: course.status,
+						price				: course.price,
+						author			: course.author,
+						duration		: course.duration + '' + course.durationUnits,
+						numBlocks		: course.numBlocks
 					});
 				});
 				res.status(200).json({
@@ -217,7 +218,8 @@ module.exports = {
 								keywords: 		course.keywords,
 								isVisible: 		course.isVisible,
 								price: 				course.price,
-								author: 			course.author
+								author: 			course.author,
+								duration		: course.duration + '' + course.durationUnits
 							});
 						});
 						res.status(200).json({
@@ -550,31 +552,48 @@ module.exports = {
 			query = { _id: req.query.id };
 		}
 		Course.findOne(query)
+			.populate({
+				path: 'blocks',
+				select: 'id title type section number duration durationUnits w wq wt',
+				options: { sort: {order: 1} }
+			})
 			.then((course) => {
 				if(course) {
 					if(course.isVisible || course.status === 'published') {
-						Block.find({ _id: { $in: course.blocks }})
-							.sort({order:1})
-							.then((blocks) => {
-								var send_blocks = new Array();
-								blocks.forEach(function(block) {
-									if(block.isVisible && block.status === 'published') {
-										send_blocks.push({
-											id: 						block._id,
-											title: 					block.title,
-											section: 				block.section,
-											number: 				block.number
-										});
-									}
-								});
-								res.status(200).json({
-									'status': 200,
-									'message': {
-										blockNum: send_blocks.length,
-										blocks: 	send_blocks
-									}
-								});
-							});
+						const blocks = course.blocks;
+						var send_blocks = new Array();
+						blocks.forEach(function(block) {
+							if(block.isVisible && block.status === 'published') {
+								var send_block = {};
+								send_block = {
+									id			: block._id,
+									title		: block.title,
+									section	: block.section,
+									number	: block.number,
+									type		: block.type
+								};
+								if(block.duration) {
+									send_block.duration = block.duration + block.durationUnits;
+								}
+								if(block.w) {
+									send_block.w 	= block.w;
+								}
+								if(block.wq) {
+									send_block.wq = block.wq;
+								}
+								if(block.wt) {
+									send_block.wt = block.wt;
+								}
+								send_blocks.push(send_block);
+							}
+						});
+						res.status(200).json({
+							'status': 200,
+							'message': {
+								blockNum: send_blocks.length,
+								blocks	: send_blocks
+							}
+						});
 					} else {
 						res.status(404).json({
 							'status': 404,

@@ -129,6 +129,20 @@ GradesSchema.virtual('numAttempts').get(function() {
 
 module.exports = GradesSchema;
 
+const SectionSchema = new Schema ({
+	viewed: {
+		type: Date
+	},
+	beginDate: {
+		type: Date
+	},
+	endDate: {
+		type: Date
+	}
+});
+
+module.exports = SectionSchema;
+
 const RosterSchema = new Schema ({
 	student: {
 		type: Schema.Types.ObjectId,
@@ -152,6 +166,7 @@ const RosterSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'orgUnits'
 	},
+	sections: [SectionSchema],
 	finalGrade: {
 		type: Number,
 		min: [0,'Minimum value is 0'],
@@ -179,6 +194,9 @@ const RosterSchema = new Schema ({
 	pass: {
 		type: Boolean,
 		defaul: false
+	},
+	passDate: {
+		type: Date
 	}
 });
 
@@ -201,9 +219,9 @@ RosterSchema.pre('save', function(next) {
 	this.track = parseInt(track / i);
 
 	if(this.finalGrade > this.minGrade && this.track > this.minTrack) {
-		this.pass = true;
+		this.pass 		= true;
+		this.passDate	= Date.now;
 	}
-
 	next();
 });
 

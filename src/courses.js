@@ -95,6 +95,15 @@ const CoursesSchema = new Schema ({
 		type: String,
 		enum: ['draft','published'],
 		default: 'draft'
+	},
+	duration: {
+		type: Number,
+		min: [0, 'Course duration cannot be less than 0'],
+		default: 0
+	},
+	durationUnits: {
+		type: String,
+		enum: ['s', 'm', 'h', 'd', 'w', 'mo', 'y']
 	}
 });
 

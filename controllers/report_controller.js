@@ -125,7 +125,8 @@ module.exports = {
 										student 		: roster.student.person.name + ' ' + roster.student.person.fatherName + ' ' + roster.student.person.motherName + ' (' + roster.student.person.email + ')',
 										finalGrade 	: roster.finalGrade,
 										track 			: roster.track,
-										pass 				: roster.pass
+										pass 				: roster.pass,
+										passDate		: roster.passDate
 									};
 									if(roster.track > 0) {
 										averageTrack = averageTrack + roster.track;
