@@ -73,7 +73,7 @@ module.exports = {
 	}, //byOrgUnit
 
 	gradesByCampus(req,res) {
-		const key_user = res.locals.user;
+		const key_user 	= res.locals.user;
 		if(key_user.orgUnit.type === 'state') {
 			OrgUnit.find({parent: key_user.orgUnit.name, org: key_user.org._id})
 				.select('_id')
