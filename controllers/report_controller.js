@@ -79,7 +79,7 @@ module.exports = {
 				.select('_id')
 				.then((ous) => {
 					Roster.find({ orgUnit: {$in: ous} })
-						.populate('student', 'person')
+						.populate('student', 'name person')
 						.populate({
 							path: 'group',
 							select: 'code course',
@@ -91,7 +91,7 @@ module.exports = {
 						})
 						.populate('orgUnit', 'name longName')
 						.sort({orgUnit: 1, group: 1})
-						.select('student.person finalGrade track pass passDate')
+						.select('student finalGrade track pass passDate')
 						.then((rosters)  => {
 							var send_rosters 		= new Array();
 							var send_group			= new Array();
@@ -118,7 +118,7 @@ module.exports = {
 									duration		= roster.group.course.duration + roster.group.course.durationUnits;
 									send_roster  = {
 										studentName : roster.student.person.fullName,
-										username		: roster.student.person.email,
+										username		: roster.student.name,
 										finalGrade 	: roster.finalGrade,
 										track 			: roster.track,
 										pass 				: roster.pass,
@@ -136,7 +136,7 @@ module.exports = {
 								} else if (lastGroup === roster.group.code) {
 									send_roster  = {
 										studentName : roster.student.person.fullName,
-										username		: roster.student.person.email,
+										username		: roster.student.name,
 										finalGrade 	: roster.finalGrade,
 										track 			: roster.track,
 										pass 				: roster.pass,
@@ -180,7 +180,7 @@ module.exports = {
 									lastOUlong		= roster.orgUnit.longName;
 									send_roster  	= {
 										studentName : roster.student.person.fullName,
-										username		: roster.student.person.email,
+										username		: roster.student.name,
 										finalGrade 	: roster.finalGrade,
 										track 			: roster.track,
 										pass 				: roster.pass,
@@ -243,7 +243,7 @@ module.exports = {
 					}
 				})
 				.sort({group: 1})
-				.select('student.person finalGrade track pass passDate')
+				.select('student finalGrade track pass passDate')
 				.then((rosters)  => {
 					var send_rosters 		= new Array();
 					var send_group			= new Array();
@@ -263,7 +263,7 @@ module.exports = {
 							duration		= roster.group.course.duration + roster.group.course.durationUnits;
 							send_roster  = {
 								studentName : roster.student.person.fullName,
-								username		: roster.student.person.email,
+								username		: roster.student.name,
 								finalGrade 	: roster.finalGrade,
 								track 			: roster.track,
 								pass 				: roster.pass,
@@ -281,7 +281,7 @@ module.exports = {
 						} else if (lastGroup === roster.group.code) {
 							send_roster  = {
 								studentName : roster.student.person.fullName,
-								username		: roster.student.person.email,
+								username		: roster.student.name,
 								finalGrade 	: roster.finalGrade,
 								track 			: roster.track,
 								pass 				: roster.pass,
@@ -322,7 +322,7 @@ module.exports = {
 							duration		= roster.group.course.duration + roster.group.course.durationUnits;
 							send_roster  = {
 								studentName : roster.student.person.fullName,
-								username		: roster.student.person.email,
+								username		: roster.student.name,
 								finalGrade 	: roster.finalGrade,
 								track 			: roster.track,
 								pass 				: roster.pass,
