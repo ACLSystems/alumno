@@ -554,9 +554,10 @@ module.exports = {
 		Course.findOne(query)
 			.populate({
 				path: 'blocks',
-				select: 'id title type section number duration durationUnits w wq wt',
+				select: 'id title type section number duration durationUnits w wq wt isVisible status',
 				options: { sort: {order: 1} }
 			})
+			.select('isVisible')
 			.then((course) => {
 				if(course) {
 					if(course.isVisible || course.status === 'published') {
