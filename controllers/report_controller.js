@@ -98,6 +98,7 @@ module.exports = {
 							var lastGroup				= '';
 							var lastCourse			= '';
 							var duration				= '';
+							var durationUnits		= '';
 							var averageTrack		= 0;
 							var averageGrade		= 0;
 							var studentsPassed 	= 0;
@@ -113,10 +114,11 @@ module.exports = {
 
 								}
 								if(lastGroup === '') {
-									lastGroup 	= roster.group.code;
-									lastCourse 	= roster.group.course.title;
-									duration		= roster.group.course.duration + roster.group.course.durationUnits;
-									send_roster  = {
+									lastGroup 		= roster.group.code;
+									lastCourse 		= roster.group.course.title;
+									duration			= roster.group.course.duration;
+									durationUnits = units(roster.group.course.durationUnits,duration);
+									send_roster  	= {
 										studentName : roster.student.person.fullName,
 										username		: roster.student.name,
 										finalGrade 	: roster.finalGrade,
@@ -161,6 +163,7 @@ module.exports = {
 										group						: lastGroup,
 										course					: lastCourse,
 										duration				: duration,
+										durationUnits		: durationUnits,
 										totalStudents		: ts,
 										studentsOnTrack : at,
 										averageTrack		: averageTrack,
@@ -175,7 +178,8 @@ module.exports = {
 									send_group 		= new Array();
 									lastGroup 		= roster.group.code;
 									lastCourse 		= roster.group.course.title;
-									duration			= roster.group.course.duration + roster.group.course.durationUnits;
+									duration			= roster.group.course.duration;
+									durationUnits = units(roster.group.course.durationUnits,duration);
 									lastOU 				= roster.orgUnit.name;
 									lastOUlong		= roster.orgUnit.longName;
 									send_roster  	= {
@@ -207,6 +211,7 @@ module.exports = {
 								group						: lastGroup,
 								course					: lastCourse,
 								duration				: duration,
+								durationUnits		: durationUnits,
 								totalStudents		: ts,
 								studentsOnTrack : at,
 								averageTrack		: averageTrack,
@@ -250,6 +255,7 @@ module.exports = {
 					var lastGroup				= '';
 					var lastCourse			= '';
 					var duration				= '';
+					var durationUnits		= '';
 					var averageTrack		= 0;
 					var averageGrade		= 0;
 					var studentsPassed 	= 0;
@@ -258,10 +264,11 @@ module.exports = {
 					rosters.forEach(function(roster) {
 						var send_roster = {};
 						if(lastGroup === '') {
-							lastGroup 	= roster.group.code;
-							lastCourse 	= roster.group.course.title;
-							duration		= roster.group.course.duration + roster.group.course.durationUnits;
-							send_roster  = {
+							lastGroup 		= roster.group.code;
+							lastCourse 		= roster.group.course.title;
+							duration			= roster.group.course.duration;
+							durationUnits = units(roster.group.course.durationUnits,duration);
+							send_roster  	= {
 								studentName : roster.student.person.fullName,
 								username		: roster.student.name,
 								finalGrade 	: roster.finalGrade,
@@ -305,6 +312,7 @@ module.exports = {
 								group						: lastGroup,
 								course					: lastCourse,
 								duration				: duration,
+								durationUnits		: durationUnits,
 								totalStudents		: ts,
 								studentsOnTrack : at,
 								averageTrack		: averageTrack,
@@ -319,7 +327,8 @@ module.exports = {
 							send_group 		= new Array();
 							lastGroup 	= roster.group.code;
 							lastCourse 	= roster.group.course.title;
-							duration		= roster.group.course.duration + roster.group.course.durationUnits;
+							duration		= roster.group.course.duration;
+							durationUnits = units(roster.group.course.durationUnits,duration);
 							send_roster  = {
 								studentName : roster.student.person.fullName,
 								username		: roster.student.name,
@@ -348,6 +357,7 @@ module.exports = {
 						group						: lastGroup,
 						course					: lastCourse,
 						duration				: duration,
+						durationUnits		: durationUnits,
 						totalStudents		: ts,
 						studentsOnTrack : at,
 						averageTrack		: averageTrack,
@@ -368,3 +378,45 @@ module.exports = {
 		}
 	}
 };
+
+// PRIVATE Functions
+
+function units(unit,cnt) {
+	if(unit === 'h') {
+		if(cnt === 1) {
+			return 'hora';
+		} else {
+			return 'horas';
+		}
+	} else if(unit === 'm') {
+		if(cnt === 1) {
+			return 'minuto';
+		} else {
+			return 'minutos';
+		}
+	} else if(unit === 's') {
+		if(cnt === 1) {
+			return 'segundo';
+		} else {
+			return 'segundos';
+		}
+	} else if(unit === 'd') {
+		if(cnt === 1) {
+			return 'día';
+		} else {
+			return 'días';
+		}
+	} else if(unit === 'mo') {
+		if(cnt === 1) {
+			return 'mes';
+		} else {
+			return 'meses';
+		}
+	} else if(unit === 'y') {
+		if(cnt === 1) {
+			return 'año';
+		} else {
+			return 'años';
+		}
+	}
+}
