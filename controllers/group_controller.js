@@ -743,7 +743,7 @@ module.exports = {
 				select: 'course',
 				populate: {
 					path: 'course',
-					select: 'blocks duration durationUnits',
+					select: 'title blocks duration durationUnits',
 					populate: {
 						path: 'blocks',
 						select: 'title section number'
@@ -776,6 +776,7 @@ module.exports = {
 					});
 					var send_grade = {
 						name			: key_user.person.fullName,
+						course		: item.group.course.title,
 						finalGrade: item.finalGrade,
 						minGrade	: item.minGrade,
 						track			: parseInt(item.track) + '%',
