@@ -806,7 +806,7 @@ module.exports = {
 					select: 'resources code title',
 					populate: {
 						path: 'resources',
-						select: 'title content',
+						select: 'title content embedded',
 						match: { status: 'published', isVisible: true}
 					}
 				}
