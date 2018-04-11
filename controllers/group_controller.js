@@ -1014,8 +1014,18 @@ module.exports = {
 								}
 								save = true;
 							} else {
-								item.sections[lastSection].viewed = now;
-								save = true;
+								if(item.sections && item.sections.length > 0 && item.sections[lastSection]){
+									item.sections[lastSection].viewed = now;
+									save = true;
+								}	 else if (!item.sections) {
+									item.sections = new Array();
+									var h = 0;
+									while (h < lastSection) {
+										item.sections.push({});
+									}
+									item.sections[lastSection].viewed = now;
+									save = true;
+								}
 							}
 						}
 					} else if(lastid !== 'empty' && lastSection === 0){
