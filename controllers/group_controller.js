@@ -743,7 +743,7 @@ module.exports = {
 				select: 'course',
 				populate: {
 					path: 'course',
-					select: 'blocks',
+					select: 'blocks duration durationUnits',
 					populate: {
 						path: 'blocks',
 						select: 'title section number'
@@ -774,18 +774,23 @@ module.exports = {
 							blocks.push(block);
 						}
 					});
+					var send_grade = {
+						name			: key_user.person.fullName,
+						finalGrade: item.finalGrade,
+						minGrade	: item.minGrade,
+						track			: parseInt(item.track) + '%',
+						minTrack	: item.minTrack + '%',
+						pass			: item.pass,
+						passDate	: item.passDate,
+						blocks		: blocks
+					};
+					if(item.group.course.duration) {
+						send_grade.duration 			= item.group.course.duration;
+						send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
+					}
 					res.status(200).json({
 						'status': 200,
-						'message': {
-							name			: key_user.person.fullName,
-							finalGrade: item.finalGrade,
-							minGrade	: item.minGrade,
-							track			: parseInt(item.track) + '%',
-							minTrack	: item.minTrack + '%',
-							pass			: item.pass,
-							passDate	: item.passDate,
-							blocks		: blocks
-						}
+						'message': send_grade
 					});
 				} else {
 					res.status(404).json({
@@ -1389,7 +1394,7 @@ function expiresIn(date, numDays) {
 	return dateObj.setDate(dateObj.getDate() + numDays);
 }
 
-/*
+
 function units(unit,cnt) {
 	if(unit === 'h') {
 		if(cnt === 1) {
@@ -1429,4 +1434,3 @@ function units(unit,cnt) {
 		}
 	}
 }
-*/
