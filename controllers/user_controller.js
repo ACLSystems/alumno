@@ -896,6 +896,11 @@ module.exports = {
 						'users': users
 					});
 					return;
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'No users without OU found'
+					});
 				}
 			})
 			.catch((err) => {
