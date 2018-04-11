@@ -1388,3 +1388,45 @@ function expiresIn(date, numDays) {
 	var dateObj = new Date(date);
 	return dateObj.setDate(dateObj.getDate() + numDays);
 }
+
+/*
+function units(unit,cnt) {
+	if(unit === 'h') {
+		if(cnt === 1) {
+			return 'hora';
+		} else {
+			return 'horas';
+		}
+	} else if(unit === 'm') {
+		if(cnt === 1) {
+			return 'minuto';
+		} else {
+			return 'minutos';
+		}
+	} else if(unit === 's') {
+		if(cnt === 1) {
+			return 'segundo';
+		} else {
+			return 'segundos';
+		}
+	} else if(unit === 'd') {
+		if(cnt === 1) {
+			return 'día';
+		} else {
+			return 'días';
+		}
+	} else if(unit === 'mo') {
+		if(cnt === 1) {
+			return 'mes';
+		} else {
+			return 'meses';
+		}
+	} else if(unit === 'y') {
+		if(cnt === 1) {
+			return 'año';
+		} else {
+			return 'años';
+		}
+	}
+}
+*/
