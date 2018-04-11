@@ -197,6 +197,9 @@ const RosterSchema = new Schema ({
 	},
 	passDate: {
 		type: Date
+	},
+	flag: {
+		type: Number
 	}
 });
 
