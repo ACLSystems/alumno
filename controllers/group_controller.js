@@ -977,49 +977,44 @@ module.exports = {
 						if(item.sections[lastSection]) { // existe el elemento lastSection?
 							if(!item.sections[lastSection].viewed && lastid !== 'empty'){ // si la sección no ha sido vista y mandan el bloque para tracking...
 								item.sections[lastSection].viewed = now;	// entonces registrar la fecha en que se está "viendo" la sección
-								if(item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){ // ahora, si el tipo de presentación de la sección es "lapse"
-									if(item.sections[nextSection] && !item.sections[nextSection].viewed) { // y existe la siguiente sección y no ha sido vista
-										// y existe
-										if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]){
-											item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
-										} else if(item.group.lapse){
-											item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
-										}
-										if(item.sections[lastSection].endDate){
-											delete item.sections[lastSection].endDate;
-										}
+								save = true;
+							}
+							if(item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){ // ahora, si el tipo de presentación de la sección es "lapse"
+								if(item.sections[nextSection] && !item.sections[nextSection].viewed) { // y existe la siguiente sección y no ha sido vista
+									// y existe
+									if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]){
+										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
+									} else if(item.group.lapse){
+										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
 									}
-									if(!item.sections[nextSection]){
-										if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]){
-											item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
-										} else if(item.group.lapse){
-											item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
-										}
+									if(item.sections[lastSection].endDate){
+										delete item.sections[lastSection].endDate;
+									}
+								}
+								if(!item.sections[nextSection]){
+									if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]){
+										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
+									} else if(item.group.lapse){
+										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
 									}
 								}
 								save = true;
 							}
 						} else if(lastid !== 'empty'){
 							if(item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){
-								item.sections.push({
-									viewed		: now
-								});
-								item.sections.push({
-									beginDate	: expiresIn(now, item.group.lapse)
-								});
+								item.sections[lastSection].viewed	= now;
+								if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]) {
+									item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
+								}
 								save = true;
 							} else {
-								item.sections.push({
-									viewed: now
-								});
+								item.sections[lastSection].viewed = now;
 								save = true;
 							}
 						}
 					} else if(lastid !== 'empty' && lastSection === 0){
 						item.sections = new Array();
-						item.sections.push({
-							viewed: now
-						});
+						item.sections[lastSection].viewed = now;
 						save = true;
 					}
 					if(save) { // si el tracking ya se registró y/o no hay tracking que guardar, pues para que molestar a MongoDB
