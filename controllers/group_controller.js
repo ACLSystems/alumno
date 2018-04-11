@@ -393,12 +393,9 @@ module.exports = {
 			.then((items) => {
 				if(items.length > 0) {
 					var send_groups = new Array();
-					var lastSeenBlock = '';
 					items.forEach(function(item) {
-						if(item.grades.length > 0) {
-							lastSeenBlock = item.grades[item.grades.length - 1].block;
-						}
-						send_groups.push({
+						var send_group = {};
+						send_group = {
 							code						: item.group.code,
 							groupid					: item.group._id,
 							name						: item.group.name,
@@ -406,17 +403,25 @@ module.exports = {
 							courseid				: item.group.course._id,
 							courseCode			: item.group.course.code,
 							courseBlocks		: item.group.course.numBlocks,
-							courseDuration	: item.group.course.duration + '' +item.group.course.durationUnits,
 							instructor			: item.group.instructor.person.name + ' ' + item.group.instructor.person.fatherName,
 							presentBlockBy	: item.group.presentBlockBy,
-							lapse						: item.group.lapse,
-							beginDate				: item.group.beginDate,
-							endDate					: item.group.endDate,
 							myStatus				: item.status,
 							track						: item.track,
-							firstBlock			: item.group.course.blocks[0],
-							lastSeenBlock		: lastSeenBlock
-						});
+							firstBlock			: item.group.course.blocks[0]
+						};
+						if(item.group.course.duration) {
+							send_group.duration = item.group.course.duration + item.group.course.durationUnits;
+						}
+						if(item.group.course.beginDate) {
+							send_group.beginDate = item.group.course.beginDate;
+						}
+						if(item.group.course.endDate) {
+							send_group.endDate = item.group.course.endDate;
+						}
+						if(item.group.presentBlockBy === 'lapse' && item.group.lapse) {
+							send_group.lapse = item.group.course.lapse;
+						}
+						send_groups.push(send_group);
 					});
 					res.status(200).json({
 						'status': 200,
@@ -488,10 +493,10 @@ module.exports = {
 							if(block.duration) {
 								new_block.duration = block.duration + block.durationUnits;
 							}
-							if(item.sections && item.sections.length > 0 && item.sections[block.section - 1] && item.sections[block.section - 1].beginDate) {
+							if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].beginDate) {
 								new_block.beginDate = item.sections[block.section - 1].beginDate;
 							}
-							if(item.sections && item.sections.length > 0 && item.sections[block.section - 1] && item.sections[block.section - 1].endDate) {
+							if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].endDate) {
 								new_block.endDate = item.sections[block.section - 1].endDate;
 							}
 						}
@@ -957,6 +962,7 @@ module.exports = {
 						}
 					}
 					const sectionDisp = section;
+					// validar que exista fecha de inicio para la sección. Si existe mandar mensaje de cuándo empezará
 					if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].beginDate && item.sections[section].beginDate > now) {
 						ok = false;
 						cause = 'Section '+ sectionDisp +' will begin at ' + item.sections[section].beginDate;
@@ -967,24 +973,28 @@ module.exports = {
 						cause = 'Section '+ sectionDisp +' was closed at ' + item.sections[section].endDate;
 						causeSP = 'La sección '+ sectionDisp +' terminó el ' + item.sections[section].endDate;
 					}
-					if(item.sections) {
-						if(item.sections[lastSection]) {
-							if(!item.sections[lastSection].viewed && lastid !== 'empty'){
-								item.sections[lastSection].viewed = now;
-								if(item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){
-									if(item.sections[nextSection]) {
-										if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[section]){
-											item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[section]);
+					if(item.sections) { // existe el arreglo sections?
+						if(item.sections[lastSection]) { // existe el elemento lastSection?
+							if(!item.sections[lastSection].viewed && lastid !== 'empty'){ // si la sección no ha sido vista y mandan el bloque para tracking...
+								item.sections[lastSection].viewed = now;	// entonces registrar la fecha en que se está "viendo" la sección
+								if(item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){ // ahora, si el tipo de presentación de la sección es "lapse"
+									if(item.sections[nextSection] && !item.sections[nextSection].viewed) { // y existe la siguiente sección y no ha sido vista
+										// y existe
+										if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]){
+											item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
 										} else if(item.group.lapse){
 											item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
 										}
 										if(item.sections[lastSection].endDate){
 											delete item.sections[lastSection].endDate;
 										}
-									} else {
-										item.sections.push({
-											beginDate	: expiresIn(now, item.group.lapse)
-										});
+									}
+									if(!item.sections[nextSection]){
+										if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]){
+											item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
+										} else if(item.group.lapse){
+											item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
+										}
 									}
 								}
 								save = true;
