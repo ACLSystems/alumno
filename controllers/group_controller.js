@@ -494,10 +494,10 @@ module.exports = {
 								new_block.duration = block.duration + block.durationUnits;
 							}
 							if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].beginDate) {
-								new_block.beginDate = item.sections[block.section - 1].beginDate;
+								new_block.beginDate = item.sections[block.section].beginDate;
 							}
 							if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].endDate) {
-								new_block.endDate = item.sections[block.section - 1].endDate;
+								new_block.endDate = item.sections[block.section].endDate;
 							}
 						}
 						if(block.questionnarie) {
