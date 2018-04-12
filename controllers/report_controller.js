@@ -406,6 +406,12 @@ function units(unit,cnt) {
 		} else {
 			return 'días';
 		}
+	} else if(unit === 'd') {
+		if(cnt === 1) {
+			return 'semana';
+		} else {
+			return 'semanas';
+		}
 	} else if(unit === 'mo') {
 		if(cnt === 1) {
 			return 'mes';
