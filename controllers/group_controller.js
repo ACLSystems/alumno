@@ -491,7 +491,7 @@ module.exports = {
 						});
 						if(block.number === 0) {
 							if(block.duration) {
-								new_block.duration = block.duration + block.durationUnits;
+								new_block.duration = block.duration + ' ' +units(block.durationUnits, block.duration);
 							}
 							if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].beginDate) {
 								new_block.beginDate = item.sections[block.section].beginDate;
