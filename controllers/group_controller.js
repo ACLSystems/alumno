@@ -890,10 +890,11 @@ module.exports = {
 			.then((item) => {
 				var prevblockid = '';
 				var nextblockid = '';
-				const studentStatus = item.status;
-				const blocks = item.group.course.blocks;
 				// Existe el roster? Si no existe, quiere decir que el alumno no está enrolado a este grupo
+				// o hay un error... posiblemente error de token?
 				if(item) {
+					const studentStatus = item.status;
+					const blocks = item.group.course.blocks;
 					// Averiguamos si el bloque debe presentarse por fecha y/o por lapso (también fecha)
 					// En todo caso, ambas fechas deben ser menores a la actual.
 					const now				= new Date();
