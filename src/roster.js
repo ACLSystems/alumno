@@ -200,6 +200,10 @@ const RosterSchema = new Schema ({
 	},
 	flag: {
 		type: Number
+	},
+	isActive: {
+		type: Boolean,
+		default: true
 	}
 });
 

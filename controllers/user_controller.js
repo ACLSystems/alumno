@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt-nodejs');
 const Err = require('../controllers/err500_controller');
 const permissions = require('../shared/permissions');
 const mailjet = require('../shared/mailjet');
+const Roster = require('../src/roster');
 //require('winston-daily-rotate-file');
 
 const url 								= process.env.LIBRETA_URI;
@@ -842,18 +843,29 @@ module.exports = {
 
 	myRoles(req,res) {
 		const key_user = res.locals.user;
-		res.status(200).json({
-			'status'			: 200,
-			'message'			: {
-				'isAdmin'				: key_user.roles.isAdmin,
-				'isBusines'			: key_user.roles.isBusiness,
-				'isOrg'					: key_user.roles.isOrg,
-				'isOrgContent'	: key_user.roles.isOrgContent,
-				'isAuthor'			: key_user.roles.isAuthor,
-				'isSupervisor'	: key_user.roles.isSupervisor,
-				'isInstructor'	: key_user.roles.isInstructor
-			}
-		});
+		var myroles = {
+			isAdmin				: key_user.roles.isAdmin,
+			isBusines			: key_user.roles.isBusiness,
+			isOrg					: key_user.roles.isOrg,
+			isOrgContent	: key_user.roles.isOrgContent,
+			isAuthor			: key_user.roles.isAuthor,
+			isSupervisor	: key_user.roles.isSupervisor,
+			isInstructor	: key_user.roles.isInstructor,
+			isUser				: false
+		};
+		Roster.findOne({student: key_user._id})
+			.then((item) => {
+				if(item) {
+					myroles.isUser 	= true;
+				}
+				res.status(200).json({
+					'status'			: 200,
+					'message'			: myroles
+				});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','myRoles -- Finding Roster --');
+			});
 	}, // myRoles
 
 	encrypt(req, res){
