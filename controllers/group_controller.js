@@ -315,41 +315,37 @@ module.exports = {
 		//const key_user 	= res.locals.user;
 		var roster = req.query;
 		Group.findOne({ code: roster.code })
-			.populate('instructor')
-			.populate('orgUnit')
-			.populate({
-				path: 'roster',
-				populate: {
-					path: 'student',
-					select: 'name person student'
-				}
-			})
+			.populate('instructor', 'name person')
+			.populate('orgUnit', 'name longName')
+			.populate('students','name status person student')
+			.select('code name beginDate endDate orgUnit students')
 			.then((group) => {
 				if(group) {
 					var send_group = {
-						code: group.code,
-						name: group.name,
-						instructor: group.instructor.name,
-						beginDate: group.beginDate,
-						endDate: group.endDate,
-						orgUnit: group.orgUnit.name
+						code				: group.code,
+						name				: group.name,
+						instructor	: group.instructor.name,
+						beginDate		: group.beginDate,
+						endDate			: group.endDate,
+						orgUnit			: group.orgUnit.name,
+						orgUnitLong	: group.orgUnit.longName
 					};
 					var students = new Array();
-					group.roster.forEach(function(s) {
+					group.students.forEach(function(s) {
 						students.push({
-							id: s.student.id,
-							username: s.student.name,
-							status: s.status,
-							name: s.student.person.name,
-							fatherName: s.student.person.fatherName,
-							motherName: s.student.person.motherName,
-							email: s.student.person.email,
-							studentType: s.student.student.type,
-							career: s.student.student.career,
-							term: s.student.student.term,
-							external: s.student.student.external,
-							origin: s.student.student.origin,
-							grades: s.student.grades
+							id					: s._id,
+							username		: s.name,
+							status			: s.status,
+							name				: s.person.name,
+							fatherName	: s.person.fatherName,
+							motherName	: s.person.motherName,
+							email				: s.person.email,
+							studentType	: s.type,
+							career			: s.career,
+							term				: s.term,
+							external		: s.external,
+							origin			: s.origin,
+							grades			: s.grades
 						});
 					});
 					send_group.students = students;
@@ -493,11 +489,13 @@ module.exports = {
 							if(block.duration) {
 								new_block.duration = block.duration + ' ' + units(block.durationUnits,block.duration);
 							}
-							if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].beginDate) {
-								new_block.beginDate = item.sections[block.section].beginDate;
-							}
-							if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].endDate) {
-								new_block.endDate = item.sections[block.section].endDate;
+							if(item.sections && item.sections.length > 0 && item.sections[block.section] && !item.sections[block.section].viewed) {
+								if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].beginDate) {
+									new_block.beginDate = item.sections[block.section].beginDate;
+								}
+								if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].endDate) {
+									new_block.endDate = item.sections[block.section].endDate;
+								}
 							}
 						}
 						if(block.questionnarie) {
@@ -971,14 +969,18 @@ module.exports = {
 					const sectionDisp = section;
 					// validar que exista fecha de inicio para la sección. Si existe mandar mensaje de cuándo empezará
 					if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].beginDate && item.sections[section].beginDate > now) {
-						ok = false;
-						cause = 'Section '+ sectionDisp +' will begin at ' + item.sections[section].beginDate;
-						causeSP = 'La sección '+ sectionDisp +' comenzará el ' + item.sections[section].beginDate;
+						if(!item.sections[section].viewed) {
+							ok = false;
+							cause = 'Section '+ sectionDisp +' will begin at ' + item.sections[section].beginDate;
+							causeSP = 'La sección '+ sectionDisp +' comenzará el ' + item.sections[section].beginDate;
+						}
 					}
 					if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].endDate && item.sections[section].endDate < now) {
-						ok = false;
-						cause = 'Section '+ sectionDisp +' was closed at ' + item.sections[section].endDate;
-						causeSP = 'La sección '+ sectionDisp +' terminó el ' + item.sections[section].endDate;
+						if(!item.sections[section].viewed) {
+							ok = false;
+							cause = 'Section '+ sectionDisp +' was closed at ' + item.sections[section].endDate;
+							causeSP = 'La sección '+ sectionDisp +' terminó el ' + item.sections[section].endDate;
+						}
 					}
 					if(item.sections) { // existe el arreglo sections?
 						if(item.sections[lastSection]) { // existe el elemento lastSection?
@@ -1383,6 +1385,80 @@ module.exports = {
 			});
 	}, //touchGrade
 
+	setTracking(req,res) {
+		const key_user	= res.locals.user;
+		var 	groupid		= '';
+		var 	userid		= '';
+		var 	all				= false;
+		var		track 		= 0;
+		var 	query			= {};
+		var 	now				= new Date();
+		if(req.query.groupid) { groupid = req.query.groupid;}
+		if(req.query.userid)	{ userid 	= req.query.userid;	}
+		if(req.query.all) 		{ all 		= true;							}
+		if(req.query.track && parseInt(req.query.track) !== track )			{ track 	= parseInt(req.query.track); }
+		if(groupid !== '' && all) {
+			query.group = groupid;
+		} else if(userid !== '' && groupid !== '') {
+			query.group = groupid;
+			query.student = userid;
+		} else {
+			res.status(200).json({
+				'status': 200,
+				'message': 'Nothing to set'
+			});
+			return;
+		}
+		if(key_user.roles && (key_user.roles.isSupervisor || key_user.roles.isInstructor || key_user.roles.isAdmin)){
+			Roster.find(query)
+				.populate('student', 'person')
+				.then((items) => {
+					if(items && items.length > 0) {
+						var send_results = new Array();
+						var i = 0;
+						while(i < items.length){
+							if(items[i] && items[i].grades && items[i].grades.length > 0) {
+								items[i].grades.map(function(x) {
+									x.track = track;
+								});
+							}
+							if(items[i] && items[i].sections && items[i].sections.length > 0 ) {
+								items[i].sections.map(function(x) {
+									if(!x.viewed){
+										x.viewed = now;
+									}
+								});
+							}
+							send_results.push({'student': items[i].student.person.fullName});
+							items[i].admin.push({
+								what	: 'Supervisor/Admin/Instructor changed tracking',
+								who		: key_user.name
+							});
+							items[i].save()
+								.catch((err) => {
+									Err.sendError(res,err,'group_controller','setTrack -- Saving Roster -- user: ' +
+										key_user.name + ' groupid: ' + groupid + ' userid: ' + items[i].student.person.fullName );
+								});
+
+							i++;
+						}
+						res.status(200).json({
+							'status': 200,
+							'message': send_results
+						});
+					} else {
+						res.status(404).json({
+							'status': 404,
+							'message': 'No rosters found'
+						});
+					}
+				})
+				.catch((err) => {
+					Err.sendError(res,err,'group_controller','setTrack -- Finding Roster -- user: ' +
+						key_user.name + ' groupid: ' + groupid + ' userid: ' + userid );
+				});
+		}
+	}, // setTracking
 	test(req,res) {
 		//var message = 'Mensaje de prueba';
 		res.status(200).json({
