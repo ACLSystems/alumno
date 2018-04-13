@@ -26,6 +26,7 @@
 /ssl/*
 /data/*
 /bkp/*
+/test/*
 /config/secret.js
 /config/newpass.js
 *.log
@@ -54,3 +55,4 @@ node_modules/*
 ######################
 doc/Oferta*
 /src/*NO_USAR*
+alumno.start.*

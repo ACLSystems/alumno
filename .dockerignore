@@ -29,6 +29,7 @@
 *.sql
 *.sqlite
 /bkp/*
+/test/*
 
 # OS generated files #
 ######################
@@ -51,3 +52,4 @@ node_modules/*
 ######################
 doc/Oferta*
 /src/*NO_USAR*
+alumno.start.*
