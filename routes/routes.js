@@ -103,6 +103,8 @@ module.exports = (app) => {
 	app.get ('/api/v1/user/getresource', 		GroupController.getResource);
 	app.post('/api/v1/user/comment/create', DiscussionController.create);
 	app.get ('/api/v1/user/comment/get',		DiscussionController.get);
+	app.post('/api/v1/user/file/upload', 		upload.single('file'), FileController.upload);
+	app.get ('/api/v1/user/file/download', 	FileController.download);
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados
 
@@ -138,8 +140,6 @@ module.exports = (app) => {
 	app.post('/api/v1/author/course/createresource', 			CourseController.createResource);
 	app.put ('/api/v1/author/course/modifyresource',			CourseController.modifyResource);
 	app.get ('/api/v1/author/course/getresource', 				CourseController.getResource);
-	app.post('/api/v1/author/file/upload', 								upload.single('file'), FileController.upload);
-	app.get ('/api/v1/author/file/download', 							FileController.download);
 
 	// Rutas para roles de 'isAdmin'
 

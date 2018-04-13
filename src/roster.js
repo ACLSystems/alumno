@@ -20,10 +20,15 @@ const AdminSchema = new Schema ({
 module.exports = AdminSchema;
 
 const TasksSchema = new Schema ({
-	file: {
+	content: {
 		type: String
 	},
-	text: {
+	type: {
+		type: String,
+		enum: ['file','text'],
+		default: 'text'
+	},
+	label: {
 		type: String
 	},
 	grade: {
@@ -31,6 +36,10 @@ const TasksSchema = new Schema ({
 		min: [0,'Minimum value is 0'],
 		max: [100,'Maximum value is 100'],
 		default: 0
+	},
+	graded: {
+		type: Boolean,
+		default: false
 	},
 	date: {
 		type: Date,

@@ -651,13 +651,15 @@ module.exports = {
 		const key_user	= res.locals.user;
 		const groupid 	= req.body.groupid;
 		const blockid 	= req.body.blockid;
-		const file 			= req.body.file;
-		const text			= req.body.text;
+		const task 			= req.body.task;
+		//const text			= req.body.text;
+		// ya no hay que construir el arreglo
+		/*
 		var task = {
 			file 		: file,
-			text		: text,
-			date		: new Date()
+			text		: text
 		};
+		*/
 		Roster.findOne({student: key_user._id, group: groupid})
 			.populate({
 				path: 'group',
@@ -692,17 +694,13 @@ module.exports = {
 							k++;
 						}
 					}
-					if(myGrade.tasks && myGrade.tasks.length > 0) {
-						myGrade.tasks.push(task);
-					} else {
-						myGrade.tasks 	= [task];
-						myGrade.track		= 100;
-					}
+					myGrade.tasks 	= task;
+					myGrade.track		= 100;
 					item.grades[k] = myGrade;
 				} else {
 					myGrade = {
 						block	: blockid,
-						tasks: [task],
+						tasks: task,
 						track	: 100
 					};
 					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
@@ -1424,11 +1422,25 @@ module.exports = {
 								});
 							}
 							if(items[i] && items[i].sections && items[i].sections.length > 0 ) {
+								const sections = items[i].sections;
+								var new_sections = new Array();
+								/*
 								items[i].sections.map(function(x) {
 									if(!x.viewed){
 										x.viewed = now;
 									}
 								});
+								*/
+								var k = 0;
+								while (k < sections.length) {
+									var sec = {};
+									sec._id = sections[k]._id;
+									if(sections[k].beginDate) { sec.beginDate = sections[k].beginDate; }
+									sec.viewed = now;
+									k++;
+								}
+								new_sections.push(sec);
+								items[i].sections = new_sections;
 							}
 							send_results.push({'student': items[i].student.person.fullName});
 							items[i].admin.push({
