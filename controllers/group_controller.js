@@ -322,6 +322,7 @@ module.exports = {
 			.then((group) => {
 				if(group) {
 					var send_group = {
+						id					: group._id,
 						code				: group.code,
 						name				: group.name,
 						instructor	: group.instructor.name,
