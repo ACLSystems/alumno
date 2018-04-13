@@ -4,6 +4,21 @@ const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
+const AdminSchema = new Schema ({
+	what: {
+		type: String
+	},
+	who: {
+		type: String
+	},
+	date: {
+		type: Date,
+		default: Date.now
+	}
+});
+
+module.exports = AdminSchema;
+
 const TasksSchema = new Schema ({
 	file: {
 		type: String
@@ -204,7 +219,8 @@ const RosterSchema = new Schema ({
 	isActive: {
 		type: Boolean,
 		default: true
-	}
+	},
+	admin: [AdminSchema]
 });
 
 RosterSchema.pre('save', function(next) {

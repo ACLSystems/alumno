@@ -61,7 +61,7 @@ module.exports = (app) => {
 	app.all	('/api/v1/orgadm/*', 									[require('../controllers/validateParams')]);
 	app.all	('/api/orgunit/*', 										[require('../controllers/validateParams')]);
 	app.all	('/api/course/*', 										[require('../controllers/validateParams')]);
-	app.all ('/api/v1/supervisor/user/getdetails',[require('../controllers/validateParams')]);
+	app.all ('/api/v1/supervisor/user/*',					[require('../controllers/validateParams')]);
 
 	// RUTAS ---------------------------------------------------------------------------------
 
@@ -175,5 +175,6 @@ module.exports = (app) => {
 
 	app.get ('/api/v1/supervisor/report/gradesbycampus',ReportController.gradesByCampus);
 	app.get ('/api/v1/supervisor/user/getdetails',			UserController.getDetailsSuper);
+	app.get ('/api/v1/supervisor/user/settracking', 		GroupController.setTracking);
 
 };

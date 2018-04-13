@@ -1356,7 +1356,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	// RUTAS PARA SUPERVISIORES --------------------------------------------------
+	// RUTAS PARA SUPERVISORES --------------------------------------------------
 
 	case '/api/v1/supervisor/user/getdetails':
 		if(!req.query) {  // GET
@@ -1369,6 +1369,47 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give username by query to process'
 			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/supervisor/user/settracking':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.groupid && !req.query.all && !req.query.userid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give groupid + all to set all students in group or userid + groupid by query to process'
+			});
+		} else if (!req.query.groupid && req.query.userid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give groupid + userid by query to process'
+			});
+		} else if (req.query.groupid && !req.query.userid && !req.query.all) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give groupid + all to set all students in group or userid + groupid by query to process'
+			});
+		} else if (!req.query.track) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give track (0 or 100) by query to process'
+			});
+		} else if (req.query.track) {
+			var t = parseInt(req.query.track);
+			if(t !== 0 && t !== 100){
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error -: track must be 0 or 100'
+				});
+			} else {
+				next();
+			}
 		} else {
 			next();
 		}
