@@ -71,6 +71,9 @@ const GradesSchema = new Schema ({
 		ref: 'blocks'
 	},
 	tasks: [TasksSchema],
+	tasktries: [{
+		type: Date
+	}],
 	quests: [QuestsSchema],
 	track: {
 		type: Number,

@@ -103,6 +103,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/user/getresource', 		GroupController.getResource);
 	app.post('/api/v1/user/comment/create', DiscussionController.create);
 	app.get ('/api/v1/user/comment/get',		DiscussionController.get);
+	app.put ('/api/v1/user/savetask', 			GroupController.saveTask);
 	app.post('/api/v1/user/file/upload', 		upload.single('file'), FileController.upload);
 	app.get ('/api/v1/user/file/download', 	FileController.download);
 
@@ -115,6 +116,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/instructor/group/createroster', GroupController.createRoster);
 	app.get ('/api/v1/instructor/group/listroster', 	GroupController.listRoster);
 	app.post('/api/v1/instructor/group/addstudent', 	GroupController.addStudent);
+	app.get ('/api/v1/instructor/group/studenttask', 	GroupController.studentTask);
 	app.get ('/api/v1/instructor/group/userswogroup', GroupController.usersWOGroup);
 
 	// Rutas para roles de 'isAuthor'

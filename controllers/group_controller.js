@@ -652,14 +652,13 @@ module.exports = {
 		const groupid 	= req.body.groupid;
 		const blockid 	= req.body.blockid;
 		const task 			= req.body.task;
-		//const text			= req.body.text;
-		// ya no hay que construir el arreglo
-		/*
-		var task = {
-			file 		: file,
-			text		: text
-		};
-		*/
+		var		force			= false;
+		const now 			= new Date();
+
+		if(req.body.force) {
+			force = true;
+		}
+
 		Roster.findOne({student: key_user._id, group: groupid})
 			.populate({
 				path: 'group',
@@ -694,9 +693,22 @@ module.exports = {
 							k++;
 						}
 					}
-					myGrade.tasks 	= task;
-					myGrade.track		= 100;
-					item.grades[k] = myGrade;
+					if(myGrade.tasks && ((myGrade.tasks.length > 0 && force) || (myGrade.tasks.length === 0)) ) {
+						myGrade.tasks = task;
+						myGrade.track		= 100;
+						item.grades[k] = myGrade;
+						if(item.grades[k].tasktries && item.grades[k].tasktries.length > 0) {
+							item.grades[k].tasktries.push(now);
+						} else {
+							item.grades[k].tasktries = [now];
+						}
+					} else if(!force && myGrade.tasks.length > 0){
+						res.status(406).json({
+							'status': 406,
+							'message': 'Task cannot be replaced (or force by force = true)'
+						});
+						return;
+					}
 				} else {
 					myGrade = {
 						block	: blockid,
@@ -713,12 +725,13 @@ module.exports = {
 						myGrade.wt = item.group.course.blocks[0].wt;
 					}
 					item.grades = [myGrade];
+					item.grades.tasktries = [now];
 				}
 				item.save()
 					.then(() => {
 						res.status(200).json({
-							'status': 200,
-							'message': 'task saved'
+							'status'				: 200,
+							'message'				: 'task saved'
 						});
 					})
 					.catch((err) => {
@@ -730,6 +743,93 @@ module.exports = {
 					key_user.name + ' id: ' + key_user._id + ' groupid: ' + groupid + ' blockid: ' + blockid );
 			});
 	}, //saveTask
+
+	studentTask(req,res) {
+		const groupid		= req.query.groupid;
+		const key_user 	= res.locals.user;
+		const studentid = req.query.studentid;
+		const blockid 	= req.query.blockid;
+		Roster.findOne({group: groupid, student: studentid})
+			.populate('group', 'instructor')
+			.then((item) => {
+				if(item) {
+					if(item.group && item.group.instructor) {
+						if(item.group.instructor + '' !== key_user._id + ''){
+							res.status(406).json({
+								'status': 406,
+								'message': 'You are not instructor for this group',
+								'userid': key_user._id,
+								'instructorid': item.group.instructor
+							});
+							return;
+						}
+					} else {
+						res.status(406).json({
+							'status': 406,
+							'message': 'No instructor for this group'
+						});
+						return;
+					}
+					var grades = [];
+					var myGrade = {};
+					var k = 0;
+					if(item.grades.length > 0) {
+						grades = item.grades;
+						var len = grades.length;
+						var found = false;
+						while ((k < len) && !found) {
+							if(grades[k].block + '' === blockid) {
+								myGrade = grades[k];
+								found = true;
+							} else {
+								k++;
+							}
+						}
+						if(myGrade.tasks && myGrade.tasks.length > 0) {
+							var send_tasks = new Array();
+							var t = 0;
+							var lent = myGrade.tasks.length;
+							while (t < lent) {
+								var task 	= myGrade.tasks[t];
+								var send_task = {
+									content	: task.content,
+									type 		: task.type,
+									label		: task.label,
+									grade		: task.grade,
+									graded	: task.graded,
+									date		: task.date
+								};
+								send_tasks.push(send_task);
+								t++;
+							}
+							res.status(200).json({
+								'status'		: 200,
+								'message'		: send_tasks
+							});
+						} else {
+							res.status(404).json({
+								'status': 404,
+								'message': 'No task delivered yet'
+							});
+						}
+					} else {
+						res.status(404).json({
+							'status': 404,
+							'message': 'No task found'
+						});
+					}
+				} else {
+					res.status(404).json({
+						'status': 404,
+						'message': 'No student roster found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','studentTask -- Finding Roster -- user: ' +
+					key_user.name + ' id: ' + key_user._id + ' groupid: ' + groupid + ' blockid: ' + studentid );
+			});
+	}, //studentTask
 
 	myGrades(req,res){
 		const groupid		= req.query.groupid;
@@ -920,6 +1020,7 @@ module.exports = {
 					var lastIndex = 0;
 					var lastSection = 0;
 					var section 		= 0;
+					var lastTaskDelivered = 0;
 					var nextSection = lastSection + 1;
 					if(item.grades && item.grades.length > 0) {
 						grades = item.grades;
@@ -945,6 +1046,9 @@ module.exports = {
 								currentBlockGrade = grade.maxGradeQ;
 								lastAttempt				= grade.lastAttemptQ;
 								numAttempts				= grade.numAttempts;
+								if(grade.tasktries && grade.tasktries.length > 0) {
+									lastTaskDelivered = grade.tasktries[grade.tasktries.length -1];
+								}
 								track 						= grade.track;
 								section 					= grade.block.section;
 							}
@@ -1187,6 +1291,8 @@ module.exports = {
 											send_items.push(send_item);
 										});
 										send_block.tasks= send_items;
+										send_block.lastTaskDelivered 	= TA.ago(lastTaskDelivered);
+										send_block.lastTaskDate 			= lastTaskDelivered;
 									}
 									if(studentStatus === 'pending' && blocksPresented > blocksPending) {
 										res.status(404).json({
