@@ -1541,8 +1541,8 @@ module.exports = {
 								while (k < sections.length) {
 									var sec = {};
 									sec._id = sections[k]._id;
-									if(sections[k].beginDate) { sec.beginDate = sections[k].beginDate; }
-									sec.viewed = now;
+									//if(sections[k].beginDate) { sec.beginDate = sections[k].beginDate; }
+									if(track === 100 ) {sec.viewed = now;}
 									k++;
 								}
 								new_sections.push(sec);
