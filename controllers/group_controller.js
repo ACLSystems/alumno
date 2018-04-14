@@ -1113,10 +1113,22 @@ module.exports = {
 								save = true;
 							}
 						} else if(lastid !== 'empty'){
-							if(item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){
-								item.sections[lastSection].viewed	= now;
+							if(item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){ // Si el grupo está seteado por lapso
+								if(item.sections[lastSection]){
+									item.sections[lastSection].viewed	= now;
+								} else {
+									item.sections[lastSection] = {
+										viewed : now
+									};
+								}
 								if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]) {
-									item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
+									if(item.sections[nextSection]){
+										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
+									} else {
+										item.sections[nextSection] = {
+											beginDate : expiresIn(now, item.group.lapseBlocks[nextSection])
+										};
+									}
 								}
 								save = true;
 							} else {
