@@ -107,6 +107,7 @@ module.exports = {
 				var send_groups = new Array();
 				groups.forEach(function(group) {
 					var send_group = {
+						id					: group._id,
 						code				: group.code,
 						name				: group.name,
 						course			: group.course.title,
@@ -1303,8 +1304,10 @@ module.exports = {
 											send_items.push(send_item);
 										});
 										send_block.tasks= send_items;
-										send_block.lastTaskDelivered 	= TA.ago(lastTaskDelivered);
-										send_block.lastTaskDate 			= lastTaskDelivered;
+										if(lastTaskDelivered && lastTaskDelivered > 0) {
+											send_block.lastTaskDelivered 	= TA.ago(lastTaskDelivered);
+											send_block.lastTaskDate 			= lastTaskDelivered;
+										}
 									}
 									if(studentStatus === 'pending' && blocksPresented > blocksPending) {
 										res.status(404).json({
