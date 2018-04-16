@@ -78,7 +78,7 @@ module.exports = {
 			OrgUnit.find({parent: key_user.orgUnit.name, org: key_user.org._id})
 				.select('_id')
 				.then((ous) => {
-					Roster.find({ orgUnit: {$in: ous} })
+					Roster.find({ orgUnit: {$in: ous}, isActive: true })
 						.populate('student', 'name person')
 						.populate({
 							path: 'group',
