@@ -793,7 +793,7 @@ module.exports = function(req, res, next) {
 		break;
 
 
-	case '/api/v1/author/file/upload':
+	case '/api/v1/user/file/upload':
 		if(!req.file) {  // POST
 			res.status(406).json({
 				'status': 406,
@@ -814,7 +814,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/author/file/download':
+	case '/api/v1/user/file/download':
 		if(!req.query) {  // GET
 			res.status(406).json({
 				'status': 406,
