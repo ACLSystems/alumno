@@ -4,29 +4,32 @@ const fs = require('fs');
 const dropbox = require('dropbox').Dropbox;
 const Err = require('../controllers/err500_controller');
 
-/*
-require('winston-daily-rotate-file');
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: './logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
-*/
-
 // Este módulo usa "Multer" y la definición está en routes/routes.js
 
 module.exports = {
 
-
 	upload(req,res) {
+		if(!req.file) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1440: Please, give file to process'
+			});
+			return;
+		}
+		if (!req.query.dir1) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1432: Please, give dir1 by query to process'
+			});
+			return;
+		}
+		if (!req.query.dir2) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1432: Please, give dir2 by query to process'
+			});
+			return;
+		}
 		var dir1 					= 'base1';
 		var dir2 					= 'base2';
 		const ordir 			= process.env.ORDIR;
@@ -70,6 +73,20 @@ module.exports = {
 	}, // upload
 
 	download(req,res) {
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1441: Please, give data by query to process'
+			});
+			return;
+		}
+		if (!req.query.filename && !req.query.fileid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1442: Please, give fileid or filename by query to process'
+			});
+			return;
+		}
 		const file 		= req.query.filename;
 		const fileid 	= req.query.fileid;
 		var query 		= {};

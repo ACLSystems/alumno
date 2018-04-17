@@ -792,13 +792,14 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-
-	case '/api/v1/user/file/upload':
+	/*
+	case '/api/v1/file/upload':
 		if(!req.file) {  // POST
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1440: Please, give file to process'
 			});
+
 		} else if (!req.query.dir1) {
 			res.status(406).json({
 				'status': 406,
@@ -812,7 +813,9 @@ module.exports = function(req, res, next) {
 		} else {
 			next();
 		}
+		next();
 		break;
+
 
 	case '/api/v1/user/file/download':
 		if(!req.query) {  // GET
@@ -829,6 +832,7 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
+		*/
 
 	case '/api/v1/author/course/createresource':
 		if(!req.body) {  // POST

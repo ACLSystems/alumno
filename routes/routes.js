@@ -46,6 +46,7 @@ module.exports = (app) => {
 		}
 	});
 
+
 	// Auth Middleware - This will check if the token is valid
 	// Only the requests that start with /api/v1/* will be checked for the token.
 	// Any URL's that do not follow the below pattern should be avoided unless you
@@ -56,7 +57,7 @@ module.exports = (app) => {
 	app.all	('/api/v1/user/*', 										[require('../controllers/validateParams')]);
 	app.all	('/api/v1/course/*', 									[require('../controllers/validateParams')]);
 	app.all	('/api/v1/author/course/*', 					[require('../controllers/validateParams')]);
-	//app.all	('/api/v1/author/file/*', 			[require('../controllers/validateParams')]);
+	//app.all	('/api/v1/author/file/*', 						[require('../controllers/validateParams')]);
 	app.all	('/api/v1/instructor/group/*',				[require('../controllers/validateParams')]);
 	app.all	('/api/v1/orgadm/*', 									[require('../controllers/validateParams')]);
 	app.all	('/api/orgunit/*', 										[require('../controllers/validateParams')]);
@@ -89,23 +90,22 @@ module.exports = (app) => {
 
 	// Rutas para usuarios
 
-	app.get ('/api/v1/user/myroles', 				UserController.myRoles);
-	app.get ('/api/v1/user/getdetails', 		UserController.getDetails);
-	app.put ('/api/v1/user/passwordchange', UserController.passwordChange);
-	app.put ('/api/v1/user/modify', 				UserController.modify);
-	app.get ('/api/v1/user/mygroups', 			GroupController.myGroups);
-	app.get ('/api/v1/user/mygroup', 				GroupController.myGroup);
-	app.put ('/api/v1/user/createattempt', 	GroupController.createAttempt);
+	app.get ('/api/v1/user/myroles', 						UserController.myRoles);
+	app.get ('/api/v1/user/getdetails', 				UserController.getDetails);
+	app.put ('/api/v1/user/passwordchange', 		UserController.passwordChange);
+	app.put ('/api/v1/user/modify', 						UserController.modify);
+	app.get ('/api/v1/user/mygroups', 					GroupController.myGroups);
+	app.get ('/api/v1/user/mygroup', 						GroupController.myGroup);
+	app.put ('/api/v1/user/createattempt', 			GroupController.createAttempt);
 	app.get ('/api/v1/user/testcreateattempt', 	GroupController.testCreateAttempt);
-	app.get ('/api/v1/user/touchgrade', 		GroupController.touchGrade);
-	app.get ('/api/v1/user/mygrades', 			GroupController.myGrades);
-	app.get ('/api/v1/user/nextblock', 			GroupController.nextBlock);
-	app.get ('/api/v1/user/getresource', 		GroupController.getResource);
-	app.post('/api/v1/user/comment/create', DiscussionController.create);
-	app.get ('/api/v1/user/comment/get',		DiscussionController.get);
-	app.put ('/api/v1/user/savetask', 			GroupController.saveTask);
-	app.post('/api/v1/user/file/upload', 		upload.single('file'), FileController.upload);
-	app.get ('/api/v1/user/file/download', 	FileController.download);
+	app.get ('/api/v1/user/touchgrade', 				GroupController.touchGrade);
+	app.get ('/api/v1/user/mygrades', 					GroupController.myGrades);
+	app.get ('/api/v1/user/nextblock', 					GroupController.nextBlock);
+	app.get ('/api/v1/user/getresource', 				GroupController.getResource);
+	app.post('/api/v1/user/comment/create', 		DiscussionController.create);
+	app.get ('/api/v1/user/comment/get',				DiscussionController.get);
+	app.put ('/api/v1/user/savetask', 					GroupController.saveTask);
+
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados
 
@@ -143,6 +143,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/author/course/modifyresource',			CourseController.modifyResource);
 	app.get ('/api/v1/author/course/getresource', 				CourseController.getResource);
 
+
 	// Rutas para roles de 'isAdmin'
 
 	app.post('/api/v1/admin/org/register', 				OrgController.register);
@@ -178,5 +179,10 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/report/gradesbycampus',ReportController.gradesByCampus);
 	app.get ('/api/v1/supervisor/user/getdetails',			UserController.getDetailsSuper);
 	app.get ('/api/v1/supervisor/user/settracking', 		GroupController.setTracking);
+
+	// Rutas para archivos
+
+	app.post('/api/v1/file/upload', 								upload.single('file'), FileController.upload);
+	app.get ('/api/v1/file/download', 							FileController.download);
 
 };
