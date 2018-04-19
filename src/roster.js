@@ -228,6 +228,9 @@ const RosterSchema = new Schema ({
 	flag: {
 		type: Number
 	},
+	newTask: {
+		type: Boolean
+	},
 	isActive: {
 		type: Boolean,
 		default: true

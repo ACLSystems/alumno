@@ -1200,6 +1200,10 @@ module.exports = function(req, res, next) {
 		next();
 		break;
 
+	case '/api/v1/instructor/group/mylist':
+		next();
+		break;
+
 	case '/api/v1/instructor/group/createroster':
 		if(!req.body) {  // PUT
 			res.status(406).json({

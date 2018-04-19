@@ -146,6 +146,74 @@ module.exports = {
 			});
 	},
 
+	myList(req,res) {
+		const key_user 	= res.locals.user;
+		var query = {instructor: key_user._id};
+		Group.find(query)
+			.populate('course', 'title code blocks numBlocks')
+			.populate('instructor', 'name person')
+			.populate('org', 'name')
+			.populate('orgUnit', 'name longName')
+			//.populate('roster', 'student status finalGrade track pass passDate')
+			/*
+			.populate({
+				path: 'roster',
+				model: 'rosters',
+				select: 'student status finalGrade track pass passDate',
+				populate: {
+					path: 'student',
+					select: 'person'
+				}
+			})
+			*/
+			.select('code name instructor course beginDate endDate numStudents students isActive presentBlockBy')
+			.then((groups) => {
+				var send_groups = new Array();
+				groups.forEach(function(group) {
+					var send_group = {
+						courseTitle			: group.course.title,
+						courseCode			: group.course.code,
+						numBlocks				: group.course.numBlocks,
+						orgUnit 				: group.orgUnit.name,
+						orgUnitName			: group.orgUnit.longName,
+						groupId					: group._id,
+						groupCode				: group.code,
+						groupName				: group.name,
+						isActive				: group.isActive,
+						instructor			: group.instructor.person.fullName,
+						beginDate				: group.beginDate,
+						endDate					: group.endDate,
+						numStudents 		: group.numStudents,
+						presentBlockBy	: group.presentBlockBy
+					};
+					/*
+					var send_students = new Array();
+					group.roster.forEach(function(s) {
+						send_students.push({
+							fullName: s.student.person.fullName
+						});
+					});
+					send_group.students = send_students;
+					*/
+					send_groups.push(send_group);
+				});
+				if(send_groups.length > 0) {
+					res.status(200).json({
+						'status': 200,
+						'message': send_groups
+					});
+				} else {
+					res.status(404).json({
+						'status': 404,
+						'message': 'No groups found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','create -- Finding Course --');
+			});
+	},
+
 	createRoster(req,res){
 		const key_user 	= res.locals.user;
 		var roster = req.body;
@@ -314,40 +382,67 @@ module.exports = {
 	listRoster(req,res) {
 		// ESTE API debe arreglarse para listar solo a personal autorizado
 		//const key_user 	= res.locals.user;
-		var roster = req.query;
-		Group.findOne({ code: roster.code })
+		var roster 	= req.query;
+		var query 	= {};
+		if(roster.code) {
+			query = { code: roster.code };
+		}
+		if(roster.id) {
+			query = { _id: roster.id };
+		}
+		Group.findOne(query)
 			.populate('instructor', 'name person')
 			.populate('orgUnit', 'name longName')
-			.populate('students','name status person student')
-			.select('code name beginDate endDate orgUnit students')
+			//.populate('students','name status person student')
+			.populate({
+				path: 'roster',
+				model: 'rosters',
+				select: 'student status finalGrade track pass passDate newTask',
+				populate: {
+					path: 'student',
+					select: 'name status person student'
+				}
+			})
+			.select('code name beginDate endDate orgUnit roster')
 			.then((group) => {
 				if(group) {
 					var send_group = {
 						id					: group._id,
 						code				: group.code,
 						name				: group.name,
-						instructor	: group.instructor.name,
+						instructor	: group.instructor.person.fullName,
 						beginDate		: group.beginDate,
 						endDate			: group.endDate,
 						orgUnit			: group.orgUnit.name,
-						orgUnitLong	: group.orgUnit.longName
+						orgUnitLong	: group.orgUnit.longName,
+						numStudents : group.roster.length,
 					};
 					var students = new Array();
-					group.students.forEach(function(s) {
+					group.roster.forEach(function(s) {
+						if(!s.pass) {
+							s.pass = false;
+						}
 						students.push({
-							id					: s._id,
-							username		: s.name,
+							id					: s.student._id,
+							username		: s.student.name,
 							status			: s.status,
-							name				: s.person.name,
-							fatherName	: s.person.fatherName,
-							motherName	: s.person.motherName,
-							email				: s.person.email,
-							studentType	: s.type,
-							career			: s.career,
-							term				: s.term,
-							external		: s.external,
-							origin			: s.origin,
-							grades			: s.grades
+							name				: s.student.person.fullName,
+							finalGrade	: s.finalGrade,
+							track				: s.track,
+							pass				: s.pass,
+							passDate		: s.passDate,
+							newTask			: s.newTask
+							/*
+							fatherName	: s.student.person.fatherName,
+							motherName	: s.student.person.motherName,
+							email				: s.student.person.email,
+							studentType	: s.student.type,
+							career			: s.student.career,
+							term				: s.student.term,
+							external		: s.student.external,
+							origin			: s.student.origin
+							//grades			: s.grades
+							*/
 						});
 					});
 					send_group.students = students;
@@ -1602,6 +1697,45 @@ module.exports = {
 			'hola': 'mundo'
 		});
 		//Err.sendError(res,message,'group_controller','test -- testing email --');
+	}, // test
+
+	repairGroup(req,res) {
+		const key_user	= res.locals.user;
+		const groupid = req.query.groupid;
+		Group.findById(groupid)
+			.populate('students')
+			.then((group) => {
+				if(group) {
+					Roster.find({group: groupid, student: {$in: group.students}})
+						.select('student')
+						.then((items) => {
+							var roster = new Array();
+							items.forEach(function(item) {
+								roster.push(item._id);
+							});
+							group.roster = roster;
+							group.save()
+								.then(() => {
+									res.status(200).json({
+										'message': 'Roster for group ' + group.code + ' repaired',
+										'roster': roster
+									});
+								})
+								.catch((err) => {
+									Err.sendError(res,err,'group_controller','repairGroup -- Saving group -- user: ' +
+										key_user.name + ' groupid: ' + groupid);
+								});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'group_controller','repairGroup -- Finding Rosters -- user: ' +
+								key_user.name + ' groupid: ' + groupid);
+						});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','repairGroup -- Finding Group -- user: ' +
+					key_user.name + ' groupid: ' + groupid);
+			});
 	}
 };
 

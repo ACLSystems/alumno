@@ -110,10 +110,12 @@ const GroupsSchema = new Schema ({
 	admin: AdminSchema
 });
 
+/*
 GroupsSchema.pre('save', function(next) {
 	this.students = this.roster;
 	next();
 });
+*/
 
 
 GroupsSchema.virtual('numStudents').get(function() {

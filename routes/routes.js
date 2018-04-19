@@ -113,6 +113,7 @@ module.exports = (app) => {
 
 	app.post('/api/v1/instructor/group/create', 			GroupController.create);
 	app.get ('/api/v1/instructor/group/list', 				GroupController.list);
+	app.get ('/api/v1/instructor/group/mylist', 			GroupController.myList);
 	app.put ('/api/v1/instructor/group/createroster', GroupController.createRoster);
 	app.get ('/api/v1/instructor/group/listroster', 	GroupController.listRoster);
 	app.post('/api/v1/instructor/group/addstudent', 	GroupController.addStudent);
@@ -157,6 +158,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/admin/user/setroles', 			UserController.setRoles);
 	app.get ('/api/v1/admin/user/encrypt', 				UserController.encrypt);
 	app.get ('/api/v1/admin/user/validate', 			UserController.validateUsers);
+	app.get ('/api/v1/admin/group/repair',				GroupController.repairGroup);
 
 	// Rutas para roles de 'isOrg'
 
