@@ -129,6 +129,7 @@ module.exports = {
 														res.status(201).json({
 															'status': 201,
 															'message': 'User - ' + userProps.name + '- created',
+															'userid': user._id,
 															'uri': link
 														});
 													})

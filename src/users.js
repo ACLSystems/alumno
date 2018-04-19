@@ -81,7 +81,7 @@ const PersonSchema = new Schema ({
 	mainPhone: {
 		type: String
 	},
-	celPhone: {
+	cellPhone: {
 		type: String
 	},
 	genre: {
