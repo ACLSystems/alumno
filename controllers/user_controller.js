@@ -146,12 +146,6 @@ module.exports = {
 										var re = new RegExp('duplicate key error collection');
 										var found = errString.match(re);
 										if(found) {
-											/*
-											res.status(406).json({
-												'status': 406,
-												'message': 'Error: user -' + userProps.name + '- or email: -'+ userProps.person.email + '- already exists'
-											});
-											*/
 											User.findOne({$or:[{name: userProps.name},{'person.email': userProps.person.email}]})
 												.then((user) => {
 													if(user.admin && user.admin.adminCreate) {
@@ -160,37 +154,46 @@ module.exports = {
 														user.mod.push({
 															by: author,
 															when: date,
-															what: 'User completed registration'
+															what: 'User tries to register again'
 														});
+														/*
 														user.org = userProps.org;
 														user.orgUnit = userProps.ou;
+														user.admin.isVerified = true;
+														user.admin.validationString = '';
+														user.admin.adminCreate = false;
+														user.admin.passwordSaved = 'saved';
 														user.password = userProps.password;
 														user.person = userProps.person;
 														if(userProps.student) {
 															user.student = userProps.student;
 														}
+
 														user.save()
 															.then((user) => {
-																const link = url + 'email=' + user.person.email + '&token=' + user.admin.validationString;
-																mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',template_user,link)
-																	.then(() => {
-																		res.status(201).json({
-																			'status': 201,
-																			'message': 'User - ' + userProps.name + '- created',
-																			'uri': link
-																		});
-																	})
-																	.catch((err) => {
-																		res.status(201).json({
-																			'status': 201,
-																			'message': 'Register was sucessfully done, but email was not send'
-																		});
-																		Err.sendError(res,err,'user_controller','register -- Sending Mail --',true);
-																	});
+															*/
+														const link = url + 'email=' + user.person.email + '&token=' + user.admin.validationString;
+														mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',template_user,link)
+															.then(() => {
+																res.status(201).json({
+																	'status': 201,
+																	'message': 'You have already been registered previously. New email for user - ' + userProps.name + '- send. New validation string created',
+																	'uri': link
+																});
+															})
+															.catch((err) => {
+																res.status(201).json({
+																	'status': 201,
+																	'message': 'Re-register done, but email was not send'
+																});
+																Err.sendError(res,err,'user_controller','register -- Sending Mail --',true);
+															});
+														/*
 															})
 															.catch((err) => {
 																Err.sendError(res,err,'user_controller','register -- Saving User validation String --');
 															});
+															*/
 													} else {
 														res.status(406).json({
 															'status': 406,
