@@ -57,7 +57,7 @@ module.exports = {
 						orgs: [{ name: key_user.org.name, canRead: true, canModify: false, canSec: false}],
 						orgUnits: [{ name: key_user.orgUnit.name, canRead: true, canModify: true, canSec: false}]
 					};
-					if(!group.instructor) {
+					if(!group.instructor && group.type === 'tutor') {
 						group.instructor = key_user._id;
 					}
 					group.roster = new Array();
@@ -150,7 +150,7 @@ module.exports = {
 		const key_user 	= res.locals.user;
 		var query = {instructor: key_user._id};
 		Group.find(query)
-			.populate('course', 'title code blocks numBlocks')
+			.populate('course', 'title code blocks numBlocks type')
 			.populate('instructor', 'name person')
 			.populate('org', 'name')
 			.populate('orgUnit', 'name longName')
@@ -173,6 +173,7 @@ module.exports = {
 					var send_group = {
 						courseTitle			: group.course.title,
 						courseCode			: group.course.code,
+						courseType			: group.course.type,
 						numBlocks				: group.course.numBlocks,
 						orgUnit 				: group.orgUnit.name,
 						orgUnitName			: group.orgUnit.longName,
@@ -236,7 +237,8 @@ module.exports = {
 						when: date,
 						what: 'Roster Creation'
 					};
-					const blocks = group.course.blocks;
+					const blocks			= group.course.blocks;
+					var new_students 	= new Array();
 					User.find({_id: { $in: roster.roster}})
 						.select('person')
 						.then((students) => {
@@ -277,17 +279,50 @@ module.exports = {
 									minTrack	: group.minTrack,
 									org				: group.org,
 									orgUnit		: group.orgUnit,
-									sections 	: sections
+									sections 	: sections,
+									admin 		: [{
+										what		: 'Roster creation',
+										who			: key_user.name,
+										when		: date
+									}]
 								});
 								new_roster.save()
 									.then(() => {
 										mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado a un curso',339994,link,group.course.title);
+										new_students.push(student);
+										group.students = group.students.concat(new_students);
+										Roster.find({group: group._id, student: {$in: group.students}})
+											.select('student')
+											.then((items) => {
+												var roster = new Array();
+												items.forEach(function(item) {
+													roster.push(item._id);
+												});
+												group.roster = roster;
+												group.mod.push(mod);
+												group.save()
+													.then(() => {
+														res.status(200).json({
+															'status': 200,
+															'message': 'Roster created'
+														});
+													})
+													.catch((err) => {
+														Err.sendError(res,err,'group_controller','createRoster -- Saving group -- user: ' +
+															key_user.name + ' groupid: ' + group._id);
+													});
+											})
+											.catch((err) => {
+												Err.sendError(res,err,'group_controller','createRoster -- Finding Rosters -- user: ' +
+													key_user.name + ' groupid: ' + group._id);
+											});
 									})
 									.catch((err) => {
 										Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
 									});
-								group.roster.push(student);
+
 							});
+							/*
 							group.mod.push(mod);
 							group.save()
 								.then(() => {
@@ -299,6 +334,7 @@ module.exports = {
 								.catch((err) => {
 									Err.sendError(res,err,'group_controller','createRoster -- Saving Group --');
 								});
+								*/
 						});
 				} else {
 					res.status(404).json({
@@ -397,7 +433,7 @@ module.exports = {
 			.populate({
 				path: 'roster',
 				model: 'rosters',
-				select: 'student status finalGrade track pass passDate newTask',
+				select: 'student status finalGrade track pass passDate newTask grades',
 				populate: {
 					path: 'student',
 					select: 'name status person student'
@@ -422,7 +458,7 @@ module.exports = {
 						if(!s.pass) {
 							s.pass = false;
 						}
-						students.push({
+						var send_student = {
 							id					: s.student._id,
 							username		: s.student.name,
 							status			: s.status,
@@ -432,18 +468,39 @@ module.exports = {
 							pass				: s.pass,
 							passDate		: s.passDate,
 							newTask			: s.newTask
-							/*
-							fatherName	: s.student.person.fatherName,
-							motherName	: s.student.person.motherName,
-							email				: s.student.person.email,
-							studentType	: s.student.type,
-							career			: s.student.career,
-							term				: s.student.term,
-							external		: s.student.external,
-							origin			: s.student.origin
-							//grades			: s.grades
-							*/
-						});
+						};
+						/*
+						var send_grades = new Array();
+						var send_grade 	= {};
+						var flag 				= false;
+						if(s.grades && s.grades.length > 0) {
+							s.grades.forEach(function(g) {
+								if(g.w && g.w > 0) {
+									if(g.wt && g.wt > 0) {
+										if(g.tasks && g.tasks.length > 0) {
+											send_grade.block = g.block;
+											send_grade.tasks = new Array();
+											g.tasks.forEach(function(t) {
+												send_grade.tasks.push({
+													content	: t.content,
+													type 		: t.type,
+													label		: t.label,
+													graded	: t.graded,
+													date 		: t.date
+												});
+												flag = true;
+											});
+										}
+									}
+								}
+							});
+							if(flag) {
+								send_grades.push(send_grade);
+							}
+						}
+						send_student.grades = send_grades;
+						*/
+						students.push(send_student);
 					});
 					send_group.students = students;
 
@@ -1703,7 +1760,6 @@ module.exports = {
 		const key_user	= res.locals.user;
 		const groupid = req.query.groupid;
 		Group.findById(groupid)
-			.populate('students')
 			.then((group) => {
 				if(group) {
 					Roster.find({group: groupid, student: {$in: group.students}})
