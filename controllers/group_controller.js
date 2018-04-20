@@ -495,7 +495,9 @@ module.exports = {
 											}
 											var b = 0;
 											while (b<numBlocks && !found) {
+												console.log('blocks[b]: ' + blocks[b] ' g.block._id: ' + g.block._id);
 												if(blocks[b] + '' === g.block._id + '') {
+													console.log('--------> here <--------');
 													send_grade.section 	= blocks[b].section;
 													send_grade.number		= blocks[b].number;
 													found = true;
