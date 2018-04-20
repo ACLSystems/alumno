@@ -494,7 +494,7 @@ module.exports = {
 												blocks = group.course.blocks;
 											}
 											var b = 0;
-											while (b<numBlocks || !found) {
+											while (b<numBlocks && !found) {
 												if(blocks[b] + '' === g.block + '') {
 													send_grade.section 	= blocks[b].section;
 													send_grade.number		= blocks[b].number;
@@ -512,11 +512,9 @@ module.exports = {
 							}
 						}
 						send_student.grades = send_grades;
-
 						students.push(send_student);
 					});
 					send_group.students = students;
-
 					res.status(200).json({
 						'status': 200,
 						'message': send_group
