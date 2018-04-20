@@ -429,6 +429,14 @@ module.exports = {
 		Group.findOne(query)
 			.populate('instructor', 'name person')
 			.populate('orgUnit', 'name longName')
+			.populate({
+				path: 'course',
+				select: 'blocks',
+				populate: {
+					path: 'blocks',
+					select: 'section number'
+				}
+			})
 			//.populate('students','name status person student')
 			.populate({
 				path: 'roster',
@@ -469,7 +477,7 @@ module.exports = {
 							passDate		: s.passDate,
 							newTask			: s.newTask
 						};
-						/*
+
 						var send_grades = new Array();
 						var send_grade 	= {};
 						var flag 				= false;
@@ -478,18 +486,21 @@ module.exports = {
 								if(g.w && g.w > 0) {
 									if(g.wt && g.wt > 0) {
 										if(g.tasks && g.tasks.length > 0) {
-											send_grade.block = g.block;
-											send_grade.tasks = new Array();
-											g.tasks.forEach(function(t) {
-												send_grade.tasks.push({
-													content	: t.content,
-													type 		: t.type,
-													label		: t.label,
-													graded	: t.graded,
-													date 		: t.date
-												});
-												flag = true;
-											});
+											var found = false;
+											var numBlocks = 0;
+											var blocks = [];
+											if(group.course && group.course.blocks && group.course.blocks.length > 0) {
+												numBlocks = group.course.blocks.length;
+												blocks = group.course.blocks;
+											}
+											var b = 0;
+											while (b<numBlocks || !found) {
+												if(blocks[b] + '' === g.block + '') {
+													send_grade.section 	= blocks[b].section;
+													send_grade.number		= blocks[b].number;
+												}
+											}
+											flag = true;
 										}
 									}
 								}
@@ -499,7 +510,7 @@ module.exports = {
 							}
 						}
 						send_student.grades = send_grades;
-						*/
+
 						students.push(send_student);
 					});
 					send_group.students = students;
