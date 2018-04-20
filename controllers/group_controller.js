@@ -498,7 +498,9 @@ module.exports = {
 												if(blocks[b] + '' === g.block + '') {
 													send_grade.section 	= blocks[b].section;
 													send_grade.number		= blocks[b].number;
+													found = true;
 												}
+												b++;
 											}
 											flag = true;
 										}
