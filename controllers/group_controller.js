@@ -184,7 +184,7 @@ module.exports = {
 						instructor			: group.instructor.person.fullName,
 						beginDate				: group.beginDate,
 						endDate					: group.endDate,
-						numStudents 		: group.numStudents,
+						numStudents 		: group.students.length,
 						presentBlockBy	: group.presentBlockBy
 					};
 					/*
