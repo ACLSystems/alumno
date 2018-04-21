@@ -80,8 +80,8 @@ module.exports = {
 							}
 						});
 				} else {
-					res.status(404).json({
-						'status': 404,
+					res.status(204).json({
+						'status': 204,
 						'message': 'Error -: Course -'+ group.course + '- not found'
 					});
 				}
@@ -135,8 +135,8 @@ module.exports = {
 						'message': send_groups
 					});
 				} else {
-					res.status(404).json({
-						'status': 404,
+					res.status(204).json({
+						'status': 204,
 						'message': 'No groups found'
 					});
 				}
@@ -204,8 +204,8 @@ module.exports = {
 						'message': send_groups
 					});
 				} else {
-					res.status(404).json({
-						'status': 404,
+					res.status(204).json({
+						'status': 204,
 						'message': 'No groups found'
 					});
 				}
@@ -337,8 +337,8 @@ module.exports = {
 								*/
 						});
 				} else {
-					res.status(404).json({
-						'status': 404,
+					res.status(204).json({
+						'status': 204,
 						'mesage': 'Group -' + roster.code + '- not found'
 					});
 				}
@@ -394,14 +394,14 @@ module.exports = {
 										Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
 									});
 							} else {
-								res.status(404).json({
-									'status': 404,
+								res.status(204).json({
+									'status': 204,
 									'mesage': 'Group -' + roster.code + '- not found'
 								});
 							}
 						} else {
-							res.status(404).json({
-								'status': 404,
+							res.status(204).json({
+								'status': 204,
 								'mesage': 'Student -' + roster.student + '- not found'
 							});
 						}
@@ -522,8 +522,8 @@ module.exports = {
 						'message': send_group
 					});
 				} else {
-					res.status(404).json({
-						'status': 404,
+					res.status(204).json({
+						'status': 204,
 						'mesage': 'Group -' + roster.code + '- not found'
 					});
 				}
@@ -595,8 +595,8 @@ module.exports = {
 						}
 					});
 				} else {
-					res.status(404).json({
-						'status': 404,
+					res.status(204).json({
+						'status': 204,
 						'message': 'No groups found'
 					});
 				}
@@ -688,8 +688,8 @@ module.exports = {
 						}
 					});
 				}	else {
-					res.status(404).json({
-						'status': 404,
+					res.status(204).json({
+						'status': 204,
 						'message': 'Group with id -' + groupid + '- not found'
 					});
 				}
@@ -973,20 +973,20 @@ module.exports = {
 								'message'		: send_tasks
 							});
 						} else {
-							res.status(404).json({
-								'status': 404,
+							res.status(204).json({
+								'status': 204,
 								'message': 'No task delivered yet'
 							});
 						}
 					} else {
-						res.status(404).json({
-							'status': 404,
+						res.status(204).json({
+							'status': 204,
 							'message': 'No task found'
 						});
 					}
 				} else {
-					res.status(404).json({
-						'status': 404,
+					res.status(204).json({
+						'status': 204,
 						'message': 'No student roster found'
 					});
 				}
@@ -1057,8 +1057,8 @@ module.exports = {
 						'message': send_grade
 					});
 				} else {
-					res.status(404).json({
-						'status': 404,
+					res.status(204).json({
+						'status': 204,
 						'message': 'You are not enrolled in this group'
 					});
 				}
@@ -1103,14 +1103,14 @@ module.exports = {
 							'message'	: send_resources
 						});
 					} else {
-						res.status(404).json({
-							'status'	: 404,
+						res.status(204).json({
+							'status'	: 204,
 							'message'	: 'No resources found for couse -' + course.code + '-'
 						});
 					}
 				} else {
-					res.status(404).json({
-						'status'	: 404,
+					res.status(204).json({
+						'status'	: 204,
 						'message'	: 'Course not found'
 					});
 				}
@@ -1183,7 +1183,7 @@ module.exports = {
 					var currentBlockGrade = 0;
 					var lastAttempt = 0;
 					var numAttempts = 0;
-					var lastIndex = 0;
+					var lastIndex 	= 0;
 					var lastSection = 0;
 					var section 		= 0;
 					var lastTaskDelivered = 0;
@@ -1327,8 +1327,8 @@ module.exports = {
 					if(ok) {
 						var blockIndex 	= blocks.findIndex(blockIndex => blockIndex == blockid + '');
 						if(blockIndex === -1) {
-							res.status(404).json({
-								'status': 404,
+							res.status(204).json({
+								'status': 204,
 								'message': 'Block not found. Please check groupid and blockid. '
 							});
 							return;
@@ -1475,13 +1475,13 @@ module.exports = {
 										}
 									}
 									if(studentStatus === 'pending' && blocksPresented > blocksPending) {
-										res.status(404).json({
-											'status': 404,
+										res.status(204).json({
+											'status': 204,
 											'message': 'Your student status is pending and you can only have -' + blocksPending + '- free blocks'
 										});
 									} else if (studentStatus === 'remove') {
-										res.status(404).json({
-											'status': 200,
+										res.status(204).json({
+											'status': 204,
 											'message': 'Your student status is remove and you cannot have blocks from this course'
 										});
 									} else {
@@ -1491,8 +1491,8 @@ module.exports = {
 										});
 									}
 								} else { // if(block)
-									res.status(404).json({
-										'status': 404,
+									res.status(204).json({
+										'status': 204,
 										'message': 'Block requested is not found'
 									});
 								}
@@ -1501,15 +1501,15 @@ module.exports = {
 								Err.sendError(res,err,'group_controller','nextBlock -- Finding Block --');
 							});
 					} else { // if(ok)
-						res.status(404).json({
-							'status': 404,
+						res.status(204).json({
+							'status': 204,
 							'message': 'Block cannot be displayed because: ' + cause,
 							'messageUser': 'El bloque no puede presentarse debido a: ' + causeSP
 						});
 					}
 				} else {
-					res.status(404).json({
-						'status': 404,
+					res.status(204).json({
+						'status': 204,
 						'message': 'You are not enrolled to this group'
 					});
 				}
@@ -1564,8 +1564,8 @@ module.exports = {
 							Err.sendError(res,err,'group_controller','usersWOGroup -- Finding Users --');
 						});
 				} else {
-					res.status(404).json({
-						'status': 404,
+					res.status(204).json({
+						'status': 204,
 						'message': 'Groups not found for this ou: -' + ou + '-'
 					});
 				}
@@ -1746,8 +1746,8 @@ module.exports = {
 							'message': send_results
 						});
 					} else {
-						res.status(404).json({
-							'status': 404,
+						res.status(204).json({
+							'status': 204,
 							'message': 'No rosters found'
 						});
 					}
