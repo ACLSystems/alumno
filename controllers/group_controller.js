@@ -495,11 +495,17 @@ module.exports = {
 											}
 											var b = 0;
 											while (b<numBlocks && !found) {
-												console.log('blocks[b]._id: ' + blocks[b]._id + ' g.block: ' + g.block);
 												if(blocks[b]._id + '' === g.block + '') {
-													console.log('--------> here <--------');
 													send_grade.section 	= blocks[b].section;
 													send_grade.number		= blocks[b].number;
+													if(g.tasktries && g.tasktries > 0) {
+														send_grade.taskDelivered = true;
+													} else {
+														send_grade.taskDelivered = false;
+													}
+													if(g.gradeT > 0){
+														send_grade.taskGrade = g.gradeT;
+													}
 													found = true;
 												}
 												b++;
