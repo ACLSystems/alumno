@@ -535,10 +535,18 @@ module.exports = {
 						'message': send_group
 					});
 				} else {
-					res.status(204).json({
-						'status': 204,
-						'mesage': 'Group -' + roster.code + '- not found'
-					});
+					if(roster.code) {
+						res.status(204).json({
+							'status': 204,
+							'mesage': 'Group -' + roster.code + '- not found'
+						});
+					}
+					if(roster.id) {
+						res.status(204).json({
+							'status': 204,
+							'mesage': 'Group -' + roster.id + '- not found'
+						});
+					}
 				}
 			})
 			.catch((err) => {
