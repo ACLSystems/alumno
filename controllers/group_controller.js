@@ -496,6 +496,7 @@ module.exports = {
 											var b = 0;
 											while (b<numBlocks && !found) {
 												if(blocks[b]._id + '' === g.block + '') {
+													send_grade.blockid	= blocks[b]._id,
 													send_grade.section 	= blocks[b].section;
 													send_grade.number		= blocks[b].number;
 													if(g.tasktries && g.tasktries > 0) {
@@ -503,8 +504,14 @@ module.exports = {
 													} else {
 														send_grade.taskDelivered = false;
 													}
+													send_grade.track = g.track;
 													if(g.gradeT > 0){
-														send_grade.taskGrade = g.gradeT;
+														send_grade.taskGrade 	= g.gradeT;
+													}
+													if(g.gradedT) {
+														send_grade.gradedT		= true;
+													} else {
+														send_grade.gradedT		= false;
 													}
 													found = true;
 												}

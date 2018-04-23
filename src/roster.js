@@ -96,6 +96,10 @@ const GradesSchema = new Schema ({
 		max: [100,'Maximum value is 100'],
 		default: 0
 	},
+	gradedT: {
+		type: Boolean,
+		default: false
+	},
 	wq: {
 		type: Number,
 		min: [0,'Minimum value is 0'],
