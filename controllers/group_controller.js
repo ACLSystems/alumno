@@ -937,7 +937,16 @@ module.exports = {
 		const studentid = req.query.studentid;
 		const blockid 	= req.query.blockid;
 		Roster.findOne({group: groupid, student: studentid})
-			.populate('group', 'instructor')
+			.populate('student', 'person')
+			.populate('group', 'instructor course')
+			.populate({
+				path: 'group',
+				select: 'instructor course code',
+				populate: {
+					path: 'course',
+					select: 'title'
+				}
+			})
 			.then((item) => {
 				if(item) {
 					if(item.group && item.group.instructor) {
@@ -991,6 +1000,9 @@ module.exports = {
 							}
 							res.status(200).json({
 								'status'		: 200,
+								'student'		: item.student.person.fullName,
+								'course'		: item.group.course.title,
+								'courseCode': item.group.course.code,
 								'message'		: send_tasks
 							});
 						} else {
