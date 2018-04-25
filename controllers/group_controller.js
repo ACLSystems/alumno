@@ -57,7 +57,7 @@ module.exports = {
 						orgs: [{ name: key_user.org.name, canRead: true, canModify: false, canSec: false}],
 						orgUnits: [{ name: key_user.orgUnit.name, canRead: true, canModify: true, canSec: false}]
 					};
-					if(!group.instructor && group.type === 'tutor') {
+					if(!group.instructor && course.type === 'tutor') {
 						group.instructor = key_user._id;
 					}
 					group.roster = new Array();
@@ -301,12 +301,6 @@ module.exports = {
 												group.roster = roster;
 												group.mod.push(mod);
 												group.save()
-													.then(() => {
-														res.status(200).json({
-															'status': 200,
-															'message': 'Roster created'
-														});
-													})
 													.catch((err) => {
 														Err.sendError(res,err,'group_controller','createRoster -- Saving group -- user: ' +
 															key_user.name + ' groupid: ' + group._id);
@@ -321,6 +315,10 @@ module.exports = {
 										Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
 									});
 
+							});
+							res.status(200).json({
+								'status': 200,
+								'message': 'Roster created'
 							});
 							/*
 							group.mod.push(mod);
