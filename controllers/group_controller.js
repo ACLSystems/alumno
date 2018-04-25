@@ -292,7 +292,7 @@ module.exports = {
 										Roster.findOne({group: group._id, student: student})
 											.select('student')
 											.then((item) => {
-												group.roster = group.roster.contact(item._id);
+												group.roster = group.roster.concat(item._id);
 												group.mod.push(mod);
 												group.save()
 													.catch((err) => {
