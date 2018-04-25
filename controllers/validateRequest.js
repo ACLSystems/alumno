@@ -31,9 +31,9 @@ module.exports = function(req, res, next) {
 	var token = (req.body && req.body.access_token) || req.headers['x-access-token'];
 
 	if(!token) {
-		res.status(400);
+		res.status(401);
 		res.json({
-			'status': 400,
+			'status': 401,
 			'message': 'Error 200: Missing token'
 		});
 		return;
@@ -83,8 +83,8 @@ module.exports = function(req, res, next) {
 		}
 		var decoded = jwt.decode(token, require('../config/secret')());
 		if(decoded.exp <= Date.now()) {
-			res.status(400).json({
-				'status': 400,
+			res.status(401).json({
+				'status': 401,
 				'message': 'Error 204: Token expired'
 			});
 			return;
