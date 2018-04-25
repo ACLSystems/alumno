@@ -241,6 +241,8 @@ module.exports = {
 					User.find({_id: { $in: roster.roster}})
 						.select('person')
 						.then((students) => {
+							var my_roster 		= new Array();
+							var new_students	= new Array();
 							students.forEach(function(student) {
 								var grade = new Array();
 								var sec = 0;
@@ -285,30 +287,24 @@ module.exports = {
 										when		: date
 									}]
 								});
+								new_students.push(student._id);
+								my_roster.push(new_roster._id);
 								new_roster.save()
 									.then(() => {
 										mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado a un curso',339994,link,group.course.title);
-										group.students = group.students.concat([student]);
-										Roster.findOne({group: group._id, student: student})
-											.select('student')
-											.then((item) => {
-												group.roster = group.roster.concat(item._id);
-												group.mod.push(mod);
-												group.save()
-													.catch((err) => {
-														Err.sendError(res,err,'group_controller','createRoster -- Saving group -- user: ' +
-															key_user.name + ' groupid: ' + group._id);
-													});
-											})
-											.catch((err) => {
-												Err.sendError(res,err,'group_controller','createRoster -- Finding Rosters -- user: ' +
-													key_user.name + ' groupid: ' + group._id);
-											});
 									})
 									.catch((err) => {
 										Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
 									});
 							});
+							group.students 	= group.students.concat(new_students);
+							group.roster		= group.roster.concat(my_roster);
+							group.mod.push(mod);
+							group.save()
+								.catch((err) => {
+									Err.sendError(res,err,'group_controller','createRoster -- Saving group -- user: ' +
+										key_user.name + ' groupid: ' + group._id);
+								});
 							res.status(200).json({
 								'status': 200,
 								'message': 'Roster created'
