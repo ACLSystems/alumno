@@ -982,29 +982,51 @@ module.exports = {
 							}
 						}
 						if(myGrade.tasks && myGrade.tasks.length > 0) {
-							var send_tasks = new Array();
-							var t = 0;
-							var lent = myGrade.tasks.length;
-							while (t < lent) {
-								var task 	= myGrade.tasks[t];
-								var send_task = {
-									content	: task.content,
-									type 		: task.type,
-									label		: task.label,
-									grade		: task.grade,
-									graded	: task.graded,
-									date		: task.date
-								};
-								send_tasks.push(send_task);
-								t++;
-							}
-							res.status(200).json({
-								'status'		: 200,
-								'student'		: item.student.person.fullName,
-								'course'		: item.group.course.title,
-								'courseCode': item.group.course.code,
-								'message'		: send_tasks
-							});
+							// Aqui ponemos la búsqueda del contenido del bloque
+							Block.findById(blockid)
+								.populate('task', 'items')
+								.then((block) => {
+									if(!block) {
+										res.status(204).json({
+											'status': 204,
+											'message': 'No block content found'
+										});
+										return;
+									}
+									var send_tasks = new Array();
+									var t = 0;
+									var lent = myGrade.tasks.length;
+									while (t < lent) {
+										var task 			= myGrade.tasks[t];
+										var taskText 	= '';
+										if(block.task && block.task.items && block.task.items.length > 0 && block.task.items[t] && block.task.items[t].text) {
+											taskText = block.task.items[t].text;
+										}
+										var send_task = {
+											taskText: taskText,
+											content	: task.content,
+											type 		: task.type,
+											label		: task.label,
+											grade		: task.grade,
+											graded	: task.graded,
+											date		: task.date
+										};
+										send_tasks.push(send_task);
+										t++;
+									}
+									res.status(200).json({
+										'status'		: 200,
+										'student'		: item.student.person.fullName,
+										'course'		: item.group.course.title,
+										'courseCode': item.group.course.code,
+										'message'		: send_tasks
+									});
+								})
+								.catch((err) => {
+									Err.sendError(res,err,'group_controller','studentTask -- Finding Block -- user: ' +
+										key_user.name + ' id: ' + key_user._id + ' groupid: ' + groupid + ' blockid: ' + blockid + ' studentid: ' + studentid);
+								});
+							// hasta aquí
 						} else {
 							res.status(204).json({
 								'status': 204,
@@ -1026,7 +1048,7 @@ module.exports = {
 			})
 			.catch((err) => {
 				Err.sendError(res,err,'group_controller','studentTask -- Finding Roster -- user: ' +
-					key_user.name + ' id: ' + key_user._id + ' groupid: ' + groupid + ' blockid: ' + studentid );
+					key_user.name + ' id: ' + key_user._id + ' groupid: ' + groupid + ' studentid: ' + studentid + ' blockid: ' + blockid);
 			});
 	}, //studentTask
 
