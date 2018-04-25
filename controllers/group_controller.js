@@ -235,10 +235,9 @@ module.exports = {
 					var mod = {
 						by: key_user.name,
 						when: date,
-						what: 'Roster Creation'
+						what: 'Adding student to roster'
 					};
 					const blocks			= group.course.blocks;
-					var new_students 	= new Array();
 					User.find({_id: { $in: roster.roster}})
 						.select('person')
 						.then((students) => {
@@ -289,16 +288,11 @@ module.exports = {
 								new_roster.save()
 									.then(() => {
 										mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado a un curso',339994,link,group.course.title);
-										new_students.push(student);
-										group.students = group.students.concat(new_students);
-										Roster.find({group: group._id, student: {$in: group.students}})
+										group.students = group.students.concat([student]);
+										Roster.findOne({group: group._id, student: student})
 											.select('student')
-											.then((items) => {
-												var roster = new Array();
-												items.forEach(function(item) {
-													roster.push(item._id);
-												});
-												group.roster = roster;
+											.then((item) => {
+												group.roster = group.roster.contact(item._id);
 												group.mod.push(mod);
 												group.save()
 													.catch((err) => {
@@ -314,7 +308,6 @@ module.exports = {
 									.catch((err) => {
 										Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
 									});
-
 							});
 							res.status(200).json({
 								'status': 200,
