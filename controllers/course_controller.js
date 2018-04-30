@@ -340,25 +340,148 @@ module.exports = {
 			query = { org: key_user.org._id, code: req.query.code };
 		}
 		Block.findOne(query)
+			.populate('questionnarie')
+			.populate('task')
 			.then((block) => {
 				if(block) {
-					const result = permissions.access(key_user,block,'content');
-					if(result.canRead) {
-						var send_block = prettyGetBlockBy(block);
-						res.status(200).json({
-							'status': 200,
-							'message': send_block
-						});
+					//const result = permissions.access(key_user,block,'content');
+					//if(result.canRead) {
+					var send_block = {
+						blockId							: block._id,
+						blockCode						: block.code,
+						blockType						: block.type,
+						blockTitle					: block.title,
+						blockSection				: block.section,
+						blockNumber					: block.number,
+						blockOrder					: block.order,
+						blockContent				: block.content,
+						blockMedia					: block.media,
+						blockKeywords				: block.keywords,
+						blockVersion				: block.version,
+						blockBegin					: block.begin,
+						blockStatus					: block.status,
+						blockIsVisible			: block.isVisible,
+						blockDefaultmin			: block.defaultmin,
+						blockW							: block.w,
+						blockWq							: block.wq,
+						blockWt							: block.wt,
+						blockDuration				: block.duration,
+						blockDurationUnits	: block.durationUnits
+					};
+					var send_questionnarie = {};
+					if(block.type === 'questionnarie' && block.questionnarie) {
+						const qn = block.questionnarie;
+						send_questionnarie = {
+							qstnnId						: qn._id,
+							qstnnVersion			: qn.version,
+							qstnnIsVisible		: qn.isVisible,
+							qstnnKeywords			: qn.keywords,
+							qstnnW						: qn.w,
+							qstnnMaxAttempts	: qn.maxAttempts,
+							qstnnMinimum			: qn.minumim,
+							qstnnType					: qn.type
+						};
+						if(qn.questions && qn.questions.length > 0) {
+							var send_questions = new Array();
+							qn.questions.forEach(function(q) {
+								var send_question = {
+									questId					: q._id,
+									questType				: q.type,
+									questLabel			: q.label,
+									questHeader			: q.header,
+									questText				: q.text,
+									questW					: q.w,
+									questIsVisible	: q.isVisible,
+									questFooter			: q.footer
+								};
+								if(q.answers && q.answers.length > 0){
+									var answers = new Array();
+									q.answers.forEach(function(a) {
+										var answer = {
+											ansId			: a._id,
+											ansType		: a.type
+										};
+										if(a.type === 'index') {
+											answer.ansIndex	= a.index;
+										}
+										if(a.type === 'text') {
+											answer.ansText	= a.text;
+										}
+										if(a.type === 'tf') {
+											answer.ansTf		= a.tf;
+										}
+										if(a.type === 'group') {
+											answer.ansGroup	= a.group;
+										}
+										answers.push(answer);
+									});
+									send_question.answers = answers;
+								}
+								if(q.options && q.options.length > 0){
+									var options = new Array();
+									q.options.forEach(function(o) {
+										options.push({
+											optId			: o._id,
+											optName		: o.name,
+											optValue 	: o.value
+										});
+									});
+									send_question.options = options;
+								}
+								if(q.group && q.group.length > 0) {
+									send_question.group = q.group;
+								}
+								send_questions.push(send_question);
+							});
+						}
+						send_questionnarie.questions = send_questions;
+					}
+					send_block.questionnarie = send_questionnarie;
+					var send_task = {};
+					if(block.type === 'task' && block.task) {
+						const ts = block.task;
+						send_task = {
+							taskId				: ts._id,
+							taskStatus		: ts.status,
+							taskVersion		: ts.version,
+							taskKeywords	: ts.keywords,
+							taskIsVisible	: ts.isVisible,
+						};
+						if(ts.items && ts.items.length > 0) {
+							var send_items = new Array();
+							ts.items.forEach(function(i) {
+								var send_item = {
+									itemId			: i._id,
+									itemHeader	: i.header,
+									itemFooter	: i.footer,
+									itemText		: i.text,
+									itemLabel		: i.label,
+									itemType		: i.type,
+									itemFiles		: i.files,
+									itemW				: i.w
+								};
+								send_items.push(send_item);
+							});
+							send_task.items = send_items;
+						}
+						send_block.task = send_task;
+					}
+					res.status(200).json({
+						'status': 200,
+						'message': send_block
+					});
+					/*
 					} else {
 						res.status(406).json({
 							'status': 406,
 							'message': 'Error 1445: User -'+ key_user.name + '- does not have permissions for block -' + block.code + '-'
 						});
 					}
+					*/
 				} else {
 					res.status(406).json({
 						'status': 406,
-						'message': 'Error 1446: We cannot found any block with code -' + req.query.code + '-'
+						'message': 'Block not found'
 					});
 				}
 			})

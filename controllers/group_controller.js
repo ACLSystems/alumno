@@ -80,8 +80,8 @@ module.exports = {
 							}
 						});
 				} else {
-					res.status(204).json({
-						'status': 204,
+					res.status(200).json({
+						'status': 200,
 						'message': 'Error -: Course -'+ group.course + '- not found'
 					});
 				}
@@ -135,8 +135,8 @@ module.exports = {
 						'message': send_groups
 					});
 				} else {
-					res.status(204).json({
-						'status': 204,
+					res.status(200).json({
+						'status': 200,
 						'message': 'No groups found'
 					});
 				}
@@ -204,8 +204,8 @@ module.exports = {
 						'message': send_groups
 					});
 				} else {
-					res.status(204).json({
-						'status': 204,
+					res.status(200).json({
+						'status': 200,
 						'message': 'No groups found'
 					});
 				}
@@ -324,8 +324,8 @@ module.exports = {
 								*/
 						});
 				} else {
-					res.status(204).json({
-						'status': 204,
+					res.status(200).json({
+						'status': 200,
 						'mesage': 'Group -' + roster.code + '- not found'
 					});
 				}
@@ -381,14 +381,14 @@ module.exports = {
 										Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
 									});
 							} else {
-								res.status(204).json({
-									'status': 204,
+								res.status(200).json({
+									'status': 200,
 									'mesage': 'Group -' + roster.code + '- not found'
 								});
 							}
 						} else {
-							res.status(204).json({
-								'status': 204,
+							res.status(200).json({
+								'status': 200,
 								'mesage': 'Student -' + roster.student + '- not found'
 							});
 						}
@@ -523,14 +523,14 @@ module.exports = {
 					});
 				} else {
 					if(roster.code) {
-						res.status(204).json({
-							'status': 204,
+						res.status(200).json({
+							'status': 200,
 							'mesage': 'Group -' + roster.code + '- not found'
 						});
 					}
 					if(roster.id) {
-						res.status(204).json({
-							'status': 204,
+						res.status(200).json({
+							'status': 200,
 							'mesage': 'Group -' + roster.id + '- not found'
 						});
 					}
@@ -603,8 +603,8 @@ module.exports = {
 						}
 					});
 				} else {
-					res.status(204).json({
-						'status': 204,
+					res.status(200).json({
+						'status': 200,
 						'message': 'No groups found'
 					});
 				}
@@ -696,8 +696,8 @@ module.exports = {
 						}
 					});
 				}	else {
-					res.status(204).json({
-						'status': 204,
+					res.status(200).json({
+						'status': 200,
 						'message': 'Group with id -' + groupid + '- not found'
 					});
 				}
@@ -925,7 +925,6 @@ module.exports = {
 		const blockid 	= req.query.blockid;
 		Roster.findOne({group: groupid, student: studentid})
 			.populate('student', 'person')
-			.populate('group', 'instructor course')
 			.populate({
 				path: 'group',
 				select: 'instructor course code',
@@ -938,97 +937,110 @@ module.exports = {
 				if(item) {
 					if(item.group && item.group.instructor) {
 						if(item.group.instructor + '' !== key_user._id + ''){
-							res.status(406).json({
-								'status': 406,
+							res.status(200).json({
+								'status': 200,
 								'message': 'You are not instructor for this group',
 								'userid': key_user._id,
 								'instructorid': item.group.instructor
 							});
 							return;
+						} else {
+							var grades = [];
+							var myGrade = {};
+							if(item.grades.length > 0) {
+								grades = item.grades;
+								var len = grades.length;
+								var found = false;
+								var k = 0;
+								while ((k < len) && !found) {
+									if(grades[k].block + '' === blockid) {
+										myGrade = grades[k];
+										found = true;
+									} else {
+										k++;
+									}
+								}
+								if(!found) {
+									res.status(200).json({
+										'status'	: 200,
+										'message'	: 'Block not found in roster. Maybe block from another course?'
+									});
+									return;
+								}
+								if(myGrade.tasks && myGrade.tasks.length > 0) {
+									// Aqui ponemos la búsqueda del contenido del bloque
+									Block.findById(blockid)
+										.populate('task', 'items')
+										.then((block) => {
+											if(block) {
+												var send_tasks = new Array();
+												var t = 0;
+												var lent = myGrade.tasks.length;
+												while (t < lent) {
+													var task 			= myGrade.tasks[t];
+													var taskText 	= '';
+													if(block.task && block.task.items && block.task.items.length > 0 && block.task.items[t] && block.task.items[t].text) {
+														taskText = block.task.items[t].text;
+													}
+													var send_task = {
+
+														taskId	: task._id,
+														taskText: taskText,
+														content	: task.content,
+														type 		: task.type,
+														label		: task.label,
+														grade		: task.grade,
+														graded	: task.graded,
+														date		: task.date
+													};
+													send_tasks.push(send_task);
+													t++;
+												}
+												res.status(200).json({
+													'status'		: 200,
+													'student'		: item.student.person.fullName,
+													'course'		: item.group.course.title,
+													'courseCode': item.group.course.code,
+													'blockId'		: block._id,
+													'rosterid'	: item._id,
+													'taskGrade'	: myGrade.gradeT,
+													'message'		: send_tasks
+												});
+											} else {
+												res.status(200).json({
+													'status': 200,
+													'message': 'No block content found'
+												});
+											}
+										})
+										.catch((err) => {
+											Err.sendError(res,err,'group_controller','studentTask -- Finding Block -- user: ' +
+												key_user.name + ' id: ' + key_user._id + ' groupid: ' + groupid + ' blockid: ' + blockid + ' studentid: ' + studentid);
+										});
+									// hasta aquí
+								} else {
+									res.status(200).json({
+										'status': 200,
+										'message': 'No task delivered yet'
+									});
+								}
+							} else {
+								res.status(200).json({
+									'status': 200,
+									'message': 'No task found'
+								});
+							}
 						}
 					} else {
-						res.status(406).json({
-							'status': 406,
+						res.status(200).json({
+							'status': 200,
 							'message': 'No instructor for this group'
 						});
 						return;
 					}
-					var grades = [];
-					var myGrade = {};
-					var k = 0;
-					if(item.grades.length > 0) {
-						grades = item.grades;
-						var len = grades.length;
-						var found = false;
-						while ((k < len) && !found) {
-							if(grades[k].block + '' === blockid) {
-								myGrade = grades[k];
-								found = true;
-							} else {
-								k++;
-							}
-						}
-						if(myGrade.tasks && myGrade.tasks.length > 0) {
-							// Aqui ponemos la búsqueda del contenido del bloque
-							Block.findById(blockid)
-								.populate('task', 'items')
-								.then((block) => {
-									if(!block) {
-										res.status(204).json({
-											'status': 204,
-											'message': 'No block content found'
-										});
-										return;
-									}
-									var send_tasks = new Array();
-									var t = 0;
-									var lent = myGrade.tasks.length;
-									while (t < lent) {
-										var task 			= myGrade.tasks[t];
-										var taskText 	= '';
-										if(block.task && block.task.items && block.task.items.length > 0 && block.task.items[t] && block.task.items[t].text) {
-											taskText = block.task.items[t].text;
-										}
-										var send_task = {
-											taskText: taskText,
-											content	: task.content,
-											type 		: task.type,
-											label		: task.label,
-											grade		: task.grade,
-											graded	: task.graded,
-											date		: task.date
-										};
-										send_tasks.push(send_task);
-										t++;
-									}
-									res.status(200).json({
-										'status'		: 200,
-										'student'		: item.student.person.fullName,
-										'course'		: item.group.course.title,
-										'courseCode': item.group.course.code,
-										'message'		: send_tasks
-									});
-								})
-								.catch((err) => {
-									Err.sendError(res,err,'group_controller','studentTask -- Finding Block -- user: ' +
-										key_user.name + ' id: ' + key_user._id + ' groupid: ' + groupid + ' blockid: ' + blockid + ' studentid: ' + studentid);
-								});
-							// hasta aquí
-						} else {
-							res.status(204).json({
-								'status': 204,
-								'message': 'No task delivered yet'
-							});
-						}
-					} else {
-						res.status(204).json({
-							'status': 204,
-							'message': 'No task found'
-						});
-					}
-				} else {
-					res.status(204).json({
-						'status': 204,
+				} else { // if(item)
+					res.status(200).json({
+						'status': 200,
 						'message': 'No student roster found'
 					});
 				}
@@ -1038,6 +1050,87 @@ module.exports = {
 					key_user.name + ' id: ' + key_user._id + ' groupid: ' + groupid + ' studentid: ' + studentid + ' blockid: ' + blockid);
 			});
 	}, //studentTask
+
+	gradeTask(req,res) {
+		const rosterid	= req.body.rosterid;
+		const blockid		= req.body.blockid;
+		const taskid		= req.body.taskid;
+		const grade			= req.body.grade;
+		const key_user 	= res.locals.user;
+		Roster.findById(rosterid)
+			.then((item) => {
+				var len 			= item.grades.length;
+				if(len === 0) {
+					res.status(200).json({
+						'status'	: 200,
+						'message'	: 'No grades found in roster'
+					});
+				}
+				var found			= false;
+				var k 				= 0;
+				var myGrade  	= 0;
+				while ((k < len) && !found) {
+					if(item.grades[k].block + '' === blockid) {
+						myGrade = k;
+						found = true;
+					} else {
+						k++;
+					}
+				}
+				if(found) {
+					len 	= item.grades[myGrade].tasks.length;
+					if(len === 0) {
+						res.status(200).json({
+							'status'	: 200,
+							'message'	: 'No task found in grades'
+						});
+					}
+					found = false;
+					k			= 0;
+					var myTask = 0;
+					while ((k < len) && !found) {
+						if(item.grades[myGrade].tasks[k]._id + '' === taskid) {
+							myTask = k;
+							found = true;
+						} else {
+							k++;
+						}
+					}
+					if(found) {
+						item.grades[myGrade].tasks[myTask].grade = grade;
+						item.grades[myGrade].tasks[myTask].graded = true;
+						item.newTask = false;
+						item.save()
+							.then(() => {
+								res.status(200).json({
+									'status'	: 200,
+									'message'	: 'Grade saved'
+								});
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'group_controller','gradeTask -- Saving Roster -- user: ' +
+									key_user.name + ' id: ' + key_user._id + ' rosterid: ' + rosterid + ' taskid: ' + taskid);
+							});
+					} else {
+						res.status(200).json({
+							'status'	: 200,
+							'message'	: 'No task found in grades. Maybe in other group or student?'
+						});
+					}
+				} else {
+					res.status(200).json({
+						'status'	: 200,
+						'message'	: 'No blockid found in roster'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','gradeTask -- Finding Roster -- user: ' +
+					key_user.name + ' id: ' + key_user._id + ' rosterid: ' + rosterid + ' taskid: ' + taskid);
+			});
+	}, //gradeTask
+
+
 
 	myGrades(req,res){
 		const groupid		= req.query.groupid;
@@ -1099,8 +1192,8 @@ module.exports = {
 						'message': send_grade
 					});
 				} else {
-					res.status(204).json({
-						'status': 204,
+					res.status(200).json({
+						'status': 200,
 						'message': 'You are not enrolled in this group'
 					});
 				}
@@ -1113,7 +1206,7 @@ module.exports = {
 	getResource(req,res) {
 		const key_user 	= res.locals.user;
 		const groupid		= req.query.groupid;
-		Roster.findOne({student: key_user.id, group: groupid})
+		Roster.findOne({student: key_user._id, group: groupid})
 			.populate({
 				path: 'group',
 				select: 'course',
@@ -1145,13 +1238,13 @@ module.exports = {
 							'message'	: send_resources
 						});
 					} else {
-						res.status(204).json({
+						res.status(200).json({
 							'status'	: 204,
 							'message'	: 'No resources found for couse -' + course.code + '-'
 						});
 					}
 				} else {
-					res.status(204).json({
+					res.status(200).json({
 						'status'	: 204,
 						'message'	: 'Course not found'
 					});
@@ -1186,7 +1279,7 @@ module.exports = {
 					select: 'beginDate endDate'
 				}
 				]
-			},
+			}, // esta parte de abajo está sospechosa, porque de todos modos tengo que ir por el dato del bloque
 			{
 				path: 'grades.block',
 				select: 'section'
@@ -1369,8 +1462,8 @@ module.exports = {
 					if(ok) {
 						var blockIndex 	= blocks.findIndex(blockIndex => blockIndex == blockid + '');
 						if(blockIndex === -1) {
-							res.status(204).json({
-								'status': 204,
+							res.status(200).json({
+								'status': 200,
 								'message': 'Block not found. Please check groupid and blockid. '
 							});
 							return;
@@ -1517,13 +1610,13 @@ module.exports = {
 										}
 									}
 									if(studentStatus === 'pending' && blocksPresented > blocksPending) {
-										res.status(204).json({
-											'status': 204,
+										res.status(200).json({
+											'status': 200,
 											'message': 'Your student status is pending and you can only have -' + blocksPending + '- free blocks'
 										});
 									} else if (studentStatus === 'remove') {
-										res.status(204).json({
-											'status': 204,
+										res.status(200).json({
+											'status': 200,
 											'message': 'Your student status is remove and you cannot have blocks from this course'
 										});
 									} else {
@@ -1533,8 +1626,8 @@ module.exports = {
 										});
 									}
 								} else { // if(block)
-									res.status(204).json({
-										'status': 204,
+									res.status(200).json({
+										'status': 200,
 										'message': 'Block requested is not found'
 									});
 								}
@@ -1543,15 +1636,15 @@ module.exports = {
 								Err.sendError(res,err,'group_controller','nextBlock -- Finding Block --');
 							});
 					} else { // if(ok)
-						res.status(204).json({
-							'status': 204,
+						res.status(200).json({
+							'status': 200,
 							'message': 'Block cannot be displayed because: ' + cause,
 							'messageUser': 'El bloque no puede presentarse debido a: ' + causeSP
 						});
 					}
 				} else {
-					res.status(204).json({
-						'status': 204,
+					res.status(200).json({
+						'status': 200,
 						'message': 'You are not enrolled to this group'
 					});
 				}
@@ -1606,8 +1699,8 @@ module.exports = {
 							Err.sendError(res,err,'group_controller','usersWOGroup -- Finding Users --');
 						});
 				} else {
-					res.status(204).json({
-						'status': 204,
+					res.status(200).json({
+						'status': 200,
 						'message': 'Groups not found for this ou: -' + ou + '-'
 					});
 				}
@@ -1788,8 +1881,8 @@ module.exports = {
 							'message': send_results
 						});
 					} else {
-						res.status(204).json({
-							'status': 204,
+						res.status(200).json({
+							'status': 200,
 							'message': 'No rosters found'
 						});
 					}

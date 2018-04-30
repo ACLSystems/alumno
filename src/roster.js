@@ -147,6 +147,21 @@ GradesSchema.pre('save', function(next) {
 			this.finalGrade = 0;
 		}
 	}
+	if(this.tasks.length > 0) {
+		var tasks = 0;
+		var grades = 0;
+		this.tasks.forEach(function(t) {
+			tasks++;
+			if(t.graded) {
+				grades = grades + t.grade;
+			}
+		});
+		if(tasks > 0) {
+			this.gradeT = grades / tasks;
+		} else {
+			this.gradeT = 0;
+		}
+	}
 	next();
 });
 
@@ -243,6 +258,7 @@ const RosterSchema = new Schema ({
 });
 
 RosterSchema.pre('save', function(next) {
+	const now = new Date;
 	var grades = this.grades;
 	var fg = 0;
 	var i = 0;
@@ -262,7 +278,7 @@ RosterSchema.pre('save', function(next) {
 
 	if(this.finalGrade > this.minGrade && this.track > this.minTrack) {
 		this.pass 		= true;
-		this.passDate	= Date.now;
+		this.passDate	= now;
 	}
 	next();
 });

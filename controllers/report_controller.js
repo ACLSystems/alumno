@@ -236,7 +236,7 @@ module.exports = {
 				});
 		}
 		if(key_user.orgUnit.type === 'campus') {
-			Roster.find({ orgUnit: key_user.orgUnit._id })
+			Roster.find({ orgUnit: key_user.orgUnit._id, isActive: true })
 				.populate('student', 'name person')
 				.populate({
 					path: 'group',

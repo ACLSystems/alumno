@@ -1283,6 +1283,37 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/instructor/group/gradetask':
+		if(!req.body) {  // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else if (!req.body.rosterid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give roster id by body to process'
+			});
+		} else if (!req.body.taskid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give task id by body to process'
+			});
+		} else if (!req.body.blockid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give block id by body to process'
+			});
+		} else if (!req.body.grade) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give grade by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/getresource':
 		if(!req.query) {  // GET
 			res.status(406).json({
