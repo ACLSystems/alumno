@@ -765,11 +765,17 @@ module.exports = {
 							});
 							return;
 						} else {
+							if(!found) {
+								myGrade.block = blockid;
+							}
 							myGrade.quests.push(quest);
 						}
 					} else {
 						myGrade.quests 	= [quest];
 						myGrade.track		= 100;
+						if(!found) {
+							myGrade.block = blockid;
+						}
 					}
 					if(myGrade.w === 0) {
 						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w === 1) {
@@ -1335,23 +1341,33 @@ module.exports = {
 						//var myGrade = {};
 						var i = 0;
 						var track = 0;
+						var length = grades.length;
 						grades.forEach(function(grade) {
-							const blockString = grade.block._id + '';
-							if(blockString === lastid) {
-								//myGrade = grade.block;
-								lastIndex 	= i;
-								lastSection = grade.block.section;
-								nextSection = grade.block.section + 1;
-							}
-							if(blockString === blockid) {
-								currentBlockGrade = grade.maxGradeQ;
-								lastAttempt				= grade.lastAttemptQ;
-								numAttempts				= grade.numAttempts;
-								if(grade.tasktries && grade.tasktries.length > 0) {
-									lastTaskDelivered = grade.tasktries[grade.tasktries.length -1];
+							if(grade && grade.block && grade.block._id) {
+								const blockString = grade.block._id + '';
+								if(blockString === lastid) {
+									//myGrade = grade.block;
+									lastIndex 	= i;
+									lastSection = grade.block.section;
+									nextSection = grade.block.section + 1;
 								}
-								track 						= grade.track;
-								section 					= grade.block.section;
+								if(blockString === blockid) {
+									currentBlockGrade = grade.maxGradeQ;
+									lastAttempt				= grade.lastAttemptQ;
+									numAttempts				= grade.numAttempts;
+									if(grade.tasktries && grade.tasktries.length > 0) {
+										lastTaskDelivered = grade.tasktries[grade.tasktries.length -1];
+									}
+									track 						= grade.track;
+									section 					= grade.block.section;
+								}
+							} else {
+								grades[length].block =  lastid;
+								if(lastid === 'empty') {
+									grades[length].track = 0;
+								} else {
+									grades[length].track = 100;
+								}
 							}
 							i++;
 						}); // grades.forEach
