@@ -1065,68 +1065,75 @@ module.exports = {
 		const key_user 	= res.locals.user;
 		Roster.findById(rosterid)
 			.then((item) => {
-				var len 			= item.grades.length;
-				if(len === 0) {
-					res.status(200).json({
-						'status'	: 200,
-						'message'	: 'No grades found in roster'
-					});
-				}
-				var found			= false;
-				var k 				= 0;
-				var myGrade  	= 0;
-				while ((k < len) && !found) {
-					if(item.grades[k].block + '' === blockid) {
-						myGrade = k;
-						found = true;
-					} else {
-						k++;
-					}
-				}
-				if(found) {
-					len 	= item.grades[myGrade].tasks.length;
+				if(item) {
+					var len 			= item.grades.length;
 					if(len === 0) {
 						res.status(200).json({
 							'status'	: 200,
-							'message'	: 'No task found in grades'
+							'message'	: 'No grades found in roster'
 						});
 					}
-					found = false;
-					k			= 0;
-					var myTask = 0;
+					var found			= false;
+					var k 				= 0;
+					var myGrade  	= 0;
 					while ((k < len) && !found) {
-						if(item.grades[myGrade].tasks[k]._id + '' === taskid) {
-							myTask = k;
+						if(item.grades[k].block + '' === blockid) {
+							myGrade = k;
 							found = true;
 						} else {
 							k++;
 						}
 					}
 					if(found) {
-						item.grades[myGrade].tasks[myTask].grade = grade;
-						item.grades[myGrade].tasks[myTask].graded = true;
-						item.newTask = false;
-						item.save()
-							.then(() => {
-								res.status(200).json({
-									'status'	: 200,
-									'message'	: 'Grade saved'
-								});
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'group_controller','gradeTask -- Saving Roster -- user: ' +
-									key_user.name + ' id: ' + key_user._id + ' rosterid: ' + rosterid + ' taskid: ' + taskid);
+						len 	= item.grades[myGrade].tasks.length;
+						if(len === 0) {
+							res.status(200).json({
+								'status'	: 200,
+								'message'	: 'No task found in grades'
 							});
+						}
+						found = false;
+						k			= 0;
+						var myTask = 0;
+						while ((k < len) && !found) {
+							if(item.grades[myGrade].tasks[k]._id + '' === taskid) {
+								myTask = k;
+								found = true;
+							} else {
+								k++;
+							}
+						}
+						if(found) {
+							item.grades[myGrade].tasks[myTask].grade = grade;
+							item.grades[myGrade].tasks[myTask].graded = true;
+							item.newTask = false;
+							item.save()
+								.then(() => {
+									res.status(200).json({
+										'status'	: 200,
+										'message'	: 'Grade saved'
+									});
+								})
+								.catch((err) => {
+									Err.sendError(res,err,'group_controller','gradeTask -- Saving Roster -- user: ' +
+										key_user.name + ' id: ' + key_user._id + ' rosterid: ' + rosterid + ' taskid: ' + taskid);
+								});
+						} else {
+							res.status(200).json({
+								'status'	: 200,
+								'message'	: 'No task found in grades. Maybe in other group or student?'
+							});
+						}
 					} else {
 						res.status(200).json({
 							'status'	: 200,
-							'message'	: 'No task found in grades. Maybe in other group or student?'
+							'message'	: 'No blockid found in roster'
 						});
 					}
 				} else {
 					res.status(200).json({
 						'status'	: 200,
-						'message'	: 'No blockid found in roster'
+						'message'	: 'No rosterid found'
 					});
 				}
 			})
