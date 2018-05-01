@@ -989,7 +989,6 @@ module.exports = {
 														taskText = block.task.items[t].text;
 													}
 													var send_task = {
-
 														taskId	: task._id,
 														taskText: taskText,
 														content	: task.content,
@@ -1004,13 +1003,15 @@ module.exports = {
 												}
 												res.status(200).json({
 													'status'		: 200,
-													'student'		: item.student.person.fullName,
-													'course'		: item.group.course.title,
-													'courseCode': item.group.course.code,
-													'blockId'		: block._id,
-													'rosterid'	: item._id,
-													'taskGrade'	: myGrade.gradeT,
-													'message'		: send_tasks
+													'message'		: {
+														'student'		: item.student.person.fullName,
+														'course'		: item.group.course.title,
+														'courseCode': item.group.course.code,
+														'blockId'		: block._id,
+														'rosterid'	: item._id,
+														'taskGrade'	: myGrade.gradeT,
+														'tasks'			: send_tasks
+													}
 												});
 											} else {
 												res.status(200).json({
