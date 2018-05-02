@@ -1516,7 +1516,7 @@ module.exports = {
 			query = {_id: req.body.courseid};
 		}
 		if(req.body.coursecode) {
-			query = {_id: req.body.coursecode};
+			query = {code: req.body.coursecode};
 		}
 		Course.findOne(query)
 			.then((course) => {
