@@ -1509,6 +1509,41 @@ module.exports = {
 			});
 	}, //setBlockOrder
 
+	newSection(req,res) {
+		const key_user 	= res.locals.user;
+		const now				= Date;
+		var query		= '';
+		if(req.body.courseid) {
+			query = {_id: req.body.courseid};
+		}
+		if(req.body.coursecode) {
+			query = {_id: req.body.coursecode};
+		}
+		Course.findOne(query)
+			.then((course) => {
+				course.currentSection++;
+				course.nextNumber = 0;
+				course.mod.push({
+					by	: key_user.name,
+					when:	now,
+					what: 'New Section: ' + course.currentSection
+				});
+				course.save()
+					.then(() => {
+						res.status(200).json({
+							'status'	: 200,
+							'message'	: 'Section -' + course.currentSection + '- created'
+						});
+					})
+					.catch((err) => {
+						sendError(res,err,'newSection -- Saving course --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'newSection -- Searching course --');
+			});
+	}, //newSection
+
 	makeAvailable(req,res) { // pone disponible el curso y los bloques del curso
 		//const key_user 	= res.locals.user;
 		const coursecode = req.body.code;

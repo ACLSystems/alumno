@@ -983,6 +983,22 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/author/course/nextsection':
+		if(!req.body) {  // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1448: Please, give data by query to process'
+			});
+		} else if(!req.body.courseid && !req.body.coursecode) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1449: Please, give course id or course code by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/author/course/addquestions':
 		if(!req.body) {  // POST
 			res.status(406).json({
