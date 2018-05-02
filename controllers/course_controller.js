@@ -1511,7 +1511,6 @@ module.exports = {
 
 	newSection(req,res) {
 		const key_user 	= res.locals.user;
-		const now				= Date;
 		var query		= '';
 		if(req.body.courseid) {
 			query = {_id: req.body.courseid};
@@ -1523,11 +1522,7 @@ module.exports = {
 			.then((course) => {
 				course.currentSection++;
 				course.nextNumber = 0;
-				course.mod.push({
-					by	: key_user.name,
-					when:	now,
-					what: 'New Section: ' + course.currentSection
-				});
+				course.mod.push(generateMod(key_user.name,'Section -' + course.currentSection + '- created'));
 				course.save()
 					.then(() => {
 						res.status(200).json({
