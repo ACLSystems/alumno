@@ -55,25 +55,33 @@ module.exports = {
 		course.version = 1;
 		Course.create(course)
 			.then(() => {
-				course.categories.forEach( function(cat) {
-					Category.findOne({ name: cat })
-						.then((cat_found) => {
-							if(!cat_found){
-								const category = new Category({
-									name: cat,
-									isVisible: true,
-									org: key_user.org._id
-								});
-								category.save()
-									.catch((err) => {
-										sendError(res,err,'listCategories -- Course category creation --');
+				if(course.categories && course.categories.length > 0) {
+					course.categories.forEach( function(cat) {
+						Category.findOne({ name: cat })
+							.then((cat_found) => {
+								if(!cat_found){
+									const category = new Category({
+										name: cat,
+										isVisible: true,
+										org: key_user.org._id
 									});
-							}
-						})
-						.catch((err) => {
-							sendError(res,err,'listCategories -- Course Category Finding --');
-						});
-				}); // foreach
+									category.save()
+										.catch((err) => {
+											sendError(res,err,'listCategories -- Course category creation --');
+										});
+								}
+							})
+							.catch((err) => {
+								sendError(res,err,'listCategories -- Course Category Finding --');
+							});
+					}); // foreach
+				} else {
+					res.status(200).json({
+						'status'	: 200,
+						'message'	: 'Category missing or not an array'
+					});
+					return;
+				}
 				res.status(201).json({
 					'status': 201,
 					'message': 'Course - ' + course.title + '- -' + course.code + '- created'
