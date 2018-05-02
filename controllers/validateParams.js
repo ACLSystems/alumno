@@ -983,7 +983,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/author/course/nextsection':
+	case '/api/v1/author/course/newsection':
 		if(!req.body) {  // PUT
 			res.status(406).json({
 				'status': 406,
