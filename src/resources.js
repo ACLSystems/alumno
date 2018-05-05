@@ -34,9 +34,13 @@ const ResourceSchema = new Schema({
 		type: Schema.Types.ObjectId,
 		ref: 'orgs'
 	},
+	course: {
+		type: Schema.Types.ObjectId,
+		ref: 'courses'
+	}
 });
 
-ResourceSchema.index( { title: 1, org: 1}, { unique: true } );
+ResourceSchema.index( { title: 1, org: 1, course: 1}, { unique: true } );
 
 const Resources = mongoose.model('resources', ResourceSchema);
 module.exports = Resources;
