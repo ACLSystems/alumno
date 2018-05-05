@@ -1066,7 +1066,8 @@ module.exports = {
 					resource.content 	= req.body.content;
 					resource.title 		= req.body.title;
 					resource.embedded	= req.body.embedded;
-					resource.status		= 'draft';
+					resource.status		= req.body.status;
+					resource.course 	= course._id;
 					resource.own = {
 						user: key_user.name,
 						org: key_user.org.name,
