@@ -1271,17 +1271,20 @@ module.exports = {
 						};
 						block.mod.push(mod);
 						var req_block = req.body.block;
-						if(req_block.content) 				{block.content 				= req_block.content;				}
-						if(req_block.order) 					{block.order 					= req_block.order;					}
-						if(req_block.number) 					{block.number 				= req_block.number;					}
-						if(req_block.section) 				{block.section				= req_block.section;				}
-						if(req_block.title) 					{block.title					= req_block.title;					}
-						if(req_block.code) 						{block.code						= req_block.code;						}
-						if(req_block.isVisible) 			{block.isVisible			= req_block.isVisible;			}
-						if(req_block.status) 					{block.status					= req_block.status;					}
-						if(req_block.keywords) 				{block.keywords 			= req_block.keywords;				}
-						if(req_block.media) 					{block.media 					= req_block.media;					}
-						if(req_block.type) 						{block.type 					= req_block.type;						}
+						if(req_block.content) 			{block.content 			= req_block.content;				}
+						if(req_block.order) 				{block.order 				= req_block.order;					}
+						if(req_block.number) 				{block.number 			= req_block.number;					}
+						if(req_block.section) 			{block.section			= req_block.section;				}
+						if(req_block.title) 				{block.title				= req_block.title;					}
+						if(req_block.code) 					{block.code					= req_block.code;						}
+						if(req_block.isVisible) 		{block.isVisible		= req_block.isVisible;			}
+						if(req_block.status) 				{block.status				= req_block.status;					}
+						if(req_block.keywords) 			{block.keywords 		= req_block.keywords;				}
+						if(req_block.media) 				{block.media 				= req_block.media;					}
+						if(req_block.type) 					{block.type 				= req_block.type;						}
+						if(req_block.w) 						{block.w 						= req_block.w;						}
+						if(req_block.wq) 						{block.wq 					= req_block.wq;						}
+						if(req_block.wt) 						{block.wt 					= req_block.wt;						}
 						block.save()
 							.then(() => {
 								res.status(200).json({
