@@ -871,6 +871,24 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/author/course/createdependency':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1441: Please, give data by body to process'
+			});
+		} else if (!req.body.blockid && !req.body.onblockid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1442: Please, give blockid and onblockid by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+
+
 	case '/api/v1/author/course/modifyresource':
 		if(!req.body) {  // PUT
 			res.status(406).json({

@@ -1,13 +1,13 @@
-const winston				= require('winston');
-//const User					= require('../src/users');
-const Course				= require('../src/courses');
-const Category			= require('../src/categories');
-const Block					= require('../src/blocks');
-const Questionnarie = require('../src/questionnaries');
-const Task 					= require('../src/tasks');
-const permissions 	= require('../shared/permissions');
-const Org						= require('../src/orgs');
-const Resource 			= require('../src/resources');
+const winston				= require('winston'								);
+const Course				= require('../src/courses'				);
+const Category			= require('../src/categories'			);
+const Block					= require('../src/blocks'					);
+const Questionnarie = require('../src/questionnaries'	);
+const Task 					= require('../src/tasks'					);
+const permissions 	= require('../shared/permissions'	);
+const Org						= require('../src/orgs'						);
+const Resource 			= require('../src/resources'			);
+const Dependency 		= require('../src/dependencies'		);
 
 //const OrgUnit = require('../src/orgUnits');
 require('winston-daily-rotate-file');
@@ -1593,7 +1593,37 @@ module.exports = {
 			.catch((err) => {
 				sendError(res,err,'makeAvailable.courses -- Searching Course --');
 			});
-	} // makeAvailable
+	}, // makeAvailable
+
+	createDependency(req,res) {
+		const blockid 		= req.body.blockid;
+		const onBlock 		= req.body.onblockid;
+		var createAttempt = false;
+		var track 				= false;
+		var saveTask			= false;
+
+		if(req.body.createattempt	) { createAttempt = true; }
+		if(req.body.track					)	{ track 				= true; }
+		if(req.body.saveTask			) { saveTask 			= true; }
+
+		var dependency = new Dependency({
+			block					: blockid,
+			onBlock				: onBlock,
+			createAttempt	: createAttempt,
+			track					: track,
+			saveTask			: saveTask
+		});
+		dependency.save()
+			.then(() => {
+				res.status(200).json({
+					'status': 200,
+					'message': 'Dependency created'
+				});
+			})
+			.catch((err) => {
+				sendError(res,err,'createDependency.courses -- Saving Dependency --');
+			});
+	} //createDependency
 };
 
 function sendError(res, err, section) {

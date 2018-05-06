@@ -19,6 +19,27 @@ const AdminSchema = new Schema ({
 
 module.exports = AdminSchema;
 
+const depSchema = new Schema ({
+	onBlock: {
+		type: Schema.Types.ObjectId,
+		ref: 'blocks'
+	},
+	createAttempt: {
+		type: Boolean,
+		default: false
+	},
+	track: {
+		type: Boolean,
+		default: false
+	},
+	saveTask: {
+		type: Boolean,
+		default: false
+	}
+});
+
+module.exports = depSchema;
+
 const TasksSchema = new Schema ({
 	content: {
 		type: String
@@ -123,7 +144,8 @@ const GradesSchema = new Schema ({
 		min: [0,'Minimum value is 0'],
 		max: [100,'Maximum value is 100'],
 		default: 0
-	}
+	},
+	dependencies: [depSchema]
 });
 
 GradesSchema.pre('save', function(next) {
