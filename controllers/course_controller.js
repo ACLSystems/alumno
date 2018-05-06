@@ -798,6 +798,9 @@ module.exports = {
 							}]
 						}
 					};
+					if(req.body.questionnarie && req.body.questionnarie.maxAttempts) {
+						questionnarie.maxAttempts = req.body.questionnarie.maxAttempts;
+					}
 					Questionnarie.create(questionnarie)
 						.then((quest) => {
 							block.questionnarie = quest._id;
