@@ -1,14 +1,12 @@
-//const winston = require('winston');
-const User = require('../src/users');
-//const Org = require('../src/orgs');
-//const OrgUnit = require('../src/orgUnits');
-const Course = require('../src/courses');
-const Group = require('../src/groups');
-const Roster = require('../src/roster');
-const Block = require('../src/blocks');
-const Err = require('../controllers/err500_controller');
-const mailjet = require('../shared/mailjet');
-const TA = require('time-ago');
+const User 				= require('../src/users'										);
+const Course 			= require('../src/courses'									);
+const Group 			= require('../src/groups'										);
+const Roster 			= require('../src/roster'										);
+const Block 			= require('../src/blocks'										);
+const Dependency 	= require('../src/dependencies'							);
+const Err 				= require('../controllers/err500_controller');
+const mailjet 		= require('../shared/mailjet'								);
+const TA 					= require('time-ago'												);
 //const permissions = require('../shared/permissions');
 //require('winston-daily-rotate-file');
 
@@ -238,6 +236,34 @@ module.exports = {
 						what: 'Adding student to roster'
 					};
 					const blocks			= group.course.blocks;
+					Dependency.find({_id: {$in: blocks}})
+						.then((deps) => {
+							if(deps.length > 0 ) { // completar "blocks" con las dependencias
+								deps.forEach(function(dep) {
+									var found = false;
+									var cursor = 0;
+									while (!found && cursor < blocks.length) {
+										if(dep._id +'' === blocks[cursor]._id +'') {
+											if(!blocks[cursor].dependencies) {
+												blocks[cursor].dependencies = new Array();
+											}
+											blocks[cursor].dependencies.push({
+												onBlock				: dep.onBlock,
+												createAttempt	: dep.createAttempt,
+												track					: dep.track,
+												saveTask			: dep.saveTask
+											});
+											found = true;
+										}
+										cursor ++;
+									}
+								});
+							}
+						}) // seguramente meter el resto del código dentro de la promesa
+						.catch((err) => {
+							Err.sendError(res,err,'group_controller','createRoster -- Searching dependencies -- user: ' +
+								key_user.name + ' groupid: ' + group._id);
+						});
 					User.find({_id: { $in: roster.roster}})
 						.select('person')
 						.then((students) => {
@@ -248,18 +274,22 @@ module.exports = {
 								var sec = 0;
 								blocks.forEach(function(block) {
 									grade.push({
-										block			: block._id,
-										track			: 0,
-										maxGradeQ : 0,
-										gradeT		: 0,
-										w					: block.w,
-										wq				: block.wq,
-										wt				: block.wt
+										block					: block._id,
+										track					: 0,
+										maxGradeQ 		: 0,
+										gradeT				: 0,
+										w							: block.w,
+										wq						: block.wq,
+										wt						: block.wt,
+										dependencies	: block.dependencies
 									});
 									if(block.section !== sec) {
 										sec++;
 									}
 								});
+								if(blocks[0].section === 0) {
+									sec++;
+								}
 								var sections = new Array();
 								var j = 0;
 								while (j < sec) {
