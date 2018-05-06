@@ -1167,7 +1167,7 @@ module.exports = {
 					var blocks	= new Array();
 					const bs 		= item.group.course.blocks;
 					item.grades.forEach(function(grade) {
-						if(grade.w > 0) {
+						if(grade.wq > 0 || grade.wt > 0) {
 							var i = 0;
 							var block = {};
 							while (i < bs.length) {
