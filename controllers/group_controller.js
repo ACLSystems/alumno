@@ -243,7 +243,7 @@ module.exports = {
 									var foundB = false;
 									var foundOnB = false;
 									var cursor = 0;
-									while (!foundB && !foundOnB && cursor < blocks.length) {
+									while (!(foundB && foundOnB) && cursor < blocks.length) {
 										if(dep.block +'' === blocks[cursor]._id +'') {
 											if(!blocks[cursor].dependencies) {
 												blocks[cursor].dependencies = new Array();
