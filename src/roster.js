@@ -35,6 +35,18 @@ const depSchema = new Schema ({
 	saveTask: {
 		type: Boolean,
 		default: false
+	},
+	caff: {
+		type: Boolean,
+		default: false
+	},
+	tff: {
+		type: Boolean,
+		default: false
+	},
+	stff: {
+		type: Boolean,
+		default: false
 	}
 });
 
