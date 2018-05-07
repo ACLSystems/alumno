@@ -248,13 +248,19 @@ module.exports = {
 												blocks[cursor].dependencies = new Array();
 											}
 											blocks[cursor].dependencies.push({
-												onBlock				: dep.onBlock,
-												createAttempt	: dep.createAttempt,
-												track					: dep.track,
-												saveTask			: dep.saveTask,
-												caff					: false,
-												tff 					: false,
-												stff					: false
+												dep						: dep._id,
+												createAttempt	: false,
+												track					: false,
+												saveTask			: false
+											});
+											found = true;
+										}
+										if(dep.onBlock +'' === blocks[cursor]._id +'') {
+											if(!blocks[cursor].dependencies) {
+												blocks[cursor].dependencies = new Array();
+											}
+											blocks[cursor].dependencies.push({
+												dep						: dep._id
 											});
 											found = true;
 										}

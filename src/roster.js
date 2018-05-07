@@ -20,21 +20,18 @@ const AdminSchema = new Schema ({
 module.exports = AdminSchema;
 
 const depSchema = new Schema ({
-	onBlock: {
+	dep: {
 		type: Schema.Types.ObjectId,
-		ref: 'blocks'
+		ref: 'dependencies'
 	},
 	createAttempt: {
-		type: Boolean,
-		default: false
+		type: Boolean
 	},
 	track: {
-		type: Boolean,
-		default: false
+		type: Boolean
 	},
 	saveTask: {
-		type: Boolean,
-		default: false
+		type: Boolean
 	}
 });
 
