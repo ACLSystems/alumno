@@ -24,5 +24,7 @@ const DependencySchema = new Schema ({
 	}
 });
 
+DependencySchema.index( { block: 1, onBlock: 1}, { unique: true } );
+
 const Dependencies = mongoose.model('dependencies', DependencySchema);
 module.exports = Dependencies;
