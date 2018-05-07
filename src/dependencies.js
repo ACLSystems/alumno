@@ -21,14 +21,6 @@ const DependencySchema = new Schema ({
 	saveTask: {
 		type: Boolean,
 		default: false
-	},
-	org: {
-		type: String,
-		required: true
-	},
-	course: {
-		type: Schema.Types.ObjectId,
-		ref: 'courses'
 	}
 });
 
