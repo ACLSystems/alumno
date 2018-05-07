@@ -236,14 +236,14 @@ module.exports = {
 						what: 'Adding student to roster'
 					};
 					const blocks			= group.course.blocks;
-					Dependency.find({_id: {$in: blocks}})
+					Dependency.find({block: {$in: blocks}})
 						.then((deps) => {
 							if(deps.length > 0 ) { // completar "blocks" con las dependencias
 								deps.forEach(function(dep) {
 									var found = false;
 									var cursor = 0;
 									while (!found && cursor < blocks.length) {
-										if(dep._id +'' === blocks[cursor]._id +'') {
+										if(dep.block +'' === blocks[cursor]._id +'') {
 											if(!blocks[cursor].dependencies) {
 												blocks[cursor].dependencies = new Array();
 											}
