@@ -32,4 +32,5 @@ const DependencySchema = new Schema ({
 	}
 });
 
-module.exports = DependencySchema;
+const Dependencies = mongoose.model('dependencies', DependencySchema);
+module.exports = Dependencies;
