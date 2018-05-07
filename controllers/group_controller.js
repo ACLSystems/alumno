@@ -764,7 +764,7 @@ module.exports = {
 		};
 		var maxAttempts = 5;
 		Roster.findOne({student: key_user._id, group: groupid})
-			.populate({
+			.populate([{
 				path: 'group',
 				select: 'course',
 				populate: {
@@ -780,89 +780,133 @@ module.exports = {
 						}
 					}
 				}
-			})
+			},
+			{
+				path: 'grades.dependencies.dep'
+			}])
 			.then((item) => {
-				if(item && item.group && item.group.course && item.group.course.blocks && item.group.course.blocks > 0 && item.group.course.blocks[0].questionnarie && item.group.course.blocks[0].questionnarie.maxAttempts ) {
-					maxAttempts = item.group.course.blocks[0].questionnarie.maxAttempts;
-				}
-				var grades = [];
-				var myGrade = {};
-				var k = 0;
-				if(item.grades.length > 0) {
-					grades = item.grades;
-					var len = grades.length;
-					var found = false;
-					while ((k < len) && !found) {
-						if(grades[k].block + '' === blockid) {
-							myGrade = grades[k];
-							found = true;
-						} else {
-							k++;
-						}
+				if(item) {
+					if(item && item.group && item.group.course && item.group.course.blocks && item.group.course.blocks > 0 && item.group.course.blocks[0].questionnarie && item.group.course.blocks[0].questionnarie.maxAttempts ) {
+						maxAttempts = item.group.course.blocks[0].questionnarie.maxAttempts;
 					}
-					if(myGrade.quests && myGrade.quests.length > 0) {
-						if(myGrade.quests.length > maxAttempts - 1) {
-							res.status(406).json({
-								'status': 406,
-								'message': 'Max number of attempts has reached. No more attempts allowed'
+					var grades = [];
+					var myGrade = {};
+					var k = 0;
+					if(item.grades.length > 0) {
+						grades = item.grades;
+						var len = grades.length;
+						var found = false;
+						while ((k < len) && !found) {
+							if(grades[k].block + '' === blockid) {
+								myGrade = grades[k];
+								found = true;
+							} else {
+								k++;
+							}
+						}
+						// verificamos las dependencias y que estas se cumplan
+						const myDeps = myGrade.dependencies;
+
+						if(myDeps.length > 0) { // hay dependencias?
+							//Solo buscamos las dependencias de las que somos origen
+							myDeps.forEach(function(dep) {
+								if(myGrade.block +'' === dep.dep.onBlock +'') {
+									found = false;
+									var l = 0;
+									var m	= 0;
+									var founddep = false;
+									while ((l < len) && !found) {
+										if(grades[l].block + '' === dep.dep.block + '') {
+											m=0;
+											founddep = false;
+											if(grades[l].dependencies && grades[l].dependencies.length > 0) {
+												while((m < grades[l].dependencies.length) && !founddep) {
+													if(grades[l].dependencies[m].dep._id + '' === dep.dep._id + '') {
+														if(grades[l].dependencies[m].dep.createAttempt) {
+															item.grades[l].dependencies[m].createAttempt = true;
+														}
+														founddep = true;
+													}
+													m++;
+												}
+											}
+											found = true;
+										}
+										l++;
+									}
+								}
 							});
-							return;
+						}
+
+						if(myGrade.quests && myGrade.quests.length > 0) {
+							if(myGrade.quests.length > maxAttempts - 1) {
+								res.status(406).json({
+									'status': 406,
+									'message': 'Max number of attempts has reached. No more attempts allowed'
+								});
+								return;
+							} else {
+								if(!found) {
+									myGrade.block = blockid;
+								}
+								myGrade.quests.push(quest);
+							}
 						} else {
+							myGrade.quests 	= [quest];
+							myGrade.track		= 100;
 							if(!found) {
 								myGrade.block = blockid;
 							}
-							myGrade.quests.push(quest);
 						}
-					} else {
-						myGrade.quests 	= [quest];
-						myGrade.track		= 100;
-						if(!found) {
-							myGrade.block = blockid;
+						if(myGrade.w === 0) {
+							if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w === 1) {
+								myGrade.w = 1;
+							}
 						}
-					}
-					if(myGrade.w === 0) {
+						if(myGrade.wq === 0) {
+							if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq === 1) {
+								myGrade.wq = 1;
+							}
+						}
+						if(myGrade.wt === 0) {
+							if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt === 1) {
+								myGrade.wt = 1;
+							}
+						}
+						item.grades[k] = myGrade;
+					} else {	// El siguiente bloque de código no debería existir porque al crear el roster se generan los bloques
+						myGrade = {
+							block	: blockid,
+							quests: [quest],
+							track	: 100
+						};
 						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w === 1) {
 							myGrade.w = 1;
 						}
-					}
-					if(myGrade.wq === 0) {
 						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq === 1) {
 							myGrade.wq = 1;
 						}
-					}
-					if(myGrade.wt === 0) {
 						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt === 1) {
 							myGrade.wt = 1;
 						}
+						item.grades = [myGrade];
 					}
-					item.grades[k] = myGrade;
-				} else {
-					myGrade = {
-						block	: blockid,
-						quests: [quest],
-						track	: 100
-					};
-					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w === 1) {
-						myGrade.w = 1;
-					}
-					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq === 1) {
-						myGrade.wq = 1;
-					}
-					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt === 1) {
-						myGrade.wt = 1;
-					}
-					item.grades = [myGrade];
-				}
-				item.save()
-					.then(() => {
-						res.status(200).json({
-							'status': 200,
-							'message': 'Attempt saved'
+					item.save()
+						.then(() => {
+							res.status(200).json({
+								'status': 200,
+								'message': 'Attempt saved'
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster --');
 						});
-					})
-					.catch((err) => {
-						Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster --');
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'Roster not found with params given'
 					});
+				}
 			})
 			.catch((err) => {
 				Err.sendError(res,err,'group_controller','createAttempt -- Finding Roster -- user: ' +
@@ -1391,8 +1435,11 @@ module.exports = {
 					if(grades.length > 0) {
 						//var myGrade = {};
 						var i = 0;
-						var track = 0;
-						var length = grades.length;
+						var track 	= 0;
+						var length 	= grades.length;
+						var depCA 	= false;
+						var depST		= false;
+						var depTr		= false;
 						grades.forEach(function(grade) {
 							if(grade && grade.block && grade.block._id) {
 								const blockString = grade.block._id + '';
@@ -1411,6 +1458,25 @@ module.exports = {
 									}
 									track 						= grade.track;
 									section 					= grade.block.section;
+									if(grade.dependencies && grade.dependencies.length > 0) {
+										grade.dependencies.forEach(function(dep) {
+											if(typeof dep.createAttempt === 'boolean' && !dep.createAttempt) {
+												ok 			= false;
+												cause		= cause + '. There is a dependency on questionnarie. ';
+												causeSP = causeSP + '. Antes de iniciar esta evaluación, debes presentar la anterior. ';
+											}
+											if(typeof dep.saveTask === 'boolean' && !dep.saveTask) {
+												ok 			= false;
+												cause		= cause + '. There is a dependency on task. ';
+												causeSP = causeSP + '. Antes de iniciar esta tarea, debes presentar la anterior. ';
+											}
+											if(typeof dep.track === 'boolean' && !dep.track) {
+												ok 			= false;
+												cause		= cause + '. There is a dependency on block. ';
+												causeSP = causeSP + '. Antes de iniciar esta lección, debes presentar la anterior. ';
+											}
+										});
+									}
 								}
 							} else {
 								grades[length].block =  lastid;
@@ -1453,6 +1519,7 @@ module.exports = {
 							causeSP = 'La sección '+ sectionDisp +' terminó el ' + item.sections[section].endDate;
 						}
 					}
+
 					if(item.sections) { // existe el arreglo sections?
 						if(item.sections[lastSection]) { // existe el elemento lastSection?
 							if(!item.sections[lastSection].viewed && lastid !== 'empty'){ // si la sección no ha sido vista y mandan el bloque para tracking...
