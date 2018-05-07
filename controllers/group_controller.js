@@ -251,7 +251,10 @@ module.exports = {
 												onBlock				: dep.onBlock,
 												createAttempt	: dep.createAttempt,
 												track					: dep.track,
-												saveTask			: dep.saveTask
+												saveTask			: dep.saveTask,
+												caff					: false,
+												tff 					: false,
+												stff					: false
 											});
 											found = true;
 										}
@@ -259,99 +262,102 @@ module.exports = {
 									}
 								});
 							}
-						}) // seguramente meter el resto del código dentro de la promesa
-						.catch((err) => {
-							Err.sendError(res,err,'group_controller','createRoster -- Searching dependencies -- user: ' +
-								key_user.name + ' groupid: ' + group._id);
-						});
-					User.find({_id: { $in: roster.roster}})
-						.select('person')
-						.then((students) => {
-							var my_roster 		= new Array();
-							var new_students	= new Array();
-							students.forEach(function(student) {
-								var grade = new Array();
-								var sec = 0;
-								blocks.forEach(function(block) {
-									grade.push({
-										block					: block._id,
-										track					: 0,
-										maxGradeQ 		: 0,
-										gradeT				: 0,
-										w							: block.w,
-										wq						: block.wq,
-										wt						: block.wt,
-										dependencies	: block.dependencies
+							User.find({_id: { $in: roster.roster}})
+								.select('person')
+								.then((students) => {
+									var my_roster 		= new Array();
+									var new_students	= new Array();
+									students.forEach(function(student) {
+										var grade = new Array();
+										var sec = 0;
+										blocks.forEach(function(block) {
+											grade.push({
+												block					: block._id,
+												track					: 0,
+												maxGradeQ 		: 0,
+												gradeT				: 0,
+												w							: block.w,
+												wq						: block.wq,
+												wt						: block.wt,
+												dependencies	: block.dependencies
+											});
+											if(block.section !== sec) {
+												sec++;
+											}
+										});
+										if(blocks[0].section === 0) {
+											sec++;
+										}
+										var sections = new Array();
+										var j = 0;
+										while (j < sec) {
+											var section = {};
+											if (group.presentBlockBy && group.presentBlockBy === 'dates' && group.dates && group.dates.length > 0) {
+												section.beginDate = group.dates[j].beginDate;
+												section.endDate		= group.dates[j].endDate;
+											}
+											sections.push(section);
+											j++;
+										}
+										var new_roster = new Roster({
+											student		: student,
+											status		: 'pending',
+											grades		: grade,
+											group			: group._id,
+											minGrade	: group.minGrade,
+											minTrack	: group.minTrack,
+											org				: group.org,
+											orgUnit		: group.orgUnit,
+											sections 	: sections,
+											admin 		: [{
+												what		: 'Roster creation',
+												who			: key_user.name,
+												when		: date
+											}]
+										});
+										new_students.push(student._id);
+										my_roster.push(new_roster._id);
+										new_roster.save()
+											.then(() => {
+												mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado a un curso',339994,link,group.course.title);
+											})
+											.catch((err) => {
+												Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
+											});
 									});
-									if(block.section !== sec) {
-										sec++;
-									}
-								});
-								if(blocks[0].section === 0) {
-									sec++;
-								}
-								var sections = new Array();
-								var j = 0;
-								while (j < sec) {
-									var section = {};
-									if (group.presentBlockBy && group.presentBlockBy === 'dates' && group.dates && group.dates.length > 0) {
-										section.beginDate = group.dates[j].beginDate;
-										section.endDate		= group.dates[j].endDate;
-									}
-									sections.push(section);
-									j++;
-								}
-								var new_roster = new Roster({
-									student		: student,
-									status		: 'pending',
-									grades		: grade,
-									group			: group._id,
-									minGrade	: group.minGrade,
-									minTrack	: group.minTrack,
-									org				: group.org,
-									orgUnit		: group.orgUnit,
-									sections 	: sections,
-									admin 		: [{
-										what		: 'Roster creation',
-										who			: key_user.name,
-										when		: date
-									}]
-								});
-								new_students.push(student._id);
-								my_roster.push(new_roster._id);
-								new_roster.save()
-									.then(() => {
-										mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado a un curso',339994,link,group.course.title);
-									})
-									.catch((err) => {
-										Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
-									});
-							});
-							group.students 	= group.students.concat(new_students);
-							group.roster		= group.roster.concat(my_roster);
-							group.mod.push(mod);
-							group.save()
-								.catch((err) => {
-									Err.sendError(res,err,'group_controller','createRoster -- Saving group -- user: ' +
-										key_user.name + ' groupid: ' + group._id);
-								});
-							res.status(200).json({
-								'status': 200,
-								'message': 'Roster created'
-							});
-							/*
-							group.mod.push(mod);
-							group.save()
-								.then(() => {
+									group.students 	= group.students.concat(new_students);
+									group.roster		= group.roster.concat(my_roster);
+									group.mod.push(mod);
+									group.save()
+										.catch((err) => {
+											Err.sendError(res,err,'group_controller','createRoster -- Saving group -- user: ' +
+												key_user.name + ' groupid: ' + group._id);
+										});
 									res.status(200).json({
 										'status': 200,
 										'message': 'Roster created'
 									});
+									/*
+									group.mod.push(mod);
+									group.save()
+										.then(() => {
+											res.status(200).json({
+												'status': 200,
+												'message': 'Roster created'
+											});
+										})
+										.catch((err) => {
+											Err.sendError(res,err,'group_controller','createRoster -- Saving Group --');
+										});
+										*/
 								})
 								.catch((err) => {
-									Err.sendError(res,err,'group_controller','createRoster -- Saving Group --');
+									Err.sendError(res,err,'group_controller','createRoster -- Finding Users --');
 								});
-								*/
+						}) // seguramente meter el resto del código dentro de la promesa
+						.catch((err) => {
+							Err.sendError(res,err,'group_controller','createRoster -- Searching dependencies -- user: ' +
+								key_user.name + ' groupid: ' + group._id);
 						});
 				} else {
 					res.status(200).json({
