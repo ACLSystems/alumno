@@ -1384,6 +1384,9 @@ module.exports = {
 			{
 				path: 'grades.block',
 				select: 'section'
+			},
+			{
+				path: 'grades.dependencies.dep'
 			}
 			])
 			.then((item) => {
@@ -1405,13 +1408,13 @@ module.exports = {
 					if(item.group.presentBlockBy && item.group.presentBlockBy === 'dates'){
 						if(item.group.beginDate && item.group.beginDate > now ) {
 							ok 		= false;
-							cause = 'Course will begin at ' + item.group.beginDate;
-							causeSP = 'El curso comenzará el ' + item.group.beginDate;
+							cause = 'Course will begin at ' + item.group.beginDate + '. ';
+							causeSP = causeSP + ' El curso comenzará el ' + item.group.beginDate + '. ';
 						} else
 						if(item.group.endDate && item.group.endDate < now) {
 							ok 		= false;
-							cause = 'Course ended at ' + item.group.endDate;
-							causeSP = 'El curso terminó el ' + item.group.endDate;
+							cause = 'Course ended at ' + item.group.endDate + '. ';
+							causeSP = causeSP + ' El curso terminó el ' + item.group.endDate + '. ';
 						}
 					}
 
@@ -1437,9 +1440,6 @@ module.exports = {
 						var i = 0;
 						var track 	= 0;
 						var length 	= grades.length;
-						var depCA 	= false;
-						var depST		= false;
-						var depTr		= false;
 						grades.forEach(function(grade) {
 							if(grade && grade.block && grade.block._id) {
 								const blockString = grade.block._id + '';
@@ -1460,21 +1460,23 @@ module.exports = {
 									section 					= grade.block.section;
 									if(grade.dependencies && grade.dependencies.length > 0) {
 										grade.dependencies.forEach(function(dep) {
-											if(typeof dep.createAttempt === 'boolean' && !dep.createAttempt) {
+											if(dep.dep.createAttempt && (typeof dep.createAttempt === 'boolean' && !dep.createAttempt)) {
 												ok 			= false;
-												cause		= cause + '. There is a dependency on questionnarie. ';
-												causeSP = causeSP + '. Antes de iniciar esta evaluación, debes presentar la anterior. ';
+												cause		= cause + 'There is a dependency on questionnarie. ';
+												causeSP = causeSP + 'Antes de iniciar esta evaluación, debes presentar la anterior. ';
 											}
-											if(typeof dep.saveTask === 'boolean' && !dep.saveTask) {
+
+											if(dep.dep.saveTask && (typeof dep.saveTask === 'boolean' && !dep.saveTask)) {
 												ok 			= false;
-												cause		= cause + '. There is a dependency on task. ';
-												causeSP = causeSP + '. Antes de iniciar esta tarea, debes presentar la anterior. ';
+												cause		= cause + 'There is a dependency on task. ';
+												causeSP = causeSP + 'Antes de iniciar esta tarea, debes presentar la anterior. ';
 											}
-											if(typeof dep.track === 'boolean' && !dep.track) {
+											if(dep.dep.track && (typeof dep.track === 'boolean' && !dep.track)) {
 												ok 			= false;
-												cause		= cause + '. There is a dependency on block. ';
-												causeSP = causeSP + '. Antes de iniciar esta lección, debes presentar la anterior. ';
+												cause		= cause + 'There is a dependency on block. ';
+												causeSP = causeSP + 'Antes de iniciar esta lección, debes presentar la anterior. ';
 											}
+
 										});
 									}
 								}
