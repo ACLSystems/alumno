@@ -240,9 +240,10 @@ module.exports = {
 						.then((deps) => {
 							if(deps.length > 0 ) { // completar "blocks" con las dependencias
 								deps.forEach(function(dep) {
-									var found = false;
+									var foundB = false;
+									var foundOnB = false;
 									var cursor = 0;
-									while (!found && cursor < blocks.length) {
+									while (!foundB && !foundOnB && cursor < blocks.length) {
 										if(dep.block +'' === blocks[cursor]._id +'') {
 											if(!blocks[cursor].dependencies) {
 												blocks[cursor].dependencies = new Array();
@@ -253,7 +254,7 @@ module.exports = {
 												track					: false,
 												saveTask			: false
 											});
-											found = true;
+											foundB = true;
 										}
 										if(dep.onBlock +'' === blocks[cursor]._id +'') {
 											if(!blocks[cursor].dependencies) {
@@ -262,7 +263,7 @@ module.exports = {
 											blocks[cursor].dependencies.push({
 												dep						: dep._id
 											});
-											found = true;
+											foundOnB = true;
 										}
 										cursor ++;
 									}
