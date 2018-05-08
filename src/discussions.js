@@ -66,6 +66,17 @@ const DiscussionsSchema = new Schema ({
 	}
 });
 
+// RosterSchema.pre('save', function(next) {
+
+DiscussionsSchema.pre('save', function(next) {
+	if('block' in this) {
+		this.blockExists = true;
+	} else {
+		this.blockExists = false;
+	}
+	next();
+});
+
 DiscussionsSchema.index( { type: 1, org: 1}, 						{ unique: false } );
 DiscussionsSchema.index( { type: 1, title: 1, org: 1}, 	{ unique: false } );
 DiscussionsSchema.index( { type: 1, block:1, 	org: 1},	{ unique: false } );
