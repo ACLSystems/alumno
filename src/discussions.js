@@ -69,7 +69,7 @@ const DiscussionsSchema = new Schema ({
 // RosterSchema.pre('save', function(next) {
 
 DiscussionsSchema.pre('save', function(next) {
-	if('block' in this) {
+	if(typeof this.block !== 'undefined') {
 		this.blockExists = true;
 	} else {
 		this.blockExists = false;
