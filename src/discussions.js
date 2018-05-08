@@ -37,6 +37,9 @@ const DiscussionsSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'blocks'
 	},
+	blockExists: {
+		type: Boolean
+	},
 	group: {
 		type: Schema.Types.ObjectId,
 		ref: 'groups'
