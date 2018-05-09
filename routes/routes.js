@@ -133,6 +133,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/author/course/getblockby', 					CourseController.getBlockBy);
 	app.get ('/api/v1/author/course/get', 								CourseController.get);
 	app.put ('/api/v1/author/course/newsection', 					CourseController.newSection);
+	app.put ('/api/v1/author/course/setnextsection', 			CourseController.setNextSection);
 	app.post('/api/v1/author/course/createquestionnarie', CourseController.createQuestionnarie);
 	app.post('/api/v1/author/course/createtasks', 				CourseController.createTasks);
 	app.get ('/api/v1/author/course/getquestionnarie', 		CourseController.getQuestionnarie);

@@ -1005,12 +1005,33 @@ module.exports = function(req, res, next) {
 		if(!req.body) {  // PUT
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1448: Please, give data by query to process'
+				'message': 'Error 1448: Please, give data by body to process'
 			});
 		} else if(!req.body.courseid && !req.body.coursecode) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1449: Please, give course id or course code by query to process'
+				'message': 'Error 1449: Please, give course id or course code by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/author/course/setnextsection':
+		if(!req.body) {  // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1448: Please, give data by body to process'
+			});
+		} else if(!req.body.courseid && !req.body.coursecode) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1449: Please, give course id or course code by body to process'
+			});
+		} else if(!req.body.section && !req.body.number) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1449: Please, give section and number by body to process'
 			});
 		} else {
 			next();

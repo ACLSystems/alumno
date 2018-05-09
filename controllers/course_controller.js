@@ -1546,6 +1546,38 @@ module.exports = {
 			});
 	}, //newSection
 
+	setNextSection(req,res) {
+		const key_user 				= res.locals.user;
+		const currentSection 	= req.body.section;
+		const nextNumber 			= req.body.number;
+		var query		= '';
+		if(req.body.courseid) {
+			query = {_id: req.body.courseid};
+		}
+		if(req.body.coursecode) {
+			query = {code: req.body.coursecode};
+		}
+		Course.findOne(query)
+			.then((course) => {
+				course.currentSection = currentSection;
+				course.nextNumber = nextNumber;
+				course.mod.push(generateMod(key_user.name,'Section -' + course.currentSection + 'nextNumber -' + course.nextNumber +'- modified'));
+				course.save()
+					.then(() => {
+						res.status(200).json({
+							'status'	: 200,
+							'message'	: 'New Section -' + course.currentSection + 'nextNumber -' + course.nextNumber +'- modified'
+						});
+					})
+					.catch((err) => {
+						sendError(res,err,'newSection -- Saving course --');
+					});
+			})
+			.catch((err) => {
+				sendError(res,err,'setNextSection -- Searching course --');
+			});
+	},
+
 	makeAvailable(req,res) { // pone disponible el curso y los bloques del curso
 		//const key_user 	= res.locals.user;
 		const coursecode = req.body.code;
