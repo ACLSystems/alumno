@@ -652,8 +652,10 @@ module.exports = {
 						res.status(200).json({
 							'status': 200,
 							'message': {
-								blockNum: send_blocks.length,
-								blocks: send_blocks
+								blockNum			: send_blocks.length,
+								currentSection: course.currentSection,
+								nextNumber		: course.nextNumber,
+								blocks				: send_blocks
 							}
 						});
 					} else {
