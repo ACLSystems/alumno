@@ -130,12 +130,12 @@ module.exports = {
 		var query = {};
 		const key_user 	= res.locals.user;
 		var sort = { name: 1 };
-		var skip = 0;
-		var limit = 15;
+		//var skip = 0;
+		//var limit = 15;
 		query = { org: key_user.org._id };
-		if(req.query.sort) 	{ sort 	= { name: req.query.sort }; 		}
-		if(req.query.skip) 	{ skip 	= parseInt( req.query.skip 	); 	}
-		if(req.query.limit) { limit = parseInt( req.query.limit ); 	}
+		//if(req.query.sort) 	{ sort 	= { name: req.query.sort }; 		}
+		//if(req.query.skip) 	{ skip 	= parseInt( req.query.skip 	); 	}
+		//if(req.query.limit) { limit = parseInt( req.query.limit ); 	}
 		if(req.query.categories) {
 			query.categories = JSON.parse(req.query.categories);
 		}
@@ -150,8 +150,8 @@ module.exports = {
 		}
 		Course.find(query)
 			.sort(sort)
-			.skip(skip)
-			.limit(limit)
+			//.skip(skip)
+			//.limit(limit)
 			.then((courses) => {
 				var send_courses = new Array();
 				courses.forEach(function(course) {
@@ -189,12 +189,12 @@ module.exports = {
 		Org.findOne({ name: req.query.org })
 			.then((org) => {
 				var sort = { name: 1 };
-				var skip = 0;
-				var limit = 15;
+				//var skip = 0;
+				//var limit = 15;
 				query = { org: org._id };
 				if(req.query.sort) 	{ sort 	= { name: req.query.sort }; 		}
-				if(req.query.skip) 	{ skip 	= parseInt( req.query.skip 	); 	}
-				if(req.query.limit) { limit = parseInt( req.query.limit ); 	}
+				//if(req.query.skip) 	{ skip 	= parseInt( req.query.skip 	); 	}
+				//if(req.query.limit) { limit = parseInt( req.query.limit ); 	}
 				if(req.query.categories) {
 					query.categories = JSON.parse(req.query.categories);
 				}
@@ -211,8 +211,8 @@ module.exports = {
 				query.isVisible = true;
 				Course.find(query)
 					.sort(sort)
-					.skip(skip)
-					.limit(limit)
+					//.skip(skip)
+					//.limit(limit)
 					.then((courses) => {
 						var send_courses = new Array();
 						courses.forEach(function(course) {
