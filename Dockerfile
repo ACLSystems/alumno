@@ -26,8 +26,8 @@ COPY . /usr/src/app
 EXPOSE 3050
 
 # Comando para arrancar nuestra aplicación
-# CMD ["npm", "start"]
+CMD ["npm", "start"]
 # Comando para arrancar aplicación con control de procesos (cluster)
-CMD ["pm2-docker", "process.yml"]
+#CMD ["pm2-docker", "process.yml"]
 
 # Aplicación DOCKERIZADA y Clusterizada!!!
