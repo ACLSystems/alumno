@@ -253,12 +253,13 @@ module.exports = {
 	}, // MassiveUsers
 
 	get(req,res) {
-		var query = req.query.find;
+		var query = JSON.parse(req.query.find);
 		User.find(query)
 			.select('_id')
 			.then((users) => {
 				if(users && users.length > 0) {
 					res.status(200).json({
+						'usersNum': users.length,
 						'users': users
 					});
 				}
