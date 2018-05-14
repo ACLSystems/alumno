@@ -80,8 +80,9 @@ module.exports = {
 								console.log('ORG UNITS -----'); // eslint-disable-line
 								console.log(orgUnits); // eslint-disable-line
 								*/
+
 								usersReq.forEach(function(val) {
-									//console.log(val); // eslint-disable-line
+									//console.time("concatenation");
 									objOrg = orgs.find(function(objOrg) {return objOrg.name === val.org; });
 									objOrgUnit = orgUnits.find(function(objOrgUnit) {return  objOrgUnit.name === val.orgUnit && objOrgUnit.org.name === val.org; });
 									//console.log(objOrg); // eslint-disable-line
@@ -151,10 +152,15 @@ module.exports = {
 										if(val.person.name) { val.person.name = properCase(val.person.name); }
 										if(val.person.fatherName) { val.person.fatherName = properCase(val.person.fatherName); }
 										if(val.person.motherName) { val.person.motherName = properCase(val.person.motherName); }
+										if(val.password) { val.password = encryptPass(val.password); }
+										val.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
+										val.admin.passwordSaved = 'saved';
 										usersToInsert.push(val);
 										usersToInsertNames.push(val.name);
 									}
+									//console.timeEnd("concatenation");
 								});
+
 								User.find({name: {$in: usersToInsertNames}})
 									.then((usersFound) => {
 										usersFound.forEach(function(val1) {
@@ -170,7 +176,8 @@ module.exports = {
 											});
 										});
 										if(usersToInsert) {
-											usersToInsert.forEach(function(usersToInsert){
+											/*
+											usersToInsert.forEach(function(userToInsert){
 												User.create(usersToInsert)
 													.then((user) => {
 														user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
@@ -183,7 +190,7 @@ module.exports = {
 																	.catch((err) => {
 																		Err.sendError(res,err,'massiveUser_controller','register -- Sending Mail --');
 																	});
-																	*/
+
 															})
 															.catch((err) => {
 																sendError(res,err,'Saving each');
@@ -192,13 +199,25 @@ module.exports = {
 													.catch((err) => {
 														sendError(res,err,'Insert Many');
 													});
+
 											});
-											/*
+											*/
 											User.insertMany(usersToInsert)
+												.then(() => {
+													usersToInsert.forEach(function(user) {
+														var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
+														var templateId = template_user_admin;
+														
+														mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
+															.catch((err) => {
+																Err.sendError(res,err,'massiveUser_controller','register -- Sending Mail --');
+															});
+
+													});
+												})
 												.catch((err) => {
 													sendError(res,err,'Insert Many');
 												});
-												*/
 											numUsers.inserted = usersToInsert.length;
 										}
 										if(usersToUpdate) {
