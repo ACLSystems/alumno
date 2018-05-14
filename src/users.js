@@ -28,6 +28,22 @@ const CorporateSchema = new Schema ({
 
 module.exports = CorporateSchema;
 
+const FiscalSchema = new Schema ({
+	id: { // se usará como el RFC
+		type: String
+	},
+	Adress: {
+		type: String
+	},
+	type: {
+		type: String,
+		enum:['fisica', 'moral'],
+		default: 'fisica'
+	}
+});
+
+module.exports = FiscalSchema;
+
 // Esquema para el usuario que es un estudiante
 const StudentSchema = new Schema ({
 	id: { // se puede usar como matricula o id del estudiante
@@ -205,6 +221,12 @@ const UserSchema = new Schema ({
 		type: Boolean,
 		default: true
 	},
+	char1: {
+		type: String
+	},
+	char2: {
+		type: String
+	},
 	person: PersonSchema,
 	roles: RolesSchema,
 	mod: [ModSchema],
@@ -213,7 +235,8 @@ const UserSchema = new Schema ({
 	geometry: PointSchema,
 	address: AddressSchema,
 	student: StudentSchema,
-	corporate: CorporateSchema
+	corporate: CorporateSchema,
+	fiscal: FiscalSchema
 });
 
 // Middleware ------------------------------------------------------------------

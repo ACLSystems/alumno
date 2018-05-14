@@ -154,6 +154,7 @@ module.exports = (app) => {
 	app.post('/api/v1/admin/org/register', 				OrgController.register);
 	app.post('/api/v1/admin/user/register', 			UserController.register);
 	app.get ('/api/v1/admin/user/list', 					UserController.list);
+	app.get ('/api/v1/admin/user/get', 						MassUsersController.get);
 	app.get ('/api/v1/admin/user/count', 					UserController.count);
 	app.get ('/api/v1/admin/org/list', 						OrgController.list);
 	app.get ('/api/v1/admin/orgunit/list', 				OrgUnitController.list);
