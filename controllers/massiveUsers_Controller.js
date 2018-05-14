@@ -178,10 +178,12 @@ module.exports = {
 															.then((user) => {
 																var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
 																var templateId = template_user_admin;
+																/*
 																mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
 																	.catch((err) => {
 																		Err.sendError(res,err,'massiveUser_controller','register -- Sending Mail --');
 																	});
+																	*/
 															})
 															.catch((err) => {
 																sendError(res,err,'Saving each');
