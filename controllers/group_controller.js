@@ -326,7 +326,7 @@ module.exports = {
 										my_roster.push(new_roster._id);
 										new_roster.save()
 											.then(() => {
-												mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado a un curso',339994,link,group.course.title);
+												mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado al curso ' + group.course.title,339994,link,group.course.title);
 											})
 											.catch((err) => {
 												Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
