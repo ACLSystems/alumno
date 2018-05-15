@@ -80,7 +80,12 @@ module.exports = {
 								console.log('ORG UNITS -----'); // eslint-disable-line
 								console.log(orgUnits); // eslint-disable-line
 								*/
-
+								var start						= new Date().getTime();
+								var end 						= new Date().getTime();
+								var timelimit				= 60000;
+								res.writeHead(200, {
+									'Content-Type': 'application/json'
+								});
 								usersReq.forEach(function(val) {
 									//console.time("concatenation");
 									objOrg = orgs.find(function(objOrg) {return objOrg.name === val.org; });
@@ -159,6 +164,11 @@ module.exports = {
 										usersToInsertNames.push(val.name);
 									}
 									//console.timeEnd("concatenation");
+									end = new Date().getTime();
+									if(end - start > timelimit) {
+										start = new Date().getTime();
+										res.write('tic ');
+									}
 								});
 
 								User.find({name: {$in: usersToInsertNames}})
@@ -207,12 +217,12 @@ module.exports = {
 													usersToInsert.forEach(function(user) {
 														var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
 														var templateId = template_user_admin;
-														
+														/*
 														mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
 															.catch((err) => {
 																Err.sendError(res,err,'massiveUser_controller','register -- Sending Mail --');
 															});
-
+														*/
 													});
 												})
 												.catch((err) => {
@@ -244,8 +254,9 @@ module.exports = {
 										numUsers.failed = failed.length;
 										var result = numUsers;
 										result.details = failed;
-										res.status(200);
-										res.json({
+										//res.status(200);
+										//res.json({
+										res.end({
 											'status': 200,
 											'message': result
 										});

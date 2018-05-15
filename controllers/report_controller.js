@@ -106,6 +106,12 @@ module.exports = {
 							var ts							= 0;
 							var lastOU					= '';
 							var lastOUlong			= '';
+							var start						= new Date().getTime();
+							var end 						= new Date().getTime();
+							var timelimit				= 60000;
+							res.writeHead(200, {
+								'Content-Type': 'application/json'
+							});
 							rosters.forEach(function(roster) {
 								var send_roster = {};
 								if(lastOU === '') {
@@ -201,7 +207,12 @@ module.exports = {
 									ts++;
 								}
 								send_group.push(send_roster);
-							});
+								end = new Date().getTime();
+								if(end - start > timelimit) {
+									start = new Date().getTime();
+									res.write('tic ');
+								}
+							}); // forEach
 							if(at > 0) {
 								averageTrack = averageTrack / at;
 								averageGrade = averageGrade / at;
@@ -220,7 +231,8 @@ module.exports = {
 								efectiveness		: studentsPassed / ts * 100 + '%',
 								grades					: send_group
 							});
-							res.status(200).json({
+							//res.status(200).json({
+							res.end({
 								'status'	: 200,
 								state 		: key_user.orgUnit.name,
 								username	: key_user.name,
@@ -261,6 +273,12 @@ module.exports = {
 					var studentsPassed 	= 0;
 					var at							= 0;
 					var ts							= 0;
+					var start						= new Date().getTime();
+					var end 						= new Date().getTime();
+					var timelimit				= 60000;
+					res.writeHead(200, {
+						'Content-Type': 'application/json'
+					});
 					rosters.forEach(function(roster) {
 						var send_roster = {};
 						if(lastGroup === '') {
@@ -348,7 +366,12 @@ module.exports = {
 							ts++;
 						}
 						send_group.push(send_roster);
-					});
+						end = new Date().getTime();
+						if(end - start > timelimit) {
+							start = new Date().getTime();
+							res.write('tic ');
+						}
+					}); // forEach
 					if(at > 0) {
 						averageTrack = averageTrack / at;
 						averageGrade = averageGrade / at;
@@ -366,7 +389,8 @@ module.exports = {
 						efectiveness		: studentsPassed / ts * 100 + '%',
 						grades					: send_group
 					});
-					res.status(200).json({
+					//res.status(200).json({
+					res.end({
 						'status': 200,
 						'campus': key_user.orgUnit.longName + ' (' + key_user.orgUnit.name + '), -' + key_user.orgUnit.parent + '-',
 						'message': send_rosters
