@@ -221,7 +221,7 @@ module.exports = {
 		Group.findOne({ code: roster.code })
 			.populate({
 				path: 'course',
-				select: 'blocks',
+				select: 'blocks title',
 				populate: {
 					path: 'blocks',
 					select: 'section w wq wt',
@@ -378,6 +378,44 @@ module.exports = {
 			});
 	}, //createRoster
 
+	notify(req,res) {
+		var groupid 		= req.query.groupid;
+		const message  	= req.query.message;
+		Roster.find({group: groupid})
+			.populate([
+				{
+					path: 'student',
+					select: 'person'
+				},
+				{
+					path: 'group',
+					select: 'course',
+					populate: {
+						path: 'course',
+						select: 'title'
+					}
+				}])
+			.then((items)  => {
+				if(items.length > 0) {
+					items.forEach(function(roster) {
+						mailjet.sendMail(roster.student.person.email, roster.student.person.name, 'Mensaje del curso ' + roster.group.course.title,391119,roster.group.course.title,message);
+					});
+					res.status(200).json({
+						'status': 20,
+						'message': 'Notification sent'
+					});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'Students not found. Maybe wrong group id?'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','notify -- Finding Roster --');
+			});
+	},
+
 	// FALTA ARREGLAR addStudent!!!
 	addStudent(req,res) {
 		const key_user 	= res.locals.user;
@@ -461,7 +499,7 @@ module.exports = {
 			.populate('orgUnit', 'name longName')
 			.populate({
 				path: 'course',
-				select: 'blocks',
+				select: 'blocks title',
 				populate: {
 					path: 'blocks',
 					select: 'section number'
@@ -484,6 +522,7 @@ module.exports = {
 						id					: group._id,
 						code				: group.code,
 						name				: group.name,
+						course			: group.course.title,
 						instructor	: group.instructor.person.fullName,
 						beginDate		: group.beginDate,
 						endDate			: group.endDate,
@@ -1894,7 +1933,8 @@ module.exports = {
 					if(grades[i].block + '' === blockid) {
 						keep = false;
 						if(grades[i].quests.length > 0 && grades[i].quests[0].grade) {
-							grade = parseInt(grades[i].quests[0].grade + 1);
+							//grade = parseInt(grades[i].quests[0].grade + 1);
+							grade = grades[i].quests[0].grade + 1;
 							grades[i].quests[0].grade = grade;
 						}
 					} else {
@@ -1911,7 +1951,8 @@ module.exports = {
 							if(grades[i].block + '' === blockid) {
 								keep = false;
 								if(grades[i].quests.length > 0 && grades[i].quests[0].grade) {
-									grade = parseInt(grades[i].quests[0].grade - 1);
+									//grade = parseInt(grades[i].quests[0].grade - 1);
+									grade = grades[i].quests[0].grade - 1;
 									grades[i].quests[0].grade = grade;
 								}
 							} else {

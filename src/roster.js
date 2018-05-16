@@ -292,7 +292,7 @@ RosterSchema.pre('save', function(next) {
 		i++;
 	});
 
-	if(w > 0) { this.finalGrade = parseInt(fg/w); }
+	if(w > 0) { this.finalGrade = fg/w; }
 	this.track = parseInt(track / i);
 
 	if(this.finalGrade > this.minGrade && this.track > this.minTrack) {

@@ -53,6 +53,13 @@ exports.sendMail = function(toEmail,toName,subject,templateID,param1,param2,para
 			'message': param4						// message
 		};
 	}
+	if(templateID === 391119) { // Plantilla para reportar errores 500 en el API
+		mail_message.Variables = {
+			'Nombre': toName,					// Nombre
+			'curso': param1,					// curso
+			'mensaje': param2					// message
+		};
+	}
 	return new Promise(function(resolve,reject) {
 		request.request({'Messages': [mail_message]})
 			.then((result) => {

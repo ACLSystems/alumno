@@ -1293,6 +1293,27 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/instructor/group/notify':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group id by query to process'
+			});
+		} else if (!req.query.message) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give message by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/instructor/group/listroster':
 		if(!req.query) {  // GET
 			res.status(406).json({

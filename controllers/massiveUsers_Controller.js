@@ -25,7 +25,7 @@ var logger = new(winston.Logger) ({
 });
 
 const url 								= process.env.LIBRETA_URI;
-const template_user				= 310518; // plantilla para el usuario que se registra por su cuenta
+//const template_user				= 310518; // plantilla para el usuario que se registra por su cuenta
 const template_user_admin = 339990; // plantilla para el usuario que es registrado por el administrador
 
 
@@ -80,12 +80,13 @@ module.exports = {
 								console.log('ORG UNITS -----'); // eslint-disable-line
 								console.log(orgUnits); // eslint-disable-line
 								*/
-								var start						= new Date().getTime();
-								var end 						= new Date().getTime();
-								var timelimit				= 60000;
-								res.writeHead(200, {
-									'Content-Type': 'application/json'
-								});
+								//var start						= new Date().getTime();
+								//var end 						= new Date().getTime();
+								//var timelimit				= 10000;
+								//var counter					= 0;
+								//res.writeHead(200, JSON.stringify({
+								//	'Content-Type': 'application/json'
+								//}));
 								usersReq.forEach(function(val) {
 									//console.time("concatenation");
 									objOrg = orgs.find(function(objOrg) {return objOrg.name === val.org; });
@@ -164,11 +165,12 @@ module.exports = {
 										usersToInsertNames.push(val.name);
 									}
 									//console.timeEnd("concatenation");
-									end = new Date().getTime();
-									if(end - start > timelimit) {
-										start = new Date().getTime();
-										res.write('tic ');
-									}
+									//counter++;
+									//end = new Date().getTime();
+									//if(end - start > timelimit) {
+									//	start = new Date().getTime();
+									//	res.write(JSON.stringify({'counter': counter}));
+									//}
 								});
 
 								User.find({name: {$in: usersToInsertNames}})
@@ -195,7 +197,7 @@ module.exports = {
 															.then((user) => {
 																var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
 																var templateId = template_user_admin;
-																/*
+
 																mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
 																	.catch((err) => {
 																		Err.sendError(res,err,'massiveUser_controller','register -- Sending Mail --');
@@ -212,22 +214,24 @@ module.exports = {
 
 											});
 											*/
+
 											User.insertMany(usersToInsert)
 												.then(() => {
 													usersToInsert.forEach(function(user) {
 														var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
 														var templateId = template_user_admin;
-														/*
+
 														mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
 															.catch((err) => {
 																Err.sendError(res,err,'massiveUser_controller','register -- Sending Mail --');
 															});
-														*/
+
 													});
 												})
 												.catch((err) => {
 													sendError(res,err,'Insert Many');
 												});
+
 											numUsers.inserted = usersToInsert.length;
 										}
 										if(usersToUpdate) {
@@ -254,11 +258,12 @@ module.exports = {
 										numUsers.failed = failed.length;
 										var result = numUsers;
 										result.details = failed;
-										//res.status(200);
-										//res.json({
-										res.end({
+										res.status(200);
+										res.json({
+										//res.end(JSON.stringify({
 											'status': 200,
 											'message': result
+										//}));
 										});
 									})
 									.catch((err) => {
