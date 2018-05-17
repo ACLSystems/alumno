@@ -789,6 +789,62 @@ module.exports = {
 			});
 	}, // mygroup
 
+	getGroups(req,res) {
+		//const key_user	= res.locals.user;
+		const username  = req.query.username;
+		User.findOne({name: username})
+			.select('name person')
+			.then((user) => {
+				if(user) {
+					Roster.find({student:user._id})
+						.populate({
+							path: 'group',
+							select: 'course code name',
+							populate: {
+								path: 'course',
+								select: 'code title'
+							}
+						})
+						.then((items) => {
+							if(items.length > 0 ) {
+								var send_items = new Array();
+								items.forEach(function(item) {
+									send_items.push({
+										group				: item.group.name,
+										groupCode		: item.group.code,
+										course			: item.group.course.title,
+										courseCode 	:	item.group.course.code
+									});
+								});
+								res.status(200).json({
+									'status'	: 200,
+									'messaage': {
+										'name'	: user.person.fullName,
+										'groups': send_items
+									}
+								});
+							} else {
+								res.status(200).json({
+									'status': 200,
+									'message': 'User ' + user.person.fullName + ' has no groups'
+								});
+							}
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'group_controller','getGroups -- Finding Roster Group Course --');
+						});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'User not found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','getGroups -- Finding User --');
+			});
+	}, //getGroups
+
 	createAttempt(req,res) {
 		const key_user	= res.locals.user;
 		const groupid 	= req.body.groupid;

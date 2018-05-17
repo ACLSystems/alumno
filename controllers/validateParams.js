@@ -308,6 +308,22 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/supervisor/user/getgroups':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1750: Please, give data by query to process'
+			});
+		} else if(!req.query.username) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1752: Please, give username by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/modify':
 		if(!req.body) {
 			res.status(406).json({
