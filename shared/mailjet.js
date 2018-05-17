@@ -53,11 +53,16 @@ exports.sendMail = function(toEmail,toName,subject,templateID,param1,param2,para
 			'message': param4						// message
 		};
 	}
-	if(templateID === 391119) { // Plantilla para reportar errores 500 en el API
+	if(templateID === 391119) { // Plantilla para notificaciones a los usuarios de un grupo
 		mail_message.Variables = {
 			'Nombre': toName,					// Nombre
 			'curso': param1,					// curso
 			'mensaje': param2					// message
+		};
+	}
+	if(templateID === 393450) { // Plantilla para notificar cambio de contraseña
+		mail_message.Variables = {
+			'Nombre': toName,					// Nombre
 		};
 	}
 	return new Promise(function(resolve,reject) {
@@ -67,6 +72,7 @@ exports.sendMail = function(toEmail,toName,subject,templateID,param1,param2,para
 			})
 			.catch((err) => {
 				reject(err.statusCode + ': ' + err.response.res.statusMessage);
+				//reject(err);
 			});
 	});
 };

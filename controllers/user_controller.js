@@ -570,6 +570,7 @@ module.exports = {
 					if(emailID === user.admin.recoverString) {
 						user.admin.recoverString = '';
 						user.admin.isVerified = true;
+						user.admin.passwordSaved = 'saved';
 						user.password = encryptPass(password);
 						user.save()
 							.then(() => {
@@ -646,7 +647,119 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'user_controller','passwordChange -- Finding User --');
 			});
-	},
+	}, //passwordChange
+
+	adminPasswordReset(req, res) {
+		const key_user 	= res.locals.user;
+		const username 	= req.query.username;
+		var query 			= { name: username };
+		if(key_user.roles.isOrg && !key_user.roles.isAdmin) {
+			query.orgUnit = key_user.orgUnit;
+		}
+		User.findOne(query)
+			.then((user) => {
+				if(user) {
+					if(user.fiscal && user.fiscal.id) {
+						user.admin.passwordSaved = 'saved';
+						user.password = encryptPass(user.fiscal.id);
+						const date = new Date();
+						var mod = {
+							by: key_user.name,
+							when: date,
+							what: 'Password reset'
+						};
+						user.mod.push(mod);
+						//const result = permissions.access(key_user,user,'user');
+						//if(result.canModify) {
+						user.save()
+							.then (() => {
+								//mailjet.sendMail(user.person.email, user.person.name, 'Tu contraseña ha sido modificada por el administrador',393450)
+								//.then(() => {
+								res.status(200).json({
+									'status': 200,
+									'message': 'Password for user -' + username + '- reset by -' + key_user.name + '-'
+								});
+								//})
+								//.catch((err) => {
+
+								//	Err.sendError(res,err,'user_controller','adminPasswordReset -- Sending email--');
+								//});
+
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'user_controller','adminPasswordReset -- Saving User--');
+							});
+						/*
+						} else {
+							res.status(403).json({
+								'status': 403,
+								'message': 'User ' + key_user.name + ' not authorized'
+							});
+						}
+						*/
+					} else {
+						res.status(200).json({
+							'status': 200,
+							'message': 'User does not have fiscal id'
+						});
+					}
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'User not found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','passwordChange -- Finding User --');
+			});
+	}, //adminPasswordChange
+
+	changeUser(req,res) {
+		const key_user 	= res.locals.user;
+		const username	= req.body.username;
+		const newname		= req.body.newname;
+		const now = new Date();
+		User.findOne({name: username})
+			.then((user) => {
+				user.name = newname;
+				user.person.email = newname;
+				user.perm.users.push({
+					name: newname,
+					canSec: false,
+					canModify: true,
+					canRead: true
+				});
+				user.mod.push({
+					by: key_user.name,
+					what: 'User change',
+					when: now
+				});
+				//console.log(JSON.stringify(user,null,2));
+				user.save()
+					.then((user) => {
+						res.status(200).json({
+							'status': 200,
+							'message': user.name
+						});
+					})
+					.catch((err) => {
+						var errString = err.toString();
+						var re = new RegExp('duplicate key error collection');
+						var found = errString.match(re);
+						if(found) {
+							res.status(200).json({
+								'status': 200,
+								'message': 'New user is already exists. This must not proceed'
+							});
+						}
+						//Err.sendError(res,err,'user_controller','passwordChange -- Finding User --');
+					});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','modify -- Finding User to modify --');
+			});
+	}, //changeUser
 
 	//modify(req, res, next) {
 	modify(req, res) {

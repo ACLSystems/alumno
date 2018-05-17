@@ -252,6 +252,62 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
+
+
+	case '/api/v1/admin/user/passwordreset':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1750: Please, give data by query to process'
+			});
+		} else if(!req.query.username) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1752: Please, give username by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+
+	case '/api/v1/orgadm/user/passwordreset':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1750: Please, give data by query to process'
+			});
+		} else if(!req.query.username) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1752: Please, give username by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/admin/user/changeuser':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1750: Please, give data by body to process'
+			});
+		} else if(!req.body.username) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1752: Please, give username by body to process'
+			});
+		} else if(!req.body.newname) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1752: Please, give newuser by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/modify':
 		if(!req.body) {
 			res.status(406).json({

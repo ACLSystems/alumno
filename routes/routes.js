@@ -165,6 +165,8 @@ module.exports = (app) => {
 	app.get ('/api/v1/admin/user/encrypt', 				UserController.encrypt);
 	app.get ('/api/v1/admin/user/validate', 			UserController.validateUsers);
 	app.get ('/api/v1/admin/group/repair',				GroupController.repairGroup);
+	app.get ('/api/v1/admin/user/passwordreset',  UserController.adminPasswordReset);
+	app.put ('/api/v1/admin/user/changeuser', 		UserController.changeUser);
 
 	// Rutas para roles de 'isOrg'
 
@@ -174,6 +176,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/orgadm/orgunit/list', 						OrgUnitController.list);
 	app.get ('/api/v1/orgadm/user/list', 								UserController.list);
 	app.get ('/api/v1/orgadm/user/count', 							UserController.count);
+	app.get ('/api/v1/orgadm/user/passwordreset', 			UserController.adminPasswordReset);
 	app.get ('/api/v1/orgadm/org/getdetails', 					OrgController.getDetails);
 	app.post('/api/v1/orgadm/career/create', 						CareerController.create);
 	app.post('/api/v1/orgadm/career/massivecreate',			CareerController.massiveCreation);
