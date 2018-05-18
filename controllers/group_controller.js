@@ -826,7 +826,7 @@ module.exports = {
 							} else {
 								res.status(200).json({
 									'status': 200,
-									'message': 'User ' + user.person.fullName + ' has no groups'
+									'message': 'User ' + user.person.fullName + ' -'+ user._id +'- '+' has no groups'
 								});
 							}
 						})

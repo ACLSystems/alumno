@@ -722,39 +722,46 @@ module.exports = {
 		const now = new Date();
 		User.findOne({name: username})
 			.then((user) => {
-				user.name = newname;
-				user.person.email = newname;
-				user.perm.users.push({
-					name: newname,
-					canSec: false,
-					canModify: true,
-					canRead: true
-				});
-				user.mod.push({
-					by: key_user.name,
-					what: 'User change',
-					when: now
-				});
-				//console.log(JSON.stringify(user,null,2));
-				user.save()
-					.then((user) => {
-						res.status(200).json({
-							'status': 200,
-							'message': user.name
-						});
-					})
-					.catch((err) => {
-						var errString = err.toString();
-						var re = new RegExp('duplicate key error collection');
-						var found = errString.match(re);
-						if(found) {
+				if(user) {
+					user.name = newname;
+					user.person.email = newname;
+					user.perm.users.push({
+						name: newname,
+						canSec: false,
+						canModify: true,
+						canRead: true
+					});
+					user.mod.push({
+						by: key_user.name,
+						what: 'User change',
+						when: now
+					});
+					//console.log(JSON.stringify(user,null,2));
+					user.save()
+						.then((user) => {
 							res.status(200).json({
 								'status': 200,
-								'message': 'New user is already exists. This must not proceed'
+								'message': user.name
 							});
-						}
-						//Err.sendError(res,err,'user_controller','passwordChange -- Finding User --');
+						})
+						.catch((err) => {
+							var errString = err.toString();
+							var re = new RegExp('duplicate key error collection');
+							var found = errString.match(re);
+							if(found) {
+								res.status(200).json({
+									'status': 200,
+									'message': 'New user is already exists. This must not proceed'
+								});
+							}
+							//Err.sendError(res,err,'user_controller','passwordChange -- Finding User --');
+						});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'User not found'
 					});
+				}
 			})
 			.catch((err) => {
 				Err.sendError(res,err,'user_controller','modify -- Finding User to modify --');
