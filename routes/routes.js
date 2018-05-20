@@ -69,6 +69,7 @@ module.exports = (app) => {
 	// Rutas que cualquiera puede acceder
 
 	app.get ('/', 													GetNothing.greeting);
+	app.get ('/perf', 											GetNothing.perf);
 	app.post('/login', 											auth.login);
 	app.post('/api/test', 									GroupController.test);
 	app.post('/api/user/register', 					UserController.register);
@@ -188,6 +189,7 @@ module.exports = (app) => {
 	// Rutas para roles de 'isSupervisor'
 
 	app.get ('/api/v1/supervisor/report/gradesbycampus',ReportController.gradesByCampus);
+	app.get ('/api/v1/supervisor/report/percentil',			ReportController.percentil);
 	app.get ('/api/v1/supervisor/user/getdetails',			UserController.getDetailsSuper);
 	app.get ('/api/v1/supervisor/user/settracking', 		GroupController.setTracking);
 	app.get ('/api/v1/supervisor/user/getgroups', 			GroupController.getGroups);
