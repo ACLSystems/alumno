@@ -72,6 +72,28 @@ module.exports = {
 			});
 	}, //byOrgUnit
 
+	percentil(req,res) {
+		const key_user  = res.locals.user;
+		var 	ou				= '';
+		if(key_user.roles.isAdmin && req.query.ou) {
+			ou = req.query.ou;
+		} else {
+			ou = key_user.ou.name;
+		}
+		Roster.aggregate()
+			.match({orgUnit:ou,track: {$gt: 0}})
+			.group({ _id: '$orgUnit', count:{$sum:1}})
+			.then((results) => {
+				res.status(200).json({
+					'status': 200,
+					'results': results
+				});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','byOrgUnit -- Counting Users --');
+			});
+	}, //percentil
+
 	gradesByCampus(req,res) {
 		const key_user 	= res.locals.user;
 		if(key_user.orgUnit.type === 'state') {
