@@ -516,6 +516,7 @@ module.exports = {
 				}
 			})
 			.select('code name beginDate endDate orgUnit roster')
+			.lean()
 			.then((group) => {
 				if(group) {
 					var send_group = {
@@ -1334,13 +1335,13 @@ module.exports = {
 		Roster.findOne({student: key_user.id, group: groupid})
 			.populate({
 				path: 'group',
-				select: 'course',
+				select: 'course certificateActive',
 				populate: {
 					path: 'course',
 					select: 'title blocks duration durationUnits',
 					populate: {
 						path: 'blocks',
-						select: 'title section number'
+						select: 'title section number w wq wt'
 					}
 				}
 			})
@@ -1357,7 +1358,8 @@ module.exports = {
 									block = {
 										blockTitle	: bs[i].title,
 										blockSection: bs[i].section,
-										blockNumber	: bs[i].number
+										blockNumber	: bs[i].number,
+										blockW			: bs[i].w
 									};
 									i = bs.length;
 								} else {
@@ -1369,15 +1371,16 @@ module.exports = {
 						}
 					});
 					var send_grade = {
-						name			: key_user.person.fullName,
-						course		: item.group.course.title,
-						finalGrade: item.finalGrade,
-						minGrade	: item.minGrade,
-						track			: parseInt(item.track) + '%',
-						minTrack	: item.minTrack + '%',
-						pass			: item.pass,
-						passDate	: item.passDate,
-						blocks		: blocks
+						name							: key_user.person.fullName,
+						course						: item.group.course.title,
+						certificateActive : item.group.certificateActive,
+						finalGrade				: item.finalGrade,
+						minGrade					: item.minGrade,
+						track							: parseInt(item.track) + '%',
+						minTrack					: item.minTrack + '%',
+						pass							: item.pass,
+						passDate					: item.passDate,
+						blocks						: blocks
 					};
 					if(item.group.course.duration) {
 						send_grade.duration 			= item.group.course.duration;

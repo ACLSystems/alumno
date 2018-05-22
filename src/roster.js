@@ -273,7 +273,11 @@ const RosterSchema = new Schema ({
 		type: Boolean,
 		default: true
 	},
-	admin: [AdminSchema]
+	admin: [AdminSchema],
+	report: {
+		type: Boolean,
+		default: true
+	}
 });
 
 RosterSchema.pre('save', function(next) {
@@ -305,6 +309,10 @@ RosterSchema.pre('save', function(next) {
 RosterSchema.index( {org: 1								},{unique: false} );
 RosterSchema.index( {group: 1							},{unique: false}	);
 RosterSchema.index( {orgUnit: 1						},{unique: false} );
+RosterSchema.index( {orgUnit: 1, track: 1	},{unique: false} );
+RosterSchema.index( {track: 1							},{unique: false} );
+RosterSchema.index( {orgUnit: 1, pass: 1	},{unique: false} );
+RosterSchema.index( {pass: 1							},{unique: false} );
 RosterSchema.index( {student: 1						},{unique: false}	);
 RosterSchema.index( {org: 1, orgUnit: 1		},{unique: false} );
 RosterSchema.index( {student: 1, group: 1	},{unique: true	}	);

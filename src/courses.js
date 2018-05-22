@@ -23,7 +23,7 @@ const CoursesSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum: ['self-paced','tutor']
+		enum: ['self-paced','tutor', 'assisted']
 	},
 	level: {
 		type: String,

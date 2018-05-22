@@ -104,6 +104,10 @@ const GroupsSchema = new Schema ({
 		type: Boolean,
 		default: true
 	},
+	certificateActive: {
+		type: Boolean,
+		default: true
+	},
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema,

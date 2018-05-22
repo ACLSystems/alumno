@@ -193,6 +193,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/user/getdetails',			UserController.getDetailsSuper);
 	app.get ('/api/v1/supervisor/user/settracking', 		GroupController.setTracking);
 	app.get ('/api/v1/supervisor/user/getgroups', 			GroupController.getGroups);
+	app.get ('/api/v1/supervisor/group/listroster', 		GroupController.listRoster);
 
 	// Rutas para archivos
 

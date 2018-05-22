@@ -1,7 +1,9 @@
-const User = require('../src/users');
-const Roster = require('../src/roster');
-const OrgUnit = require('../src/orgUnits');
-const Err = require('../controllers/err500_controller');
+const mongoose 	= require('mongoose');
+const User 			= require('../src/users');
+const Roster 		= require('../src/roster');
+const OrgUnit 	= require('../src/orgUnits');
+const Group 		= require('../src/groups');
+const Err 			= require('../controllers/err500_controller');
 
 module.exports = {
 
@@ -78,21 +80,166 @@ module.exports = {
 		if(key_user.roles.isAdmin && req.query.ou) {
 			ou = req.query.ou;
 		} else {
-			ou = key_user.ou.name;
-		}
-		Roster.aggregate()
-			.match({orgUnit:ou,track: {$gt: 0}})
-			.group({ _id: '$orgUnit', count:{$sum:1}})
-			.then((results) => {
+			if(key_user.orgUnit._id) {
+				ou = key_user.orgUnit._id;
+			} else {
 				res.status(200).json({
 					'status': 200,
-					'results': results
+					'message': 'User has not orgUnit. -  Please contact Admin'
 				});
+			}
+		}
+
+		Roster.aggregate() // Buscar Track
+			.match({orgUnit: mongoose.Types.ObjectId(ou),track:{$gt:0}, report: {$ne:false}})
+			.group({ _id: '$group', usersOnTrack:{$sum:1}})
+			.then((resultsT) => {
+				// Resultados de Track
+				//console.log(resultsT);
+				var group_ids = new Array();
+				var results 	= resultsT;
+				results.forEach(function(res) {
+					group_ids.push(res._id);
+				});
+				Roster.aggregate() // Buscar Track
+					.match({orgUnit: mongoose.Types.ObjectId(ou),pass:true, report: {$ne:false}})
+					.group({ _id: '$group', usersPassed:{$sum:1}})
+					.then((resultsP) => {
+						//console.log(resultsP);
+						//console.log(results.length);
+						if(resultsP.length > 0){
+							resultsP.forEach(function(res) {
+								var i = 0;
+								var found = false;
+								while(!found && i < results.length) {
+									if(results[i]){
+										if(res._id + '' === results[i]._id +'')  {
+											found=true;
+											results[i].usersPassed = res.usersPassed;
+										}
+									}
+									i++;
+								}
+								if(!found) {
+									group_ids.push(res._id);
+									results.push(res);
+								}
+							});
+						}
+						Roster.aggregate()
+							.match({orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false}})
+							.group({ _id: '$group', totalUsers:{$sum:1}})
+							.then((resultsR) => {
+								if(resultsR.length > 0){
+									resultsR.forEach(function(res) {
+										var i = 0;
+										var found = false;
+										while(!found && i < results.length) {
+											if(results[i]){
+												if(res._id + '' === results[i]._id +'')  {
+													found=true;
+													results[i].totalUsers = res.totalUsers;
+												}
+											}
+											i++;
+										}
+										if(!found) {
+											group_ids.push(res._id);
+											results.push(res);
+										}
+									});
+								}
+								if(results.length === 0) {
+									res.status(200).json({
+										'status': 200,
+										'totalUsers'	: 0,
+										'usersOnTrack': 0,
+										'usersPassed'	: 0,
+										'results'			: 'No results'
+									});
+									return;
+								}
+
+								Group.find({_id: {$in: group_ids}})
+									.select('name orgUnit')
+									.populate('orgUnit', 'name longName')
+									.then((groups) => {
+										if(groups.length > 0 ) {
+											groups.forEach(function(group) {
+												var i = 0;
+												var found = false;
+												while(!found && i < results.length) {
+													if(results[i]._id + '' === group._id +'') {
+														found = true;
+														results[i].group  = group.name;
+													}
+													i++;
+												}
+											});
+											//console.log(results);
+											var totalTracks = 0;
+											var totalPassed = 0;
+											var totalUsers 	= 0;
+											results.forEach(function(res) {
+												if(res.usersOnTrack	)	{totalTracks += res.usersOnTrack; }
+												if(res.usersPassed	)	{totalPassed += res.usersPassed;  }
+												if(res.totalUsers		)	{totalUsers  += res.totalUsers;   }
+											});
+
+											res.status(200).json({
+												'status'			: 200,
+												'orgUnit'			: groups[0].orgUnit.name,
+												'orgUnitName' : groups[0].orgUnit.longName,
+												'totalUsers'	: totalUsers,
+												'usersOnTrack': totalTracks,
+												'usersPassed'	: totalPassed,
+												'results'			: results
+											});
+											// esto es del total
+
+										// del total
+										} else {
+											res.status(200).json({
+												'status': 200,
+												'results': 'No groups found'
+											});
+										}
+									})
+									.catch((err) => {
+										Err.sendError(res,err,'report_controller','percentil -- Searching group names --');
+									});
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'report_controller','percentil -- Searching totalUsers --');
+							});
+					})
+					.catch((err) => {
+						Err.sendError(res,err,'report_controller','percentil -- Counting Passed --');
+					});
+				// Resultados de track
+
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'report_controller','byOrgUnit -- Counting Users --');
+				Err.sendError(res,err,'report_controller','percentil -- Counting track --');
 			});
 	}, //percentil
+
+	gradesByOU(req,res) {
+		const key_user  = res.locals.user;
+		var 	ou				= '';
+		if(req.query.ou) {
+			ou = req.query.ou;
+		} else {
+			if(key_user.orgUnit._id) {
+				ou = key_user.orgUnit._id;
+			} else {
+				res.status(200).json({
+					'status': 200,
+					'message': 'User has not orgUnit. -  Please contact Admin'
+				});
+			}
+		}
+	}, // gradesByOU
 
 	gradesByCampus(req,res) {
 		const key_user 	= res.locals.user;
@@ -254,7 +401,7 @@ module.exports = {
 								grades					: send_group
 							});
 							//res.status(200).json({
-							res.end({
+							res.status(200).json({
 								'status'	: 200,
 								state 		: key_user.orgUnit.name,
 								username	: key_user.name,

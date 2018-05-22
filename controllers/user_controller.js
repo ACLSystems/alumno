@@ -272,6 +272,49 @@ module.exports = {
 			});
 	},
 
+	confirmHTML(req,res) {
+		const email 		= req.query.email;
+		const token 		= req.query.token;
+		var password		= 'empty';
+		if(req.query.password) {
+			password  = req.query.password;
+		}
+		User.findOne({name: email})
+			.then((user) => {
+				if(user) {
+					if(token === user.admin.validationString){
+						user.admin.isVerified = true;
+						user.admin.validationString = '';
+						user.admin.adminCreate = false;
+						user.admin.passwordSaved = 'saved';
+						if(password !== 'empty'){ user.password = encryptPass(password); }
+						user.save()
+							.then(() => {
+								res.status(200).send(
+									'<!DOCTYPE html><html><head><meta http-equiv=Refresh content="3;url=https://conalepvirtual.superatemexico.com"></head><body><p>Gracias por su registro. Espere unos instantes mientras carga la página.</p</body></html>'
+								);
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'user_controller','confirmUser -- Saving User Status --');
+							});
+					} else {
+						res.status(406).json({
+							'status': 406,
+							'message': 'Token is not valid. Please verify'
+						});
+					}
+				} else {
+					res.status(404).json({
+						'status': 404,
+						'message': 'Email -'+ email + '- not found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','confirmUser -- Finding Email --');
+			});
+	},
+
 	//getDetails(req, res, next) {
 	getDetails(req, res) {
 		const key_user = res.locals.user;
