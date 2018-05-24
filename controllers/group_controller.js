@@ -395,6 +395,8 @@ module.exports = {
 						select: 'title'
 					}
 				}])
+			.select('student group')
+			.lean()
 			.then((items)  => {
 				if(items.length > 0) {
 					items.forEach(function(roster) {
