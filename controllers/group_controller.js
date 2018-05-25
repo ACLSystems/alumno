@@ -1932,6 +1932,7 @@ module.exports = {
 			.unwind('motherName')
 			.unwind('email')
 			.unwind('group')
+			/*
 			.group({
 				_id: '$group',
 				'students': {
@@ -1944,6 +1945,7 @@ module.exports = {
 				}
 			}
 			)
+			*/
 			.then((users) => {
 				if(users.length > 0) {
 					res.status(200).json(users);
