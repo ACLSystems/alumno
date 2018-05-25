@@ -1449,6 +1449,27 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/instructor/group/studentgrades':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group id by query to process'
+			});
+		} else if (!req.query.studentid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give student id by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/instructor/group/gradetask':
 		if(!req.body) {  // PUT
 			res.status(406).json({
