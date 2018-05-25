@@ -1917,15 +1917,15 @@ module.exports = {
 		}
 		Roster.aggregate()
 			.match({orgUnit: mongoose.Types.ObjectId(ou),track:0, report: {$ne:false}})
-			.project('student group')
+			.project('student group -_id')
 			.lookup({from: 'users', localField: 'student', foreignField: '_id', as: 'myUser'})
 			.lookup({from: 'groups', localField: 'group', foreignField: '_id', as: 'myGroup'})
 			.project({
-				name				:	'$myUser.person.name',
+				group				: '$myGroup.name',
 				fatherName	:	'$myUser.person.fatherName',
 				motherName	: '$myUser.person.motherName',
+				name				:	'$myUser.person.name',
 				email				: '$myUser.person.email',
-				group				: '$myGroup.name'
 			})
 			.unwind('name')
 			.unwind('fatherName')
