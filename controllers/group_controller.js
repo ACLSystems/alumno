@@ -1,3 +1,4 @@
+const mongoose 		= require('mongoose');
 const User 				= require('../src/users'										);
 const Course 			= require('../src/courses'									);
 const Group 			= require('../src/groups'										);
@@ -1898,6 +1899,65 @@ module.exports = {
 				Err.sendError(res,err,'group_controller','nextBlock -- Finding Roster --');
 			});
 	}, // nextBlock
+
+	usersWOActivity(req,res) {
+		const key_user  = res.locals.user;
+		var 	ou				= '';
+		if(key_user.roles.isAdmin && req.query.ou) {
+			ou = req.query.ou;
+		} else {
+			if(key_user.orgUnit._id) {
+				ou = key_user.orgUnit._id;
+			} else {
+				res.status(200).json({
+					'status': 200,
+					'message': 'User has not orgUnit. -  Please contact Admin'
+				});
+			}
+		}
+		Roster.aggregate()
+			.match({orgUnit: mongoose.Types.ObjectId(ou),track:0, report: {$ne:false}})
+			.project('student group')
+			.lookup({from: 'users', localField: 'student', foreignField: '_id', as: 'myUser'})
+			.lookup({from: 'groups', localField: 'group', foreignField: '_id', as: 'myGroup'})
+			.project({
+				name				:	'$myUser.person.name',
+				fatherName	:	'$myUser.person.fatherName',
+				motherName	: '$myUser.person.motherName',
+				email				: '$myUser.person.email',
+				group				: '$myGroup.name'
+			})
+			.unwind('name')
+			.unwind('fatherName')
+			.unwind('motherName')
+			.unwind('email')
+			.unwind('group')
+			.group({
+				_id: '$group',
+				'students': {
+					$push: {
+						name				: '$name',
+						fatherName	: '$fatherName',
+						motherName	: '$motherName',
+						email				: '$email'
+					}
+				}
+			}
+			)
+			.then((users) => {
+				if(users.length > 0) {
+					res.status(200).json(users);
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'No users found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','usersWOActivity -- Finding Roster --');
+			});
+	}, //usersWOActivity
 
 	usersWOGroup(req,res) {
 		const key_user	= res.locals.user;

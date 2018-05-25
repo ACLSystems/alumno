@@ -188,13 +188,14 @@ module.exports = (app) => {
 
 	// Rutas para roles de 'isSupervisor'
 
-	app.get ('/api/v1/supervisor/report/gradesbycampus',ReportController.gradesByCampus);
-	app.get ('/api/v1/supervisor/report/percentil',			ReportController.percentil);
-	app.get ('/api/v1/supervisor/report/gradesbygroup', ReportController.gradesByGroup);
-	app.get ('/api/v1/supervisor/user/getdetails',			UserController.getDetailsSuper);
-	app.get ('/api/v1/supervisor/user/settracking', 		GroupController.setTracking);
-	app.get ('/api/v1/supervisor/user/getgroups', 			GroupController.getGroups);
-	app.get ('/api/v1/supervisor/group/listroster', 		GroupController.listRoster);
+	app.get ('/api/v1/supervisor/report/gradesbycampus',	ReportController.gradesByCampus);
+	app.get ('/api/v1/supervisor/report/percentil',				ReportController.percentil);
+	app.get ('/api/v1/supervisor/report/gradesbygroup', 	ReportController.gradesByGroup);
+	app.get ('/api/v1/supervisor/report/userswoactivity',	GroupController.usersWOActivity);
+	app.get ('/api/v1/supervisor/user/getdetails',				UserController.getDetailsSuper);
+	app.get ('/api/v1/supervisor/user/settracking', 			GroupController.setTracking);
+	app.get ('/api/v1/supervisor/user/getgroups', 				GroupController.getGroups);
+	app.get ('/api/v1/supervisor/group/listroster', 			GroupController.listRoster);
 
 	// Rutas para archivos
 
