@@ -819,6 +819,7 @@ module.exports = {
 								var send_items = new Array();
 								items.forEach(function(item) {
 									send_items.push({
+										groupid			: item.group._id,
 										group				: item.group.name,
 										groupCode		: item.group.code,
 										course			: item.group.course.title,
@@ -829,6 +830,7 @@ module.exports = {
 									'status'	: 200,
 									'messaage': {
 										'name'	: user.person.fullName,
+										'id'		: user._id,
 										'groups': send_items
 									}
 								});
