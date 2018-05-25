@@ -190,6 +190,7 @@ module.exports = (app) => {
 
 	app.get ('/api/v1/supervisor/report/gradesbycampus',ReportController.gradesByCampus);
 	app.get ('/api/v1/supervisor/report/percentil',			ReportController.percentil);
+	app.get ('/api/v1/supervisor/report/gradesbygroup', ReportController.gradesByGroup);
 	app.get ('/api/v1/supervisor/user/getdetails',			UserController.getDetailsSuper);
 	app.get ('/api/v1/supervisor/user/settracking', 		GroupController.setTracking);
 	app.get ('/api/v1/supervisor/user/getgroups', 			GroupController.getGroups);

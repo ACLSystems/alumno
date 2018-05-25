@@ -224,21 +224,105 @@ module.exports = {
 			});
 	}, //percentil
 
-	gradesByOU(req,res) {
-		const key_user  = res.locals.user;
-		var 	ou				= '';
-		if(req.query.ou) {
-			ou = req.query.ou;
-		} else {
-			if(key_user.orgUnit._id) {
-				ou = key_user.orgUnit._id;
-			} else {
-				res.status(200).json({
-					'status': 200,
-					'message': 'User has not orgUnit. -  Please contact Admin'
-				});
-			}
+	gradesByGroup(req,res) {
+		//const key_user  = res.locals.user;
+		var 	groupid				= '';
+		if(req.query.groupid) {
+			groupid = req.query.groupid;
 		}
+		Group.findById(groupid)
+			.then((group) => {
+				if(group) {
+					Roster.aggregate()
+						.match({group: mongoose.Types.ObjectId(groupid),report: {$ne:false}})
+						.project('student grades finalGrade track pass passDate -_id')
+						.lookup({from: 'users', localField: 'student', foreignField: '_id', as: 'myUser'})
+						.project({
+							grades			:	1,
+							finalGrade	:	1,
+							track				:	1,
+							pass				:	1,
+							passDate		:	1,
+							name				:	'$myUser.person.name',
+							fatherName	:	'$myUser.person.fatherName',
+							motherName	: '$myUser.person.motherName',
+							email				: '$myUser.person.email'
+						})
+						.unwind('name')
+						.unwind('fatherName')
+						.unwind('motherName')
+						.unwind('email')
+						.unwind('grades')
+						.match({$or: [{'grades.wq': {$gt:0}},{'grades.wt': {$gt:0}}]})
+						.lookup({
+							from: 'blocks',
+							localField: 'grades.block',
+							foreignField: '_id',
+							as: 'myBlocks'})
+						.project({
+							finalGrade	:	1,
+							track				:	1,
+							pass				:	1,
+							passDate		:	1,
+							name				:	1,
+							fatherName	:	1,
+							motherName	:	1,
+							email				:	1,
+							blockTitle	:	'$myBlocks.title',
+							blockGrade	:	'$grades.finalGrade',
+							blockPond		:	'$grades.w'
+						})
+						.unwind('blockTitle')
+						.group({
+							_id: {
+								name				: '$name',
+								fatherName	: '$fatherName',
+								motherName	: '$motherName',
+								email				: '$email',
+								track				: '$track',
+								finalGrade	: '$finalGrade',
+								pass				: '$pass',
+								passDate		: '$passDate'
+							},
+							grades: {
+								$push: {
+									blockTitle	: '$blockTitle',
+									blockGrade	: '$blockGrade'
+								}
+							}
+						})
+						.project({
+							name				: '$_id.name',
+							fatherName	: '$_id.fatherName',
+							motherName	: '$_id.motherName',
+							email				: '$_id.email',
+							track				: '$_id.track',
+							finalGrade	: '$_id.finalGrade',
+							pass				: '$_id.pass',
+							passDate		: '$_id.passDate',
+							grades			: true,
+							_id 				: false
+						})
+						.then((items) => {
+							res.status(200).json({
+								'status': 200,
+								'group'	: group.name,
+								'roster': items
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'report_controller','gradesByGroup -- Finding roster items --');
+						});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'Group not found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','gradesByGroup -- Finding group --');
+			});
 	}, // gradesByOU
 
 	gradesByCampus(req,res) {
