@@ -101,6 +101,7 @@ module.exports = {
 			.populate('org', 'name')
 			.populate('orgUnit', 'name longName')
 			.populate('students', 'name person')
+			.lean()
 			.then((groups) => {
 				var send_groups = new Array();
 				groups.forEach(function(group) {
@@ -165,6 +166,7 @@ module.exports = {
 			})
 			*/
 			.select('code name instructor course beginDate endDate numStudents students isActive presentBlockBy')
+			.lean()
 			.then((groups) => {
 				var send_groups = new Array();
 				groups.forEach(function(group) {
@@ -646,6 +648,7 @@ module.exports = {
 					}
 				]
 			})
+			.lean()
 			.then((items) => {
 				if(items.length > 0) {
 					var send_groups = new Array();
@@ -716,6 +719,7 @@ module.exports = {
 					}
 				}
 			})
+			.lean()
 			.then((item) => {
 				if(item) {
 					var myStatus 	= item.status;
@@ -808,6 +812,7 @@ module.exports = {
 								select: 'code title'
 							}
 						})
+						.lean()
 						.then((items) => {
 							if(items.length > 0 ) {
 								var send_items = new Array();
@@ -948,27 +953,29 @@ module.exports = {
 									myGrade.block = blockid;
 								}
 								myGrade.quests.push(quest);
+								myGrade.gradedQ = true;
 							}
 						} else {
 							myGrade.quests 	= [quest];
 							myGrade.track		= 100;
+							myGrade.gradedQ = true;
 							if(!found) {
 								myGrade.block = blockid;
 							}
 						}
 						if(myGrade.w === 0) {
-							if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w === 1) {
-								myGrade.w = 1;
+							if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
+								myGrade.w = item.group.course.blocks[0].w;
 							}
 						}
 						if(myGrade.wq === 0) {
-							if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq === 1) {
-								myGrade.wq = 1;
+							if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
+								myGrade.wq = item.group.course.blocks[0].wq;
 							}
 						}
 						if(myGrade.wt === 0) {
-							if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt === 1) {
-								myGrade.wt = 1;
+							if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
+								myGrade.wt = item.group.course.blocks[0].wt;
 							}
 						}
 						item.grades[k] = myGrade;
@@ -976,16 +983,17 @@ module.exports = {
 						myGrade = {
 							block	: blockid,
 							quests: [quest],
-							track	: 100
+							track	: 100,
+							gradedQ: true
 						};
-						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w === 1) {
-							myGrade.w = 1;
+						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
+							myGrade.w = item.group.course.blocks[0].w;
 						}
-						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq === 1) {
-							myGrade.wq = 1;
+						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
+							myGrade.wq = item.group.course.blocks[0].wq;
 						}
-						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt === 1) {
-							myGrade.wt = 1;
+						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
+							myGrade.wt = item.group.course.blocks[0].wt;
 						}
 						item.grades = [myGrade];
 					}
@@ -1347,6 +1355,7 @@ module.exports = {
 					}
 				}
 			})
+			.lean()
 			.then((item) => {
 				if(item) {
 					var blocks	= new Array();

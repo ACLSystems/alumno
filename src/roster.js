@@ -118,6 +118,10 @@ const GradesSchema = new Schema ({
 		type: Boolean,
 		default: false
 	},
+	gradedQ: {
+		type: Boolean,
+		default: false
+	},
 	wq: {
 		type: Number,
 		min: [0,'Minimum value is 0'],
