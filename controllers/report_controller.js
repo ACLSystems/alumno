@@ -287,7 +287,8 @@ module.exports = {
 							grades: {
 								$push: {
 									blockTitle	: '$blockTitle',
-									blockGrade	: '$blockGrade'
+									blockGrade	: '$blockGrade',
+									blockPond		: '$blockPond'
 								}
 							}
 						})
