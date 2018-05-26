@@ -231,6 +231,7 @@ module.exports = {
 			groupid = req.query.groupid;
 		}
 		Group.findById(groupid)
+			.populate('course', 'title duration durationUnits')
 			.then((group) => {
 				if(group) {
 					Roster.aggregate()
@@ -306,9 +307,12 @@ module.exports = {
 						})
 						.then((items) => {
 							res.status(200).json({
-								'status': 200,
-								'group'	: group.name,
-								'roster': items
+								'status'				: 200,
+								'group'					: group.name,
+								'course'				: group.course.title,
+								'courseDuration': group.course.duration,
+								'courseDurUnits': group.course.durationUnits,
+								'roster'				: items
 							});
 						})
 						.catch((err) => {
@@ -324,7 +328,7 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'report_controller','gradesByGroup -- Finding group --');
 			});
-	}, // gradesByOU
+	}, // gradesByGroup
 
 	gradesByCampus(req,res) {
 		const key_user 	= res.locals.user;

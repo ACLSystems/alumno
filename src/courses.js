@@ -103,7 +103,8 @@ const CoursesSchema = new Schema ({
 	},
 	durationUnits: {
 		type: String,
-		enum: ['s', 'm', 'h', 'd', 'w', 'mo', 'y']
+		enum: ['s', 'm', 'h', 'd', 'w', 'mo', 'y'],
+		default: 'h'
 	}
 });
 
