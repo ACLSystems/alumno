@@ -41,14 +41,18 @@ module.exports = {
 		if(req.query.dir2) {
 			dir2 = req.query.dir2;
 		}
-		console.log(req.file);
+		var filename = req.file.filename;
+		if(req.file && !req.file.filename) {
+			filename = req.file.originalname;
+		}
 		const file 	= new File({
 			name		: req.file.originalname,
 			mimetype: req.file.mimetype,
-			filename: req.file.filename,
+			filename: filename,
 			path		: '/' + file_dir + '/' + dir1 + '/' + dir2,
 			size		: req.file.size
 		});
+
 		file.save()
 			.then((file) => {
 				const localFile = fs.readFileSync(ordir + '/' + file.filename);
@@ -71,6 +75,7 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'file_controller','upload -- Saving File --');
 			});
+
 	}, // upload
 
 	download(req,res) {
