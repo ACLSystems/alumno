@@ -33,9 +33,16 @@ module.exports = {
 		}
 		var dir1 					= 'base1';
 		var dir2 					= 'base2';
-		const ordir 			= process.env.ORDIR;
-		const file_dir		= process.env.NODE_ENV;
-		const accessToken	= process.env.DBX_TOKEN;
+		var ordir 			= process.env.ORDIR;
+		var file_dir		= process.env.NODE_ENV;
+		var accessToken	= process.env.DBX_TOKEN;
+
+		if(!file_dir) {
+			file_dir = 'production';
+		}
+		if(!ordir) {
+			ordir = '/usr/src/app/files';
+		}
 		if(req.query.dir1) {
 			dir1 = req.query.dir1;
 		}
@@ -121,7 +128,10 @@ module.exports = {
 		File.findOne(query)
 			.then((file) => {
 				if(file) {
-					const ordir = process.env.ORDIR;
+					var ordir = process.env.ORDIR;
+					if(!ordir) {
+						ordir = '/usr/src/app/files';
+					}
 					if(fs.existsSync(ordir + '/' + file.filename)) {
 						res.set({'Content-type': file.mimetype});
 						res.download(ordir + '/' + file.filename,file.name);
