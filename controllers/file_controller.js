@@ -41,6 +41,7 @@ module.exports = {
 		if(req.query.dir2) {
 			dir2 = req.query.dir2;
 		}
+		console.log(req.file);
 		const file 	= new File({
 			name		: req.file.originalname,
 			mimetype: req.file.mimetype,
