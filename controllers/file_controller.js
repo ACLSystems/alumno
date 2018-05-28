@@ -9,6 +9,7 @@ const Err = require('../controllers/err500_controller');
 module.exports = {
 
 	upload(req,res) {
+		const filesize = 1048576;
 		if(!req.file) {
 			res.status(406).json({
 				'status': 406,
@@ -44,6 +45,13 @@ module.exports = {
 		var filename = req.file.filename;
 		if(req.file && !req.file.filename) {
 			filename = req.file.originalname;
+		}
+		if(req.file.size > filesize) {
+			req.status(200).json({
+				'status': 200,
+				'message': 'File size is bigger than ' + filesize + ' bytes'
+			});
+			return;
 		}
 		const file 	= new File({
 			name		: req.file.originalname,
