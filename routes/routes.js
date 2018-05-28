@@ -123,6 +123,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/instructor/group/gradetask', 		GroupController.gradeTask);
 	app.get ('/api/v1/instructor/group/userswogroup', GroupController.usersWOGroup);
 	app.get ('/api/v1/instructor/group/notify', 			GroupController.notify);
+	app.get ('/api/v1/instructor/group/repairroster', GroupController.repairRoster);
 
 	// Rutas para roles de 'isAuthor'
 

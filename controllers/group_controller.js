@@ -1784,7 +1784,7 @@ module.exports = {
 						item.grades = grades;
 						item.save()
 							.catch((err) => {
-								Err.sendError(res,err,'group_controller','nextBlock -- Saving item --');
+								Err.sendError(res,err,'group_controller','nextBlock -- Saving item -- '+ key_user.name);
 							});
 					}
 					if(ok) {
@@ -2294,6 +2294,106 @@ module.exports = {
 		});
 		//Err.sendError(res,message,'group_controller','test -- testing email --');
 	}, // test
+
+	repairRoster(req,res) {
+		const key_user	= res.locals.user;
+		const groupid 	= req.query.groupid;
+		Group.findById(groupid)
+			.populate({
+				path: 'course',
+				select: 'blocks',
+				populate: {
+					path: 'blocks',
+					select: 'w wq wt'
+				}
+			})
+			.then((group) => {
+				if(group) {
+					const bs = group.course.blocks;
+					Roster.count({group: groupid})
+						.then((count) => {
+							if(count > 0) {
+								var skip			= 0;
+								var limit			= 100;
+								var itemCount = count;
+								if(itemCount < limit) {
+									limit = itemCount;
+								}
+								while(itemCount > 0) {
+									Roster.find({group: groupid})
+										.skip(skip)
+										.limit(limit)
+										.then((items) => {
+											if(items.length > 0) {
+												res.status(200).json({
+													'status': 200,
+													'message': 'Roster repair has begun'
+												});
+												items.forEach(function(item) {
+													var grades = item.grades;
+													var i=0;
+													while(i < bs.length) {
+														var j=0;
+														var found = false;
+														while(!found && j < grades.length) {
+															if(bs[i]._id + '' === grades[j].block + '') {
+																grades[j].w 			= bs[i].w;
+																grades[j].wq 			= bs[i].wq;
+																grades[j].wt 			= bs[i].wt;
+																grades[j].repair	= 1;
+																found = true;
+															}
+															j++;
+														}
+														if(!found) {
+															grades.push({
+																block	: bs[i]._id,
+																w 		: bs[i].w,
+																wq 		: bs[i].wq,
+																wt		: bs[i].wt,
+																repair: 1
+															});
+														}
+														i++;
+													}
+													item.grades = grades;
+													item.save();
+												});
+											}
+										})
+										.catch((err) => {
+											Err.sendError(res,err,'group_controller','repairRoster -- Counting Roster -- user: ' +
+												key_user.name + ' groupid: ' + groupid);
+										});
+									skip += limit;
+									itemCount -= limit;
+									if((skip + limit) > count) {
+										limit = itemCount;
+									}
+								}
+							} else {
+								res.status(200).json({
+									'status': 200,
+									'message': 'No rosters found'
+								});
+							}
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'group_controller','repairRoster -- Counting Roster -- user: ' +
+								key_user.name + ' groupid: ' + groupid);
+						});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'No group found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','repairRoster -- Finding Group -- user: ' +
+					key_user.name + ' groupid: ' + groupid);
+			});
+	}, //repairRoster
 
 	repairGroup(req,res) {
 		const key_user	= res.locals.user;
