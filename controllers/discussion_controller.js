@@ -12,6 +12,7 @@ module.exports = {
 			orgUnit : key_user.orgUnit,
 			user		: key_user._id
 		};
+		/*
 		if(req.body.title){
 			commentObj.type			= 'root';
 			commentObj.title		= req.body.title;
@@ -24,6 +25,7 @@ module.exports = {
 		if(req.body.replyto) {
 			commentObj.type					= 'reply';
 		}
+		*/
 		const vars = ['comment','replyto','block','group','course'];
 		vars.forEach(function(evar) {
 			if(req.body[evar]){
