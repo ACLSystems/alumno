@@ -1370,52 +1370,88 @@ module.exports = {
 					}
 				}
 			})
-			.lean()
 			.then((item) => {
 				if(item) {
 					var blocks	= new Array();
 					const bs 		= item.group.course.blocks;
-					item.grades.forEach(function(grade) {
-						if(grade.wq > 0 || grade.wt > 0) {
-							var i = 0;
-							var block = {};
-							while (i < bs.length) {
-								if(grade.block + '' === bs[i]._id + '') {
-									block = {
-										blockTitle	: bs[i].title,
-										blockSection: bs[i].section,
-										blockNumber	: bs[i].number,
-										blockW			: bs[i].w
-									};
-									i = bs.length;
-								} else {
-									i++;
-								}
+					// ------------
+
+					var grades = item.grades;
+					var i=0;
+					while(i < bs.length) {
+						var j=0;
+						var found = false;
+						while(!found && j < grades.length) {
+							if(bs[i]._id + '' === grades[j].block + '') {
+								grades[j].w 			= bs[i].w;
+								grades[j].wq 			= bs[i].wq;
+								grades[j].wt 			= bs[i].wt;
+								grades[j].repair	= 1;
+								found = true;
 							}
-							block.grade = grade.finalGrade;
-							blocks.push(block);
+							j++;
 						}
-					});
-					var send_grade = {
-						name							: key_user.person.fullName,
-						course						: item.group.course.title,
-						certificateActive : item.group.certificateActive,
-						finalGrade				: item.finalGrade,
-						minGrade					: item.minGrade,
-						track							: parseInt(item.track) + '%',
-						minTrack					: item.minTrack + '%',
-						pass							: item.pass,
-						passDate					: item.passDate,
-						blocks						: blocks
-					};
-					if(item.group.course.duration) {
-						send_grade.duration 			= item.group.course.duration;
-						send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
+						if(!found) {
+							grades.push({
+								block	: bs[i]._id,
+								w 		: bs[i].w,
+								wq 		: bs[i].wq,
+								wt		: bs[i].wt,
+								repair: 1
+							});
+						}
+						i++;
 					}
-					res.status(200).json({
-						'status': 200,
-						'message': send_grade
-					});
+					item.grades = grades;
+					item.repair = 1;
+					item.save()
+						.then((item) => {
+						// ------
+							item.grades.forEach(function(grade) {
+								if(grade.wq > 0 || grade.wt > 0) {
+									var i = 0;
+									var block = {};
+									while (i < bs.length) {
+										if(grade.block + '' === bs[i]._id + '') {
+											block = {
+												blockTitle	: bs[i].title,
+												blockSection: bs[i].section,
+												blockNumber	: bs[i].number,
+												blockW			: bs[i].w
+											};
+											i = bs.length;
+										} else {
+											i++;
+										}
+									}
+									block.grade = grade.finalGrade;
+									blocks.push(block);
+								}
+							});
+							var send_grade = {
+								name							: key_user.person.fullName,
+								course						: item.group.course.title,
+								certificateActive : item.group.certificateActive,
+								finalGrade				: item.finalGrade,
+								minGrade					: item.minGrade,
+								track							: parseInt(item.track) + '%',
+								minTrack					: item.minTrack + '%',
+								pass							: item.pass,
+								passDate					: item.passDate,
+								blocks						: blocks
+							};
+							if(item.group.course.duration) {
+								send_grade.duration 			= item.group.course.duration;
+								send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
+							}
+							res.status(200).json({
+								'status': 200,
+								'message': send_grade
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'group_controller','mygrades -- Reparing Roster --');
+						});
 				} else {
 					res.status(200).json({
 						'status': 200,
