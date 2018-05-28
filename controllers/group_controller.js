@@ -1079,8 +1079,13 @@ module.exports = {
 						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
 							myGrade.wt = item.group.course.blocks[0].wt;
 						}
-						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].task && typeof item.group.course.blocks[0].task.justDelivery === 'boolean') {
-							task.justDelivery = item.group.course.blocks[0].justDelivery;
+
+						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].task && item.group.course.blocks[0].task.justDelivery) {
+							var c = 0;
+							while (c < task.length) {
+								task[c].justDelivery = item.group.course.blocks[0].task.justDelivery;
+								c++;
+							}
 						}
 						myGrade.tasks = task;
 						myGrade.track	= 100;
@@ -1100,7 +1105,6 @@ module.exports = {
 				} else {
 					myGrade = {
 						block	: blockid,
-						tasks: task,
 						track	: 100
 					};
 					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
@@ -1112,6 +1116,10 @@ module.exports = {
 					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
 						myGrade.wt = item.group.course.blocks[0].wt;
 					}
+					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].task && item.group.course.blocks[0].task.justDelivery) {
+						task.justDelivery = item.group.course.blocks[0].task.justDelivery;
+					}
+					myGrade.tasks = task;
 					item.grades = [myGrade];
 					item.grades.tasktries = [now];
 				}

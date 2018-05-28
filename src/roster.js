@@ -177,27 +177,30 @@ GradesSchema.pre('save', function(next) {
 			this.maxGradeQ		= lastGrade;
 			this.lastAttemptQ	= lastDate;
 		}
-		var wTotal = this.wq + this.wt;
-		if(wTotal > 0 && this.track === 100) {
-			this.finalGrade = (((this.wq * this.maxGradeQ)+(this.wt*this.gradeT))/(wTotal));
-		} else {
-			this.finalGrade = 0;
-		}
 	}
 	if(this.tasks.length > 0) {
 		var tasks = 0;
 		var grades = 0;
 		this.tasks.forEach(function(t) {
 			tasks++;
-			if(t.graded) {
+			if(t.justDelivery) {
+				grades = grades + 100;
+			} else if(t.graded) {
 				grades = grades + t.grade;
 			}
 		});
 		if(tasks > 0) {
 			this.gradeT = grades / tasks;
+			this.gradedT = true;
 		} else {
 			this.gradeT = 0;
 		}
+	}
+	var wTotal = this.wq + this.wt;
+	if(wTotal > 0 && this.track === 100) {
+		this.finalGrade = (((this.wq * this.maxGradeQ)+(this.wt*this.gradeT))/(wTotal));
+	} else {
+		this.finalGrade = 0;
 	}
 	next();
 });

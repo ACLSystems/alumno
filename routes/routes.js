@@ -14,9 +14,13 @@ const TermController 				= require('../controllers/term_controller');
 const DiscussionController 	= require('../controllers/discussion_controller');
 const ReportController 			= require('../controllers/report_controller');
 const multer 								= require('multer');
-const dir 									= process.env.ORDIR;
+var dir 										= process.env.ORDIR;
 const fileSize 							= 1048576;
 const files 								= 1;
+
+if(!dir) {
+	dir = '/usr/src/data/files';
+}
 
 module.exports = (app) => {
 
