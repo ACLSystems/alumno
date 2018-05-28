@@ -1048,7 +1048,7 @@ module.exports = {
 						select: 'task w wq wt',
 						populate: {
 							path: 'task',
-							select: 'items'
+							select: 'items justDelivery'
 						}
 					}
 				}
@@ -1070,8 +1070,20 @@ module.exports = {
 						}
 					}
 					if(myGrade.tasks && ((myGrade.tasks.length > 0 && force) || (myGrade.tasks.length === 0)) ) {
+						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
+							myGrade.w = item.group.course.blocks[0].w;
+						}
+						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
+							myGrade.wq = item.group.course.blocks[0].wq;
+						}
+						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
+							myGrade.wt = item.group.course.blocks[0].wt;
+						}
+						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].task && typeof item.group.course.blocks[0].task.justDelivery === 'boolean') {
+							task.justDelivery = item.group.course.blocks[0].justDelivery;
+						}
 						myGrade.tasks = task;
-						myGrade.track		= 100;
+						myGrade.track	= 100;
 						item.grades[k] = myGrade;
 						if(item.grades[k].tasktries && item.grades[k].tasktries.length > 0) {
 							item.grades[k].tasktries.push(now);
@@ -2340,7 +2352,7 @@ module.exports = {
 																grades[j].w 			= bs[i].w;
 																grades[j].wq 			= bs[i].wq;
 																grades[j].wt 			= bs[i].wt;
-																grades[j].repair	= 1;
+																grades[j].repair	+= 1;
 																found = true;
 															}
 															j++;
@@ -2357,6 +2369,7 @@ module.exports = {
 														i++;
 													}
 													item.grades = grades;
+													item.repair += 1;
 													item.save();
 												});
 											}

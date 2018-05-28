@@ -62,7 +62,18 @@ const TasksSchema = new Schema ({
 	date: {
 		type: Date,
 		default: Date.now
+	},
+	justDelivery: {
+		type: Boolean,
+		default: false
 	}
+});
+TasksSchema.pre('save', function(next) {
+	if(this.justDelivery && this.content) {
+		this.grade 	= 100;
+		this.graded = true;
+	}
+	next();
 });
 
 module.exports = TasksSchema;
@@ -281,6 +292,9 @@ const RosterSchema = new Schema ({
 		default: true
 	},
 	admin: [AdminSchema],
+	repair: {
+		type: Number
+	},
 	report: {
 		type: Boolean,
 		default: true

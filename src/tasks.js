@@ -65,6 +65,10 @@ const TaskSchema = new Schema ({
 		type: Boolean,
 		default: true
 	},
+	justDelivery: {
+		type: Boolean,
+		default: false
+	},
 	own: {OwnerSchema},
 	mod: [{ModSchema}],
 	perm: {PermissionsSchema}

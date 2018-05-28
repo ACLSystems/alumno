@@ -978,12 +978,17 @@ module.exports = {
 		} else if(req.body.code) {
 			queryBlock = { code: req.body.code, org: key_user.org._id };
 		}
+		var justDelivery = false;
+		if(req.body.justDelivery) {
+			justDelivery = true;
+		}
 		Block.findOne(queryBlock)
 			.then((block) => {
 				if(block) {
 					var date = new Date();
 					var task = new Task;
 					task.items 		= req.body.tasks;
+					task.justDelivery = justDelivery;
 					task.org 			= key_user.org._id;
 					task.orgUnit 	= key_user.orgUnit._id;
 					task.version 	= 1;
