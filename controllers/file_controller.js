@@ -9,6 +9,7 @@ const Err = require('../controllers/err500_controller');
 module.exports = {
 
 	upload(req,res) {
+		const key_user 	= res.locals.user;
 		const filesize = 1048576;
 		if(!req.file) {
 			res.status(406).json({
@@ -67,6 +68,7 @@ module.exports = {
 			path		: '/' + file_dir + '/' + dir1 + '/' + dir2,
 			size		: req.file.size
 		});
+		var pretty = JSON.stringify(file,null,2);
 
 		file.save()
 			.then((file) => {
@@ -77,6 +79,7 @@ module.exports = {
 					.then(() => {
 						res.status(200).json({
 							'status'	: 200,
+							//'localFile' : localFile,
 							'message'	: 'File -' + req.file.originalname + '- was successfully uploaded',
 							'file'		: file.filename,
 							'filepath': file.path,
@@ -84,7 +87,7 @@ module.exports = {
 						});
 					})
 					.catch((err) => {
-						Err.sendError(res,err,'file_controller','upload dropbox -- uploading File --');
+						Err.sendError(res,err,'file_controller','upload dropbox -- uploading File -- User: ' + key_user.name + ' filepath: ' + file.path + ' filename: '+ file.filename +' req.file: ' + pretty + ' TKN: ' + accessToken);
 					});
 			})
 			.catch((err) => {
