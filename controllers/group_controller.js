@@ -2352,7 +2352,7 @@ module.exports = {
 																grades[j].w 			= bs[i].w;
 																grades[j].wq 			= bs[i].wq;
 																grades[j].wt 			= bs[i].wt;
-																grades[j].repair	+= 1;
+																grades[j].repair	= 1;
 																found = true;
 															}
 															j++;
@@ -2369,7 +2369,7 @@ module.exports = {
 														i++;
 													}
 													item.grades = grades;
-													item.repair += 1;
+													item.repair = 1;
 													item.save();
 												});
 											}
