@@ -5,6 +5,8 @@ const TA = require('time-ago');
 module.exports = {
 	create(req,res) {
 		const key_user 	= res.locals.user;
+		var commentObj	= req.body;
+		/*
 		const text 			= req.body.text;
 		var commentObj = {
 			text		: text,
@@ -12,7 +14,6 @@ module.exports = {
 			orgUnit : key_user.orgUnit,
 			user		: key_user._id
 		};
-		/*
 		if(req.body.title){
 			commentObj.type			= 'root';
 			commentObj.title		= req.body.title;
@@ -25,13 +26,14 @@ module.exports = {
 		if(req.body.replyto) {
 			commentObj.type					= 'reply';
 		}
-		*/
+
 		const vars = ['comment','replyto','block','group','course'];
 		vars.forEach(function(evar) {
 			if(req.body[evar]){
 				commentObj[evar] = req.body[evar];
 			}
 		});
+			*/
 		var status = {
 			'status': 200
 		};
