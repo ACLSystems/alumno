@@ -1619,6 +1619,7 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give data by body to process'
 			});
+			/*
 		} else if(!req.body.text) {
 			res.status(406).json({
 				'status': 406,
@@ -1629,6 +1630,7 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give discussion title or discussion id or replyto by body to process'
 			});
+			*/
 		} else {
 			next();
 		}

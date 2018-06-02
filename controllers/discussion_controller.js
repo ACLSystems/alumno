@@ -6,6 +6,10 @@ module.exports = {
 	create(req,res) {
 		const key_user 	= res.locals.user;
 		var commentObj	= req.body;
+
+		commentObj.org 			= key_user.org;
+		commentObj.orgUnit 	= key_user.orgUnit;
+		commentObj.user 		=	key_user._id;
 		/*
 		const text 			= req.body.text;
 		var commentObj = {
@@ -33,7 +37,7 @@ module.exports = {
 				commentObj[evar] = req.body[evar];
 			}
 		});
-			*/
+
 		var status = {
 			'status': 200
 		};
@@ -45,28 +49,37 @@ module.exports = {
 						commentObj.type 			= 'comment';
 						delete commentObj.title;
 					}
-					Discussion.create(commentObj)
-						.then((d) => {
-							if(d.type === 'root') {
-								status.type				= d.type;
-								status.message 		= 'Root created';
-								status.root 			= d._id;
-							}
-							if(d.type === 'comment') {
-								status.type				= d.type;
-								status.message 		= 'Comment created';
-								status.root 			= d.root;
-								status.comment		= d._id;
-							}
-							res.status(200).json(status);
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'discussion_controller','create -- Creating comment --');
-						});
+					*/
+		Discussion.create(commentObj)
+			.then(() => {
+				/*
+				if(d.type === 'root') {
+					status.type				= d.type;
+					status.message 		= 'Root created';
+					status.root 			= d._id;
+				}
+				if(d.type === 'comment') {
+					status.type				= d.type;
+					status.message 		= 'Comment created';
+					status.root 			= d.root;
+					status.comment		= d._id;
+				}
+				res.status(200).json(status);
+				*/
+				res.status(200).json({
+					'status'	: 200,
+					'message'	: 'Register created'
+				});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'discussion_controller','create -- Creating comment --');
+			});
+		/*
 				})
 				.catch((err) => {
 					Err.sendError(res,err,'discussion_controller','create -- Finding Root --');
 				});
+
 		} else {
 			Discussion.findOne({_id: commentObj.replyto})
 				.then((c) => {
@@ -107,7 +120,7 @@ module.exports = {
 					Err.sendError(res,err,'discussion_controller','create -- Finding comment --');
 				});
 		}
-
+			*/
 	}, // crear comentario
 
 	get(req,res) {
@@ -170,7 +183,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'discussion_controller','create -- Creating comment --');
+				Err.sendError(res,err,'discussion_controller','get -- Getting comment --');
 			});
 	}
 };
