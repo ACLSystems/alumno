@@ -74,6 +74,54 @@ module.exports = {
 			});
 	}, //byOrgUnit
 
+	rosterSummary(req,res){
+		const key_user  = res.locals.user;
+		var 	ou				= '';
+		if(key_user.roles.isAdmin && req.query.ou) {
+			ou = req.query.ou;
+		} else {
+			if(key_user.orgUnit._id) {
+				ou = key_user.orgUnit._id;
+			} else {
+				res.status(200).json({
+					'status': 200,
+					'message': 'User has not orgUnit. -  Please contact Admin'
+				});
+			}
+		}
+		Roster.aggregate()
+			.match({orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false}})
+			.unwind('grades')
+			.match(
+				{$or:[
+					{'grades.wq':{$gt:0},'grades.maxGradeQ':{$gt:0}},
+					{'grades.wt':{$gt:0},'grades.gradeT':{$gt:0}}
+				]
+				})
+			.lookup({
+				from: 'blocks',
+				localField: 'grades.block',
+				foreignField: '_id',
+				as: 'myBlocks'})
+			.project({
+				grades						:	1,
+				'$myBlocks.title'	: 1
+			})
+			.group({
+				_id: '$myBlocks.title',
+				total: {$sum:1}
+			})
+			.then((evals) => {
+				res.status(200).json({
+					'status': 200,
+					'message': evals
+				});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','rosterSummary -- Aggregate --');
+			});
+	}, //rosterSummary
+
 	percentil(req,res) {
 		const key_user  = res.locals.user;
 		var 	ou				= '';
@@ -247,7 +295,8 @@ module.exports = {
 							name				:	'$myUser.person.name',
 							fatherName	:	'$myUser.person.fatherName',
 							motherName	: '$myUser.person.motherName',
-							email				: '$myUser.person.email'
+							email				: '$myUser.person.email',
+							rfc					: '$myUser.fiscal.id'
 						})
 						.unwind('name')
 						.unwind('fatherName')
@@ -269,6 +318,7 @@ module.exports = {
 							fatherName	:	1,
 							motherName	:	1,
 							email				:	1,
+							rfc 				: 1,
 							blockTitle	:	'$myBlocks.title',
 							blockGrade	:	'$grades.finalGrade',
 							blockPond		:	'$grades.w'
@@ -294,6 +344,7 @@ module.exports = {
 							}
 						})
 						.project({
+							rfc 				: '$_id.rfc',
 							name				: '$_id.name',
 							fatherName	: '$_id.fatherName',
 							motherName	: '$_id.motherName',
