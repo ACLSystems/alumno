@@ -110,6 +110,7 @@ module.exports = (app) => {
 	app.post('/api/v1/user/comment/create', 		DiscussionController.create);
 	app.get ('/api/v1/user/comment/get',				DiscussionController.get);
 	app.put ('/api/v1/user/savetask', 					GroupController.saveTask);
+	app.get ('/api/v1/user/tookcert', 					GroupController.tookCertificate);
 
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados

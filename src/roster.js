@@ -301,6 +301,10 @@ const RosterSchema = new Schema ({
 	report: {
 		type: Boolean,
 		default: true
+	},
+	tookCertificate: {
+		type: Boolean,
+		default: false
 	}
 });
 
