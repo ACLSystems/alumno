@@ -128,6 +128,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/instructor/group/userswogroup', GroupController.usersWOGroup);
 	app.get ('/api/v1/instructor/group/notify', 			GroupController.notify);
 	app.get ('/api/v1/instructor/group/repairroster', GroupController.repairRoster);
+	app.get ('/api/v1/instructor/group/sor',					GroupController.searchOrphanRoster);
 
 	// Rutas para roles de 'isAuthor'
 

@@ -104,12 +104,18 @@ module.exports = {
 				foreignField: '_id',
 				as: 'myBlocks'})
 			.project({
-				grades						:	1,
-				'$myBlocks.title'	: 1
+				grades	:	1,
+				title 	: '$myBlocks.title'
 			})
+			.unwind('title')
 			.group({
-				_id: '$myBlocks.title',
+				_id: '$title',
 				total: {$sum:1}
+			})
+			.project({
+				_id		: 0,
+				title	: '$_id',
+				total	: 1
 			})
 			.then((evals) => {
 				res.status(200).json({
@@ -285,7 +291,12 @@ module.exports = {
 					Roster.aggregate()
 						.match({group: mongoose.Types.ObjectId(groupid),report: {$ne:false}})
 						.project('student grades finalGrade track pass passDate -_id')
-						.lookup({from: 'users', localField: 'student', foreignField: '_id', as: 'myUser'})
+						.lookup({
+							from				: 'users',
+							localField	: 'student',
+							foreignField: '_id',
+							as					: 'myUser'
+						})
 						.project({
 							grades			:	1,
 							finalGrade	:	1,
@@ -302,13 +313,15 @@ module.exports = {
 						.unwind('fatherName')
 						.unwind('motherName')
 						.unwind('email')
+						.unwind('rfc')
 						.unwind('grades')
 						.match({$or: [{'grades.wq': {$gt:0}},{'grades.wt': {$gt:0}}]})
 						.lookup({
-							from: 'blocks',
-							localField: 'grades.block',
+							from				: 'blocks',
+							localField	: 'grades.block',
 							foreignField: '_id',
-							as: 'myBlocks'})
+							as					: 'myBlocks'
+						})
 						.project({
 							finalGrade	:	1,
 							track				:	1,
@@ -326,6 +339,7 @@ module.exports = {
 						.unwind('blockTitle')
 						.group({
 							_id: {
+								rfc					: '$rfc',
 								name				: '$name',
 								fatherName	: '$fatherName',
 								motherName	: '$motherName',
@@ -363,6 +377,8 @@ module.exports = {
 								'course'				: group.course.title,
 								'courseDuration': group.course.duration,
 								'courseDurUnits': group.course.durationUnits,
+								'beginDate'			: group.beginDate,
+								'endDate'				: group.endDate,
 								'roster'				: items
 							});
 						})

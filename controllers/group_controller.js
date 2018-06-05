@@ -1368,7 +1368,7 @@ module.exports = {
 		Roster.findOne({student: key_user.id, group: groupid})
 			.populate({
 				path: 'group',
-				select: 'course certificateActive',
+				select: 'course certificateActive beginDate endDate',
 				populate: {
 					path: 'course',
 					select: 'title blocks duration durationUnits',
@@ -1440,6 +1440,8 @@ module.exports = {
 								name							: key_user.person.fullName,
 								course						: item.group.course.title,
 								certificateActive : item.group.certificateActive,
+								beginDate					: item.group.beginDate,
+								endDate						: item.group.endDate,
 								finalGrade				: item.finalGrade,
 								minGrade					: item.minGrade,
 								track							: parseInt(item.track) + '%',
@@ -1479,7 +1481,7 @@ module.exports = {
 		Roster.findOne({student: studentid, group: groupid})
 			.populate([{
 				path: 'group',
-				select: 'course certificateActive',
+				select: 'course certificateActive beginDate endDate',
 				populate: {
 					path: 'course',
 					select: 'title blocks duration durationUnits',
@@ -1524,6 +1526,8 @@ module.exports = {
 						email 						: item.student.person.email,
 						course						: item.group.course.title,
 						certificateActive : item.group.certificateActive,
+						beginDate					: item.group.beginDate,
+						endDate						: item.group.endDate,
 						finalGrade				: item.finalGrade,
 						minGrade					: item.minGrade,
 						track							: parseInt(item.track) + '%',
@@ -2350,6 +2354,36 @@ module.exports = {
 		});
 		//Err.sendError(res,message,'group_controller','test -- testing email --');
 	}, // test
+
+	searchOrphanRoster(req,res) {
+		const key_user	= res.locals.user;
+		const groupid 	= req.query.groupid;
+		Roster.find({group:groupid})
+			.populate('student person')
+			.then((items) => {
+				var 		i	=	0;
+				var found = false;
+				while(!found && i < items.length) {
+					if(!items[i].student.person.name) {
+						found = true;
+					}
+				}
+				if(found) {
+					res.status(200).json({
+						'roster': items[i]._id
+					});
+				} else {
+					res.status(200).json({
+						'message': 'No roster found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','searchOrphanRoster -- Finding Roster -- user: ' +
+					key_user.name + ' groupid: ' + groupid );
+			});
+	}, //searchOrphanRoster
+
 
 	repairRoster(req,res) {
 		const key_user	= res.locals.user;
