@@ -376,9 +376,9 @@ module.exports = {
 								'group'					: group.name,
 								'course'				: group.course.title,
 								'courseDuration': group.course.duration,
-								'courseDurUnits': group.course.durationUnits,
-								'beginDate'			: group.beginDate,
-								'endDate'				: group.endDate,
+								'courseDurUnits': units(group.course.durationUnits),
+								'beginDate'			: dateInSpanish(group.beginDate),
+								'endDate'				: dateInSpanish(group.endDate),
 								'roster'				: items
 							});
 						})
@@ -774,4 +774,25 @@ function units(unit,cnt) {
 			return 'años';
 		}
 	}
+}
+
+function dateInSpanish(date) {
+	var day 	= date.getDate();
+	var month = date.getMonth();
+	var year	= date.getFullYear();
+	const months = [
+		'enero',
+		'febrero',
+		'marzo',
+		'abril',
+		'mayo',
+		'junio',
+		'julio',
+		'agosto',
+		'septiembre',
+		'octubre',
+		'noviembre',
+		'diciembre'
+	];
+	return day + ' de ' + months[month] + ' de ' + year;
 }

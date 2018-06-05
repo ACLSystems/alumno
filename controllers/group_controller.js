@@ -1439,9 +1439,11 @@ module.exports = {
 							var send_grade = {
 								name							: key_user.person.fullName,
 								course						: item.group.course.title,
+								courseDuration		: item.group.course.duration,
+								courseDurUnits		: units(item.group.course.durationUnits),
 								certificateActive : item.group.certificateActive,
-								beginDate					: item.group.beginDate,
-								endDate						: item.group.endDate,
+								beginDate					: dateInSpanish(item.group.beginDate),
+								endDate						: dateInSpanish(item.group.endDate),
 								finalGrade				: item.finalGrade,
 								minGrade					: item.minGrade,
 								track							: parseInt(item.track) + '%',
@@ -1555,6 +1557,35 @@ module.exports = {
 				Err.sendError(res,err,'group_controller','mygrades -- Finding Roster --');
 			});
 	}, // studentGrades
+
+	tookCertificate(req,res) {
+		const key_user 	= res.locals.user;
+		const groupid		= req.query.groupid;
+		Roster.findOne({student: key_user._id, group: groupid})
+			.then((item) => {
+				if(item) {
+					item.tookCertificate = true;
+					item.save()
+						.then(() => {
+							res.status(200).json({
+								'status'	: 200,
+								'message'	: 'Roster saved'
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'group_controller','tookCertificate -- Saving Roster --');
+						});
+				} else {
+					res.status(200).json({
+						'status'	: 200,
+						'message'	: 'Roster not found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','tookCertificate -- Finding Roster --');
+			});
+	}, //tookCertificate
 
 	getResource(req,res) {
 		const key_user 	= res.locals.user;
@@ -2581,4 +2612,25 @@ function units(unit,cnt) {
 			return 'años';
 		}
 	}
+}
+
+function dateInSpanish(date) {
+	var day 	= date.getDate();
+	var month = date.getMonth();
+	var year	= date.getFullYear();
+	const months = [
+		'enero',
+		'febrero',
+		'marzo',
+		'abril',
+		'mayo',
+		'junio',
+		'julio',
+		'agosto',
+		'septiembre',
+		'octubre',
+		'noviembre',
+		'diciembre'
+	];
+	return day + ' de ' + months[month] + ' de ' + year;
 }
