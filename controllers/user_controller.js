@@ -1104,7 +1104,35 @@ module.exports = {
 			'status': 404,
 			'message': 'Validation complete'
 		});
-	} // validateUsers
+	}, // validateUsers
+
+	correctUsers(req,res){
+		const users = req.body.users;
+		if(users.length > 0) {
+			users.forEach(function(user) {
+				User.findOne({'fiscal.id': user.fiscal})
+					.then((userFound) => {
+						userFound.person.name = user.name;
+						userFound.save()
+							.catch((err) => {
+								Err.sendError(res,err,'correctUsers','correct -- Saving user--' + user.fiscal);
+							});
+					})
+					.catch((err) => {
+						Err.sendError(res,err,'correctUsers','correct -- Finding user--' + user.fiscal);
+					});
+			});
+			res.status(200).json({
+				'status': 200,
+				'message': 'Users changed'
+			});
+		} else {
+			res.status(200).json({
+				'status': 200,
+				'message': 'No users given'
+			});
+		}
+	} // correctUsers
 };
 
 

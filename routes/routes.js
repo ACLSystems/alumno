@@ -176,6 +176,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/admin/group/repair',				GroupController.repairGroup);
 	app.get ('/api/v1/admin/user/passwordreset',  UserController.adminPasswordReset);
 	app.put ('/api/v1/admin/user/changeuser', 		UserController.changeUser);
+	app.put ('/api/v1/admin/user/correctusers', 	UserController.correctUsers);
 
 	// Rutas para roles de 'isOrg'
 

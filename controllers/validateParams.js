@@ -324,6 +324,17 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/admin/user/correctusers':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1750: Please, give data by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/supervisor/user/getgroups':
 		if(!req.query) {
 			res.status(406).json({
