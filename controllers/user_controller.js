@@ -1112,7 +1112,10 @@ module.exports = {
 			users.forEach(function(user) {
 				User.findOne({'fiscal.id': user.fiscal})
 					.then((userFound) => {
-						userFound.person.name = user.name;
+						var oldName = userFound.person.name;
+						userFound.person.name 			= userFound.person.motherName;
+						userFound.person.motherName = userFound.person.fatherName;
+						userFound.person.fatherName = oldName;
 						userFound.save()
 							.catch((err) => {
 								Err.sendError(res,err,'correctUsers','correct -- Saving user--' + user.fiscal);
