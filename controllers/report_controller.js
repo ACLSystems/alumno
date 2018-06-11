@@ -382,8 +382,10 @@ module.exports = {
 								'course'				: group.course.title,
 								'courseDuration': group.course.duration,
 								'courseDurUnits': units(group.course.durationUnits),
-								'beginDate'			: dateInSpanish(group.beginDate),
-								'endDate'				: dateInSpanish(group.endDate),
+								'beginDate'			: group.beginDate,
+								'endDate'				: group.endDate,
+								'beginDateSpa'	: dateInSpanish(group.beginDate),
+								'endDateSpa'		: dateInSpanish(group.endDate),
 								'roster'				: items
 							});
 						})
