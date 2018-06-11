@@ -50,6 +50,9 @@ module.exports = {
 						delete commentObj.title;
 					}
 					*/
+		if(commentObj.block === ''){
+			delete commentObj.block;
+		}
 		Discussion.create(commentObj)
 			.then(() => {
 				/*
@@ -72,7 +75,7 @@ module.exports = {
 				});
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'discussion_controller','create -- Creating comment --');
+				Err.sendError(res,err,'discussion_controller','create -- Creating comment -- User: ' + key_user.name + ' text: ' + commentObj.text);
 			});
 		/*
 				})
