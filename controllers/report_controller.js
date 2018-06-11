@@ -370,11 +370,6 @@ module.exports = {
 							grades			: true,
 							_id 				: false
 						})
-						.sort({
-							fatherName	: 1,
-							motherName	: 1,
-							name				: 1
-						})
 						.then((items) => {
 							res.status(200).json({
 								'status'				: 200,
