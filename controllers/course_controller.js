@@ -623,7 +623,7 @@ module.exports = {
 		Course.findOne(query)
 			.populate({
 				path: 'blocks',
-				select: 'code type title section number order status isVisible w wq wt',
+				select: 'code type title section number order status isVisible w wq wt questionnarie task',
 				match: { section: {$gte: section1, $lte: section2}},
 				options: { sort: {order: 1} }
 			})
@@ -635,18 +635,20 @@ module.exports = {
 						const blocks = course.blocks;
 						blocks.forEach(function(block) {
 							send_blocks.push({
-								id				: block._id,
-								code			: block.code,
-								type			:	block.type,
-								title			:	block.title,
-								section		: block.section,
-								number		: block.number,
-								order			: block.order,
-								status		: block.status,
-								isVisible	: block.isVisible,
-								w					: block.w,
-								wq				: block.wq,
-								wt				: block.wt
+								id						: block._id,
+								code					: block.code,
+								type					:	block.type,
+								title					:	block.title,
+								section				: block.section,
+								number				: block.number,
+								order					: block.order,
+								status				: block.status,
+								isVisible			: block.isVisible,
+								w							: block.w,
+								wq						: block.wq,
+								wt						: block.wt,
+								task					: block.task,
+								questionnarie : block.questionnarie
 							});
 						});
 						res.status(200).json({
