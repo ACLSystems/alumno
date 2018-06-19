@@ -219,9 +219,13 @@ module.exports = {
 	createRoster(req,res){
 		const key_user 	= res.locals.user;
 		var roster = req.body;
+		var org 	 = '';
+		if(!roster.org) {
+			org = key_user.org;
+		}
 		const date = new Date();
 		const link = url;
-		Group.findOne({ code: roster.code })
+		Group.findOne({ org: org, code: roster.code })
 			.populate({
 				path: 'course',
 				select: 'blocks title',
@@ -425,9 +429,13 @@ module.exports = {
 	addStudent(req,res) {
 		const key_user 	= res.locals.user;
 		var roster = req.body;
+		var org 	 = '';
+		if (!roster.org) {
+			org = key_user.org;
+		}
 		const date = new Date();
 		const link = url;
-		Group.findOne({ code: roster.code })
+		Group.findOne({ org: org, code: roster.code })
 			.then((group) => {
 				User.findById(roster.student)
 					.then((student) => {
@@ -490,11 +498,16 @@ module.exports = {
 
 	listRoster(req,res) {
 		// ESTE API debe arreglarse para listar solo a personal autorizado
-		//const key_user 	= res.locals.user;
+		const key_user 	= res.locals.user;
 		var roster 	= req.query;
 		var query 	= {};
+		if(roster.org) {
+			query.org = roster.org;
+		} else {
+			query.org = key_user.org;
+		}
 		if(roster.code) {
-			query = { code: roster.code };
+			query.code = roster.code;
 		}
 		if(roster.id) {
 			query = { _id: roster.id };
@@ -1145,7 +1158,7 @@ module.exports = {
 		const key_user 	= res.locals.user;
 		const studentid = req.query.studentid;
 		const blockid 	= req.query.blockid;
-		Roster.findOne({group: groupid, student: studentid})
+		Roster.findOne({student: studentid,group: groupid})
 			.populate('student', 'person')
 			.populate({
 				path: 'group',
@@ -1544,6 +1557,92 @@ module.exports = {
 						send_grade.duration 			= item.group.course.duration;
 						send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
 					}
+					res.status(200).json({
+						'status': 200,
+						'message': send_grade
+					});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'You are not enrolled in this group'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','mygrades -- Finding Roster --');
+			});
+	}, // studentGrades
+
+	studentHistoric(req,res){
+		const groupid		= req.query.groupid;
+		//const key_user 	= res.locals.user;
+		const studentid = req.query.studentid;
+		Roster.findOne({student: studentid, group: groupid})
+			.populate([{
+				path: 'group',
+				select: 'course',
+				populate: {
+					path: 'course',
+					select: 'blocks',
+					populate: {
+						path: 'blocks',
+						select: 'title section number w wq wt'
+					}
+				}
+			},
+			{
+				path: 'student',
+				select: 'person'
+			}])
+			.select('sections grades')
+			.lean()
+			.then((item) => {
+				if(item) {
+					var blocks	= new Array();
+					const bs 		= item.group.course.blocks;
+					item.grades.forEach(function(grade) {
+						if(grade.wq > 0 || grade.wt > 0) {
+							var i = 0;
+							var block = {};
+							while (i < bs.length) {
+								if(grade.block + '' === bs[i]._id + '') {
+									block = {
+										blockTitle	: bs[i].title,
+										blockSection: bs[i].section,
+										blockNumber	: bs[i].number
+									};
+									if(grade.wq > 0 && grade.quests.length > 0) {
+										var attempts = new Array();
+										grade.quests.forEach(function(attempt) {
+											attempts.push(attempt.attempt);
+										});
+										block.blockAttempts = attempts;
+									}
+									if(grade.wt > 0 && grade.tasks.length > 0) {
+										var tasks = new Array();
+										grade.tasks.forEach(function(task) {
+											tasks.push({
+												taskLabel	: task.label,
+												date			: task.date
+											});
+										});
+										block.blockTasks = tasks;
+									}
+									i = bs.length;
+								} else {
+									i++;
+								}
+							}
+							block.grade = grade.finalGrade;
+							blocks.push(block);
+						}
+					});
+					var send_grade = {
+						name							: item.student.person.fullName,
+						email 						: item.student.person.email,
+						course						: item.group.course.title,
+						blocks						: blocks
+					};
 					res.status(200).json({
 						'status': 200,
 						'message': send_grade
@@ -2091,7 +2190,7 @@ module.exports = {
 			}
 		}
 		Roster.aggregate()
-			.match({orgUnit: mongoose.Types.ObjectId(ou),track:0, report: {$ne:false}})
+			.match({orgUnit: mongoose.Types.ObjectId(ou), report: {$ne:false}, track:0})
 			.project('student group -_id')
 			.lookup({from: 'users', localField: 'student', foreignField: '_id', as: 'myUser'})
 			.lookup({from: 'groups', localField: 'group', foreignField: '_id', as: 'myGroup'})
@@ -2304,8 +2403,8 @@ module.exports = {
 		if(groupid !== '' && all) {
 			query.group = groupid;
 		} else if(userid !== '' && groupid !== '') {
-			query.group = groupid;
 			query.student = userid;
+			query.group = groupid;
 		} else {
 			res.status(200).json({
 				'status': 200,

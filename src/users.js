@@ -268,11 +268,12 @@ UserSchema.methods.validatePassword = function(password, cb) {
 
 // Indices ---------------------------------------------------------------------
 
-UserSchema.index( {org: 1													},{unique: false} );
-UserSchema.index( {group: 1												},{unique: false}	);
-UserSchema.index( {orgUnit: 1											},{unique: false} );
-UserSchema.index( {org: 1, orgUnit: 1							},{unique: false} );
-UserSchema.index( {org: 1, orgUnit: 1, report: 1	},{unique: false}	);
+//UserSchema.index( {org: 1													},{unique: false} );
+//UserSchema.index( {group: 1												},{unique: false}	);
+//UserSchema.index( {org: 1, orgUnit: 1							},{unique: false} );
+UserSchema.index( { orgUnit		: 1													} );
+UserSchema.index( { org				: 1, orgUnit: 1, report: 1	}	);
+UserSchema.index( { 'fiscal.id': 1												} );
 
 
 const User = mongoose.model('users', UserSchema);

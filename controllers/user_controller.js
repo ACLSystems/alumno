@@ -1085,7 +1085,7 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'validateUsers','list -- Finding Users without OU --');
 			});
-		User.find({password: /$2a$.*/i})
+		User.find({password: /\$2a\$.*/i})
 			.select('name')
 			.then((users) => {
 				if(users && users.length > 0) {
