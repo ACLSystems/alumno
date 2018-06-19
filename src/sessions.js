@@ -5,8 +5,8 @@ mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 const SessionSchema = new Schema ({
 	user: {
-		type: String,
-		required: true
+		type: Schema.Types.ObjectId,
+		ref: 'users'
 	},
 	token: {
 		type: String,
@@ -16,11 +16,13 @@ const SessionSchema = new Schema ({
 		type: Date,
 		required: true
 	},
-	isActive: {
-		type: Boolean,
-		default: true // validar que cuando el servidor arranque ponga todas las sesiones TRUE en FALSE
+	url: {
+		type: String
 	}
 });
+
+SessionSchema.index( { user: 1, date: 1 } );
+SessionSchema.index( { date: 1 					} );
 
 const Sessions = mongoose.model('sessions', SessionSchema);
 module.exports = Sessions;

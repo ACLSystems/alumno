@@ -1,5 +1,6 @@
 const jwt = require('jwt-simple');
 const Users = require('../src/users');
+const Session = require('../src/sessions');
 const winston = require('winston');
 require('winston-daily-rotate-file');
 
@@ -112,17 +113,6 @@ module.exports = function(req, res, next) {
 					if(indexurl !== -1){
 						url = url.substring(0,indexurl);
 					}
-					/*
-					console.log(url + ' '  // eslint-disable-line
-					+ url.indexOf('admin') + ' '
-					+ url.indexOf('orgadm') + ' '
-					+ url.indexOf('orgcontent') + ' '
-					+ url.indexOf('author') + ' '
-					+ url.indexOf('instructor') + ' '
-					+ url.indexOf('supervisor') + ' '
-					+ url.indexOf('/api/v1/') + ' '
-					);
-					*/
 					if (  (url.indexOf('admin') !== -1 && dbUserObj.roles.isAdmin) ||
 									(url.indexOf('business') !== -1 && dbUserObj.roles.isBusiness) ||
 									(url.indexOf('orgadm') !== -1 && dbUserObj.roles.isOrg) ||
@@ -140,6 +130,15 @@ module.exports = function(req, res, next) {
 									url.indexOf('admin') === -1 &&
 									url.indexOf('/api/v1/') !== -1)) {
 						res.locals.user = user;
+						var session = new Session;
+						var date = new Date();
+						session.user 	= user._id;
+						session.date 	= date;
+						session.url 	= url;
+						session.save()
+							.catch((err) => {
+								sendError(res,err,'auth -- Saving session -- User: ' + user.name + ' URL: ' + url);
+							});
 						next();
 					} else {
 						res.status(403);
@@ -192,4 +191,15 @@ function base64urlDecode(str) {
 function base64urlUnescape(str) {
 	str += new Array(5 - str.length % 4).join('=');
 	return str.replace(/\-/g, '+').replace(/_/g, '/');  // eslint-disable-line
+}
+
+function sendError(res, err, section) {
+	logger.info('validate request -- Section: ' + section + '----');
+	logger.info(err);
+	res.status(500).json({
+		'status': 500,
+		'message': 'Error',
+		'Error': err.message
+	});
+	return;
 }
