@@ -77,12 +77,24 @@ DiscussionsSchema.pre('save', function(next) {
 	next();
 });
 
-DiscussionsSchema.index( { type: 1, org: 1}, 						{ unique: false } );
-DiscussionsSchema.index( { type: 1, title: 1, org: 1}, 	{ unique: false } );
-DiscussionsSchema.index( { type: 1, block:1, 	org: 1},	{ unique: false } );
-DiscussionsSchema.index( { type: 1, group:1, 	org: 1},	{ unique: false } );
-DiscussionsSchema.index( { type: 1, course:1, org: 1},	{ unique: false } );
-DiscussionsSchema.index( { type: 1, comment: 1 }, 			{ unique: false } );
+//DiscussionsSchema.index( { type: 1, org			: 1					} );
+//DiscussionsSchema.index( { type: 1, title		: 1, org: 1	} );
+//DiscussionsSchema.index( { type: 1, block		:	1, org: 1	} );
+//DiscussionsSchema.index( { type: 1, group		:	1, org: 1	} );
+//DiscussionsSchema.index( { type: 1, course	:	1, org: 1	} );
+//DiscussionsSchema.index( { type: 1, comment	: 1 				} );
+
+
+DiscussionsSchema.index( { course		:  1	} );
+DiscussionsSchema.index( { group		:  1	} );
+DiscussionsSchema.index( { block		:  1	} );
+DiscussionsSchema.index( { pubtype	:  1 	} );
+DiscussionsSchema.index( { type			:  1 	} );
+DiscussionsSchema.index( { root			:  1 	} );
+DiscussionsSchema.index( { comment	:  1 	} );
+DiscussionsSchema.index( { replyto	:  1 	} );
+DiscussionsSchema.index( { user			:  1 	} );
+DiscussionsSchema.index( { date			: -1 	} );
 
 const Discussions = mongoose.model('discussions', DiscussionsSchema);
 module.exports = Discussions;
