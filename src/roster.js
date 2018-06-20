@@ -332,13 +332,6 @@ RosterSchema.pre('save', function(next) {
 	next();
 });
 
-//RosterSchema.index( {org: 1								},{unique: false} );
-//RosterSchema.index( {orgUnit: 1						},{unique: false} );
-//RosterSchema.index( {track: 1							},{unique: false} );
-//RosterSchema.index( {pass: 1							},{unique: false} );
-//RosterSchema.index( {student: 1						},{unique: false}	);
-//RosterSchema.index( {orgUnit: 1,	report: 1	},{unique: false} );
-
 RosterSchema.index( {org			: 1	} );
 RosterSchema.index( {pass			: 1	}	);
 RosterSchema.index( {track		: 1	}	);
@@ -346,10 +339,6 @@ RosterSchema.index( {group		: 1	}	);
 RosterSchema.index( {report		: 1	}	);
 RosterSchema.index( {orgUnit	: 1	} );
 RosterSchema.index( {student	: 1,	group: 	1	},{unique: true	}	);
-
-
-
-
 
 const Rosters = mongoose.model('rosters', RosterSchema);
 module.exports = Rosters;

@@ -43,14 +43,11 @@ const OrgUnitsSchema = new Schema ({
 	perm: PermissionsSchema
 });
 
-//OrgUnitsSchema.index( { type: 		1, org: 		1					} );
-//OrgUnitsSchema.index( { parent: 	1, org: 		1					} );
-OrgUnitsSchema.index( { org: 1, parent	: 1, name	: 1	}, { unique: true } );
-OrgUnitsSchema.index( { parent	:	1	} );
-OrgUnitsSchema.index( { name		: 1 } );
-OrgUnitsSchema.index( { longName: 1 } );
-OrgUnitsSchema.index( { isActive: 1 } );
-
+OrgUnitsSchema.index( { org				: 1, parent	: 1, name	: 1	}, { unique: true } );
+OrgUnitsSchema.index( { parent		:	1	} );
+OrgUnitsSchema.index( { name			: 1 } );
+OrgUnitsSchema.index( { longName	: 1 } );
+OrgUnitsSchema.index( { isActive	: 1 } );
 
 const OrgUnits = mongoose.model('orgUnits', OrgUnitsSchema);
 module.exports = OrgUnits;

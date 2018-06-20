@@ -116,11 +116,12 @@ CoursesSchema.virtual('numBlocks').get(function() {
 	}
 });
 
+CoursesSchema.index( { org				: 1 }	);
+CoursesSchema.index( { title			: 1 } );
+CoursesSchema.index( { author			: 1 } );
+CoursesSchema.index( { keyworkds	: 1	}	);
+CoursesSchema.index( { categories	: 1	}	);
+CoursesSchema.index( { code				: 1, org: 1 }, { unique: true } );
 
-CoursesSchema.index( { code: 1, org: 1}, { unique: true } );
-CoursesSchema.index( { categories: 1, org: 1 }, { unique: false } );
-CoursesSchema.index( { keyworkds: 1, org: 1 }, { unique: false } );
-CoursesSchema.index( { title: 1, org: 1 }, { unique: false } );
-CoursesSchema.index( { author: 1, org: 1 }, { unique: false } );
 const Courses = mongoose.model('courses', CoursesSchema);
 module.exports = Courses;

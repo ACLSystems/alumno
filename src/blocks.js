@@ -108,7 +108,6 @@ BlocksSchema.index( { w					: 1					} );
 BlocksSchema.index( { wq				: 1					} );
 BlocksSchema.index( { wt				: 1					} );
 BlocksSchema.index( { type			: 1					} );
-BlocksSchema.index( { code			: 1					} );
 BlocksSchema.index( { keywords	: 1					} );
 
 const Blocks = mongoose.model('blocks', BlocksSchema);

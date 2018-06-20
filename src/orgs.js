@@ -36,6 +36,8 @@ const OrgsSchema = new Schema ({
 	perm: PermissionsSchema,
 });
 
+OrgsSchema.index({ isActive: 1});
+
 OrgsSchema.pre('save', function(next) {
 	this.name = this.name.toLowerCase();
 	next();
