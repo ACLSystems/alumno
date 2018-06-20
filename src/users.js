@@ -32,7 +32,7 @@ const FiscalSchema = new Schema ({
 	id: { // se usará como el RFC
 		type: String
 	},
-	Adress: {
+	Address: {
 		type: String
 	},
 	type: {
@@ -268,12 +268,28 @@ UserSchema.methods.validatePassword = function(password, cb) {
 
 // Indices ---------------------------------------------------------------------
 
-//UserSchema.index( {org: 1													},{unique: false} );
-//UserSchema.index( {group: 1												},{unique: false}	);
-//UserSchema.index( {org: 1, orgUnit: 1							},{unique: false} );
-UserSchema.index( { orgUnit		: 1													} );
-UserSchema.index( { org				: 1, orgUnit: 1, report: 1	}	);
-UserSchema.index( { 'fiscal.id': 1												} );
+UserSchema.index( { org									: 1	}	);
+UserSchema.index( { char1								: 1	}	);
+UserSchema.index( { char2								: 1	}	);
+UserSchema.index( { report							: 1	}	);
+UserSchema.index( { orgUnit							: 1	}	);
+UserSchema.index( { 'person.name'				: 1	}	);
+UserSchema.index( { 'person.fatherName'	: 1	}	);
+UserSchema.index( { 'person.motherName'	: 1	}	);
+UserSchema.index( { 'person.email'			: 1	}	);
+UserSchema.index( { 'person.genre'			: 1	}, { sparse: true }	);
+UserSchema.index( { 'fiscal.id'					: 1	}, { sparse: true } );
+UserSchema.index( { 'fiscal.type'				: 1	}, { sparse: true } );
+UserSchema.index( { 'student.id'				: 1	}, { sparse: true }	);
+UserSchema.index( { 'student.term'			: 1	}, { sparse: true }	);
+UserSchema.index( { 'student.type'			: 1	}, { sparse: true }	);
+UserSchema.index( { 'student.career'		: 1	}, { sparse: true }	);
+UserSchema.index( { 'student.origin'		: 1	}, { sparse: true }	);
+UserSchema.index( { 'student.isActive'	: 1	}, { sparse: true }	);
+UserSchema.index( { 'student.external'	: 1	}, { sparse: true }	);
+UserSchema.index( { 'corporate.id'			: 1	}, { sparse: true }	);
+UserSchema.index( { 'corporate.type'		: 1	}, { sparse: true }	);
+UserSchema.index( { 'corporate.isActive': 1	}, { sparse: true }	);
 
 
 const User = mongoose.model('users', UserSchema);

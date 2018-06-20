@@ -24,7 +24,9 @@ const TermSchema = new Schema ({
 	}
 });
 
-TermSchema.index( { org: 1}, { unique: false } );
-TermSchema.index( { name: 1, org: 1}, { unique: true } );
+TermSchema.index( { org				: 1,	name: 1 }, { unique: true } );
+TermSchema.index( { type			: 1 } );
+TermSchema.index( { isVisible	: 1 } );
+
 const Term = mongoose.model('terms', TermSchema);
 module.exports = Term;

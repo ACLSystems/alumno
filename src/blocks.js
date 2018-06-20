@@ -100,7 +100,16 @@ BlocksSchema.virtual('wTotal').get(function() {
 	return this.wq + this.wt;
 });
 
-BlocksSchema.index( { org: 1, code: 1}, { unique: true } );
+BlocksSchema.index( { org				: 1, code: 1}, { unique: true } );
+BlocksSchema.index( { code			: 1					} );
+BlocksSchema.index( { isVisible	: 1					} );
+BlocksSchema.index( { status		: 1					} );
+BlocksSchema.index( { w					: 1					} );
+BlocksSchema.index( { wq				: 1					} );
+BlocksSchema.index( { wt				: 1					} );
+BlocksSchema.index( { type			: 1					} );
+BlocksSchema.index( { code			: 1					} );
+BlocksSchema.index( { keywords	: 1					} );
 
 const Blocks = mongoose.model('blocks', BlocksSchema);
 module.exports = Blocks;

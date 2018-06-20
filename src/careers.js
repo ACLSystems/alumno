@@ -27,9 +27,9 @@ const CareerSchema = new Schema ({
 	}
 });
 
-CareerSchema.index( { org: 1}, { unique: false } );
-CareerSchema.index( { area: 1, org: 1}, { unique: false } );
-CareerSchema.index( { name: 1, org: 1}, { unique: true } );
-CareerSchema.index( { name: 1, area: 1, org: 1}, { unique: false } );
+CareerSchema.index( { org		: 1										} );
+CareerSchema.index( { area	: 1										} );
+CareerSchema.index( { name	: 1, org: 1						}, { unique: true } );
+
 const Career = mongoose.model('careers', CareerSchema);
 module.exports = Career;

@@ -21,8 +21,8 @@ const SessionSchema = new Schema ({
 	}
 });
 
-SessionSchema.index( { user: 1, date: 1 } );
-SessionSchema.index( { date: 1 					} );
+SessionSchema.index( { user:  1 } );
+SessionSchema.index( { date: -1 } );
 
 const Sessions = mongoose.model('sessions', SessionSchema);
 module.exports = Sessions;

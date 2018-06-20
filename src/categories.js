@@ -24,7 +24,10 @@ const CategorySchema = new Schema ({
 	}
 });
 
-CategorySchema.index( { org: 1}, { unique: false } );
-CategorySchema.index( { name: 1, org: 1}, { unique: true } );
+CategorySchema.index( { org				: 1					} );
+CategorySchema.index( { isVisible	: 1					} );
+CategorySchema.index( { type			: 1					} );
+CategorySchema.index( { name			: 1, org: 1	}, { unique: true } );
+
 const Category = mongoose.model('categories', CategorySchema);
 module.exports = Category;

@@ -131,10 +131,13 @@ GroupsSchema.virtual('numStudents').get(function() {
 });
 
 //GroupsSchema.index( { code: 1 }, { unique: false } );
-GroupsSchema.index( { org: 				1, code: 1 		}, { unique: true  } );
-GroupsSchema.index( { org: 				1, name: 1 		}, { unique: false } );
-GroupsSchema.index( { org: 				1, orgUnit: 1 }, { unique: false } );
-GroupsSchema.index( { instructor: 1 						}, { unique: false } );
+GroupsSchema.index( { org					: 1, code: 1 	}, { unique: true  } );
+GroupsSchema.index( { code				: 1 					} );
+GroupsSchema.index( { name				: 1 					} );
+GroupsSchema.index( { course			: 1 					} );
+GroupsSchema.index( { orgUnit			: 1 					} );
+GroupsSchema.index( { instructor	: 1 					} );
+GroupsSchema.index( { isActive		: 1 					} );
 
 const Groups = mongoose.model('groups', GroupsSchema);
 module.exports = Groups;
