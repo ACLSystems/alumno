@@ -336,14 +336,26 @@ RosterSchema.pre('save', function(next) {
 
 		var cert 	= new Certificate;
 		cert.roster = this._id;
-		cert.save()
-			.then((cert) => {
-				this.certificateNumber = cert.number;
-				next();
+		Certificate.findOne({roster: cert.roster})
+			.then((certFound) => {
+				if(certFound) {
+					this.certificateNumber = certFound.number;
+					next();
+				} else {
+					cert.save()
+						.then((cert) => {
+							this.certificateNumber = cert.number;
+							next();
+						})
+						.catch((err) => {
+							console.log('Cannot create certificate. Roster: ' + this._id + ' ' + err); //eslint-disable-line
+						});
+				}
 			})
 			.catch((err) => {
-				console.log('Cannot create certificate. Roster: ' + this._id + ' ' + err); //eslint-disable-line
+				console.log('Error trying to find certificate. Roster: ' + this._id + ' ' + err); //eslint-disable-line
 			});
+
 	} else {
 		next();
 	}
