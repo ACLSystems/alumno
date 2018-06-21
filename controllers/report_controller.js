@@ -304,7 +304,7 @@ module.exports = {
 							track				:	1,
 							pass				:	1,
 							passDate		:	1,
-							certificateNumber : 1,
+							certificateNumber : '' + '$certificateNumber',
 							name				:	'$myUser.person.name',
 							fatherName	:	'$myUser.person.fatherName',
 							motherName	: '$myUser.person.motherName',
@@ -371,7 +371,7 @@ module.exports = {
 							finalGrade	: '$_id.finalGrade',
 							pass				: '$_id.pass',
 							passDate		: '$_id.passDate',
-							certificateNumber	: '$_id.certificateNumber',
+							certificateNumber	: '$_id.certificateNumber'.padStart(7,'0'),
 							grades			: true,
 							_id 				: false
 						})

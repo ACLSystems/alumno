@@ -1474,14 +1474,16 @@ module.exports = {
 								send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
 							}
 							if(item.certificateNumber > 0) {
-								send_grade.certificateNumber = item.certificateNumber;
+								var certificate = '' + item.certificateNumber;
+								send_grade.certificateNumber = certificate.padStart(7, '0');
 							}
 							if(item.pass && item.certificateNumber === 0) {
 								var cert = new Certificate;
 								cert.roster = item._id;
 								cert.save()
 									.then((cert) => {
-										send_grade.certificateNumber = cert.number;
+										var certificate = '' + cert.number;
+										send_grade.certificateNumber = certificate.padStart(7, '0');
 										res.status(200).json({
 											'status': 200,
 											'message': send_grade
