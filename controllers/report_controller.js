@@ -291,7 +291,7 @@ module.exports = {
 				if(group) {
 					Roster.aggregate()
 						.match({group: mongoose.Types.ObjectId(groupid),report: {$ne:false}})
-						.project('student grades finalGrade track pass passDate -_id')
+						.project('student grades finalGrade track pass passDate -_id certificateNumber')
 						.lookup({
 							from				: 'users',
 							localField	: 'student',
@@ -304,6 +304,7 @@ module.exports = {
 							track				:	1,
 							pass				:	1,
 							passDate		:	1,
+							certificateNumber : 1,
 							name				:	'$myUser.person.name',
 							fatherName	:	'$myUser.person.fatherName',
 							motherName	: '$myUser.person.motherName',
@@ -328,6 +329,7 @@ module.exports = {
 							track				:	1,
 							pass				:	1,
 							passDate		:	1,
+							certificateNumber: 1,
 							name				:	1,
 							fatherName	:	1,
 							motherName	:	1,
@@ -348,7 +350,8 @@ module.exports = {
 								track				: '$track',
 								finalGrade	: '$finalGrade',
 								pass				: '$pass',
-								passDate		: '$passDate'
+								passDate		: '$passDate',
+								certificateNumber: '$certificateNumber'
 							},
 							grades: {
 								$push: {
@@ -368,6 +371,7 @@ module.exports = {
 							finalGrade	: '$_id.finalGrade',
 							pass				: '$_id.pass',
 							passDate		: '$_id.passDate',
+							certificateNumber	: '$_id.certificateNumber',
 							grades			: true,
 							_id 				: false
 						})

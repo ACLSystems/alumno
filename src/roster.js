@@ -1,6 +1,7 @@
 // Esquema para modelar rosters
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const mongoose			= require('mongoose');
+const Certificate		= require('./certificates');
+const Schema 				= mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -305,6 +306,10 @@ const RosterSchema = new Schema ({
 	tookCertificate: {
 		type: Boolean,
 		default: false
+	},
+	certificateNumber: {
+		type: Number,
+		default: 0
 	}
 });
 
@@ -328,8 +333,21 @@ RosterSchema.pre('save', function(next) {
 	if(this.finalGrade > this.minGrade && this.track > this.minTrack) {
 		this.pass 		= true;
 		this.passDate	= now;
+
+		var cert 	= new Certificate;
+		cert.roster = this._id;
+		cert.create()
+			.then((cert) => {
+				this.certificateNumber = cert.number;
+				next();
+			})
+			.catch((err) => {
+				console.log('Cannot create certificate. Roster: ' + this._id + ' ' + err); //eslint-disable-line
+			});
+	} else {
+		next();
 	}
-	next();
+	//next();
 });
 
 RosterSchema.index( {org			: 1	} );
@@ -342,5 +360,3 @@ RosterSchema.index( {student	: 1,	group: 	1	},{unique: true	}	);
 
 const Rosters = mongoose.model('rosters', RosterSchema);
 module.exports = Rosters;
-
-//module.exports = RosterSchema;

@@ -3,6 +3,7 @@ const User 				= require('../src/users'										);
 const Course 			= require('../src/courses'									);
 const Group 			= require('../src/groups'										);
 const Roster 			= require('../src/roster'										);
+const Certificate = require('../src/certificates							');
 const Block 			= require('../src/blocks'										);
 const Dependency 	= require('../src/dependencies'							);
 const Err 				= require('../controllers/err500_controller');
@@ -1470,6 +1471,9 @@ module.exports = {
 							if(item.group.course.duration) {
 								send_grade.duration 			= item.group.course.duration;
 								send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
+							}
+							if(item.certificateNumber > 0) {
+								send_grade.certificateNumber = item.certificateNumber;
 							}
 							res.status(200).json({
 								'status': 200,
