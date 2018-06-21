@@ -330,7 +330,7 @@ RosterSchema.pre('save', function(next) {
 	if(w > 0) { this.finalGrade = fg/w; }
 	this.track = parseInt(track / i);
 
-	if(this.finalGrade > this.minGrade && this.track > this.minTrack) {
+	if(!this.pass && (this.finalGrade > this.minGrade && this.track > this.minTrack)) {
 		this.pass 		= true;
 		this.passDate	= now;
 

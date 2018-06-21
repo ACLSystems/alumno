@@ -16,7 +16,7 @@ const CertificateSchema = new Schema ({
 
 CertificateSchema.plugin(auto,{inc_field: 'number'});
 CertificateSchema.index({number	:1	},{unique: true});
-CertificateSchema.index({roster	:1	});
+CertificateSchema.index({roster	:1	},{unique: true});
 
 const Certificate = mongoose.model('certificates', CertificateSchema);
 module.exports = Certificate;
