@@ -1,19 +1,20 @@
-const GetNothing 						= require('../controllers/get_nothing');
-const HelpController 				= require('../controllers/help_controller');
-const ErrorMessController 	= require('../controllers/errmessage_controller');
-const UserController 				= require('../controllers/user_controller');
-const auth 									= require('./auth');
-const MassUsersController 	= require('../controllers/massiveUsers_Controller');
-const OrgController 				= require('../controllers/org_controller');
-const OrgUnitController 		= require('../controllers/orgUnit_controller');
-const CourseController 			= require('../controllers/course_controller');
-const GroupController 			= require('../controllers/group_controller');
-const FileController 				= require('../controllers/file_controller');
-const CareerController 			= require('../controllers/career_controller');
-const TermController 				= require('../controllers/term_controller');
-const DiscussionController 	= require('../controllers/discussion_controller');
-const ReportController 			= require('../controllers/report_controller');
-const multer 								= require('multer');
+const GetNothing 						= require('../controllers/get_nothing'							);
+const HelpController 				= require('../controllers/help_controller'					);
+const ErrorMessController 	= require('../controllers/errmessage_controller'		);
+const UserController 				= require('../controllers/user_controller'					);
+const auth 									= require('./auth'																	);
+const MassUsersController 	= require('../controllers/massiveUsers_Controller'	);
+const OrgController 				= require('../controllers/org_controller'						);
+const OrgUnitController 		= require('../controllers/orgUnit_controller'				);
+const CourseController 			= require('../controllers/course_controller'				);
+const GroupController 			= require('../controllers/group_controller'					);
+const FileController 				= require('../controllers/file_controller'					);
+const CareerController 			= require('../controllers/career_controller'				);
+const TermController 				= require('../controllers/term_controller'					);
+const DiscussionController 	= require('../controllers/discussion_controller'		);
+const CertController 				= require('../controllers/certs_controller'					);
+const ReportController 			= require('../controllers/report_controller'				);
+const multer 								= require('multer'																	);
 var dir 										= process.env.ORDIR;
 const fileSize 							= 1048576;
 const files 								= 1;
@@ -90,6 +91,7 @@ module.exports = (app) => {
 	app.get ('/api/term/listtypes', 				TermController.listTypes);
 	app.get ('/api/course/getblocklist',		CourseController.getBlocklistStudents);
 	app.get ('/api/course/list', 						CourseController.listCoursesStudents);
+	app.get ('/api/cert/get', 							CertController.getCertificate);
 
 	// Rutas que pueden acceder solo usuarios autenticados
 
