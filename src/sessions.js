@@ -9,8 +9,7 @@ const SessionSchema = new Schema ({
 		ref: 'users'
 	},
 	token: {
-		type: String,
-		required: true
+		type: String
 	},
 	date: {
 		type: Date,
