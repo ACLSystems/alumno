@@ -334,28 +334,29 @@ RosterSchema.pre('save', function(next) {
 		this.pass 		= true;
 		this.passDate	= now;
 
-		var cert 	= new Certificate;
-		cert.roster = this._id;
-		Certificate.findOne({roster: cert.roster})
-			.then((certFound) => {
-				if(certFound) {
-					this.certificateNumber = certFound.number;
-					next();
-				} else {
-					cert.save()
-						.then((cert) => {
-							this.certificateNumber = cert.number;
-							next();
-						})
-						.catch((err) => {
-							console.log('Cannot create certificate. Roster: ' + this._id + ' ' + err); //eslint-disable-line
-						});
-				}
-			})
-			.catch((err) => {
-				console.log('Error trying to find certificate. Roster: ' + this._id + ' ' + err); //eslint-disable-line
-			});
-
+		if(!this.certificateNumber || this.certificateNumber === 0) {
+			var cert 	= new Certificate;
+			cert.roster = this._id;
+			Certificate.findOne({roster: cert.roster})
+				.then((certFound) => {
+					if(certFound) {
+						this.certificateNumber = certFound.number;
+						next();
+					} else {
+						cert.save()
+							.then((cert) => {
+								this.certificateNumber = cert.number;
+								next();
+							})
+							.catch((err) => {
+								console.log('Cannot create certificate. Roster: ' + this._id + ' ' + err); //eslint-disable-line
+							});
+					}
+				})
+				.catch((err) => {
+					console.log('Error trying to find certificate. Roster: ' + this._id + ' ' + err); //eslint-disable-line
+				});
+		}
 	} else {
 		next();
 	}
