@@ -1480,18 +1480,34 @@ module.exports = {
 							if(item.pass && item.certificateNumber === 0) {
 								var cert = new Certificate;
 								cert.roster = item._id;
-								cert.save()
-									.then((cert) => {
-										var certificate = '' + cert.number;
-										send_grade.certificateNumber = certificate.padStart(7, '0');
-										res.status(200).json({
-											'status': 200,
-											'message': send_grade
-										});
+								Certificate.findOne({roster:cert.roster})
+									.then((certFound) => {
+										if(certFound) {
+											var certificate = '' + certFound.number;
+											send_grade.certificateNumber = certificate.padStart(7, '0');
+											res.status(200).json({
+												'status': 200,
+												'message': send_grade
+											});
+										} else {
+											cert.save()
+												.then((cert) => {
+													var certificate = '' + cert.number;
+													send_grade.certificateNumber = certificate.padStart(7, '0');
+													res.status(200).json({
+														'status': 200,
+														'message': send_grade
+													});
+												})
+												.catch((err) => {
+													Err.sendError(res,err,'group_controller','mygrades -- Saving certificate -- Roster: '  + item._id);
+												});
+										}
 									})
 									.catch((err) => {
-										Err.sendError(res,err,'group_controller','mygrades -- Saving certificate -- Roster: '  + item._id);
+										Err.sendError(res,err,'group_controller','mygrades -- Finding certificate -- Roster: '  + item._id);
 									});
+
 							} else {
 								res.status(200).json({
 									'status': 200,
