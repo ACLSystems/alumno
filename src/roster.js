@@ -336,7 +336,7 @@ RosterSchema.pre('save', function(next) {
 
 		var cert 	= new Certificate;
 		cert.roster = this._id;
-		cert.create()
+		cert.save()
 			.then((cert) => {
 				this.certificateNumber = cert.number;
 				next();

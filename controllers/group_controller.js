@@ -1450,6 +1450,7 @@ module.exports = {
 									blocks.push(block);
 								}
 							});
+
 							var send_grade = {
 								name							: key_user.person.fullName,
 								course						: item.group.course.title,
@@ -1475,10 +1476,26 @@ module.exports = {
 							if(item.certificateNumber > 0) {
 								send_grade.certificateNumber = item.certificateNumber;
 							}
-							res.status(200).json({
-								'status': 200,
-								'message': send_grade
-							});
+							if(item.pass && item.certificateNumber === 0) {
+								var cert = new Certificate;
+								cert.roster = item._id;
+								cert.save()
+									.then((cert) => {
+										send_grade.certificateNumber = cert.number;
+										res.status(200).json({
+											'status': 200,
+											'message': send_grade
+										});
+									})
+									.catch((err) => {
+										Err.sendError(res,err,'group_controller','mygrades -- Saving certificate -- Roster: '  + item._id);
+									});
+							} else {
+								res.status(200).json({
+									'status': 200,
+									'message': send_grade
+								});
+							}
 						})
 						.catch((err) => {
 							Err.sendError(res,err,'group_controller','mygrades -- Reparing Roster --');
