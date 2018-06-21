@@ -6,17 +6,17 @@ mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 const CertificateSchema = new Schema ({
 	number: {
-		type: Number
+		type: Number,
+		unique: true
 	},
 	roster: {
 		type: Schema.Types.ObjectId,
-		ref: 'rosters'
+		ref: 'rosters',
+		unique: true
 	}
 });
 
 CertificateSchema.plugin(auto,{inc_field: 'number'});
-CertificateSchema.index({number	:1	},{unique: true});
-CertificateSchema.index({roster	:1	},{unique: true});
 
 const Certificate = mongoose.model('certificates', CertificateSchema);
 module.exports = Certificate;
