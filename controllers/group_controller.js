@@ -1862,7 +1862,7 @@ module.exports = {
 						//var myGrade = {};
 						var i = 0;
 						var track 	= 0;
-						var length 	= grades.length;
+						//var length 	= grades.length;
 						grades.forEach(function(grade) {
 							if(grade && grade.block && grade.block._id) {
 								const blockString = grade.block._id + '';
@@ -1904,12 +1904,13 @@ module.exports = {
 									}
 								}
 							} else {
-								grades[length].block =  lastid;
+								var lastGrade = { block : lastid };
 								if(lastid === 'empty') {
-									grades[length].track = 0;
+									lastGrade.track = 0;
 								} else {
-									grades[length].track = 100;
+									lastGrade.track = 100;
 								}
+								grades.push(lastGrade);
 							}
 							i++;
 						}); // grades.forEach
@@ -2192,7 +2193,7 @@ module.exports = {
 								}
 							}) // then((block))
 							.catch((err) => {
-								Err.sendError(res,err,'group_controller','nextBlock -- Finding Block --');
+								Err.sendError(res,err,'group_controller','nextBlock -- Finding Block -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid);
 							});
 					} else { // if(ok)
 						res.status(200).json({
@@ -2209,7 +2210,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'group_controller','nextBlock -- Finding Roster --');
+				Err.sendError(res,err,'group_controller','nextBlock -- Finding Roster -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid);
 			});
 	}, // nextBlock
 
