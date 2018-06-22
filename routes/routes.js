@@ -180,6 +180,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/admin/user/passwordreset',  UserController.adminPasswordReset);
 	app.put ('/api/v1/admin/user/changeuser', 		UserController.changeUser);
 	app.put ('/api/v1/admin/user/correctusers', 	UserController.correctUsers);
+	app.get ('/api/v1/admin/certs/rosters', 			GroupController.addCertToRoster);
 
 	// Rutas para roles de 'isOrg'
 

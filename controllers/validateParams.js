@@ -335,6 +335,11 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+
+	case '/api/v1/admin/certs/rosters':
+		next();
+		break;
+
 	case '/api/v1/supervisor/user/getgroups':
 		if(!req.query) {
 			res.status(406).json({

@@ -2694,6 +2694,37 @@ module.exports = {
 				Err.sendError(res,err,'group_controller','repairGroup -- Finding Group -- user: ' +
 					key_user.name + ' groupid: ' + groupid);
 			});
+	}, // repairGroup
+
+	addCertToRoster(req,res) {
+		Certificate.find()
+			.then((certs) => {
+				if(certs.length) {
+					certs.forEach(function(cert) {
+						Roster.findById(cert.roster)
+							.then((item) => {
+								if(item) {
+									item.certificateNumber = cert.number;
+									item.save()
+										.catch((err) => {
+											Err.sendError(res,err,'group_controller','addCertToRoster -- Saving Roster -- Roster: ' + cert.roster);
+										});
+								}
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'group_controller','addCertToRoster -- Finding Roster -- Roster: ' + cert.roster);
+							});
+					});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'No certs found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','addCertToRoster -- Finding Certs --');
+			});
 	}
 };
 
