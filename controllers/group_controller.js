@@ -2715,6 +2715,10 @@ module.exports = {
 								Err.sendError(res,err,'group_controller','addCertToRoster -- Finding Roster -- Roster: ' + cert.roster);
 							});
 					});
+					res.status(200).json({
+						'status': 200,
+						'message': 'Rosters ready'
+					});
 				} else {
 					res.status(200).json({
 						'status': 200,

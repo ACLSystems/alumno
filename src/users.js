@@ -192,6 +192,9 @@ const AdmUsrSchema = new Schema({
 	adminCreate: {
 		type: Boolean,
 		default: false
+	},
+	initialPassword: {
+		type: String
 	}
 });
 

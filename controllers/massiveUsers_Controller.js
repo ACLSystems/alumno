@@ -294,8 +294,14 @@ module.exports = {
 			.then((users) => {
 				if(users && users.length > 0) {
 					res.status(200).json({
+						'status'	: 200,
 						'usersNum': users.length,
-						'users': users
+						'users'		: users
+					});
+				} else {
+					res.status(200).json({
+						'status'	: 200,
+						'message'	: 'No users found'
 					});
 				}
 			})
