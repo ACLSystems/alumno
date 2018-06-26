@@ -18,8 +18,9 @@ const CertificateSchema = new Schema ({
 });
 
 CertificateSchema.plugin(auto,{inc_field: 'number'});
+/*
 CertificateSchema.post('save', function(next) {
-	Roster.findById(this.roster)
+	Roster.findOne({_id: this.roster})
 		.then((item) => {
 			if(item) {
 				if(!item.certificateNumber || item.certificateNumber === 0) {
@@ -42,5 +43,6 @@ CertificateSchema.post('save', function(next) {
 			console.log('certificate middleware Error: Finding roster: ' + this.roster + ' Error: ' + err); //eslint-disable-line
 		});
 });
+*/
 const Certificate = mongoose.model('certificates', CertificateSchema);
 module.exports = Certificate;
