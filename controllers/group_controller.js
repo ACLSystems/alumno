@@ -1022,7 +1022,7 @@ module.exports = {
 							});
 						})
 						.catch((err) => {
-							Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster --');
+							Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster -- Roster: ' + item._id + key_user.name);
 						});
 				} else {
 					res.status(200).json({
