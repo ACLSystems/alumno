@@ -79,7 +79,7 @@ var auth = {
 // private Methods
 
 function genToken(user) {
-	var expires = expiresIn(7);  // 7 días
+	var expires = expiresIn(1);  // 7 días
 	var token = jwt.encode({
 		user: user.name,
 		exp: expires
