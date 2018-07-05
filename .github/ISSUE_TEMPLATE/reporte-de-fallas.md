@@ -15,7 +15,6 @@ Por favor, indícanos qué pasos seguiste cuando apareció la falla, para que no
 4. Aparece el error
 
 **Comportamiento esperado**
-A clear and concise description of what you expected to happen.
 Coloca una descripción clara y concisa de lo que esperabas que pasara.
 
 **Pantalla**
