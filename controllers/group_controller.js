@@ -38,8 +38,14 @@ module.exports = {
 			.then((course) => {
 				if(course) {
 					const date = new Date();
-					group.org = key_user.org._id,
-					group.orgUnit = key_user.orgUnit._id,
+					group.org = key_user.org._id;
+					if(key_user.roles.isAdmin || key_user.roles.isBusiness) {
+						if(!group.orgUnit) {
+							group.orgUnit = key_user.orgUnit._id;
+						}
+					} else {
+						group.orgUnit = key_user.orgUnit._id;
+					}
 					group.own = {
 						user: key_user.name,
 						org: key_user.org.name,
