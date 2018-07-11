@@ -35,6 +35,13 @@ module.exports = {
 		const key_user 	= res.locals.user;
 		var group = req.body;
 		Course.findOne({ _id: group.course })
+			// Esta parte sirve para recolectar la rúbrica
+			.populate({
+				path: 'blocks',
+				match: {type: {$in: ['task','questionnarie']}},
+				select: 'w wt wq'
+			})
+			// ----
 			.then((course) => {
 				if(course) {
 					const date = new Date();
@@ -45,6 +52,9 @@ module.exports = {
 						}
 					} else {
 						group.orgUnit = key_user.orgUnit._id;
+					}
+					if(!group.type) {
+						group.type = course.type;
 					}
 					group.own = {
 						user: key_user.name,
@@ -66,6 +76,19 @@ module.exports = {
 					if(!group.instructor && course.type === 'tutor') {
 						group.instructor = key_user._id;
 					}
+					// Agregar la rúbrica recolectada desde los bloques
+					group.rubric = new Array();
+					if(course.blocks.length > 0) {
+						course.blocks.forEach(function(block) {
+							group.rubric.push({
+								block	: block._id,
+								w			: block.w,
+								wq		: block.wq,
+								wt		: block.wt
+							});
+						});
+					}
+					//	---------
 					group.roster = new Array();
 					group.students = new Array();
 					Group.create(group)
@@ -97,6 +120,86 @@ module.exports = {
 			});
 	}, // create
 
+	get(req,res) {
+		// se requiere el ID del grupo
+		//const key_user = res.locals.user;
+		Group.findById(req.query.groupid)
+			.then((group) => {
+				if(group) {
+					var varEnum	= {
+						status				: varenum('status'),
+						type					: varenum('type'),
+						presentBlockBy: varenum('presentBlockBy')
+					};
+					res.status(200).json({
+						status	: 200,
+						message	: group,
+						enum		: varEnum
+					});
+				} else {
+					res.status(200).json({
+						status	: 200,
+						message	: 'Group ' + req.query.groupid + ' not found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','get -- Finding group --');
+			});
+	}, // get
+
+	modify(req,res) {
+		// se requiere el ID del grupo
+		const key_user = res.locals.user;
+		Group.findById(req.body.groupid)
+			.then((group) => {
+				if(group) {
+					var date = new Date();
+					var mod = {
+						by: key_user.name,
+						when: date,
+						what: 'Group modification'
+					};
+					group.mod.push(mod);
+					var req_group = req.body;
+					if(req_group.code							) {group.code 							= req_group.code;							}
+					if(req_group.name							) {group.name 							= req_group.name;							}
+					if(req_group.status						) {group.status 						= req_group.status;						}
+					if(req_group.type							) {group.type 							= req_group.type;							}
+					if(req_group.course						) {group.course 						= req_group.course;						}
+					if(req_group.instructor				) {group.instructor 				= req_group.instructor;				}
+					if(req_group.orgUnit					) {group.orgUnit		 				= req_group.orgUnit;					}
+					if(req_group.org							) {group.org				 				= req_group.org;							}
+					if(req_group.beginDate				) {group.beginDate					= req_group.beginDate;				}
+					if(req_group.endDate					) {group.endDate						= req_group.endDate;					}
+					if(req_group.rubric						) {group.rubric			 				= req_group.rubric;						}
+					if(req_group.certificateActive) {group.certificateActive	= req_group.certificateActive;}
+					if(req_group.isActive					) {group.isActive						= req_group.isActive;					}
+					if(req_group.minTrack					) {group.minTrack						= req_group.minTrack;					}
+					if(req_group.minGrade					) {group.minGrade						= req_group.minGrade;					}
+					if(req_group.lapseBlocks			) {group.lapseBlocks				= req_group.lapseBlocks;			}
+					if(req_group.lapse						) {group.lapse							= req_group.lapse;						}
+					if(req_group.dates						) {group.dates							= req_group.dates;						}
+					if(req_group.presentBlockBy		) {group.presentBlockBy			= req_group.presentBlockBy;		}
+					group.save()
+						.then(() => {
+							res.status(200).json({
+								'status': 200,
+								'message': 'Group -'+ group._id +'- modified'
+							});
+						});
+				} else {
+					res.status(200).json({
+						status	: 200,
+						message	: 'Group ' + req.body.groupid + ' not found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','modify -- Finding group --');
+			});
+	}, // modify
+
 	list(req,res) {
 		const key_user 	= res.locals.user;
 		var query = {org: key_user.org._id};
@@ -117,6 +220,7 @@ module.exports = {
 						id					: group._id,
 						code				: group.code,
 						name				: group.name,
+						status			: group.status,
 						course			: group.course.title,
 						coursecode	: group.course.code,
 						numBlocks		: group.course.numBlocks,
@@ -244,6 +348,13 @@ module.exports = {
 			})
 			.then((group) => {
 				if(group) {
+					if(group.status !== 'active') {
+						res.status(200).json({
+							'status': 200,
+							'message': 'Group ' + group.name + ' (' + group.code + ') is not active'
+						});
+						return;
+					}
 					var mod = {
 						by: key_user.name,
 						when: date,
@@ -2815,4 +2926,8 @@ function dateInSpanish(date) {
 		'diciembre'
 	];
 	return day + ' de ' + months[month] + ' de ' + year;
+}
+
+function varenum(field) {
+	return Group.schema.path(field).enumValues;
 }

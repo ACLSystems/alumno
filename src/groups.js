@@ -34,7 +34,40 @@ const DatesSchema = new Schema ({
 
 module.exports = DatesSchema;
 
+
+const RubricSchema = new Schema ({
+	block: {
+		type: Schema.Types.ObjectId,
+		ref: 'blocks'
+	},
+	wq: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	wt: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	},
+	w: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		max: [100,'Maximum value is 100'],
+		default: 0
+	}
+});
+
+module.exports = RubricSchema;
+
 const GroupsSchema = new Schema ({
+	status: {
+		type: String,
+		enum: ['draft','active','closed'],
+		default: 'draft'
+	},
 	code: {
 		type: String,
 		required: true
@@ -42,6 +75,11 @@ const GroupsSchema = new Schema ({
 	name: {
 		type: String,
 		required: true
+	},
+	type: {
+		type: String,
+		enum: ['self-paced','tutor','assisted'],
+		default: 'self-paced'
 	},
 	course: {
 		type: Schema.Types.ObjectId,
@@ -111,7 +149,8 @@ const GroupsSchema = new Schema ({
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema,
-	admin: AdminSchema
+	admin: AdminSchema,
+	rubric: [RubricSchema]
 });
 
 /*
@@ -138,6 +177,7 @@ GroupsSchema.index( { course			: 1 					} );
 GroupsSchema.index( { orgUnit			: 1 					} );
 GroupsSchema.index( { instructor	: 1 					} );
 GroupsSchema.index( { isActive		: 1 					} );
+GroupsSchema.index( { status			: 1 					} );
 
 const Groups = mongoose.model('groups', GroupsSchema);
 module.exports = Groups;
