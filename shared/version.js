@@ -1,4 +1,4 @@
 module.exports = {
 	app: 'alumno',
-	version: '1.0.1.91'
+	version: '1.0.1.92'
 };
