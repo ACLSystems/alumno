@@ -79,7 +79,7 @@ module.exports = (app) => {
 	app.post('/api/test', 									GroupController.test);
 	app.post('/api/user/register', 					UserController.register);
 	app.get ('/api/user/near', 							OrgUnitController.index);
-	app.get ('/api/user/confirm', 					UserController.confirm);
+	app.put ('/api/user/confirm', 					UserController.confirm);
 	app.get ('/api/user/validateemail',			UserController.validateEmail);
 	app.put ('/api/user/passwordrecovery',	UserController.passwordRecovery);
 	app.get ('/api/help',										HelpController.help);

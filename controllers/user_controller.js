@@ -118,10 +118,10 @@ module.exports = {
 										user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
 										user.save()
 											.then((user) => {
-												var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email;
+												var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + user.person.name + '/' + user.person.fatherName + '/' + user.person.motherName;
 												var templateId = template_user;
 												if(adminCreate) {
-													link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
+													link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email + '/' + user.person.name + '/' + user.person.fatherName + '/' + user.person.motherName;
 													templateId = template_user_admin;
 												}
 												mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
@@ -224,6 +224,9 @@ module.exports = {
 	confirm(req,res) {
 		const email 		= req.query.email;
 		const token 		= req.query.token;
+		const name 			= req.query.name;
+		const fatherName = req.query.fathername;
+		const motherName = req.query.mothername;
 		var password		= 'empty';
 		if(req.query.password) {
 			password  = req.query.password;
@@ -237,6 +240,9 @@ module.exports = {
 						user.admin.adminCreate = false;
 						user.admin.passwordSaved = 'saved';
 						if(password !== 'empty'){ user.password = encryptPass(password); }
+						user.people.name = name;
+						user.people.fatherName = fatherName;
+						user.people.motherName = motherName;
 						user.save()
 							.then(() => {
 								if(password === 'empty'){

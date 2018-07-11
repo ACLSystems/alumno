@@ -174,15 +174,20 @@ module.exports = function(req, res, next) {
 		break;
 
 	case '/api/user/confirm':
-		if(!req.query) {
+		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1780: Please, give data by query to process'
 			});
-		} else if(!req.query.email || !req.query.token) {
+		} else if(!req.body.email || !req.body.token) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1781: Please, give email and token to confirm'
+			});
+		} else if(!req.body.name || !req.body.fathername || !req.body.mothername) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1781: Please, give name, fathername and  mothername to confirm'
 			});
 		} else {
 			next();
