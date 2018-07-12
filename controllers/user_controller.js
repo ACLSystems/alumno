@@ -222,13 +222,13 @@ module.exports = {
 	},
 
 	confirm(req,res) {
-		const email 		= req.query.email;
-		const token 		= req.query.token;
-		const name 			= req.query.name;
-		const fatherName = req.query.fathername;
-		const motherName = req.query.mothername;
+		const email 		= req.body.email;
+		const token 		= req.body.token;
+		const name 			= req.body.name;
+		const fatherName = req.body.fathername;
+		const motherName = req.body.mothername;
 		var password		= 'empty';
-		if(req.query.password) {
+		if(req.body.password) {
 			password  = req.query.password;
 		}
 		User.findOne({name: email})
