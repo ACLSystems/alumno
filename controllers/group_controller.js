@@ -221,6 +221,7 @@ module.exports = {
 						code				: group.code,
 						name				: group.name,
 						status			: group.status,
+						type				: group.type,
 						course			: group.course.title,
 						coursecode	: group.course.code,
 						numBlocks		: group.course.numBlocks,
@@ -431,6 +432,28 @@ module.exports = {
 											sections.push(section);
 											j++;
 										}
+										// Modificar la rúbrica que trajimos el curso y colocar la del grupo
+										if(group.rubric && group.rubric.length > 0) {
+											var rubcount = 0;
+											group.rubric.forEach(function(rub) {
+												var found = false;
+												var i 		= 0;
+												while(!found && i < group.grade.length) {
+													if(rub.block + '' === group.grade[i].block + '') {
+														found = true;
+													} else {
+														i++;
+													}
+												}
+												if(found) {
+													group.rubric[rubcount].w 	= group.grade[i].w;
+													group.rubric[rubcount].wq = group.grade[i].wq;
+													group.rubric[rubcount].wt = group.grade[i].wt;
+												}
+												rubcount++;
+											});
+										}
+										//
 										var new_roster = new Roster({
 											student		: student,
 											status		: 'pending',
