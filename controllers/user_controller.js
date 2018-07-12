@@ -240,9 +240,9 @@ module.exports = {
 						user.admin.adminCreate = false;
 						user.admin.passwordSaved = 'saved';
 						if(password !== 'empty'){ user.password = encryptPass(password); }
-						user.people.name = name;
-						user.people.fatherName = fatherName;
-						user.people.motherName = motherName;
+						user.person.name = name;
+						user.person.fatherName = fatherName;
+						user.person.motherName = motherName;
 						user.save()
 							.then(() => {
 								if(password === 'empty'){
