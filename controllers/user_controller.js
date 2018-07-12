@@ -9,6 +9,7 @@ const Err = require('../controllers/err500_controller');
 const permissions = require('../shared/permissions');
 const mailjet = require('../shared/mailjet');
 const Roster = require('../src/roster');
+const urlencode = require('urlencode');
 //require('winston-daily-rotate-file');
 
 const url 								= process.env.LIBRETA_URI;
@@ -118,10 +119,10 @@ module.exports = {
 										user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
 										user.save()
 											.then((user) => {
-												var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + user.person.name + '/' + user.person.fatherName + '/' + user.person.motherName;
+												var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
 												var templateId = template_user;
 												if(adminCreate) {
-													link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email + '/' + user.person.name + '/' + user.person.fatherName + '/' + user.person.motherName;
+													link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
 													templateId = template_user_admin;
 												}
 												mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
