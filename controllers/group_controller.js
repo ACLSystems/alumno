@@ -404,7 +404,7 @@ module.exports = {
 										var grade = new Array();
 										var sec = 0;
 										blocks.forEach(function(block) {
-											grade.push({
+											var gradePushed = {
 												block					: block._id,
 												track					: 0,
 												maxGradeQ 		: 0,
@@ -413,7 +413,14 @@ module.exports = {
 												wq						: block.wq,
 												wt						: block.wt,
 												dependencies	: block.dependencies
-											});
+											};
+											var gradeIndex = group.rubric.findIndex(rubric => rubric.block + '' === gradePushed.block + '');
+											if(gradeIndex > -1 ) {
+												gradePushed.w 	= group.rubric[gradeIndex].w;
+												gradePushed.wt 	= group.rubric[gradeIndex].wt;
+												gradePushed.wq 	= group.rubric[gradeIndex].wq;
+											}
+											grade.push(gradePushed);
 											if(block.section !== sec) {
 												sec++;
 											}
@@ -432,6 +439,7 @@ module.exports = {
 											sections.push(section);
 											j++;
 										}
+										/*
 										// Modificar la rúbrica que trajimos el curso y colocar la del grupo
 										if(group.rubric && group.rubric.length > 0) {
 											var rubcount = 0;
@@ -453,6 +461,7 @@ module.exports = {
 												rubcount++;
 											});
 										}
+										*/
 										//
 										var new_roster = new Roster({
 											student		: student,
@@ -1052,6 +1061,7 @@ module.exports = {
 					var grades = [];
 					var myGrade = {};
 					var k = 0;
+					var index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + '');
 					if(item.grades.length > 0) {
 						grades = item.grades;
 						var len = grades.length;
@@ -1120,19 +1130,30 @@ module.exports = {
 								myGrade.block = blockid;
 							}
 						}
+
 						if(myGrade.w === 0) {
-							if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
-								myGrade.w = item.group.course.blocks[0].w;
+							//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
+							//	myGrade.w = item.group.course.blocks[0].w;
+							//}
+							// implementamos la rúbrica desde el grupo
+							if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].w) {
+								myGrade.w = item.group.rubric[index].w;
 							}
 						}
 						if(myGrade.wq === 0) {
-							if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
-								myGrade.wq = item.group.course.blocks[0].wq;
+							//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
+							//	myGrade.wq = item.group.course.blocks[0].wq;
+							//}
+							if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wq) {
+								myGrade.wq = item.group.rubric[index].wq;
 							}
 						}
 						if(myGrade.wt === 0) {
-							if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
-								myGrade.wt = item.group.course.blocks[0].wt;
+							//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
+							//	myGrade.wt = item.group.course.blocks[0].wt;
+							//}
+							if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wt) {
+								myGrade.wt = item.group.rubric[index].wt;
 							}
 						}
 						item.grades[k] = myGrade;
@@ -1143,14 +1164,23 @@ module.exports = {
 							track	: 100,
 							gradedQ: true
 						};
-						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
-							myGrade.w = item.group.course.blocks[0].w;
+						//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
+						//	myGrade.w = item.group.course.blocks[0].w;
+						//}
+						if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].w) {
+							myGrade.w = item.group.rubric[index].w;
 						}
-						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
-							myGrade.wq = item.group.course.blocks[0].wq;
+						//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
+						//	myGrade.wq = item.group.course.blocks[0].wq;
+						//}
+						if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wq) {
+							myGrade.wq = item.group.rubric[index].wq;
 						}
-						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
-							myGrade.wt = item.group.course.blocks[0].wt;
+						//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
+						//	myGrade.wt = item.group.course.blocks[0].wt;
+						//}
+						if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wt) {
+							myGrade.wt = item.group.rubric[index].wt;
 						}
 						item.grades = [myGrade];
 					}
@@ -1211,6 +1241,7 @@ module.exports = {
 				var grades = [];
 				var myGrade = {};
 				var k = 0;
+				var index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + '');
 				if(item.grades.length > 0) {
 					grades = item.grades;
 					var len = grades.length;
@@ -1224,16 +1255,24 @@ module.exports = {
 						}
 					}
 					if(myGrade.tasks && ((myGrade.tasks.length > 0 && force) || (myGrade.tasks.length === 0)) ) {
-						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
-							myGrade.w = item.group.course.blocks[0].w;
+						//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
+						//	myGrade.w = item.group.course.blocks[0].w;
+						//}
+						if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].w) {
+							myGrade.w = item.group.rubric[index].w;
 						}
-						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
-							myGrade.wq = item.group.course.blocks[0].wq;
+						//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
+						//	myGrade.wq = item.group.course.blocks[0].wq;
+						//}
+						if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wq) {
+							myGrade.wq = item.group.rubric[index].wq;
 						}
-						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
-							myGrade.wt = item.group.course.blocks[0].wt;
+						//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
+						//	myGrade.wt = item.group.course.blocks[0].wt;
+						//}
+						if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wt) {
+							myGrade.wt = item.group.rubric[index].wt;
 						}
-
 						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].task && item.group.course.blocks[0].task.justDelivery) {
 							var c = 0;
 							while (c < task.length) {
@@ -1261,14 +1300,23 @@ module.exports = {
 						block	: blockid,
 						track	: 100
 					};
-					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
-						myGrade.w = item.group.course.blocks[0].w;
+					//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
+					//	myGrade.w = item.group.course.blocks[0].w;
+					//}
+					if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].w) {
+						myGrade.w = item.group.rubric[index].w;
 					}
-					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
-						myGrade.wq = item.group.course.blocks[0].wq;
+					//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
+					//	myGrade.wq = item.group.course.blocks[0].wq;
+					//}
+					if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wq) {
+						myGrade.wq = item.group.rubric[index].wq;
 					}
-					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
-						myGrade.wt = item.group.course.blocks[0].wt;
+					//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
+					//	myGrade.wt = item.group.course.blocks[0].wt;
+					//}
+					if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wt) {
+						myGrade.wt = item.group.rubric[index].wt;
 					}
 					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].task && item.group.course.blocks[0].task.justDelivery) {
 						task.justDelivery = item.group.course.blocks[0].task.justDelivery;
@@ -1534,8 +1582,9 @@ module.exports = {
 			})
 			.then((item) => {
 				if(item) {
-					var blocks	= new Array();
-					const bs 		= item.group.course.blocks;
+					var blocks		= new Array();
+					const bs 			= item.group.course.blocks;
+					const rubric 	= item.group.rubric;
 					// ------------
 
 					var grades = item.grades;
@@ -1544,10 +1593,10 @@ module.exports = {
 						var j=0;
 						var found = false;
 						while(!found && j < grades.length) {
-							if(bs[i]._id + '' === grades[j].block + '') {
-								grades[j].w 			= bs[i].w;
-								grades[j].wq 			= bs[i].wq;
-								grades[j].wt 			= bs[i].wt;
+							if(rubric[i].block + '' === grades[j].block + '') {
+								grades[j].w 			= rubric[i].w;
+								grades[j].wq 			= rubric[i].wq;
+								grades[j].wt 			= rubric[i].wt;
 								grades[j].repair	= 1;
 								found = true;
 							}
@@ -1555,10 +1604,10 @@ module.exports = {
 						}
 						if(!found) {
 							grades.push({
-								block	: bs[i]._id,
-								w 		: bs[i].w,
-								wq 		: bs[i].wq,
-								wt		: bs[i].wt,
+								block	: rubric[i].block,
+								w 		: rubric[i].w,
+								wq 		:	rubric[i].wq,
+								wt		: rubric[i].wt,
 								repair: 1
 							});
 						}
@@ -1579,7 +1628,7 @@ module.exports = {
 												blockTitle	: bs[i].title,
 												blockSection: bs[i].section,
 												blockNumber	: bs[i].number,
-												blockW			: bs[i].w
+												blockW			: grade.w
 											};
 											i = bs.length;
 										} else {
@@ -1706,8 +1755,11 @@ module.exports = {
 										blockTitle	: bs[i].title,
 										blockSection: bs[i].section,
 										blockNumber	: bs[i].number,
-										blockW			: bs[i].w
 									};
+									var index = item.group.rubric.findIndex(e => e.block + '' === grade.block + '');
+									if(index > -1 ) {
+										block.blockW = item.group.rubric[index].w;
+									}
 									i = bs.length;
 								} else {
 									i++;
