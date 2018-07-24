@@ -1378,6 +1378,38 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/instructor/group/get':
+		if(!req.query) { // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group id by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/instructor/group/modify':
+		if(!req.body) { // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else if (!req.body.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group id by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/instructor/group/list':
 		next();
 		break;

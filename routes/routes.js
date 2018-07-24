@@ -120,6 +120,8 @@ module.exports = (app) => {
 	// Rutas para roles de 'isInstructor'
 
 	app.post('/api/v1/instructor/group/create', 					GroupController.create);
+	app.get ('/api/v1/instructor/group/get',							GroupController.get);
+	app.put ('/api/v1/instructor/group/modify',						GroupController.modify);
 	app.get ('/api/v1/instructor/group/list', 						GroupController.list);
 	app.get ('/api/v1/instructor/group/mylist', 					GroupController.myList);
 	app.put ('/api/v1/instructor/group/createroster',			GroupController.createRoster);
