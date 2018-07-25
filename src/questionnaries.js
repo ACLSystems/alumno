@@ -23,7 +23,7 @@ module.exports = OptionSchema;
 const AnswerSchema = new Schema ({
 	type: {
 		type: String,
-		enum: ['index', 'text', 'tf', 'group']
+		enum: ['index', 'text', 'tf', 'group','none']
 	},
 	index: Number,
 	text: String,
@@ -63,13 +63,14 @@ const QuestionSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum: ['open', 'text', 'option', 'tf', 'map','group'],
+		enum: ['open', 'text', 'option', 'tf', 'map','group','none'],
 		// open 	>>> pregunta abierta
 		// text 	>>> pregunta con respuesta de texto
 		// option >>> pregunta con opciones (opción múltiple)
 		// tf			>>> verdadero(t), falso(f)
 		// map		>>> Grupo de preguntas que basan sus respuestas en un set de opciones
 		// group	>>> Grupo de preguntas que basan sus respuestas en un grupo de respuestas
+		// none		>>> Preguntas vacías (sin preguntas y sin respuesta). Sirven para colocar texto en medio de los cuestionarios.
 		required: true
 	},
 	options: [OptionSchema],
@@ -82,12 +83,14 @@ const QuestionSchema = new Schema ({
 		type: String,
 		enum: ['0','1'],
 		default: 1
+		// Display permite mostrar u ocultar la pregunta
 	}],
 	w: {
 		type: Number,
 		min: [0,'Minimum value is 0'],
 		max: [100,'Maximum value is 100'],
 		default: 1
+		// W es el peso que lleva esta pregunta. 
 	}
 });
 
