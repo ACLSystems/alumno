@@ -39,13 +39,9 @@ module.exports = {
 		const key_user 	= res.locals.user;
 		if(res.locals.user && res.locals.user.name) {
 			key = key_user.name;
-			//console.log('key: '+ key_user.name);
 		} else {
 			key = req.body.name;
-			//console.log('req: '+ req.body.name);
 		}
-
-
 		var userProps = req.body;
 		var adminCreate = false;
 		if(userProps.name !== key) {
@@ -230,7 +226,7 @@ module.exports = {
 		const motherName = req.body.mothername;
 		var password		= 'empty';
 		if(req.body.password) {
-			password  = req.query.password;
+			password  = req.body.password;
 		}
 		User.findOne({name: email})
 			.then((user) => {
@@ -240,7 +236,9 @@ module.exports = {
 						user.admin.validationString = '';
 						user.admin.adminCreate = false;
 						user.admin.passwordSaved = 'saved';
-						if(password !== 'empty'){ user.password = encryptPass(password); }
+						if(password !== 'empty'){
+							user.password = password;
+						}
 						user.person.name = name;
 						user.person.fatherName = fatherName;
 						user.person.motherName = motherName;
@@ -257,49 +255,6 @@ module.exports = {
 										'message': 'User -'+ user.person.email + '- verified and password changed'
 									});
 								}
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'user_controller','confirmUser -- Saving User Status --');
-							});
-					} else {
-						res.status(406).json({
-							'status': 406,
-							'message': 'Token is not valid. Please verify'
-						});
-					}
-				} else {
-					res.status(404).json({
-						'status': 404,
-						'message': 'Email -'+ email + '- not found'
-					});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'user_controller','confirmUser -- Finding Email --');
-			});
-	},
-
-	confirmHTML(req,res) {
-		const email 		= req.query.email;
-		const token 		= req.query.token;
-		var password		= 'empty';
-		if(req.query.password) {
-			password  = req.query.password;
-		}
-		User.findOne({name: email})
-			.then((user) => {
-				if(user) {
-					if(token === user.admin.validationString){
-						user.admin.isVerified = true;
-						user.admin.validationString = '';
-						user.admin.adminCreate = false;
-						user.admin.passwordSaved = 'saved';
-						if(password !== 'empty'){ user.password = encryptPass(password); }
-						user.save()
-							.then(() => {
-								res.status(200).send(
-									'<!DOCTYPE html><html><head><meta http-equiv=Refresh content="3;url=https://conalepvirtual.superatemexico.com"></head><body><p>Gracias por su registro. Espere unos instantes mientras carga la página.</p</body></html>'
-								);
 							})
 							.catch((err) => {
 								Err.sendError(res,err,'user_controller','confirmUser -- Saving User Status --');
@@ -621,7 +576,8 @@ module.exports = {
 						user.admin.recoverString = '';
 						user.admin.isVerified = true;
 						user.admin.passwordSaved = 'saved';
-						user.password = encryptPass(password);
+						//user.password = encryptPass(password);
+						user.password = password;
 						user.save()
 							.then(() => {
 								res.status(200).json({
@@ -659,7 +615,8 @@ module.exports = {
 			.then((user) => {
 				if(user) {
 					user.admin.passwordSaved = 'saved';
-					user.password = encryptPass(password);
+					//user.password = encryptPass(password);
+					user.password = password;
 					const date = new Date();
 					var mod = {
 						by: user.name,
@@ -711,7 +668,8 @@ module.exports = {
 				if(user) {
 					if(user.fiscal && user.fiscal.id) {
 						user.admin.passwordSaved = 'saved';
-						user.password = encryptPass(user.fiscal.id);
+						//user.password = encryptPass(user.fiscal.id);
+						user.password = user.admin.initialPassword;
 						const date = new Date();
 						var mod = {
 							by: key_user.name,
@@ -822,9 +780,9 @@ module.exports = {
 	modify(req, res) {
 		const key_user = res.locals.user;
 		const userProps = req.body;
-		userProps.person.name = properCase(userProps.person.name);
-		userProps.person.fatherName = properCase(userProps.person.fatherName);
-		userProps.person.motherName = properCase(userProps.person.motherName);
+		if(userProps.person.name) 			{ userProps.person.name 			= properCase(userProps.person.name); 			}
+		if(userProps.person.fatherName) { userProps.person.fatherName = properCase(userProps.person.fatherName);}
+		if(userProps.person.motherName) { userProps.person.motherName = properCase(userProps.person.motherName);}
 		//var birthDate = moment.utc(userProps.person.birthDate);
 		//userProps.person.birthDate = birthDate.toDate();
 		User.findOne({ 'name': userProps.name })
@@ -1048,7 +1006,9 @@ module.exports = {
 		User.findOne({name: username})
 			.then((user)  => {
 				if(user) {
-					user.password = encryptPass(user.password);
+					var re = /^\$2a\$10\$.*/;
+					var found = re.test(user.password);
+					if(!found) { user.password = encryptPass(user.password); }
 					user.save()
 						.then(() => {
 							res.status(200).json({

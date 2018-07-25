@@ -246,7 +246,10 @@ const UserSchema = new Schema ({
 
 //Encriptar password antes de guardarlo en la base
 UserSchema.pre('save', function(next) {
-	if(this.password && this.admin.passwordSaved !== 'saved') {
+	//if(this.password && this.admin.passwordSaved !== 'saved') {
+	var re = /^\$2a\$10\$.*/;
+	var found = re.test(this.password);
+	if(!found) {
 		var salt = bcrypt.genSaltSync(10);
 		this.password = bcrypt.hashSync(this.password, salt);
 		this.admin.passwordSaved = 'saved';
