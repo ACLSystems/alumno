@@ -1584,7 +1584,10 @@ module.exports = {
 				if(item) {
 					var blocks		= new Array();
 					const bs 			= item.group.course.blocks;
-					const rubric 	= item.group.rubric;
+					var rubric  	= new Array();
+					if(item.group.rubric) {
+						rubric 	= item.group.rubric;
+					}
 					// ------------
 
 					var grades = item.grades;
@@ -1593,23 +1596,43 @@ module.exports = {
 						var j=0;
 						var found = false;
 						while(!found && j < grades.length) {
-							if(rubric[i].block + '' === grades[j].block + '') {
-								grades[j].w 			= rubric[i].w;
-								grades[j].wq 			= rubric[i].wq;
-								grades[j].wt 			= rubric[i].wt;
-								grades[j].repair	= 1;
-								found = true;
+							if(rubric.length > 0){
+								if(rubric[i].block + '' === grades[j].block + '') {
+									grades[j].w 			= rubric[i].w;
+									grades[j].wq 			= rubric[i].wq;
+									grades[j].wt 			= rubric[i].wt;
+									grades[j].repair	= 1;
+									found = true;
+								}
+							} else {
+								if(bs[i]._id + '' === grades[j].block + '') {
+									grades[j].w 			= bs[i].w;
+									grades[j].wq 			= bs[i].wq;
+									grades[j].wt 			= bs[i].wt;
+									grades[j].repair	= 1;
+									found = true;
+								}
 							}
 							j++;
 						}
 						if(!found) {
-							grades.push({
-								block	: rubric[i].block,
-								w 		: rubric[i].w,
-								wq 		:	rubric[i].wq,
-								wt		: rubric[i].wt,
-								repair: 1
-							});
+							if(rubric.length > 0){
+								grades.push({
+									block	: rubric[i].block,
+									w 		: rubric[i].w,
+									wq 		:	rubric[i].wq,
+									wt		: rubric[i].wt,
+									repair: 1
+								});
+							} else {
+								grades.push({
+									block	: bs[i]._id,
+									w 		: bs[i].w,
+									wq 		: bs[i].wq,
+									wt		: bs[i].wt,
+									repair: 1
+								});
+							}
 						}
 						i++;
 					}
