@@ -14,6 +14,7 @@ const TermController 				= require('../controllers/term_controller'					);
 const DiscussionController 	= require('../controllers/discussion_controller'		);
 const CertController 				= require('../controllers/certs_controller'					);
 const ReportController 			= require('../controllers/report_controller'				);
+const NotificationController = require('../controllers/notification_controller'	);
 const multer 								= require('multer'																	);
 var dir 										= process.env.ORDIR;
 const fileSize 							= 1048576;
@@ -113,6 +114,9 @@ module.exports = (app) => {
 	app.get ('/api/v1/user/comment/get',				DiscussionController.get);
 	app.put ('/api/v1/user/savetask', 					GroupController.saveTask);
 	app.get ('/api/v1/user/tookcert', 					GroupController.tookCertificate);
+	app.post('/api/v1/user/message/create',			NotificationController.create);
+	app.get ('/api/v1/user/message/my',					NotificationController.myNotifications);
+	app.get ('/api/v1/user/message/new',				NotificationController.newNotifications);
 
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados

@@ -200,6 +200,15 @@ const AdmUsrSchema = new Schema({
 
 module.exports = AdmUsrSchema;
 
+const PrefsSchema = new Schema({
+	alwaysSendEmail: {
+		type: Boolean,
+		default: true
+	}
+});
+
+module.exports = PrefsSchema;
+
 // Esquema para usuario
 const UserSchema = new Schema ({
 	name: {
@@ -239,7 +248,8 @@ const UserSchema = new Schema ({
 	address: AddressSchema,
 	student: StudentSchema,
 	corporate: CorporateSchema,
-	fiscal: FiscalSchema
+	fiscal: FiscalSchema,
+	preferences: PrefsSchema,
 });
 
 // Middleware ------------------------------------------------------------------

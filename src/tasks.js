@@ -34,6 +34,10 @@ const ItemSchema = new Schema ({
 		min: [0,'Minimum value is 0'],
 		max: [100,'Maximum value is 100'],
 		default: 1
+	},
+	notifications: {
+		type: [Schema.Types.ObjectId],
+		ref: 'notifications'
 	}
 });
 
