@@ -24,7 +24,12 @@ const NotificationSchema = new Schema({
 		enum: ['user','system'],
 		default: 'user'
 	},
-	role: {
+	destinationRole: {
+		type: String,
+		enum: ['admin', 'instructor', 'supervisor', 'user'],
+		default: 'user'
+	},
+	sourceRole: {
 		type: String,
 		enum: ['admin', 'instructor', 'supervisor', 'user'],
 		default: 'user'
@@ -40,6 +45,9 @@ const NotificationSchema = new Schema({
 		type: Date,
 		default: Date.now
 	},
+	dateRead: {
+		type: Date
+	},
 	object: {
 		kind: String,
 		item: {
@@ -52,6 +60,7 @@ const NotificationSchema = new Schema({
 NotificationSchema.index( { 'destination.item'	: 1 	} );
 NotificationSchema.index( { read								: 1 	} );
 NotificationSchema.index( { date								: -1 	} );
+NotificationSchema.index( { destinationRole			: 1		} );
 NotificationSchema.index( { 'object.item'				: 1 	} );
 
 const Notifications = mongoose.model('notifications', NotificationSchema);

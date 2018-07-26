@@ -22,6 +22,7 @@ module.exports = {
 						kind: 'users',
 						item: source._id
 					};
+					message.sourceRole = 'user';
 					if(message.object) {
 						message.object = {
 							item: message.object,
