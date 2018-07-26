@@ -1422,13 +1422,19 @@ module.exports = {
 												res.status(200).json({
 													'status'		: 200,
 													'message'		: {
-														'student'		: item.student.person.fullName,
-														'course'		: item.group.course.title,
-														'courseCode': item.group.course.code,
-														'blockId'		: block._id,
-														'rosterid'	: item._id,
-														'taskGrade'	: myGrade.gradeT,
-														'tasks'			: send_tasks
+														'studentFullName'		: item.student.person.fullName,
+														'studentEmail'			: item.student.person.email,
+														'studentName'				: item.student.person.name,
+														'studentFathername'	: item.student.person.fatherName,
+														'studentMothername'	: item.student.person.motherName,
+														'course'						: item.group.course.title,
+														'courseCode'				: item.group.course.code,
+														'group'							: item.group.name,
+														'groupCode'					: item.group.code,
+														'blockId'						: block._id,
+														'rosterid'					: item._id,
+														'taskGrade'					: myGrade.gradeT,
+														'tasks'							: send_tasks
 													}
 												});
 											} else {
