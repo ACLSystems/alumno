@@ -111,19 +111,19 @@ module.exports = {
 		}
 		Notification.find(query)
 			.populate([{
-				path: 'object.item'
+				path: 'object.item',
+				select: 'text'
 			},
 			{
-				path: 'source.item'
+				path: 'source.item',
+				select: 'name person.name person.fatherName person.motherName'
 			}])
 			.skip(skip)
 			.limit(limit)
-			.lean()
 			.then((notifications) => {
 				if(notifications.length > 0) {
 					var nots = new Array();
 					notifications.forEach(function(notification) {
-
 						var not = {
 							source		: notification.source,
 							sourceType: notification.sourceType,
@@ -134,20 +134,6 @@ module.exports = {
 							date			: notification.date,
 							object		: notification.object
 						};
-						if(not.source.kind === 'users') {
-							delete not.source.item.password;
-							delete not.source.item.perm;
-							delete not.source.item.admin;
-							delete not.source.item.roles;
-							delete not.source.item.mod;
-							delete not.source.item.fiscal;
-							delete not.source.item.__v;
-							delete not.source.item.person._id;
-						}
-						if(not.object && not.object.kind === 'discussions') {
-							delete not.object.item.__v;
-							if(not.object.item.date) { not.object.item.dateAgo = TA.ago(not.object.item.date); }
-						}
 						nots.push(not);
 					});
 					res.status(200).json({
