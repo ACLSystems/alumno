@@ -207,7 +207,7 @@ const PrefsSchema = new Schema({
 	}
 });
 
-module.exports = AdmUsrSchema;
+module.exports = PrefsSchema;
 
 // Esquema para usuario
 const UserSchema = new Schema ({
