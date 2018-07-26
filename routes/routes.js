@@ -116,6 +116,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/user/tookcert', 					GroupController.tookCertificate);
 	app.post('/api/v1/user/message/create',			NotificationController.create);
 	app.get ('/api/v1/user/message/my',					NotificationController.myNotifications);
+	app.get ('/api/v1/user/message/new',				NotificationController.newNotifications);
 
 
 	// Rutas que pueden acceder solo usuarios autenticados y autorizados

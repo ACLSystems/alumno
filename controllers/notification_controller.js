@@ -71,6 +71,27 @@ module.exports = {
 			});
 	}, //create
 
+	newNotifications(req,res) {
+		const key_user 	= res.locals.user;
+		Notification.count({'destination.item': key_user._id, read: false})
+			.then((count) => {
+				if(count > 0){
+					res.status(200).json({
+						'status': 200,
+						'newNotifications': count
+					});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'No new notifications'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'notification_controller','newNotifications -- Finding new notifications for --' + key_user.name );
+			});
+	}, //newNotifications
+
 	myNotifications(req,res) {
 		const key_user 	= res.locals.user;
 		const read			= req.query.read;
