@@ -655,6 +655,36 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/user/message/create':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by body to process'
+			});
+		} else if(!req.body.destination) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give destination id by body to process'
+			});
+		} else if(!req.body.message) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give message by body to process'
+			});
+		} else if(req.body.object && !req.body.objectType) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give object and objectType by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/user/message/my':
+		next();
+		break;
+
 	case '/api/v1/admin/user/validate':
 		next();
 		break;
