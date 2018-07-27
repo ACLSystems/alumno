@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-var ObjectId = Schema.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -8,14 +7,14 @@ const NotificationSchema = new Schema({
 	destination: {
 		kind: String,
 		item: {
-			type: ObjectId,
+			type: Schema.Types.ObjectId,
 			refPath: 'destination.kind'
 		}
 	},
 	source: {
 		kind: String,
 		item: {
-			type: ObjectId,
+			type: Schema.Types.ObjectId,
 			refPath: 'source.kind'
 		}
 	},
@@ -51,7 +50,7 @@ const NotificationSchema = new Schema({
 	object: {
 		kind: String,
 		item: {
-			type: ObjectId,
+			type: Schema.Types.ObjectId,
 			refPath: 'object.kind'
 		}
 	}
