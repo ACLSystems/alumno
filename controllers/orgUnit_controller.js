@@ -1,22 +1,8 @@
 const Org = require('../src/orgs');
 const OrgUnit = require('../src/orgUnits');
 //const Users = require('../src/users');
-const winston = require('winston');
-require('winston-daily-rotate-file');
 
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: './logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
+const logger = require('../shared/winston-logger');
 
 module.exports = {
 	//register(req, res, next) {
@@ -81,9 +67,8 @@ module.exports = {
 											});
 										})
 										.catch((err) => {
-											logger.info(err);
 											const mess = {id: 409, error: 'Error: OU -' + ouProps.name + '- already exists'};
-											logger.info(mess);
+											logger.warn(mess);
 											res.status(409).json({
 												'status': 409,
 												'message': 'OU -' + ouProps.name + '- already exists'
@@ -94,7 +79,7 @@ module.exports = {
 										.then((orgunitParent) => {
 											if(!orgunitParent) {
 												const mess = {id: 404, error: 'Error: Parent OU -' + ouProps.parent + '- does not exist'};
-												logger.info(mess);
+												logger.warn(mess);
 												res.status(404).json({
 													'status': 404,
 													'message': 'Parent OU -' + ouProps.parent + '- does not exist'
@@ -426,8 +411,8 @@ module.exports = {
 };
 
 function sendError(res, err, section) {
-	logger.info('orgUnit controller -- Section: ' + section + '----');
-	logger.info(err);
+	logger.error('orgUnit controller -- Section: ' + section + '----');
+	logger.error(err);
 	res.status(500).json({
 		'status': 500,
 		'message': 'Error',

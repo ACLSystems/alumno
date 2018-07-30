@@ -9,23 +9,10 @@ const Dependency 	= require('../src/dependencies'							);
 const Err 				= require('../controllers/err500_controller');
 const mailjet 		= require('../shared/mailjet'								);
 const TA 					= require('time-ago'												);
-//const permissions = require('../shared/permissions');
-//require('winston-daily-rotate-file');
+//const winston 		= require('winston'													);
 
 /*
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: './logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
+const logger = require('../shared/winston-logger');
 */
 
 const url = process.env.LIBRETA_URI;

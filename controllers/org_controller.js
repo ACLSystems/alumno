@@ -4,21 +4,8 @@ const User = require('../src/users');
 const winston = require('winston');
 const bcrypt = require('bcrypt-nodejs');
 const newpass = require('../config/newpass');
-require('winston-daily-rotate-file');
 
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: './logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
+const logger = require('../shared/winston-logger');
 
 module.exports = {
 	//register(req, res, next) {
@@ -115,15 +102,15 @@ module.exports = {
 							}
 						});
 						userProps.save().catch((err) => {
-							logger.info('Trying to save public user');
-							logger.info(err);
+							logger.error('Trying to save public user');
+							logger.error(err);
 						});
 						// fin creación usuario "publico"
 					})
 					.catch((err) => {
-						logger.info(err);
+						logger.error(err);
 						const mess = {id: 409, error: 'Error: OU -' + ouProps.name + '- already exists'};
-						logger.info(mess);
+						logger.error(mess);
 						res.status(409).json({
 							'status': 409,
 							'message': 'OU -' + ouProps.name + '- already exists'
@@ -134,8 +121,8 @@ module.exports = {
 				res.status(201).send(mess);
 			})
 			.catch((err) => {
-				logger.info('Org Register -----');
-				logger.info(err);
+				logger.error('Org Register -----');
+				logger.error(err);
 				const mess = {id: 422, error: 'Error: Org -' + orgProps.name + '- already exists'};
 				res.status(422).send(mess);
 			});
@@ -164,8 +151,8 @@ module.exports = {
 				});
 			})
 			.catch((err) => {
-				logger.info('Org list -----');
-				logger.info(err);
+				logger.error('Org list -----');
+				logger.error(err);
 				const mess = {id: 422, error: 'Error: '+ err.message};
 				res.status(422).send(mess);
 			});
@@ -187,8 +174,8 @@ module.exports = {
 					});
 				})
 				.catch((err) => {
-					logger.info('Org list -----');
-					logger.info(err);
+					logger.error('Org list -----');
+					logger.error(err);
 					const mess = {id: 422, error: 'Error: '+ err.message};
 					res.status(422).send(mess);
 				});
@@ -216,8 +203,8 @@ module.exports = {
 					});
 				})
 				.catch((err) => {
-					logger.info('Org list -----');
-					logger.info(err);
+					logger.error('Org list -----');
+					logger.error(err);
 					const mess = {id: 422, error: 'Error: '+ err.message};
 					res.status(422).send(mess);
 				});
@@ -271,8 +258,8 @@ module.exports = {
 };
 
 function sendError(res, err, section) {
-	logger.info('orgUnit controller -- Section: ' + section + '----');
-	logger.info(err);
+	logger.error('orgUnit controller -- Section: ' + section + '----');
+	logger.error(err);
 	res.status(500).json({
 		'status': 500,
 		'message': 'Error',

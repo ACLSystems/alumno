@@ -1,5 +1,4 @@
 const File = require('../src/files');
-//const winston = require('winston');
 const fs = require('fs');
 const dropbox = require('dropbox').Dropbox;
 const Err = require('../controllers/err500_controller');
@@ -167,16 +166,3 @@ module.exports = {
 
 	}
 };
-
-/*
-function sendError(res, err, section) {
-	logger.info('Course controller -- Section: ' + section + '----');
-	logger.info(err);
-	res.status(500).json({
-		'status': 500,
-		'message': 'Error',
-		'Error': err.message
-	});
-	return;
-}
-*/

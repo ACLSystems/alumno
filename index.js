@@ -1,21 +1,7 @@
 const version = require('./shared/version');
-const winston = require('winston');
-require('winston-daily-rotate-file');
 const app = require('./app');
 
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: './logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
+const logger = require('./shared/winston-logger');
 
 app.set('port', process.env.PORT || 3050);
 

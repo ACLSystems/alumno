@@ -1,27 +1,13 @@
-const Control = require('./control');
-const Users = require('./users');
-const Orgs = require('./orgs');
-const OrgUnits = require('./orgUnits');
-const winston = require('winston');
-const bcrypt = require('bcrypt-nodejs');
-const newpass = require('../config/newpass');
+const Control 	= require('./control'					);
+const Users 		= require('./users'						);
+const Orgs 			= require('./orgs'						);
+const OrgUnits 	= require('./orgUnits'				);
+const bcrypt 		= require('bcrypt-nodejs'			);
+const newpass 	= require('../config/newpass'	);
 
 
-/* eslint-disable no-console */
+const logger = require('../shared/winston-logger');
 
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: './logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
 
 
 module.exports = {
@@ -32,7 +18,7 @@ module.exports = {
 			.then((control) => {
 				if(!control)  {  // No... no está inicializada.
 					logger.info(message);
-					console.log(message);
+					console.log(message); //eslint-disable-line
 					// Comenzamos inicializacion de la base si la base no tiene datos
 
 					// Inicializacion de la organizacion "publica"
@@ -65,9 +51,9 @@ module.exports = {
 					});
 					orgPublic.save().catch((err) => {
 						message = 'Trying to save public org';
-						logger.info(message);
+						logger.error(message);
 						console.log(message);
-						logger.info(err);
+						logger.error(err);
 						console.log(err);
 					});
 
@@ -115,9 +101,9 @@ module.exports = {
 
 					orgACL.save().catch((err) => {
 						message = 'Trying to save ACL org';
-						logger.info(message);
+						logger.error(message);
 						console.log(message);
-						logger.info(err);
+						logger.error(err);
 						console.log(err);
 					});
 
@@ -155,9 +141,9 @@ module.exports = {
 					});
 					ouPublic.save().catch((err) => {
 						message = 'Trying to save public org unit';
-						logger.info(message);
+						logger.error(message);
 						console.log(message);
-						logger.info(err);
+						logger.error(err);
 						console.log(err);
 					});
 
@@ -208,9 +194,9 @@ module.exports = {
 					});
 					ouACL.save().catch((err) => {
 						message = 'Trying to save ACL org unit';
-						logger.info(message);
+						logger.error(message);
 						console.log(message);
-						logger.info(err);
+						logger.error(err);
 						console.log(err);
 					});
 
@@ -264,9 +250,9 @@ module.exports = {
 					});
 					admin.save().catch((err) => {
 						message = 'Trying to save admin user';
-						logger.info(message);
+						logger.error(message);
 						console.log(message);
-						logger.info(err);
+						logger.error(err);
 						console.log(err);
 					});
 
@@ -283,9 +269,9 @@ module.exports = {
 					});
 					control.save().catch((err) => {
 						message = 'Trying to save control document';
-						logger.info(message);
+						logger.error(message);
 						console.log(message);
-						logger.info(err);
+						logger.error(err);
 						console.log(err);
 					});
 
@@ -298,15 +284,15 @@ module.exports = {
 					control.name = version.app;
 					control.save().catch((err) => {
 						message = 'Trying to save control document';
-						logger.info(message);
+						logger.error(message);
 						console.log(message);
-						logger.info(err);
+						logger.error(err);
 						console.log(err);
 					});
 				}
 			})
 			.catch((err) => {
-				logger.info(err);
+				logger.error(err);
 				console.log(err);
 			});
 	}

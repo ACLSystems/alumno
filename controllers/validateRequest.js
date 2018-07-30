@@ -1,22 +1,8 @@
 const jwt = require('jwt-simple');
 const Users = require('../src/users');
 const Session = require('../src/sessions');
-const winston = require('winston');
-require('winston-daily-rotate-file');
 
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: './logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
+const logger = require('../shared/winston-logger');
 
 //const validateUser = require('../routes/auth').validateUser;
 
@@ -159,8 +145,8 @@ module.exports = function(req, res, next) {
 				}
 			})
 			.catch((err) => {
-				logger.info('Validate Request ------');
-				logger.info(err);
+				logger.error('Validate Request ------');
+				logger.error(err);
 				res.status(500);
 				res.json({
 					'status': 500,
@@ -194,8 +180,8 @@ function base64urlUnescape(str) {
 }
 
 function sendError(res, err, section) {
-	logger.info('validate request -- Section: ' + section + '----');
-	logger.info(err);
+	logger.error('validate request -- Section: ' + section + '----');
+	logger.error(err);
 	res.status(500).json({
 		'status': 500,
 		'message': 'Error',

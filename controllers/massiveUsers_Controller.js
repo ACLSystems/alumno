@@ -8,21 +8,8 @@ const bcrypt = require('bcrypt-nodejs');
 const mailjet = require('../shared/mailjet');
 const generate = require('nanoid/generate');
 const Err = require('../controllers/err500_controller');
-require('winston-daily-rotate-file');
 
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: './logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
+const logger = require('../shared/winston-logger');
 
 const url 								= process.env.LIBRETA_URI;
 //const template_user				= 310518; // plantilla para el usuario que se registra por su cuenta
@@ -344,8 +331,8 @@ function encryptPass(obj) {
 }
 
 function sendError(res, err, section) {
-	logger.info('MassiveUsers Controller -- Section: ' + section + '----');
-	logger.info(err);
+	logger.error('MassiveUsers Controller -- Section: ' + section + '----');
+	logger.error(err);
 	res.status(500).json({
 		'status': 500,
 		'message': 'Error',

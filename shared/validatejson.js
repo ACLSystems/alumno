@@ -1,17 +1,4 @@
-const winston = require('winston');
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: '../logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
+const logger = require('../shared/winston-logger');
 
 module.exports = function(log) {
 
@@ -30,7 +17,7 @@ module.exports = function(log) {
 					log.error(err);
 				}
 
-				logger.info(err);
+				logger.error(err);
 				res.status(500).json({
 					'status': 500,
 					'message': 'Error',

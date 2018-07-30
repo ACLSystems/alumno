@@ -10,26 +10,13 @@ const permissions = require('../shared/permissions');
 const mailjet = require('../shared/mailjet');
 const Roster = require('../src/roster');
 const urlencode = require('urlencode');
-//require('winston-daily-rotate-file');
 
 const url 								= process.env.LIBRETA_URI;
 const template_user				= 310518; // plantilla para el usuario que se registra por su cuenta
 const template_user_admin = 339990; // plantilla para el usuario que es registrado por el administrador
 
 /*
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: './logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
+const logger = require('../shared/winston-logger');
 */
 
 module.exports = {

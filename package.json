@@ -44,8 +44,8 @@
     "randomatic": "^3.0.0",
     "time-ago": "^0.2.1",
     "urlencode": "^1.1.0",
-    "winston": "^2.4.3",
-    "winston-daily-rotate-file": "^1.7.2"
+    "winston": "^3.0.0",
+    "winston-daily-rotate-file": "^3.3.0"
   },
   "devDependencies": {
     "babel-cli": "6.26.0",

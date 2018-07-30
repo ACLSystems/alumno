@@ -4,25 +4,7 @@ const init = require('./init');
 const version = require('../shared/version');
 mongoose.Promise = global.Promise;
 
-
-// Bring winston
-const winston = require('winston');
-require('winston-daily-rotate-file');
-
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: './logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
-
+const logger = require('../shared/winston-logger');
 
 // Build the connection string
 var dbURI = 'mongodb://operator:Password01@mongo/alumno';
@@ -57,7 +39,7 @@ mongoose.connection.on('connected', function () {
 // If the connection throws an error
 mongoose.connection.on('error',function (err) {
 	message = 'DB connection error: ' + err;
-	logger.info(message);
+	logger.error(message);
 	console.log(message); // eslint-disable-line
 });
 

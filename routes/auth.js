@@ -1,22 +1,8 @@
 const jwt = require('jwt-simple');
-const winston = require('winston');
 const Users = require('../src/users');
 const Session = require('../src/sessions');
-require('winston-daily-rotate-file');
 
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: './logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
+const logger = require('../shared/winston-logger');
 
 var auth = {
 
@@ -98,8 +84,8 @@ function expiresIn(numDays) {
 }
 
 function sendError(res, err, section) {
-	logger.info('Course controller -- Section: ' + section + '----');
-	logger.info(err);
+	logger.error('Auth -- Section: ' + section + '----');
+	logger.error(err);
 	res.status(500).json({
 		'status': 500,
 		'message': 'Error',

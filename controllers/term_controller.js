@@ -1,22 +1,7 @@
-const winston = require('winston');
-const User = require('../src/users');
 const Org = require('../src/orgs');
 const Term = require('../src/terms');
-require('winston-daily-rotate-file');
 
-var transport = new(winston.transports.DailyRotateFile) ({
-	filename: './logs/log',
-	datePattern: 'yyyy-MM-dd.',
-	prepend: true,
-	localTime: true,
-	level: process.env.ENV === 'development' ? 'debug' : 'info'
-});
-
-var logger = new(winston.Logger) ({
-	transports: [
-		transport
-	]
-});
+const logger = require('../shared/winston-logger');
 
 module.exports = {
 	create(req,res){
@@ -235,8 +220,8 @@ module.exports = {
 // Private Functions -----------------------------------------------------------
 
 function sendError(res, err, section) {
-	logger.info('Course controller -- Section: ' + section + '----');
-	logger.info(err);
+	logger.error('Term controller -- Section: ' + section + '----');
+	logger.error(err);
 	res.status(500).json({
 		'status': 500,
 		'message': 'Error',
