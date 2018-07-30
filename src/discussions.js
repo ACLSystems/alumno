@@ -17,7 +17,7 @@ const DiscussionsSchema = new Schema ({
 	},
 	pubtype: {
 		type: String,
-		enum:['discussion','question'],
+		enum:['discussion','question','announcement'],
 		required: true,
 		default: 'discussion'
 	},
@@ -76,14 +76,6 @@ DiscussionsSchema.pre('save', function(next) {
 	}
 	next();
 });
-
-//DiscussionsSchema.index( { type: 1, org			: 1					} );
-//DiscussionsSchema.index( { type: 1, title		: 1, org: 1	} );
-//DiscussionsSchema.index( { type: 1, block		:	1, org: 1	} );
-//DiscussionsSchema.index( { type: 1, group		:	1, org: 1	} );
-//DiscussionsSchema.index( { type: 1, course	:	1, org: 1	} );
-//DiscussionsSchema.index( { type: 1, comment	: 1 				} );
-
 
 DiscussionsSchema.index( { course		:  1	} );
 DiscussionsSchema.index( { group		:  1	} );

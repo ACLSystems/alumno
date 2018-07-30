@@ -1,74 +1,92 @@
-const Discussion = require('../src/discussions');
-const Err = require('../controllers/err500_controller');
-const TA = require('time-ago');
+const Discussion 		= require('../src/discussions'							);
+const Notification 	= require('../src/notifications'						);
+const Follow 				= require('../src/follow'										);
+const Err 					= require('../controllers/err500_controller');
+const mailjet 			= require('../shared/mailjet'								);
+const TA 						= require('time-ago'												);
 
 module.exports = {
 	create(req,res) {
 		const key_user 	= res.locals.user;
 		var commentObj	= req.body;
-
 		commentObj.org 			= key_user.org;
 		commentObj.orgUnit 	= key_user.orgUnit;
 		commentObj.user 		=	key_user._id;
-		/*
-		const text 			= req.body.text;
-		var commentObj = {
-			text		: text,
-			org 		: key_user.org,
-			orgUnit : key_user.orgUnit,
-			user		: key_user._id
-		};
-		if(req.body.title){
-			commentObj.type			= 'root';
-			commentObj.title		= req.body.title;
-			commentObj.pubtype	= req.body.pubtype;
-		}
-		if(!req.body.title && req.body.root) {
-			commentObj.type 		= 'comment';
-			commentObj.root			= req.body.root;
-		}
-		if(req.body.replyto) {
-			commentObj.type					= 'reply';
-		}
-
-		const vars = ['comment','replyto','block','group','course'];
-		vars.forEach(function(evar) {
-			if(req.body[evar]){
-				commentObj[evar] = req.body[evar];
-			}
-		});
-
-		var status = {
-			'status': 200
-		};
-		if(commentObj.title) {
-			Discussion.findOne({type: 'root', title: commentObj.title, org: key_user.org._id})
-				.then((old_disc) => {
-					if(old_disc) {
-						commentObj.root 			= old_disc._id;
-						commentObj.type 			= 'comment';
-						delete commentObj.title;
-					}
-					*/
 		if(commentObj.block === ''){
 			delete commentObj.block;
 		}
 		Discussion.create(commentObj)
-			.then(() => {
-				/*
-				if(d.type === 'root') {
-					status.type				= d.type;
-					status.message 		= 'Root created';
-					status.root 			= d._id;
+			.then((discussion) => {
+				// Aquí insertamos la parte de notificaciones
+				// Para anuncios
+				if(discussion.pubtype === 'announcement') {
+					if(!commentObj.sourceType) {
+						commentObj.sourceType = 'user';
+					}
+					if(!commentObj.sourceRole) {
+						commentObj.sourceRole = 'instructor';
+					}
+					if(!commentObj.message) {
+						commentObj.message = 'El instructor ha hecho un nuevo anuncio';
+					}
+					var message = new Notification({
+						source: {
+							item: key_user._id,
+							kind: 'users'
+						},
+						destination: {
+							item: discussion.group,
+							kind: 'groups'
+						},
+						sourceType: commentObj.sourceType,
+						sourceRole: commentObj.sourceRole,
+						message		: commentObj.message,
+						object		: discussion._id
+					});
+					message.save()
+						.catch((err) => {
+							Err.sendError(res,err,'discussion_controller','create -- Creating notification for announcement' + key_user.name + ' text: ' + commentObj.text);
+						});
+				} else {
+					Follow.find({$or: [{'object.item': discussion.root},{'object.item': discussion.comment},{'object.item': discussion.replyto}],'who.item': key_user._id})
+						.populate('who.item')
+						.then((follows) => {
+							follows.forEach(function(f) {
+								var send_email = true;
+								if(f.who.item.preferences && f.who.item.preferences.alwaysSendEmail === false) { send_email = false; }
+								var message = {};
+								message.destination = {
+									kind: 'users',
+									item: f.who.item._id
+								};
+								message.source = {
+									kind: 'users',
+									item: key_user._id
+								};
+								message.sourceRole = 'user';
+								message.destinationRole = 'user';
+								message.sourceType = 'system';
+								message.object = {
+									item: discussion._id,
+									kind: 'discussions'
+								};
+								message.message = 'Han respondido a una discusión/pregunta que tú estás siguiendo';
+								Notification.create(message)
+									.then(() => {
+										if(send_email) {
+											mailjet.sendMail(f.who.item.person.email, f.who.item.person.name, 'Tienes una notificación',493237,'curso',message.message);
+										}
+									})
+									.catch((err) => {
+										Err.sendError(res,err,'discussion_controller','create -- sending notification for discussion ' + key_user.name + ' text: ' + commentObj.text);
+									});
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'discussion_controller','create -- Searching follow for discussion ' + key_user.name + ' text: ' + commentObj.text);
+						});
 				}
-				if(d.type === 'comment') {
-					status.type				= d.type;
-					status.message 		= 'Comment created';
-					status.root 			= d.root;
-					status.comment		= d._id;
-				}
-				res.status(200).json(status);
-				*/
+				// Hasta acá es la parte de notificaciones
 				res.status(200).json({
 					'status'	: 200,
 					'message'	: 'Register created'
@@ -77,62 +95,13 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'discussion_controller','create -- Creating comment -- User: ' + key_user.name + ' text: ' + commentObj.text);
 			});
-		/*
-				})
-				.catch((err) => {
-					Err.sendError(res,err,'discussion_controller','create -- Finding Root --');
-				});
-
-		} else {
-			Discussion.findOne({_id: commentObj.replyto})
-				.then((c) => {
-					if(c) {
-						if(c.type === 'comment' || c.type === 'reply') {
-							commentObj.type 			= 'reply';
-							commentObj.comment 		= c._id;
-							commentObj.root 			= c.root;
-						} else if(c.type === 'root') {
-							commentObj.root 			= c._id;
-							commentObj.type 			= 'comment';
-						}
-						Discussion.create(commentObj)
-							.then((d) => {
-								status.type					= d.type;
-								status.root 				= d.root;
-								status.id						= d._id;
-								if(d.type === 'comment') {
-									status.message 		= 'Comment created';
-
-								} else {
-									status.message 		= 'Reply created';
-									status.comment		= d.comment;
-								}
-								res.status(200).json(status);
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'discussion_controller','create -- Creating comment --');
-							});
-					} else {
-						res.status(404).json({
-							'status': 404,
-							'message': 'Entry replyto not found'
-						});
-					}
-				})
-				.catch((err) => {
-					Err.sendError(res,err,'discussion_controller','create -- Finding comment --');
-				});
-		}
-			*/
 	}, // crear comentario
 
 	get(req,res) {
-		//const key_user 	= res.locals.user;
 		const query			= JSON.parse(req.query.query);
 		var order 			= -1;
 		var skip 				= 0;
 		var limit 			= 15;
-		//var get 			= {title: 1};
 		var select 			= '';
 		if(req.query.select) {
 			select = req.query.select;
@@ -164,9 +133,10 @@ module.exports = {
 								disc_send[evar] = disc[evar];
 							}
 						});
-						disc_send.id 			= disc._id;
-						disc_send.when 		= TA.ago(disc.date);
-						disc_send.date 		= disc.date;
+						disc_send.discussionId 	= disc._id;
+						disc_send.when 					= TA.ago(disc.date);
+						disc_send.date 					= disc.date;
+						disc_send.userId 				= disc.user._id;
 						if(disc.user.person.alias) {
 							disc_send.user 	= disc.user.person.alias;
 						} else {

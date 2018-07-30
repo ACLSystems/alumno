@@ -689,6 +689,52 @@ module.exports = function(req, res, next) {
 		next();
 		break;
 
+	case '/api/v1/user/follow/create':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by body to process'
+			});
+		} else if(!req.body.object) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give object id by body to process'
+			});
+		} else if(!req.body.objectType) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give object type by body to process'
+			});
+		} else if(req.body.objectType !== 'discussions') {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give only accepted object type by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/user/follow/myfollows':
+		next();
+		break;
+
+	case '/api/v1/user/follow/delete':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by body to process'
+			});
+		} else if(!req.body.followid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give follow id by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/admin/user/validate':
 		next();
 		break;
