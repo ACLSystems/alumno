@@ -1,16 +1,13 @@
-// Esquema para modelar grupos
+// Definir requerimientos
 const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const OwnerSchema = require('./owner');
 const PermissionsSchema = require('./permissions');
-//const RosterSchema = require('./roster');
-//const Course = require('./courses');
-//const Block = require('./blocks');
-//const Orgs = require('./orgs');
-//const OrgUnits = require('./orgUnits');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const AdminSchema = new Schema({
 	blocksPending: {
@@ -153,13 +150,7 @@ const GroupsSchema = new Schema ({
 	rubric: [RubricSchema]
 });
 
-/*
-GroupsSchema.pre('save', function(next) {
-	this.students = this.roster;
-	next();
-});
-*/
-
+// Definir virtuals
 
 GroupsSchema.virtual('numStudents').get(function() {
 	if(this.roster) {
@@ -169,7 +160,10 @@ GroupsSchema.virtual('numStudents').get(function() {
 	}
 });
 
-//GroupsSchema.index( { code: 1 }, { unique: false } );
+// Definir middleware
+
+// Definir índices
+
 GroupsSchema.index( { org					: 1, code: 1 	}, { unique: true  } );
 GroupsSchema.index( { code				: 1 					} );
 GroupsSchema.index( { name				: 1 					} );
@@ -178,6 +172,8 @@ GroupsSchema.index( { orgUnit			: 1 					} );
 GroupsSchema.index( { instructor	: 1 					} );
 GroupsSchema.index( { isActive		: 1 					} );
 GroupsSchema.index( { status			: 1 					} );
+
+// Compilar esquema
 
 const Groups = mongoose.model('groups', GroupsSchema);
 module.exports = Groups;

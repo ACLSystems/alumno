@@ -1,7 +1,10 @@
+// Definir requerimientos
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const SessionSchema = new Schema ({
 	user: {
@@ -20,8 +23,16 @@ const SessionSchema = new Schema ({
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
 SessionSchema.index( { user:  1 } );
 SessionSchema.index( { date: -1 } );
+
+// Compilar esquema
 
 const Sessions = mongoose.model('sessions', SessionSchema);
 module.exports = Sessions;

@@ -1,29 +1,26 @@
-// Bring Mongoose into the app
-const mongoose = require( 'mongoose' );
-const init = require('./init');
-const version = require('../shared/version');
+const mongoose 	= require( 'mongoose' );
+const uriFormat = require( 'mongodb-uri' );
+const init 			= require('./init');
+const version		= require('../shared/version');
 mongoose.Promise = global.Promise;
 
 const logger = require('../shared/winston-logger');
 
-// Build the connection string
-var dbURI = 'mongodb://operator:Password01@mongo/alumno';
+var dbURI = 'mongodb://operator:Password01@mongo:27017/alumno';
 if(process.env.MONGO_URI) { dbURI = process.env.MONGO_URI; }
 
-//console.log('Using ' + dbURI); // eslint-disable-line
-
-// Build connection options
 let options = {
-	useMongoClient: true,
+	//useMongoClient: true,
 	autoReconnect: true,
 	reconnectTries: 2,
 	//reconnectTries: 3600, // Intenta conectarte cada segundo hasta en una hora
 	reconnectInterval: 1000,
-	poolSize: 10
+	poolSize: 10,
+	useNewUrlParser: true
 };
 
 // Create the database connection
-mongoose.connect(dbURI, options);
+mongoose.connect(encodeMongoURI(dbURI), options);
 
 var message = '';
 
@@ -59,3 +56,14 @@ process.on('SIGINT', function() {
 		process.exit(0);
 	});
 });
+
+
+// Private Functions
+
+function encodeMongoURI (urlString) {
+	if (urlString) {
+		let parsed = uriFormat.parse(urlString);
+		urlString = uriFormat.format(parsed);
+	}
+	return urlString;
+}

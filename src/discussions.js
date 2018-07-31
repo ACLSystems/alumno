@@ -1,5 +1,8 @@
+// Definir requerimientos
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+
+// Definir esquema y subesquemas
 
 const DiscussionsSchema = new Schema ({
 	title: {
@@ -66,7 +69,9 @@ const DiscussionsSchema = new Schema ({
 	}
 });
 
-// RosterSchema.pre('save', function(next) {
+// Definir virtuals
+
+// Definir middleware
 
 DiscussionsSchema.pre('save', function(next) {
 	if(typeof this.block !== 'undefined') {
@@ -76,6 +81,8 @@ DiscussionsSchema.pre('save', function(next) {
 	}
 	next();
 });
+
+// Definir índices
 
 DiscussionsSchema.index( { course		:  1	} );
 DiscussionsSchema.index( { group		:  1	} );
@@ -87,6 +94,8 @@ DiscussionsSchema.index( { comment	:  1 	} );
 DiscussionsSchema.index( { replyto	:  1 	} );
 DiscussionsSchema.index( { user			:  1 	} );
 DiscussionsSchema.index( { date			: -1 	} );
+
+// Compilar esquema
 
 const Discussions = mongoose.model('discussions', DiscussionsSchema);
 module.exports = Discussions;

@@ -1,4 +1,4 @@
-// Esquema para modelar cuestionarios
+// Definir requerimientos
 const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const OwnerSchema = require('./owner');
@@ -6,6 +6,8 @@ const PermissionsSchema = require('./permissions');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const OptionSchema = new Schema ({
 	name: {
@@ -18,7 +20,15 @@ const OptionSchema = new Schema ({
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
 module.exports = OptionSchema;
+
+// Definir esquema y subesquemas
 
 const AnswerSchema = new Schema ({
 	type: {
@@ -36,7 +46,15 @@ const AnswerSchema = new Schema ({
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
 module.exports = AnswerSchema;
+
+// Definir esquema y subesquemas
 
 const QuestionSchema = new Schema ({
 	header: {
@@ -90,11 +108,19 @@ const QuestionSchema = new Schema ({
 		min: [0,'Minimum value is 0'],
 		max: [100,'Maximum value is 100'],
 		default: 1
-		// W es el peso que lleva esta pregunta. 
+		// W es el peso que lleva esta pregunta.
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
 module.exports = QuestionSchema;
+
+// Definir esquema y subesquemas
 
 const QuestionnarieSchema = new Schema ({
 	org: {
@@ -142,6 +168,12 @@ const QuestionnarieSchema = new Schema ({
 	mod: [ModSchema],
 	perm: PermissionsSchema
 });
+
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
 
 const Questionnaries = mongoose.model('questionnaries', QuestionnarieSchema);
 module.exports = Questionnaries;

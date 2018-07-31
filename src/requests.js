@@ -1,9 +1,10 @@
-// Esquema para modelar solicitudes
-
+// Definir requerimientos
 const mongoose = require('mongoosee');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const ItemsSchema = new Schema ({
 	itemCode: {
@@ -46,6 +47,14 @@ const ItemsSchema = new Schema ({
 		default: false
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
+// Compilar esquema
 
 module.exports = ItemsSchema;
 
@@ -135,6 +144,14 @@ const RequestSchema = new Schema ({
 		type: String
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
+// Compilar esquema
 
 const Requests = mongoose.model('requests', RequestSchema);
 module.exports = Requests;

@@ -1,4 +1,4 @@
-// Esquema para modelar Tareas
+// Definir requerimientos
 const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const PermissionsSchema = require('./permissions');
@@ -6,6 +6,8 @@ const OwnerSchema = require('./owner');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const ItemSchema = new Schema ({
 	header: {
@@ -40,6 +42,10 @@ const ItemSchema = new Schema ({
 		ref: 'notifications'
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
 
 module.exports = ItemSchema;
 
@@ -77,6 +83,12 @@ const TaskSchema = new Schema ({
 	mod: [{ModSchema}],
 	perm: {PermissionsSchema}
 });
+
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
 
 const Tasks = mongoose.model('tasks', TaskSchema);
 module.exports = Tasks;

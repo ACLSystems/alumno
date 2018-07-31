@@ -1,11 +1,13 @@
+// Definir requerimientos
 const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const OwnerSchema = require('./owner');
 const PermissionsSchema = require('./permissions');
-//const BlocksSchema = require('./blocks');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const ResourceSchema = new Schema({
 	title: {
@@ -40,7 +42,15 @@ const ResourceSchema = new Schema({
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
 ResourceSchema.index( { title: 1, org: 1, course: 1}, { unique: true } );
+
+// Compilar esquema
 
 const Resources = mongoose.model('resources', ResourceSchema);
 module.exports = Resources;

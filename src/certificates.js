@@ -1,9 +1,12 @@
+// Definir requerimientos
 const mongoose 	= require('mongoose');
 const auto 			= require('mongoose-sequence')(mongoose);
-const Roster 		= require('./roster');
+//const Roster 		= require('./roster');
 const Schema 		= mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const CertificateSchema = new Schema ({
 	number: {
@@ -16,6 +19,10 @@ const CertificateSchema = new Schema ({
 		unique: true
 	}
 });
+
+// Definir Virtuals
+
+// Definir middleware
 
 CertificateSchema.plugin(auto,{inc_field: 'number'});
 /*
@@ -44,5 +51,12 @@ CertificateSchema.post('save', function(next) {
 		});
 });
 */
+
+// Definir índices
+
+CertificateSchema.index( { number					: 1					} );
+
+// Compilar esquema
+
 const Certificate = mongoose.model('certificates', CertificateSchema);
 module.exports = Certificate;

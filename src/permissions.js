@@ -1,6 +1,8 @@
-// Esquema para modelar Unidades Organizacionales
+// Definir requerimientos
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+
+// Definir esquema y subesquemas
 
 const PermUnitSchema = new Schema ({
 	// unidad de permiso
@@ -25,6 +27,14 @@ const PermUnitSchema = new Schema ({
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
+// Compilar esquema
+
 module.exports = PermUnitSchema;
 
 const PermissionsSchema = new Schema ({
@@ -35,5 +45,13 @@ const PermissionsSchema = new Schema ({
 	orgs: [PermUnitSchema],
 	orgUnits: [PermUnitSchema]
 });
+
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
+// Compilar esquema
 
 module.exports = PermissionsSchema;

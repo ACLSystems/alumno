@@ -1,4 +1,4 @@
-// Esquema para modelar Usuarios
+// Definir requerimientos
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt-nodejs');
 const ModSchema = require('./modified');
@@ -9,6 +9,8 @@ const moment = require('moment');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 // Esquema para el usuario que pertenece a una institución o corporación
 const CorporateSchema = new Schema ({
@@ -26,6 +28,10 @@ const CorporateSchema = new Schema ({
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
 module.exports = CorporateSchema;
 
 const FiscalSchema = new Schema ({
@@ -41,6 +47,10 @@ const FiscalSchema = new Schema ({
 		default: 'fisica'
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
 
 module.exports = FiscalSchema;
 
@@ -72,6 +82,10 @@ const StudentSchema = new Schema ({
 		type: String
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
 
 module.exports = StudentSchema;
 
@@ -110,6 +124,12 @@ const PersonSchema = new Schema ({
 
 });
 
+// Definir virtuals
+PersonSchema.virtual('fullName').get(function () {
+	return this.name + ' ' + this.fatherName + ' ' + this.motherName;
+});
+
+// Definir middleware
 PersonSchema.pre('save', function(next) {
 	this.name = properCase(this.name);
 	this.fatherName = properCase(this.fatherName);
@@ -117,10 +137,6 @@ PersonSchema.pre('save', function(next) {
 	var birthDate = moment.utc(this.birthDate);
 	this.birthDate = birthDate.toDate();
 	next();
-});
-
-PersonSchema.virtual('fullName').get(function () {
-	return this.name + ' ' + this.fatherName + ' ' + this.motherName;
 });
 
 module.exports = PersonSchema;
@@ -166,6 +182,10 @@ const RolesSchema = new Schema ({
 
 });
 
+// Definir virtuals
+
+// Definir middleware
+
 module.exports = RolesSchema;
 
 const AdmUsrSchema = new Schema({
@@ -198,6 +218,10 @@ const AdmUsrSchema = new Schema({
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
 module.exports = AdmUsrSchema;
 
 const PrefsSchema = new Schema({
@@ -206,6 +230,10 @@ const PrefsSchema = new Schema({
 		default: true
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
 
 module.exports = PrefsSchema;
 
@@ -251,8 +279,9 @@ const UserSchema = new Schema ({
 	fiscal: FiscalSchema,
 	preferences: PrefsSchema,
 });
+// Definir virtuals
 
-// Middleware ------------------------------------------------------------------
+// Definir middleware
 
 //Encriptar password antes de guardarlo en la base
 UserSchema.pre('save', function(next) {
@@ -282,7 +311,7 @@ UserSchema.methods.validatePassword = function(password, cb) {
 	});
 };
 
-// Indices ---------------------------------------------------------------------
+// Definir índices
 
 UserSchema.index( { org									: 1	}	);
 UserSchema.index( { char1								: 1	}	);
@@ -307,9 +336,12 @@ UserSchema.index( { 'corporate.id'			: 1	}, { sparse: true }	);
 UserSchema.index( { 'corporate.type'		: 1	}, { sparse: true }	);
 UserSchema.index( { 'corporate.isActive': 1	}, { sparse: true }	);
 
+// Compilar esquema
 
 const User = mongoose.model('users', UserSchema);
 module.exports = User;
+
+// Funciones privadas
 
 function properCase(obj) {
 	var name = new String(obj);

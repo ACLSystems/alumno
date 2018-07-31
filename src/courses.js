@@ -1,4 +1,4 @@
-// Esquema para modelar cursos
+// Definir requerimientos
 const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const OwnerSchema = require('./owner');
@@ -7,6 +7,8 @@ const PermissionsSchema = require('./permissions');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const CoursesSchema = new Schema ({
 	code: {
@@ -108,6 +110,8 @@ const CoursesSchema = new Schema ({
 	}
 });
 
+// Definir virtuals
+
 CoursesSchema.virtual('numBlocks').get(function() {
 	if(this.blocks){
 		return this.blocks.length;
@@ -116,12 +120,18 @@ CoursesSchema.virtual('numBlocks').get(function() {
 	}
 });
 
+// Definir middleware
+
+// Definir índices
+
 CoursesSchema.index( { org				: 1 }	);
 CoursesSchema.index( { title			: 1 } );
 CoursesSchema.index( { author			: 1 } );
 CoursesSchema.index( { keyworkds	: 1	}	);
 CoursesSchema.index( { categories	: 1	}	);
 CoursesSchema.index( { code				: 1, org: 1 }, { unique: true } );
+
+// Compilar esquema
 
 const Courses = mongoose.model('courses', CoursesSchema);
 module.exports = Courses;

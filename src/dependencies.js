@@ -1,5 +1,8 @@
+// Definir requerimientos
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+
+// Definir esquema y subesquemas
 
 const DependencySchema = new Schema ({
 	block: {
@@ -24,8 +27,16 @@ const DependencySchema = new Schema ({
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
 DependencySchema.index( { block		: 1, onBlock: 1 }, { unique: true } );
 DependencySchema.index( { onBlock	: 1							} );
+
+// Compilar esquema
 
 const Dependencies = mongoose.model('dependencies', DependencySchema);
 module.exports = Dependencies;

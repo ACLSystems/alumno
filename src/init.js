@@ -52,9 +52,9 @@ module.exports = {
 					orgPublic.save().catch((err) => {
 						message = 'Trying to save public org';
 						logger.error(message);
-						console.log(message);
+						console.log(message); //eslint-disable-line
 						logger.error(err);
-						console.log(err);
+						console.log(err); //eslint-disable-line
 					});
 
 					// Inicializacion de la organizacion "ACL Systems"
@@ -102,9 +102,9 @@ module.exports = {
 					orgACL.save().catch((err) => {
 						message = 'Trying to save ACL org';
 						logger.error(message);
-						console.log(message);
+						console.log(message); //eslint-disable-line
 						logger.error(err);
-						console.log(err);
+						console.log(err); //eslint-disable-line
 					});
 
 					// Unidad Organizacional "Pública"
@@ -142,9 +142,9 @@ module.exports = {
 					ouPublic.save().catch((err) => {
 						message = 'Trying to save public org unit';
 						logger.error(message);
-						console.log(message);
+						console.log(message); //eslint-disable-line
 						logger.error(err);
-						console.log(err);
+						console.log(err); //eslint-disable-line
 					});
 
 					// Unidad Organizacional "ACL Systems"
@@ -195,9 +195,9 @@ module.exports = {
 					ouACL.save().catch((err) => {
 						message = 'Trying to save ACL org unit';
 						logger.error(message);
-						console.log(message);
+						console.log(message); //eslint-disable-line
 						logger.error(err);
-						console.log(err);
+						console.log(err); //eslint-disable-line
 					});
 
 					// Creacion del usuario admin
@@ -251,9 +251,9 @@ module.exports = {
 					admin.save().catch((err) => {
 						message = 'Trying to save admin user';
 						logger.error(message);
-						console.log(message);
+						console.log(message); //eslint-disable-line
 						logger.error(err);
-						console.log(err);
+						console.log(err); //eslint-disable-line
 					});
 
 					// terminamos la inicializacion con el registro de control
@@ -270,30 +270,30 @@ module.exports = {
 					control.save().catch((err) => {
 						message = 'Trying to save control document';
 						logger.error(message);
-						console.log(message);
+						console.log(message); //eslint-disable-line
 						logger.error(err);
-						console.log(err);
+						console.log(err); //eslint-disable-line
 					});
 
 					// Listo, terminamos de inicializar
 					message = 'Database initialized...';
 					logger.info(message);
-					console.log(message);
+					console.log(message); //eslint-disable-line
 				} else {
 					control.version = version.version;
 					control.name = version.app;
 					control.save().catch((err) => {
 						message = 'Trying to save control document';
 						logger.error(message);
-						console.log(message);
+						console.log(message); //eslint-disable-line
 						logger.error(err);
-						console.log(err);
+						console.log(err); //eslint-disable-line
 					});
 				}
 			})
 			.catch((err) => {
 				logger.error(err);
-				console.log(err);
+				console.log(err); //eslint-disable-line
 			});
 	}
 };

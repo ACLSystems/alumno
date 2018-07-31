@@ -1,7 +1,10 @@
+// Definir requerimientos
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const NotificationSchema = new Schema({
 	destination: {
@@ -56,11 +59,19 @@ const NotificationSchema = new Schema({
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
 NotificationSchema.index( { 'destination.item'	: 1 	} );
 NotificationSchema.index( { read								: 1 	} );
 NotificationSchema.index( { date								: -1 	} );
 NotificationSchema.index( { destinationRole			: 1		} );
 NotificationSchema.index( { 'object.item'				: 1 	} );
+
+// Compilar esquema
 
 const Notifications = mongoose.model('notifications', NotificationSchema);
 module.exports = Notifications;

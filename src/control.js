@@ -1,8 +1,10 @@
-// Esquema para control de la aplicacion
+// Definir requerimientos
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const ControlSchema = new Schema({
 	name: {
@@ -15,6 +17,12 @@ const ControlSchema = new Schema({
 	},
 	schemas: [String]
 });
+
+// Definir middleware
+
+// Definir índices
+
+// Compilar esquema
 
 const Control = mongoose.model('control', ControlSchema, 'control');
 module.exports = Control;

@@ -273,6 +273,12 @@ module.exports = {
 	}, //massiveRegister
 
 	index(req, res){
+		res.status(200).json({
+			'status': 404,
+			'message': 'This API is in maintenance'
+		});
+
+		/*
 		const lng = req.query.lng;
 		const lat = req.query.lat;
 		var org = 'public';
@@ -319,6 +325,7 @@ module.exports = {
 			.catch((err) => {
 				sendError(res,err,'index -- Finding orgUnit --');
 			});
+		*/
 	}, // index
 
 	list(req,res) {

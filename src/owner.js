@@ -1,5 +1,8 @@
+// Definir requerimientos
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+
+// Definir esquema y subesquemas
 
 const OwnerSchema = new Schema ({
 	user: {
@@ -15,5 +18,13 @@ const OwnerSchema = new Schema ({
 		required: true
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
+// Compilar esquema
 
 module.exports = OwnerSchema;

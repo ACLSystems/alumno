@@ -1,7 +1,10 @@
+// Definir requerimientos
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 var date = new Date();
+
+// Definir esquema y subesquemas
 
 const ModSchema = new Schema ({
 	by: {
@@ -20,5 +23,13 @@ const ModSchema = new Schema ({
 		default: 'Modified'
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
+// Compilar esquema
 
 module.exports = ModSchema;

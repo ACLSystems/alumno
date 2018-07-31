@@ -1,4 +1,4 @@
-// Esquema para modelar Unidades Organizacionales
+// Definir requerimientos
 const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const PointSchema = require('./point');
@@ -7,6 +7,8 @@ const PermissionsSchema = require('./permissions');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const OrgUnitsSchema = new Schema ({
 	name: {
@@ -43,16 +45,24 @@ const OrgUnitsSchema = new Schema ({
 	perm: PermissionsSchema
 });
 
+// Definir virtuals
+
+// Definir middleware
+
+OrgUnitsSchema.pre('save', function(next) {
+	this.name = this.name.toLowerCase();
+	next();
+});
+
+// Definir índices
+
 OrgUnitsSchema.index( { org				: 1, parent	: 1, name	: 1	}, { unique: true } );
 OrgUnitsSchema.index( { parent		:	1	} );
 OrgUnitsSchema.index( { name			: 1 } );
 OrgUnitsSchema.index( { longName	: 1 } );
 OrgUnitsSchema.index( { isActive	: 1 } );
 
+// Compilar esquema
+
 const OrgUnits = mongoose.model('orgUnits', OrgUnitsSchema);
 module.exports = OrgUnits;
-
-OrgUnitsSchema.pre('save', function(next) {
-	this.name = this.name.toLowerCase();
-	next();
-});

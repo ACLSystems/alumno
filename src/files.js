@@ -1,7 +1,10 @@
+// Definir requerimientos
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const FileSchema = new Schema ({
 	name: {
@@ -27,7 +30,15 @@ const FileSchema = new Schema ({
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
 FileSchema.index( { name: 1 } );
+
+// Compilar esquema
 
 const File = mongoose.model('files', FileSchema);
 module.exports = File;

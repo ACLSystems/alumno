@@ -1,9 +1,11 @@
-// Esquema para modelar rosters
+// Definir requerimientos
 const mongoose			= require('mongoose');
 const Certificate		= require('./certificates');
 const Schema 				= mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const AdminSchema = new Schema ({
 	what: {
@@ -17,6 +19,10 @@ const AdminSchema = new Schema ({
 		default: Date.now
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
 
 module.exports = AdminSchema;
 
@@ -35,6 +41,10 @@ const depSchema = new Schema ({
 		type: Boolean
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
 
 module.exports = depSchema;
 
@@ -69,6 +79,11 @@ const TasksSchema = new Schema ({
 		default: false
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
+
 TasksSchema.pre('save', function(next) {
 	if(this.justDelivery && this.content) {
 		this.grade 	= 100;
@@ -92,6 +107,10 @@ const QuestsSchema = new Schema ({
 		default: Date.now
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
 
 module.exports = QuestsSchema;
 
@@ -214,6 +233,10 @@ GradesSchema.virtual('numAttempts').get(function() {
 	return this.quests.length;
 });
 
+// Definir virtuals
+
+// Definir middleware
+
 module.exports = GradesSchema;
 
 const SectionSchema = new Schema ({
@@ -227,6 +250,10 @@ const SectionSchema = new Schema ({
 		type: Date
 	}
 });
+
+// Definir virtuals
+
+// Definir middleware
 
 module.exports = SectionSchema;
 
@@ -313,6 +340,10 @@ const RosterSchema = new Schema ({
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
 RosterSchema.pre('save', function(next) {
 	const now = new Date;
 	var grades = this.grades;
@@ -360,8 +391,9 @@ RosterSchema.pre('save', function(next) {
 	} else {
 		next();
 	}
-	//next();
 });
+
+// Definir índices
 
 RosterSchema.index( {org								: 1	} );
 RosterSchema.index( {pass								: 1	}	);
@@ -371,6 +403,8 @@ RosterSchema.index( {report							: 1	}	);
 RosterSchema.index( {orgUnit						: 1	} );
 RosterSchema.index( {certificateNumber	: 1	}, { sparse: true } );
 RosterSchema.index( {student						: 1,	group: 	1	},{unique: true	}	);
+
+// Compilar esquema
 
 const Rosters = mongoose.model('rosters', RosterSchema);
 module.exports = Rosters;

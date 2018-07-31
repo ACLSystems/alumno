@@ -1,4 +1,4 @@
-// Esquema para modelar bloques
+// Definir requerimientos
 const mongoose = require('mongoose');
 const ModSchema = require('./modified');
 const OwnerSchema = require('./owner');
@@ -6,6 +6,8 @@ const PermissionsSchema = require('./permissions');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const BlocksSchema = new Schema ({
 	org: {
@@ -96,9 +98,15 @@ const BlocksSchema = new Schema ({
 	perm: PermissionsSchema
 });
 
+// Definir virtuals
+
+// Definir middleware
+
 BlocksSchema.virtual('wTotal').get(function() {
 	return this.wq + this.wt;
 });
+
+// Definir índices
 
 BlocksSchema.index( { org				: 1, code: 1}, { unique: true } );
 BlocksSchema.index( { w					: 1					} );
@@ -110,6 +118,8 @@ BlocksSchema.index( { title			: 1					} );
 BlocksSchema.index( { status		: 1					} );
 BlocksSchema.index( { keywords	: 1					} );
 BlocksSchema.index( { isVisible	: 1					} );
+
+// Compilar esquema
 
 const Blocks = mongoose.model('blocks', BlocksSchema);
 module.exports = Blocks;

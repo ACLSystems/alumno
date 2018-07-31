@@ -1,7 +1,10 @@
+// Definir requerimientos
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
+
+// Definir esquema y subesquemas
 
 const TermSchema = new Schema ({
 	name: {
@@ -24,9 +27,17 @@ const TermSchema = new Schema ({
 	}
 });
 
+// Definir virtuals
+
+// Definir middleware
+
+// Definir índices
+
 TermSchema.index( { org				: 1,	name: 1 }, { unique: true } );
 TermSchema.index( { type			: 1 } );
 TermSchema.index( { isVisible	: 1 } );
+
+// Compilar esquema
 
 const Term = mongoose.model('terms', TermSchema);
 module.exports = Term;
