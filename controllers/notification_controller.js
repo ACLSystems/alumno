@@ -165,8 +165,64 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'notification_controller','myNotifications -- Finding Notifications --');
 			});
-	} //myNotifications
+	}, //myNotifications
 
+	closeNotification(req,res) {
+		//const key_user 	= res.locals.user;
+		Notification.findById(req.query.notificationid)
+			.then((notification) => {
+				if(notification) {
+					notification.read = true;
+					notification.dateRead = new Date();
+					notification.save()
+						.then(() => {
+							res.status(200).json({
+								'status': 200,
+								'message': 'Notification saved'
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'notification_controller','closeNotification -- Save Notification --');
+						});
+				} else {
+					res.status(200).json({
+						'status': 404,
+						'message': 'No notification found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'notification_controller','closeNotification -- Finding Notification --');
+			});
+	}, //closeNotification
+
+	reOpenNotification(req,res) {
+		Notification.findById(req.query.notificationid)
+			.then((notification) => {
+				if(notification) {
+					notification.read = false;
+					notification.dateRead = new Date();
+					notification.save()
+						.then(() => {
+							res.status(200).json({
+								'status': 200,
+								'message': 'Notification saved'
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'notification_controller','closeNotification -- Save Notification --');
+						});
+				} else {
+					res.status(200).json({
+						'status': 404,
+						'message': 'No notification found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'notification_controller','closeNotification -- Finding Notification --');
+			});
+	} //reOpenNotification
 };
 
 

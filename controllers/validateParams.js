@@ -689,6 +689,38 @@ module.exports = function(req, res, next) {
 		next();
 		break;
 
+	case '/api/v1/user/message/close':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by query to process'
+			});
+		} else if(!req.query.notificationid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give notification ID by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/user/message/reopen':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by query to process'
+			});
+		} else if(!req.query.notificationid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give notification ID by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/follow/create':
 		if(!req.body) {
 			res.status(406).json({
