@@ -118,6 +118,8 @@ module.exports = (app) => {
 	app.post('/api/v1/user/message/create',			NotificationController.create);
 	app.get ('/api/v1/user/message/my',					NotificationController.myNotifications);
 	app.get ('/api/v1/user/message/new',				NotificationController.newNotifications);
+	app.put ('/api/v1/user/message/close', 			NotificationController.closeNotification);
+	app.put ('/api/v1/user/message/reopen', 		NotificationController.reOpenNotification);
 	app.post('/api/v1/user/follow/create', 			FollowController.create);
 	app.get ('/api/v1/user/follow/myfollows',		FollowController.myFollows);
 	app.put ('/api/v1/user/follow/delete', 			FollowController.delete);
