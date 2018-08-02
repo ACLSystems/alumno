@@ -1,6 +1,7 @@
-const jwt = require('jwt-simple');
-const Users = require('../src/users');
-const Session = require('../src/sessions');
+const jwt 		= require('jwt-simple'											);
+const Users 	= require('../src/users'										);
+const Session = require('../src/sessions'									);
+const Err 		= require('../controllers/err500_controller');
 
 const logger = require('../shared/winston-logger');
 
@@ -123,7 +124,7 @@ module.exports = function(req, res, next) {
 						session.url 	= url;
 						session.save()
 							.catch((err) => {
-								sendError(res,err,'auth -- Saving session -- User: ' + user.name + ' URL: ' + url);
+								Err.sendError(res,err,'auth -- Saving session -- User: ' + user.name + ' URL: ' + url);
 							});
 						next();
 					} else {
@@ -145,6 +146,7 @@ module.exports = function(req, res, next) {
 				}
 			})
 			.catch((err) => {
+				/*
 				logger.error('Validate Request ------');
 				logger.error(err);
 				res.status(500);
@@ -153,6 +155,8 @@ module.exports = function(req, res, next) {
 					'message': 'Error 40: System Error',
 					'error': err
 				});
+				*/
+				Err.sendError(res,err,'Validate Request','Validate Request -- Finding User: ' + decoded.user);
 			});
 	}
 	/*
@@ -178,7 +182,7 @@ function base64urlUnescape(str) {
 	str += new Array(5 - str.length % 4).join('=');
 	return str.replace(/\-/g, '+').replace(/_/g, '/');  // eslint-disable-line
 }
-
+/*
 function sendError(res, err, section) {
 	logger.error('validate request -- Section: ' + section + '----');
 	logger.error(err);
@@ -189,3 +193,4 @@ function sendError(res, err, section) {
 	});
 	return;
 }
+*/
