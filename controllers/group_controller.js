@@ -692,15 +692,18 @@ module.exports = {
 							s.pass = false;
 						}
 						var send_student = {
-							id					: s.student._id,
-							username		: s.student.name,
-							status			: s.status,
-							name				: s.student.person.fullName,
-							finalGrade	: s.finalGrade,
-							track				: s.track,
-							pass				: s.pass,
-							passDate		: s.passDate,
-							newTask			: s.newTask
+							id							: s.student._id,
+							userName				: s.student.person.name,
+							userFatherName	: s.student.person.fatherName,
+							userMotherName	: s.student.person.motherName,
+							useremail				: s.student.name,
+							status					: s.status,
+							name						: s.student.person.fullName,
+							finalGrade			: s.finalGrade,
+							track						: s.track,
+							pass						: s.pass,
+							passDate				: s.passDate,
+							newTask					: s.newTask
 						};
 
 						var send_grades = new Array();
