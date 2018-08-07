@@ -126,6 +126,7 @@ module.exports = {
 					notifications.forEach(function(notification) {
 
 						var not = {
+							notificationid			: notification._id,
 							source		: notification.source,
 							sourceType: notification.sourceType,
 							role			: notification.role,
