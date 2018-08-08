@@ -95,7 +95,6 @@ module.exports = {
 
 	myNotifications(req,res) {
 		const key_user 	= res.locals.user;
-		const read			= req.query.read;
 		var skip			=	0;
 		var limit			= 0;
 		if(req.query.skip) {
@@ -107,8 +106,8 @@ module.exports = {
 		var query 			= {
 			'destination.item': key_user._id
 		};
-		if(!read) {
-			query.read = false;
+		if('read' in req.query) {
+			query.read = req.query.read;
 		}
 		Notification.find(query)
 			.populate([{
