@@ -98,6 +98,7 @@ module.exports = {
 	}, // crear comentario
 
 	get(req,res) {
+		const key_user 	= res.locals.user;
 		const query			= JSON.parse(req.query.query);
 		var order 			= -1;
 		var skip 				= 0;
@@ -116,13 +117,12 @@ module.exports = {
 			limit = parseInt(req.query.limit);
 		}
 		var qOrder 	= {date: order};
-		Discussion.find(query)
-			.select(select)
-			.populate('user', 'person')
-			.sort(qOrder)
-			.skip(skip)
-			.limit(limit)
-			.then((discussions) => {
+		Promise.all([
+			Discussion.find(query).select(select).populate('user', 'person').sort(qOrder).skip(skip).limit(limit).lean(),
+			Follow.find({'who.item': key_user._id}).lean()
+		])
+			.then((results) => {
+				const [discussions,follows] = results;
 				if(discussions || discussions.length > 0) {
 					var discs_send = new Array();
 					discussions.forEach(function(disc) {
@@ -142,6 +142,11 @@ module.exports = {
 						} else {
 							disc_send.user 	= disc.user.person.fullName;
 						}
+						follows.forEach(function(f) {
+							if(f.object.item + '' === disc._id + '') {
+								disc_send.followid 	= f._id;
+							}
+						});
 						discs_send.push(disc_send);
 					});
 					res.status(200).json({
