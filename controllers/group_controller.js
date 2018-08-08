@@ -2783,7 +2783,7 @@ module.exports = {
 			.then((group) => {
 				if(group) {
 					const bs = group.course.blocks;
-					Roster.count({group: groupid})
+					Roster.estimatedDocumentCount({group: groupid})
 						.then((count) => {
 							if(count > 0) {
 								var skip			= 0;

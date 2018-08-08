@@ -925,7 +925,7 @@ module.exports = {
 			if(req.query && req.query.org) {
 				Org.findOne({ name: req.query.org })
 					.then((org) => {
-						User.count({ org: org._id }, function(err,count) {
+						User.estimatedDocumentCount({ org: org._id }, function(err,count) {
 							res.status(200).json({
 								'status': 200,
 								'message': count + ' total users found from ' + org.name,
@@ -946,7 +946,7 @@ module.exports = {
 		if(key_user.roles.isOrg && !key_user.roles.isAdmin){
 			Org.findOne({ org: key_user.org._id})
 				.then((org) => {
-					User.count({ org: key_user.org._id }, function(err,count) {
+					User.estimatedDocumentCount({ org: key_user.org._id }, function(err,count) {
 						res.status(200).json({
 							'status': 200,
 							'message': count + ' total users found from ' + org.name,

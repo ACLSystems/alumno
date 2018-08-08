@@ -10,7 +10,7 @@ module.exports = {
 
 	totalUsers(req,res) {
 		const key_user = res.locals.user;
-		User.count({org: key_user.org})
+		User.estimatedDocumentCount({org: key_user.org})
 			.then((count) => {
 				res.status(200).json({
 					'status'		: 200,
