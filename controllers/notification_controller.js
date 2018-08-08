@@ -74,7 +74,7 @@ module.exports = {
 
 	newNotifications(req,res) {
 		const key_user 	= res.locals.user;
-		Notification.estimatedDocumentCount({'destination.item': key_user._id, read: false})
+		Notification.countDocuments({'destination.item': key_user._id, read: false})
 			.then((count) => {
 				if(count > 0){
 					res.status(200).json({
