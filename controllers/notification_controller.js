@@ -169,7 +169,7 @@ module.exports = {
 
 	closeNotification(req,res) {
 		//const key_user 	= res.locals.user;
-		Notification.findById(req.query.notificationid)
+		Notification.findById(req.body.notificationid)
 			.then((notification) => {
 				if(notification) {
 					notification.read = true;
@@ -197,7 +197,7 @@ module.exports = {
 	}, //closeNotification
 
 	reOpenNotification(req,res) {
-		Notification.findById(req.query.notificationid)
+		Notification.findById(req.body.notificationid)
 			.then((notification) => {
 				if(notification) {
 					notification.read = false;

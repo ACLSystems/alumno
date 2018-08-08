@@ -690,15 +690,15 @@ module.exports = function(req, res, next) {
 		break;
 
 	case '/api/v1/user/message/close':
-		if(!req.query) {
+		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give data by query to process'
+				'message': 'Error: Please, give data by body to process'
 			});
-		} else if(!req.query.notificationid) {
+		} else if(!req.body.notificationid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give notification ID by query to process'
+				'message': 'Error: Please, give notification ID by body to process'
 			});
 		} else {
 			next();
@@ -706,15 +706,15 @@ module.exports = function(req, res, next) {
 		break;
 
 	case '/api/v1/user/message/reopen':
-		if(!req.query) {
+		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give data by query to process'
+				'message': 'Error: Please, give data by body to process'
 			});
-		} else if(!req.query.notificationid) {
+		} else if(!req.body.notificationid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please, give notification ID by query to process'
+				'message': 'Error: Please, give notification ID by body to process'
 			});
 		} else {
 			next();
