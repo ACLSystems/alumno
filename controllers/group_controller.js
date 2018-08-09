@@ -1231,7 +1231,7 @@ module.exports = {
 				var grades = [];
 				var myGrade = {};
 				var k = 0;
-				var index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + '');
+				var index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + '') || -1;
 				if(item.grades.length > 0) {
 					grades = item.grades;
 					var len = grades.length;
