@@ -9,9 +9,9 @@ const templateID	= 321554;
 const logger = require('../shared/winston-logger');
 
 exports.sendError = function(res, err, controller,section,send,send_mail) {
-	logger.error(controller + ' controller -- Section: ' + section + '---- Error message: ' + err);
+	logger.error('${controller} -- Section: ${section} --- Error message: ${err}');
 	if(!send_mail) {
-		mailjet.sendMail(devEmail, devName, 'API error at '+ controller, templateID, '',500,controller, 'Section: ' + section + '----' + err.message);
+		mailjet.sendMail(devEmail, devName, 'API error at ${controller}', templateID, '',500,controller, 'Section: ${section} ---- ${err.message}');
 	}
 	if(!send) {
 		res.status(500).json({
