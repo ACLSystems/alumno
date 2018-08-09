@@ -401,7 +401,8 @@ module.exports = {
 												wt						: block.wt,
 												dependencies	: block.dependencies
 											};
-											var gradeIndex = group.rubric.findIndex(rubric => rubric.block + '' === gradePushed.block + '');
+											var gradeIndex = -1;
+											if(group.rubric && group.rubric.length > 0) { gradeIndex = group.rubric.findIndex(rubric => rubric.block + '' === gradePushed.block + ''); }
 											if(gradeIndex > -1 ) {
 												gradePushed.w 	= group.rubric[gradeIndex].w;
 												gradePushed.wt 	= group.rubric[gradeIndex].wt;
@@ -1051,7 +1052,8 @@ module.exports = {
 					var grades = [];
 					var myGrade = {};
 					var k = 0;
-					var index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + '');
+					var index = -1;
+					if(item.group.rubric && item.group.rubric.length > 0) { index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + ''); }
 					if(item.grades.length > 0) {
 						grades = item.grades;
 						var len = grades.length;
@@ -1231,7 +1233,8 @@ module.exports = {
 				var grades = [];
 				var myGrade = {};
 				var k = 0;
-				var index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + '') || -1;
+				var index = -1;
+				if(item.group.rubric && item.group.rubric.length > 0) { index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + ''); }
 				if(item.grades.length > 0) {
 					grades = item.grades;
 					var len = grades.length;
@@ -1775,7 +1778,8 @@ module.exports = {
 										blockSection: bs[i].section,
 										blockNumber	: bs[i].number,
 									};
-									var index = item.group.rubric.findIndex(e => e.block + '' === grade.block + '');
+									var index = -1;
+									if(item.group.rubric && item.group.rubric.length > 0) { index = item.group.rubric.findIndex(e => e.block + '' === grade.block + ''); }
 									if(index > -1 ) {
 										block.blockW = item.group.rubric[index].w;
 									}
