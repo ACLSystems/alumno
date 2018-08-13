@@ -345,6 +345,10 @@ module.exports = function(req, res, next) {
 		next();
 		break;
 
+	case '/api/v1/admin/log/read':
+		next();
+		break;
+
 	case '/api/v1/supervisor/user/getgroups':
 		if(!req.query) {
 			res.status(406).json({

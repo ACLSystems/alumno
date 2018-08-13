@@ -16,6 +16,7 @@ const CertController 				= require('../controllers/certs_controller'					);
 const ReportController 			= require('../controllers/report_controller'				);
 const NotificationController = require('../controllers/notification_controller'	);
 const FollowController 			= require('../controllers/follow_controller'				);
+const logController 				= require('../controllers/log_controller'						);
 const multer 								= require('multer'																	);
 var dir 										= process.env.ORDIR;
 const fileSize 							= 1048576;
@@ -193,6 +194,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/admin/user/changeuser', 		UserController.changeUser);
 	app.put ('/api/v1/admin/user/correctusers', 	UserController.correctUsers);
 	app.get ('/api/v1/admin/certs/rosters', 			GroupController.addCertToRoster);
+	app.get ('/api/v1/admin/log/read', 						logController.read);
 
 	// Rutas para roles de 'isOrg'
 
