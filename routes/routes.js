@@ -195,6 +195,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/admin/user/correctusers', 	UserController.correctUsers);
 	app.get ('/api/v1/admin/certs/rosters', 			GroupController.addCertToRoster);
 	app.get ('/api/v1/admin/log/read', 						logController.read);
+	app.delete ('/api/v1/admin/log/truncate', 		logController.truncate);
 
 	// Rutas para roles de 'isOrg'
 
