@@ -27,6 +27,9 @@ module.exports = {
 					if(lines !== 0) {
 						dataArray = dataArray.slice(-lines);
 					}
+					for(var i = 0; i < dataArray.length; i++) {
+						dataArray[i] = JSON.parse(dataArray[i]);
+					}
 					//console.log(dataArray)
 					res.status(200).json({
 						'status': 200,
