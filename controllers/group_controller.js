@@ -727,7 +727,7 @@ module.exports = {
 													send_grade.blockid	= blocks[b]._id,
 													send_grade.section 	= blocks[b].section;
 													send_grade.number		= blocks[b].number;
-													if(g.tasktries && g.tasktries > 0) {
+													if(g.tasktries && g.tasktries.length > 0) {
 														send_grade.taskDelivered = true;
 													} else {
 														send_grade.taskDelivered = false;
