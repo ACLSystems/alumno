@@ -4,6 +4,7 @@ const Orgs 			= require('./orgs'						);
 const OrgUnits 	= require('./orgUnits'				);
 const bcrypt 		= require('bcrypt-nodejs'			);
 const newpass 	= require('../config/newpass'	);
+const mongoose 	= require( 'mongoose' );
 
 
 const logger = require('../shared/winston-logger');
@@ -11,7 +12,7 @@ const logger = require('../shared/winston-logger');
 
 
 module.exports = {
-	init(version){
+	initDB(version){
 		// revisamos si tenemos inicializada la base
 		var message = 'Database uninitialized detected. Begining initialization...';
 		Control.findOne({})
@@ -260,40 +261,62 @@ module.exports = {
 					const control = new Control({
 						version: version.version,
 						name: version.app,
-						schemas: [
-							'control',
-							'orgs',
-							'orgunits',
-							'users'
-						]
+						schemas: mongoose.modelNames()
 					});
-					control.save().catch((err) => {
-						message = 'Trying to save control document';
-						logger.error(message);
-						console.log(message); //eslint-disable-line
-						logger.error(err);
-						console.log(err); //eslint-disable-line
-					});
-
+					var mongooseAdmin = new mongoose.mongo.Admin(mongoose.connection.db);
+					mongooseAdmin.buildInfo()
+						.then((info) => {
+							control.mongo = info.version;
+							control.save().catch((err) => {
+								message = 'Trying to save control document';
+								logger.error(message);
+								console.log(message); //eslint-disable-line
+								logger.error(err);
+								console.log(err); //eslint-disable-line
+							})
+								.catch((err) => {
+									logger.error(err);
+									console.log(err); //eslint-disable-line
+								});
+						})
+						.catch((err) => {
+							logger.error(err);
+							console.log(err); //eslint-disable-line
+						});
 					// Listo, terminamos de inicializar
 					message = 'Database initialized...';
 					logger.info(message);
 					console.log(message); //eslint-disable-line
-				} else {
+				} else { // Ya existe el registro de control
 					control.version = version.version;
 					control.name = version.app;
-					control.save().catch((err) => {
-						message = 'Trying to save control document';
-						logger.error(message);
-						console.log(message); //eslint-disable-line
-						logger.error(err);
-						console.log(err); //eslint-disable-line
-					});
+					control.schemas = mongoose.modelNames();
+					var admin = new mongoose.mongo.Admin(mongoose.connection.db);
+					admin.buildInfo()
+						.then((info) => {
+							control.mongo = info.version;
+							control.host	= mongoose.connection.host;
+							control.mongoose = mongoose.version;
+							control.save().catch((err) => {
+								message = 'Trying to save control document';
+								logger.error(message);
+								console.log(message); //eslint-disable-line
+								logger.error(err);
+								console.log(err); //eslint-disable-line
+							});
+						})
+						.catch((err) => {
+							logger.error(err);
+							console.log(err); //eslint-disable-line
+						});
 				}
 			})
 			.catch((err) => {
 				logger.error(err);
 				console.log(err); //eslint-disable-line
 			});
+	},
+	initConsumer(){
+
 	}
 };

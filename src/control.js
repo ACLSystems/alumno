@@ -15,7 +15,16 @@ const ControlSchema = new Schema({
 	version: {
 		type: String
 	},
-	schemas: [String]
+	schemas: [String],
+	mongo: {
+		type: String
+	},
+	mongoose: {
+		type: String
+	},
+	host: {
+		type: String
+	}
 });
 
 // Definir middleware

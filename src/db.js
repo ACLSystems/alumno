@@ -24,13 +24,20 @@ mongoose.connect(encodeMongoURI(dbURI), options);
 
 var message = '';
 
+var systemInit = true;
+
 // CONNECTION EVENTS
 // When successfully connected
 mongoose.connection.on('connected', function () {
 	message = 'DB connection open successfully';
 	logger.info(message);
 	console.log(message); // eslint-disable-line
-	init.init(version);
+	init.initDB(version);
+	if(systemInit) {
+		// Colocar los procesos que deben arrancar junto con el servidor
+		
+		systemInit = false;
+	}
 });
 
 // If the connection throws an error
