@@ -22,6 +22,17 @@ let options = {
 // Create the database connection
 mongoose.connect(encodeMongoURI(dbURI), options);
 
+// Agregado para hacer debug. Apagar inmediatamente y por ningún motivo prenderlo en producción
+if(process.env.NODE_ENV &&
+	(
+		process.env.NODE_ENV === 'development' ||
+		process.env.NODE_ENV === 'test'
+	) &&
+	process.env.NODE_DEBUG &&
+	process.env.NODE_DEBUG === 'on'){
+	mongoose.set('debug',true);
+}
+
 var message = '';
 
 var systemInit = true;
@@ -35,7 +46,7 @@ mongoose.connection.on('connected', function () {
 	init.initDB(version);
 	if(systemInit) {
 		// Colocar los procesos que deben arrancar junto con el servidor
-		
+
 		systemInit = false;
 	}
 });
