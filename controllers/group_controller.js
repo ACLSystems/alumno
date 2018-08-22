@@ -708,10 +708,11 @@ module.exports = {
 						};
 
 						var send_grades = new Array();
-						var send_grade 	= {};
-						var flag 				= false;
+
 						if(s.grades && s.grades.length > 0) {
 							s.grades.forEach(function(g) {
+								var send_grade 	= {};
+								var flag 				= false;
 								if(g.w && g.w > 0) {
 									if(g.wt && g.wt > 0) {
 										if(g.tasks && g.tasks.length > 0) {
@@ -750,10 +751,10 @@ module.exports = {
 										}
 									}
 								}
+								if(flag) {
+									send_grades.push(send_grade);
+								}
 							});
-							if(flag) {
-								send_grades.push(send_grade);
-							}
 						}
 						send_student.grades = send_grades;
 						students.push(send_student);
@@ -1318,6 +1319,7 @@ module.exports = {
 					item.grades = [myGrade];
 					item.grades.tasktries = [now];
 				}
+				item.newTask = true;
 				item.save()
 					.then(() => {
 						res.status(200).json({
