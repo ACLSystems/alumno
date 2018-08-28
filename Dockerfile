@@ -17,7 +17,7 @@ COPY package.json /usr/src/app
 RUN npm install
 
 # Le decimos a NPM que instale PM2
-RUN npm install pm2 -g
+# RUN npm install pm2 -g
 
 # Copiamos la aplicacion
 COPY . /usr/src/app
