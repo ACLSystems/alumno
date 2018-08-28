@@ -110,9 +110,17 @@ module.exports = {
 			});
 			return;
 		}
-		const file 		= req.query.filename;
-		const fileid 	= req.query.fileid;
-		var query 		= {};
+		const file 			= req.query.filename;
+		const fileid 		= req.query.fileid;
+		var query 			= {};
+		var properties	= false;
+		if(req.query.properties && req.query.properties.toLowerCase() === 'true') {
+			properties 		= true;
+		}
+		var link				= false;
+		if(req.query.link && req.query.link.toLowerCase() === 'true') {
+			link 		= true;
+		}
 		if(fileid){
 			if (fileid.match(/^[0-9a-fA-F]{24}$/)) {
 				query = { _id: fileid };
@@ -130,28 +138,116 @@ module.exports = {
 		File.findOne(query)
 			.then((file) => {
 				if(file) {
+					const accessToken	= process.env.DBX_TOKEN;
 					var ordir = process.env.ORDIR;
-					if(!ordir) {
-						ordir = '/usr/src/app/files';
-					}
-					if(fs.existsSync(ordir + '/' + file.filename)) {
-						res.set({'Content-type': file.mimetype});
-						res.download(ordir + '/' + file.filename,file.name);
-					} else {
-						const accessToken	= process.env.DBX_TOKEN;
-						require('isomorphic-fetch');
-						var dbx = new dropbox({ accessToken: accessToken});
-						dbx.filesDownload({path: file.path + '/' + file.filename})
-							.then((dbxFile) => {
-								fs.writeFileSync(ordir + '/'+ dbxFile.name, dbxFile.fileBinary, 'binary',function (err) {Err.sendError(res,err,'file_controller','download -- downloading file in dropbox --');});
-								if(fs.existsSync(ordir + '/' + file.filename)) {
-									res.set({'Content-type': file.mimetype});
-									res.download(ordir + '/' + file.filename,file.name);
+					require('isomorphic-fetch');
+					var dbx = new dropbox({ accessToken: accessToken});
+					if(properties){
+						res.status(200).json({
+							status	: 200,
+							message	: {
+								name		: file.name,
+								mimetype: file.mimetype,
+								filename: file.filename,
+								path		: file.path,
+								size		: file.size
+							}
+						});
+					} else if(link){
+						dbx.sharingListSharedLinks({path: file.path + '/' + file.filename})
+							.then((dbxshared) => {
+								var dbxlink = '';
+								if(dbxshared && dbxshared.links && dbxshared.links.length > 0) {
+									dbxshared.links.forEach(function(link) {
+										if(link['.tag'] === 'file') {
+											dbxlink = parseDropboxUrl(link.url);
+										}
+									});
+									if(dbxlink === ''){ // Este pedazo de código corre porque hay shared links pero del directorio padre
+										dbx.sharingCreateSharedLinkWithSettings({path: file.path + '/' + file.filename})
+											.then((dbxlink) => {
+												if(dbxlink) {
+													res.status(200).json({
+														status	: 200,
+														message : 'Shared link created',
+														file	: {
+															url					: parseDropboxUrl(dbxlink.url),
+															name				: file.filename,
+															originalName:	file.name,
+															size				: file.size
+														}
+													});
+												} else {
+													res.status(200).json({
+														status	: 400,
+														message	: 'No dropbox link could create'
+													});
+												}
+											})
+											.catch((err) => {
+												Err.sendError(res,err,'file_controller','download -- Creating shared link in dropbox --');
+											});
+									} else {
+										res.status(200).json({
+											status	: 200,
+											message	: 'Shared link',
+											file 		: {
+												url	: dbxlink,
+												name				: file.filename,
+												originalName:	file.name,
+												size				: file.size
+											}
+										});
+									}
+								} else { // Este corre porque no hay shared links del archivo o del directorio padre
+									dbx.sharingCreateSharedLinkWithSettings({path: file.path + '/' + file.filename})
+										.then((dbxlink) => {
+											if(dbxlink) {
+												res.status(200).json({
+													status	: 200,
+													message : 'Shared link created',
+													file		: {
+														url	: parseDropboxUrl(dbxlink.url),
+														name				: file.filename,
+														originalName:	file.name,
+														size				: file.size
+													}
+												});
+											} else {
+												res.status(200).json({
+													status	: 400,
+													message	: 'No dropbox link could create'
+												});
+											}
+										})
+										.catch((err) => {
+											Err.sendError(res,err,'file_controller','download -- Creating shared link in dropbox --');
+										});
 								}
 							})
 							.catch((err) => {
 								Err.sendError(res,err,'file_controller','download -- Searching File in dropbox --');
 							});
+					} else {
+						if(!ordir) {
+							ordir = '/usr/src/app/files';
+						}
+						if(fs.existsSync(ordir + '/' + file.filename)) {
+							res.set({'Content-type': file.mimetype});
+							res.download(ordir + '/' + file.filename,file.name);
+						} else {
+							dbx.filesDownload({path: file.path + '/' + file.filename})
+								.then((dbxFile) => {
+									fs.writeFileSync(ordir + '/'+ dbxFile.name, dbxFile.fileBinary, 'binary',function (err) {Err.sendError(res,err,'file_controller','download -- downloading file in dropbox --');});
+									if(fs.existsSync(ordir + '/' + file.filename)) {
+										res.set({'Content-type': file.mimetype});
+										res.download(ordir + '/' + file.filename,file.name);
+									}
+								})
+								.catch((err) => {
+									Err.sendError(res,err,'file_controller','download -- Searching File in dropbox --');
+								});
+						}
 					}
 				} else {
 					res.status(404).json({
@@ -166,3 +262,10 @@ module.exports = {
 
 	}
 };
+
+//private functions
+
+function parseDropboxUrl(dbx) {
+	var regex = /\?dl=0/gi;
+	return dbx.replace(regex,'?dl=1');
+}
