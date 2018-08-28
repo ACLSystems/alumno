@@ -2262,7 +2262,7 @@ module.exports = {
 									{
 										path: 'questionnarie',
 										match: { isVisible: true },
-										select: 'type begin minimum maxAttempts questions w'
+										select: 'type begin minimum maxAttempts questions w shuffle show'
 									},
 									{
 										path: 'task',
@@ -2317,6 +2317,12 @@ module.exports = {
 										var send_questions = new Array();
 										questions.forEach(function(q) {
 											var send_question = {};
+											// Crear una forma de generar el id de la pregunta y guardarla si esta no existe
+											if(q._id)					{send_question.id					= q._id;				}
+											else
+											{
+												Err.sendError(res,'question without id','group_controller','nextBlock -- Finding question -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid + ' Questionnarie: ' + questionnarie._id);
+											}
 											if(q.header) 			{send_question.header 		= q.header;			}
 											if(q.footer) 			{send_question.footer 		= q.footer;			}
 											if(q.footerShow) 	{send_question.footerShow = q.footerShow;	}
@@ -2354,7 +2360,22 @@ module.exports = {
 											send_question.answers = answers;
 											send_questions.push(send_question);
 										});
+										// si está configurado que se vayan en random, ponlas en random
+
+										var send_questions_shuffle = new Array();
+										if(questionnarie.shuffle && questionnarie.shuffle === true){ send_questions_shuffle = shuffle(send_questions); }
+										else
+										{ send_questions_shuffle = send_questions; }
+
+										// si está configurado para que muestre solo algunas preguntas, se corta el arreglo
+										if(questionnarie.show && questionnarie.show > 0) {
+
+											if(questionnarie.show <= send_questions_shuffle.length){
+												send_questions_shuffle = send_questions_shuffle.slice(0,questionnarie.show);
+											}
+										}
 										send_questionnarie = {
+											id 						: questionnarie._id,
 											type					: questionnarie.type,
 											begin					: questionnarie.begin,
 											minimum				: questionnarie.minimum,
@@ -2362,7 +2383,7 @@ module.exports = {
 											//attempts			: numAttempts,
 											//lastGrade			: lastGrade,
 											w							: questionnarie.w,
-											questions			: send_questions
+											questions			: send_questions_shuffle
 										};
 										send_block.questionnarie = send_questionnarie;
 									}
@@ -2954,13 +2975,19 @@ module.exports = {
 
 // Private Functions -----------------------------------------------------------
 
-
+// expiresIn - función que regresa una fecha de expiración
+// date -> fecha
+// numDays -> número de días
+//
+// al final entrega una fecha + el número de días = fecha + dias
 function expiresIn(date, numDays) {
 	var dateObj = new Date(date);
 	return dateObj.setDate(dateObj.getDate() + numDays);
 }
 
-
+// units - Muestra las unidades de tiempo en español
+// unit -> la unidad a cambiar, por ejemplo 'h' que sería horas
+// cnt	-> el número de las unidades. Aquí solo importa si es 1 unidad o varias para ponerle la 's' (hora/horas)
 function units(unit,cnt) {
 	if(unit === 'h') {
 		if(cnt === 1) {
@@ -3007,6 +3034,8 @@ function units(unit,cnt) {
 	}
 }
 
+// dateInSpanish - Muestra los meses en español
+// date -> fecha a la que se devuelve el mes en español
 function dateInSpanish(date) {
 	var day 	= date.getDate();
 	var month = date.getMonth();
@@ -3028,6 +3057,20 @@ function dateInSpanish(date) {
 	return day + ' de ' + months[month] + ' de ' + year;
 }
 
+// varenum - Muestra en el query los valores enum que soporta una propiedad del esquema
+// field -> campo al que se le quieren mostrar los valores enum
 function varenum(field) {
 	return Group.schema.path(field).enumValues;
+}
+
+// suffle - función que desordena un arreglo y lo presenta en forma aleatoria
+// requiere que el arreglo tenga objetos con la propiedad _id definida
+// array -> arreglo que se va a desordenar
+function shuffle(array) {
+	for (let i = array.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[array[i], array[j]] = [array[j], array[i]];
+	}
+	console.log('aqui');
+	return array;
 }

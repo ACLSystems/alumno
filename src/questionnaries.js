@@ -100,8 +100,8 @@ const QuestionSchema = new Schema ({
 	display: [{
 		type: String,
 		enum: ['0','1'],
-		default: 1
-		// Display permite mostrar u ocultar la pregunta
+		default: '1'
+		// El orden como queremos que aparezca en angular
 	}],
 	w: {
 		type: Number,
@@ -129,8 +129,8 @@ const QuestionnarieSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum: ['quiz','poll'],
-		default: 'Quiz'
+		enum: ['quiz','poll','exam'],
+		default: 'quiz'
 	},
 	begin: {
 		type: Boolean,
@@ -163,6 +163,14 @@ const QuestionnarieSchema = new Schema ({
 	isVisible: {
 		type: Boolean,
 		default: true
+	},
+	shuffle: {
+		type: Boolean,
+		default: true
+	},
+	show: { // Si show es cero, entonces muestra todas las preguntas
+		type: Number,
+		default: 0
 	},
 	own: OwnerSchema,
 	mod: [ModSchema],
