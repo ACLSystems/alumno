@@ -2395,6 +2395,11 @@ module.exports = {
 												text: item.text,
 												type: item.type
 											};
+											if(item._id)					{send_items.id					= item._id;				}
+											else
+											{
+												Err.sendError(res,'task without id','group_controller','nextBlock -- Finding task -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid + ' Questionnarie: ' + task._id);
+											}
 											if(item.header) {send_item.header = item.header;}
 											if(item.footer) {send_item.footer = item.footer;}
 											if(item.label) 	{send_item.label	= item.label; }
