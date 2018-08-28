@@ -201,6 +201,7 @@ GradesSchema.pre('save', function(next) {
 	if(this.tasks.length > 0) {
 		var tasks = 0;
 		var grades = 0;
+		var graded = true;
 		this.tasks.forEach(function(t) {
 			tasks++;
 			if(t.justDelivery) {
@@ -208,10 +209,13 @@ GradesSchema.pre('save', function(next) {
 			} else if(t.graded) {
 				grades = grades + t.grade;
 			}
+			if(t.graded === true) {
+				graded = true;
+			}
 		});
+		this.gradedT = graded;
 		if(tasks > 0) {
 			this.gradeT = grades / tasks;
-			this.gradedT = true;
 		} else {
 			this.gradeT = 0;
 		}

@@ -738,7 +738,7 @@ module.exports = {
 													if(g.gradeT > 0){
 														send_grade.taskGrade 	= g.gradeT;
 													}
-													if(g.gradedT) {
+													if(g.gradedT === true) {
 														send_grade.gradedT		= true;
 													} else {
 														send_grade.gradedT		= false;
