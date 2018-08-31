@@ -20,7 +20,7 @@ const DiscussionsSchema = new Schema ({
 	},
 	pubtype: {
 		type: String,
-		enum:['discussion','question','announcement'],
+		enum:['discussion','question','announcement','tutor'],
 		required: true,
 		default: 'discussion'
 	},
