@@ -676,10 +676,11 @@ module.exports = {
 			.then((group) => {
 				if(group) {
 					var send_group = {
-						id					: group._id,
-						code				: group.code,
-						name				: group.name,
-						course			: group.course.title,
+						groupid			: group._id,
+						groupcode		: group.code,
+						groupname		: group.name,
+						coursetitle	: group.course.title,
+						courseid		: group.course._id,
 						instructor	: group.instructor.person.fullName,
 						beginDate		: group.beginDate,
 						endDate			: group.endDate,
@@ -693,7 +694,7 @@ module.exports = {
 							s.pass = false;
 						}
 						var send_student = {
-							id							: s.student._id,
+							userid					: s.student._id,
 							userName				: s.student.person.name,
 							userFatherName	: s.student.person.fatherName,
 							userMotherName	: s.student.person.motherName,
@@ -1422,8 +1423,10 @@ module.exports = {
 														'studentName'				: item.student.person.name,
 														'studentFathername'	: item.student.person.fatherName,
 														'studentMothername'	: item.student.person.motherName,
+														'courseid'					: item.group.course._id,
 														'course'						: item.group.course.title,
 														'courseCode'				: item.group.course.code,
+														'groupid'						: item.group._id,
 														'group'							: item.group.name,
 														'groupCode'					: item.group.code,
 														'blockId'						: block._id,
