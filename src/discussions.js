@@ -63,6 +63,10 @@ const DiscussionsSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'users'
 	},
+	toUser: {
+		type: Schema.Types.ObjectId,
+		ref: 'users'
+	},
 	date: {
 		type: Date,
 		default: Date.now
