@@ -22,7 +22,6 @@ module.exports = {
 						kind: 'users',
 						item: source._id
 					};
-					message.sourceRole = 'user';
 					if(message.object) {
 						message.object = {
 							item: message.object,
@@ -126,14 +125,15 @@ module.exports = {
 
 						var not = {
 							notificationid			: notification._id,
-							source		: notification.source,
-							sourceType: notification.sourceType,
-							role			: notification.role,
-							message		: notification.message,
-							read			: notification.read,
-							dateAgo		: TA.ago(notification.date),
-							date			: notification.date,
-							object		: notification.object
+							source					: notification.source,
+							sourceType			: notification.sourceType,
+							sourceRole			: notification.sourceRole,
+							destinationRole :	notification.destinationRole,
+							message					: notification.message,
+							read						: notification.read,
+							dateAgo					: TA.ago(notification.date),
+							date						: notification.date,
+							object					: notification.object
 						};
 						if(not.source.kind === 'users') {
 							delete not.source.item.password;
