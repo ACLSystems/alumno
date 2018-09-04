@@ -50,13 +50,17 @@ const NotificationSchema = new Schema({
 	dateRead: {
 		type: Date
 	},
-	object: {
-		kind: String,
+	object: [{
+		kind: {
+			type: String,
+			enum: ['users', 'discussions', 'blocks', 'groups', 'certificates','courses', 'files','notifications','orgs', 'orgUnits', 'requests', 'rosters', 'tasks', 'questionnaries'],
+			default: 'users'
+		},
 		item: {
 			type: Schema.Types.ObjectId,
 			refPath: 'object.kind'
 		}
-	}
+	}]
 });
 
 // Definir virtuals
