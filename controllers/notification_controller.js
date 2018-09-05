@@ -13,7 +13,7 @@ module.exports = {
 		if(message.objects && message.objects.length > 0) {
 			var errorInObjects = false;
 			message.objects.forEach(function(object) {
-				if(object.hasOwnProperty('item')) {
+				if(!object.hasOwnProperty('item')) {
 					errorInObjects = true;
 				}
 			});
@@ -141,6 +141,7 @@ module.exports = {
 			.lean()
 			.then((notifications) => {
 				if(notifications.length > 0) {
+
 					var nots = new Array();
 					notifications.forEach(function(notification) {
 
@@ -150,7 +151,7 @@ module.exports = {
 							sourceType			: notification.type,
 							sourceRole			: notification.source.role,
 							destinationRole :	notification.destination.role,
-							destionation		: notification.destination,
+							destination			: notification.destination,
 							message					: notification.message,
 							read						: notification.read,
 							dateAgo					: TA.ago(notification.date),
@@ -168,18 +169,19 @@ module.exports = {
 							delete not.source.item.person._id;
 						}
 						if(not.destination.kind === 'users') {
-							delete not.source.item.password;
-							delete not.source.item.perm;
-							delete not.source.item.admin;
-							delete not.source.item.roles;
-							delete not.source.item.mod;
-							delete not.source.item.fiscal;
-							delete not.source.item.__v;
-							delete not.source.item.person._id;
+							delete not.destination.item.password;
+							delete not.destination.item.perm;
+							delete not.destination.item.admin;
+							delete not.destination.item.roles;
+							delete not.destination.item.mod;
+							delete not.destination.item.fiscal;
+							delete not.destination.item.__v;
+							delete not.destination.item.person._id;
 						}
 						if(not.objects && not.objects.length > 0){
 							not.objects.forEach(function(object) {
 								delete object.item.__v;
+								delete object._id;
 								if(object && object.kind === 'discussions') {
 									if(object.item.date) { object.item.dateAgo = TA.ago(object.item.date); }
 								} else {
