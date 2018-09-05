@@ -64,7 +64,7 @@ const NotificationSchema = new Schema({
 		},
 		item: {
 			type: Schema.Types.ObjectId,
-			refPath: 'object.kind'
+			refPath: 'objects.kind'
 		}
 	}]
 });
