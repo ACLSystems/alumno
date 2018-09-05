@@ -11,7 +11,7 @@ const ErrorsSchema = new Schema ({
 	},
 	errorType: {
 		type: String,
-		enum: ['EvalError', 'InternalError', 'RangeError','ReferenceError','SyntaxError','TypeError','URIError']
+		enum: ['EvalError', 'InternalError', 'RangeError','ReferenceError','SyntaxError','TypeError','URIError','CastError']
 	},
 	controller: {
 		type: String
@@ -44,7 +44,7 @@ const ErrorsSchema = new Schema ({
 
 ErrorsSchema.index( { controller		:  1	} );
 ErrorsSchema.index( { errorType			:  1	} );
-ErrorsSchema.index( { date					:  1	} );
+ErrorsSchema.index( { date					:  -1	} );
 ErrorsSchema.index( { status				:  1	} );
 
 // Compilar esquema

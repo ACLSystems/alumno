@@ -151,7 +151,7 @@ module.exports = {
 							sourceType			: notification.type,
 							sourceRole			: notification.source.role,
 							destinationRole :	notification.destination.role,
-							destinoation			: notification.destination,
+							destination			: notification.destination,
 							message					: notification.message,
 							read						: notification.read,
 							dateAgo					: TA.ago(notification.date),

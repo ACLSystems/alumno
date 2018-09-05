@@ -86,7 +86,6 @@ module.exports = (app) => {
 	app.get ('/api/user/validateemail',			UserController.validateEmail);
 	app.put ('/api/user/passwordrecovery',	UserController.passwordRecovery);
 	app.get ('/api/help',										HelpController.help);
-	app.get ('/api/errorcodes',							ErrorMessController.errorCodes);
 	app.get ('/api/orgunit/list',						OrgUnitController.publiclist);
 	app.get ('/api/career/list',						CareerController.list);
 	app.get ('/api/career/listareas',				CareerController.listAreas);
@@ -195,6 +194,9 @@ module.exports = (app) => {
 	app.put ('/api/v1/admin/user/correctusers', 	UserController.correctUsers);
 	app.get ('/api/v1/admin/certs/rosters', 			GroupController.addCertToRoster);
 	app.get ('/api/v1/admin/log/read', 						logController.read);
+	app.get ('/api/v1/admin/error/get', 					ErrorMessController.get);
+	app.put ('/api/v1/admin/error/close', 				ErrorMessController.close);
+	app.put ('/api/v1/admin/error/closeseveral', 	ErrorMessController.closeSeveral);
 	app.delete ('/api/v1/admin/log/truncate', 		logController.truncate);
 
 	// Rutas para roles de 'isOrg'
