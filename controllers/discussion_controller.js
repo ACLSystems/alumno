@@ -126,6 +126,7 @@ module.exports = {
 				if(discussions || discussions.length > 0) {
 					var discs_send = new Array();
 					discussions.forEach(function(disc) {
+						console.log(disc);
 						var disc_send = {};
 						const vars = ['title','text','type','pubtype','root','comment','replyto','block','group','course'];
 						vars.forEach(function(evar) {
