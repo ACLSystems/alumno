@@ -5,7 +5,7 @@ const request = mailjet.post('send', {'version': 'v3.1'});
 const fromEmail = 'soporte@superatemexico.com';
 const fromName = 'Superate Mexico';
 
-exports.sendMail = function(toEmail,toName,subject,templateID,param1,param2,param3,param4) {
+exports.sendMail = function(toEmail,toName,subject,templateID,param1,param2,param3,param4,param5,param6,param7,param8,param9) {
 	var mail_message =
 		{
 			'From': {
@@ -48,9 +48,14 @@ exports.sendMail = function(toEmail,toName,subject,templateID,param1,param2,para
 	}
 	if(templateID === 321554) { // Plantilla para reportar errores 500 en el API
 		mail_message.Variables = {
-			'errNum': param2,						// errNum
-			'controller': param3,				// controller
-			'message': param4						// message
+			'errNum': param2,					// errNum
+			'controller': param3,			// controller
+			'section': param8,				// section
+			'env': param4,						// environment
+			'id': param5,							// id
+			'stringError': param6,		// stringError
+			'errorStack': param7,			// errorStack
+			'message': param9					// mensaje
 		};
 	}
 	if(templateID === 391119) { // Plantilla para notificaciones a los usuarios de un grupo

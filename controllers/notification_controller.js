@@ -151,7 +151,7 @@ module.exports = {
 							sourceType			: notification.type,
 							sourceRole			: notification.source.role,
 							destinationRole :	notification.destination.role,
-							destination			: notification.destination,
+							destinoation			: notification.destination,
 							message					: notification.message,
 							read						: notification.read,
 							dateAgo					: TA.ago(notification.date),
@@ -205,7 +205,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'notification_controller','myNotifications -- Finding Notifications --');
+				Err.sendError(res,err,'notification_controller','myNotifications -- Finding Notifications --',false,false,`User: ${key_user.name}`);
 			});
 	}, //myNotifications
 
