@@ -10,6 +10,21 @@ module.exports = {
 	create(req,res) {
 		const key_user 	= res.locals.user;
 		var message 		= req.body;
+		if(message.objects && message.objects.length > 0) {
+			var errorInObjects = false;
+			message.objects.forEach(function(object) {
+				if(object.hasOwnProperty('item')) {
+					errorInObjects = true;
+				}
+			});
+			if(errorInObjects) {
+				res.status(200).json({
+					'status': '400',
+					'message': 'Bad Objects array. Missing "item" in one object in the array'
+				});
+				return;
+			}
+		}
 		User.findById(key_user._id)
 			// buscar el usuario que quiere mandar el mensaje (source)
 			.then((source) => {
