@@ -1,8 +1,10 @@
 const mailjet 	= require('../shared/mailjet'	);
 const ErrorReg	= require('../src/errors'			);
 
-const devEmail		= 'arturocastro@aclsystems.mx';
-const devName			= 'Desarrollo API alumno';
+//const devEmail		= 'arturocastro@aclsystems.mx';
+const devEmail		= process.env.DEV_EMAIL;
+//const devName			= 'Desarrollo API alumno';
+const devName 		= process.env.DEV_NAME;
 const templateID	= 321554;
 
 const logger = require('../shared/winston-logger');
