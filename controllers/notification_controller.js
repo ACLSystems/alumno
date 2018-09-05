@@ -11,7 +11,7 @@ module.exports = {
 		const key_user 	= res.locals.user;
 		var message 		= req.body;
 		User.findById(key_user._id)
-			// buscar el usuario que quiere mandar el mensaje
+			// buscar el usuario que quiere mandar el mensaje (source)
 			.then((source) => {
 				if(source) {
 					var send_email = true;
@@ -19,23 +19,25 @@ module.exports = {
 						send_email = false;
 					}
 					message.source = {
-						kind: 'users',
-						item: source._id
+						item: source._id,
+						role: message.sourceRole
 					};
-					if(message.object) {
-						message.object = {
-							item: message.object,
-							kind: message.objectType
-						};
-						delete message.objectType;
+					if(message.sourceKind) {
+						message.source.kind = message.sourceKind;
+						delete message.sourceKind;
 					}
+					// Se borra la lógica de message.object porque ahora se tiene que considerar desde el envío
 					User.findById(message.destination)
 						.then((destination) => {
 							if(destination) {
 								message.destination = {
-									kind: 'users',
-									item: destination._id
+									item: destination._id,
+									role: message.destinationRole
 								};
+								if(message.destinationKind) {
+									message.destination.kind = message.destinationKind;
+									delete message.destinationKind;
+								}
 								Notification.create(message)
 									.then(() => {
 										res.status(200).json({
@@ -110,11 +112,15 @@ module.exports = {
 		}
 		Notification.find(query)
 			.populate([{
-				path: 'object.item'
+				path: 'objects.item'
 			},
 			{
 				path: 'source.item'
-			}])
+			},
+			{
+				path: 'destination.item'
+			}
+			])
 			.skip(skip)
 			.limit(limit)
 			.lean()
@@ -124,16 +130,17 @@ module.exports = {
 					notifications.forEach(function(notification) {
 
 						var not = {
-							notificationid			: notification._id,
+							notificationid	: notification._id,
 							source					: notification.source,
-							sourceType			: notification.sourceType,
-							sourceRole			: notification.sourceRole,
-							destinationRole :	notification.destinationRole,
+							sourceType			: notification.type,
+							sourceRole			: notification.source.role,
+							destinationRole :	notification.destination.role,
+							destionation		: notification.destination,
 							message					: notification.message,
 							read						: notification.read,
 							dateAgo					: TA.ago(notification.date),
 							date						: notification.date,
-							object					: notification.object
+							objects					: notification.objects
 						};
 						if(not.source.kind === 'users') {
 							delete not.source.item.password;
@@ -145,9 +152,27 @@ module.exports = {
 							delete not.source.item.__v;
 							delete not.source.item.person._id;
 						}
-						if(not.object && not.object.kind === 'discussions') {
-							delete not.object.item.__v;
-							if(not.object.item.date) { not.object.item.dateAgo = TA.ago(not.object.item.date); }
+						if(not.destination.kind === 'users') {
+							delete not.source.item.password;
+							delete not.source.item.perm;
+							delete not.source.item.admin;
+							delete not.source.item.roles;
+							delete not.source.item.mod;
+							delete not.source.item.fiscal;
+							delete not.source.item.__v;
+							delete not.source.item.person._id;
+						}
+						if(not.objects && not.objects.length > 0){
+							not.objects.forEach(function(object) {
+								delete object.item.__v;
+								if(object && object.kind === 'discussions') {
+									if(object.item.date) { object.item.dateAgo = TA.ago(object.item.date); }
+								} else {
+									delete object.item.mod;
+									delete object.item.own;
+									delete object.item.perm;
+								}
+							});
 						}
 						nots.push(not);
 					});

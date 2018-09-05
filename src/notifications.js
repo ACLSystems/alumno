@@ -8,32 +8,38 @@ mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 const NotificationSchema = new Schema({
 	destination: {
-		kind: String,
+		kind: {
+			type: String,
+			default: 'users'
+		},
 		item: {
 			type: Schema.Types.ObjectId,
 			refPath: 'destination.kind'
-		}
+		},
+		role: {
+			type: String,
+			enum: ['admin', 'instructor', 'supervisor', 'user'],
+			default: 'user'
+		},
 	},
 	source: {
-		kind: String,
+		kind: {
+			type: String,
+			default: 'users'
+		},
 		item: {
 			type: Schema.Types.ObjectId,
 			refPath: 'source.kind'
+		},
+		role: {
+			type: String,
+			enum: ['admin', 'instructor', 'supervisor', 'user'],
+			default: 'user'
 		}
 	},
-	sourceType: {
+	type: {
 		type: String,
 		enum: ['user','system'],
-		default: 'user'
-	},
-	destinationRole: {
-		type: String,
-		enum: ['admin', 'instructor', 'supervisor', 'user'],
-		default: 'user'
-	},
-	sourceRole: {
-		type: String,
-		enum: ['admin', 'instructor', 'supervisor', 'user'],
 		default: 'user'
 	},
 	message: {
@@ -50,7 +56,7 @@ const NotificationSchema = new Schema({
 	dateRead: {
 		type: Date
 	},
-	object: [{
+	objects: [{
 		kind: {
 			type: String,
 			enum: ['users', 'discussions', 'blocks', 'groups', 'certificates','courses', 'files','notifications','orgs', 'orgUnits', 'requests', 'rosters', 'tasks', 'questionnaries'],
