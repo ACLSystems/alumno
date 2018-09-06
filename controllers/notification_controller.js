@@ -36,16 +36,16 @@ module.exports = {
 				if(source) {
 					var message = new Notification({ message: query.message });
 					message.source = { item : source._id };
-					message.source.role = (query.sourceRole) ? query.sourceRole : 'user';
-					message.source.kind = (query.sourceKind) ? query.sourceKind : 'users';
+					message.source.role = query.sourceRole ? query.sourceRole : 'user';
+					message.source.kind = query.sourceKind ? query.sourceKind : 'users';
 					if(destination) {
 						var send_email = true;
 						if(destination.preferences && destination.preferences.alwaysSendEmail === false) {
 							send_email = false;
 						}
 						message.destination = { item : destination._id };
-						message.destination.role = (query.destinationRole) ? query.destinationRole : 'user';
-						message.destination.kind = (query.destinationKind) ? query.destinationKind : 'users';
+						message.destination.role = query.destinationRole ? query.destinationRole : 'user';
+						message.destination.kind = query.destinationKind ? query.destinationKind : 'users';
 						if(query.objects && query.objects.length > 0 ) { message.objects = query.objects; }
 						message.save()
 							.then(() => {
