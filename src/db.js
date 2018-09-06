@@ -21,6 +21,7 @@ let options = {
 
 // Create the database connection
 mongoose.connect(encodeMongoURI(dbURI), options);
+mongoose.set('useCreateIndex', true);
 
 // Agregado para hacer debug. Apagar inmediatamente y por ningún motivo prenderlo en producción
 if(process.env.NODE_ENV &&

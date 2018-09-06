@@ -36,21 +36,21 @@
     "jwt-simple": "^0.5.1",
     "moment": "^2.22.2",
     "mongodb-uri": "^0.9.7",
-    "mongoose": "^5.2.10",
+    "mongoose": "^5.2.13",
     "mongoose-sequence": "^4.0.1",
     "multer": "^1.3.1",
-    "nanoid": "^1.2.1",
+    "nanoid": "^1.2.3",
     "node-mailjet": "^3.2.1",
-    "nodemon": "^1.18.3",
+    "nodemon": "^1.18.4",
     "randomatic": "^3.1.0",
     "time-ago": "^0.2.1",
     "urlencode": "^1.1.0",
-    "winston": "^3.0.0",
+    "winston": "^3.1.0",
     "winston-daily-rotate-file": "^3.3.2"
   },
   "devDependencies": {
     "babel-cli": "6.26.0",
     "babel-preset-env": "^1.7.0",
-    "eslint": "^5.4.0"
+    "eslint": "^5.5.0"
   }
 }

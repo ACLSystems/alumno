@@ -9,10 +9,10 @@ module.exports = {
 
 	create(req,res) {
 		const key_user 	= res.locals.user;
-		var message 		= req.body;
-		if(message.objects && message.objects.length > 0) {
+		var query 		= req.body;
+		if(query.objects && query.objects.length > 0) {
 			var errorInObjects = false;
-			message.objects.forEach(function(object) {
+			query.objects.forEach(function(object) {
 				if(!object.hasOwnProperty('item')) {
 					errorInObjects = true;
 				}
@@ -25,57 +25,48 @@ module.exports = {
 				return;
 			}
 		}
-		User.findById(key_user._id)
+		Promise.all([
 			// buscar el usuario que quiere mandar el mensaje (source)
-			.then((source) => {
+			User.findById(key_user._id),
+			// buscar el usuario que recibirá el mensaje (destination)
+			User.findById(query.destination)
+		])
+			.then((results) => {
+				const [source,destination] = results;
 				if(source) {
-					var send_email = true;
-					if(source.preferences && source.preferences.alwaysSendEmail === false) {
-						send_email = false;
-					}
-					message.source = {
-						item: source._id,
-						role: message.sourceRole
-					};
-					if(message.sourceKind) {
-						message.source.kind = message.sourceKind;
-						delete message.sourceKind;
-					}
-					// Se borra la lógica de message.object porque ahora se tiene que considerar desde el envío
-					User.findById(message.destination)
-						.then((destination) => {
-							if(destination) {
-								message.destination = {
-									item: destination._id,
-									role: message.destinationRole
-								};
-								if(message.destinationKind) {
-									message.destination.kind = message.destinationKind;
-									delete message.destinationKind;
-								}
-								Notification.create(message)
-									.then(() => {
-										res.status(200).json({
-											'status': '200',
-											'message': 'Notification for: (' + destination.name + ') created successfully'
-										});
-										if(send_email) {
-											mailjet.sendMail(source.person.email, source.person.name, 'Tienes una notificación',493237,'curso',message.message);
-										}
-									})
-									.catch((err) => {
-										Err.sendError(res,err,'notification_controller','create -- Creating Notification --');
-									});
-							} else {
+					var message = new Notification({ message: query.message });
+					message.source = { item : source._id };
+					message.source.role = (query.sourceRole) ? query.sourceRole : 'user';
+					message.source.kind = (query.sourceKind) ? query.sourceKind : 'users';
+					if(destination) {
+						var send_email = true;
+						if(destination.preferences && destination.preferences.alwaysSendEmail === false) {
+							send_email = false;
+						}
+						message.destination = { item : destination._id };
+						message.destination.role = (query.destinationRole) ? query.destinationRole : 'user';
+						message.destination.kind = (query.destinationKind) ? query.destinationKind : 'users';
+						if(query.objects && query.objects.length > 0 ) { message.objects = query.objects; }
+						message.save()
+							.then(() => {
 								res.status(200).json({
-									'status': '404',
-									'message': 'Destination not found'
+									'status': '200',
+									'notificationid': message._id,
+									'message': `Notification for: ${destination.name} created successfully`
 								});
-							}
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'notification_controller','create -- Finding Destination --');
+								if(send_email) {
+									mailjet.sendMail(destination.person.email, destination.person.name, 'Tienes una notificación',493237,'curso',message.message);
+								}
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'notification_controller','create -- Creating Notification --',false,false,`Destination: ${destination.name} Source: ${source.name}`);
+							});
+					} else {
+						res.status(200).json({
+							'status': '404',
+							'message': 'Destination not found'
 						});
+					}
 				} else {
 					res.status(200).json({
 						'status': '404',
@@ -84,7 +75,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'notification_controller','create -- Finding Source --');
+				Err.sendError(res,err,'notification_controller','create -- Finding users --');
 			});
 	}, //create
 
