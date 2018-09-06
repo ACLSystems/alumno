@@ -100,25 +100,13 @@ module.exports = {
 	get(req,res) {
 		const key_user 	= res.locals.user;
 		const query			= JSON.parse(req.query.query);
-		var order 			= -1;
-		var skip 				= 0;
-		var limit 			= 15;
-		var select 			= '';
-		if(req.query.select) {
-			select = req.query.select;
-		}
-		if(req.query.order) {
-			order = parseInt(req.query.order);
-		}
-		if(req.query.skip) {
-			skip = parseInt(req.query.skip);
-		}
-		if(req.query.limit) {
-			limit = parseInt(req.query.limit);
-		}
-		var qOrder 	= {date: order};
+		var select 			= (req.query.select	) ? req.query.select 					: ''	;
+		var order 			= (req.query.order	)	? parseInt(req.query.order) : -1	;
+		var skip 				= (req.query.skip		) ? parseInt(req.query.skip) 	: 0		;
+		var limit 			= (req.query.limit	) ? parseInt(req.query.limit) : 15	;
+		var qOrder 			= {date: order};
 		Promise.all([
-			Discussion.find(query).select(select).populate('user', 'person').sort(qOrder).skip(skip).limit(limit).lean(),
+			Discussion.find(query).select(select).populate('user').sort(qOrder).skip(skip).limit(limit).lean(),
 			Follow.find({'who.item': key_user._id}).lean()
 		])
 			.then((results) => {
@@ -137,10 +125,19 @@ module.exports = {
 						disc_send.when 					= TA.ago(disc.date);
 						disc_send.date 					= disc.date;
 						disc_send.userId 				= disc.user._id;
-						if(disc.user.person.alias) {
-							disc_send.user 	= disc.user.person.alias;
+						if(disc.user && disc.user.person){
+							if(disc.user.person.alias) {
+								disc_send.user 	= disc.user.person.alias;
+							} else if (disc.user.person.fullName ){
+								disc_send.user 	= disc.user.person.fullName;
+							} else {
+								disc_send.user 	= `${disc.user.person.name} ${disc.user.person.fatherName} ${disc.user.person.motherName}`;
+							}
 						} else {
-							disc_send.user 	= disc.user.person.fullName;
+							res.status(200).json({
+								'status': 400,
+								'message': 'User document is incomplete. Please contact Administrator or Service Desk'
+							});
 						}
 						follows.forEach(function(f) {
 							if(f.object.item + '' === disc._id + '') {
