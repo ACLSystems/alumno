@@ -1749,6 +1749,87 @@ module.exports = {
 			});
 	}, // myGrades
 
+	getGrade(req,res) {
+		const key_user 	= res.locals.user;
+		const groupid		= req.query.groupid;
+		const blockid		= req.query.blockid;
+		Roster.findOne({student: key_user._id, group: groupid})
+			.populate([{
+				path: 'group',
+				select: 'course',
+				populate: {
+					path: 'course',
+					select: 'title blocks',
+					populate: {
+						path: 'blocks',
+						match: { _id: blockid },
+						select: 'type questionnarie task w wt wq',
+						populate: [
+							{
+								path: 'task'
+							},
+							{
+								path: 'questionnarie'
+							}
+						]
+					}
+				}
+			},
+			{
+				path: 'student',
+				select: 'person'
+			}])
+			.select('grades')
+			.lean()
+			.then((item) => {
+				if(item) {
+					if(item.grades && item.grades.length > 0){
+						var grade = item.grades.find(grade => grade.block + '' === blockid + '');
+						var myGrade = {};
+						if(item.group.course.blocks[0].type === 'task') {
+							myGrade = {
+								student 		: {
+									id			:	item.student._id,
+									fullName: `${item.student.person.name} ${item.student.person.fatherName} ${item.student.person.motherName}`
+								},
+								blockid			: item.group.course.blocks[0]._id,
+								type 				: item.group.course.blocks[0].type,
+								blockTask 	: {
+									items: item.group.course.blocks[0].task.items
+								},
+								w						: grade.w,
+								wt					: grade.wt,
+								wq					: grade.wq,
+								finalGrade	: grade.finalGrade,
+								gradedT			: grade.gradedT,
+								gradeT			: grade.gradeT,
+								track				: grade.track,
+								task				: grade.tasks,
+								tasktries		: grade.tasktries
+							};
+						}
+						res.status(200).json({
+							'status': 200,
+							'myGrade': myGrade
+						});
+					} else {
+						res.status(200).json({
+							'status': 404,
+							'message': 'No grades found'
+						});
+					}
+				} else {
+					res.status(200).json({
+						'status': 404,
+						'message': 'No roster found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','getGrade -- Finding Roster --',false,false,`User: ${key_user.name}, groupid: ${groupid}, blockid: ${blockid}`);
+			});
+	}, //getGrade
+
 	studentGrades(req,res){
 		const groupid		= req.query.groupid;
 		//const key_user 	= res.locals.user;
@@ -1831,7 +1912,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'group_controller','mygrades -- Finding Roster --');
+				Err.sendError(res,err,'group_controller','studentGrades -- Finding Roster --');
 			});
 	}, // studentGrades
 
@@ -1917,9 +1998,9 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'group_controller','mygrades -- Finding Roster --');
+				Err.sendError(res,err,'group_controller','studentHistoric -- Finding Roster --');
 			});
-	}, // studentGrades
+	}, // studentHistoric
 
 	tookCertificate(req,res) {
 		const key_user 	= res.locals.user;

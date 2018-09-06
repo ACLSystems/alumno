@@ -577,6 +577,27 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/user/getgrade':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by query to process'
+			});
+		} else if (!req.query.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give groupid by query to process'
+			});
+		} else if (!req.query.blockid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give blockid by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/course/getblocklist':
 		if(!req.query) {
 			res.status(406).json({
