@@ -1580,7 +1580,7 @@ module.exports = {
 					select: 'title blocks duration durationUnits',
 					populate: {
 						path: 'blocks',
-						select: 'title section number w wq wt'
+						select: 'title section number w wq wt type'
 					}
 				}
 			})
@@ -1655,7 +1655,9 @@ module.exports = {
 												blockTitle	: bs[i].title,
 												blockSection: bs[i].section,
 												blockNumber	: bs[i].number,
-												blockW			: grade.w
+												blockW			: grade.w,
+												blockType		: bs[i].type,
+												blockId			: bs[i]._id
 											};
 											i = bs.length;
 										} else {
@@ -1669,6 +1671,7 @@ module.exports = {
 
 							var send_grade = {
 								name							: key_user.person.fullName,
+								rosterid					: item._id,
 								course						: item.group.course.title,
 								courseDuration		: item.group.course.duration,
 								courseDurUnits		: units(item.group.course.durationUnits),
