@@ -1,4 +1,4 @@
-
+const mongoose 		= require('mongoose');
 
 module.exports = function(req, res, next) {
 	var url = req.url;
@@ -1519,6 +1519,11 @@ module.exports = function(req, res, next) {
 			} else {
 				next();
 			}
+		} else if (!mongoose.Types.ObjectId.isValid(req.body.orgUnit)) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: orgUnit is not a valid ObjectID'
+			});
 		} else {
 			next();
 		}
