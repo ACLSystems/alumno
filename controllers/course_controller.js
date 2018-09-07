@@ -1,4 +1,4 @@
-const winston				= require('winston'								);
+//const winston				= require('winston'								);
 const Course				= require('../src/courses'				);
 const Category			= require('../src/categories'			);
 const Block					= require('../src/blocks'					);
