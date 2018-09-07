@@ -57,3 +57,5 @@ doc/Oferta*
 /src/*NO_USAR*
 /*/*_notUse*
 alumno.start.*
+bld_alumno*
+push_alumno*
