@@ -88,7 +88,6 @@ module.exports = function(req, res, next) {
 			})
 			.select('-password')
 			.then((user) => {
-				//console.log(user); // eslint-disable-line
 				if (user) {
 					var dbUserObj = {
 						name: user.name,

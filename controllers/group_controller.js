@@ -2633,7 +2633,6 @@ module.exports = {
 									if(users[i]._id +'' === user + '') {
 										users.splice(i,1);
 										keep = false;
-										//console.log('cortando ' + user );
 									} else {
 										i++;
 									}

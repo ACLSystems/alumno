@@ -11,7 +11,6 @@ module.exports = {
 	//register(req, res, next) {
 	register(req, res) {
 		const key_user 	= res.locals.user;
-		//console.log('aquí estoy'); // eslint-disable-line
 		if(!req.body) return res.sendStatus(400).res.send({id: 417, err: 'Please, give data to process'});
 		const orgProps = req.body;
 		if(orgProps.alias) { orgProps.alias = parseArray(orgProps.alias); }

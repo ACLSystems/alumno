@@ -35,19 +35,15 @@ module.exports = {
 			if(key_user.roles.isOrg && !key_user.roles.isAdmin) {
 				searchO = { name: key_user.org.name };
 			}
-			//console.log(searchO); // eslint-disable-line
 			if(key_user.roles.isAdmin || key_user.roles.isOrg) {
 				Org.find(searchO, {name: true})
 					.then((orgs) => {
 						if(key_user.roles.isOrg && !key_user.roles.isAdmin) {
 							searchOU = { org: orgs[0]._id };
 						}
-						//console.log(searchOU); // eslint-disable-line
 						OrgUnit.find(searchOU)
 							.populate('org')
 							.then((orgUnits) => {
-								//console.log(orgs); // eslint-disable-line
-								//console.log(orgUnits); // eslint-disable-line
 								var objOrg = '';
 								var objOrgUnit = '';
 								var failed = new Array();
@@ -61,12 +57,6 @@ module.exports = {
 								var usersToInsertNames = new Array();
 								var usersToUpdate = new Array();
 								var usersToUpdateNames = new Array();
-								/*
-								console.log('ORGS ----------'); // eslint-disable-line
-								console.log(orgs); // eslint-disable-line
-								console.log('ORG UNITS -----'); // eslint-disable-line
-								console.log(orgUnits); // eslint-disable-line
-								*/
 								//var start						= new Date().getTime();
 								//var end 						= new Date().getTime();
 								//var timelimit				= 10000;
@@ -78,8 +68,6 @@ module.exports = {
 									//console.time("concatenation");
 									objOrg = orgs.find(function(objOrg) {return objOrg.name === val.org; });
 									objOrgUnit = orgUnits.find(function(objOrgUnit) {return  objOrgUnit.name === val.orgUnit && objOrgUnit.org.name === val.org; });
-									//console.log(objOrg); // eslint-disable-line
-									//console.log(objOrgUnit); // eslint-disable-line
 									var orgStatus = 'ok';
 									var orgUnitStatus = 'ok';
 									var rolesStatus = 'ok';

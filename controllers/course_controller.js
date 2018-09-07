@@ -1379,7 +1379,6 @@ module.exports = {
 		Course.findById(courseid)
 			.then((course) => {
 				if(course) {
-					//console.log(JSON.stringify(course.blocks));
 					var blocks = course.blocks;
 					var refblockIndex = -1;
 					var blockIndex = -1;
@@ -1429,8 +1428,6 @@ module.exports = {
 									refsection = block.section;
 								}
 							});
-							//console.log('Course blocks: '+ blocks);
-							//console.log('DBBlocks: '+JSON.stringify(dbBlocks,null,2));
 							var newDBblock = {};
 							blocks.forEach(function(block) { // y actualizamos order en los bloques
 								dbBlocks.forEach(function(dbBlock) {
