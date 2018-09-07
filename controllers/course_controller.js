@@ -745,11 +745,20 @@ module.exports = {
 				if(block) {
 					var date = new Date();
 					var questionnarie = {
-						type: req.body.questionnarie.type,
-						questions: req.body.questionnarie.questions,
-						version: 1,
-						keywords: req.body.questionnarie.keywords,
-						own: {
+						org					: block.org,
+						type				: req.body.questionnarie.type || 'quiz',
+						begin				: req.body.questionnarie.begin || false,
+						minimum			: req.body.questionnarie.minimum || 60,
+						maxAttempts	: req.body.questionnarie.maxAttempts || 5,
+						questions		: req.body.questionnarie.questions,
+						w						: req.body.questionnarie.w || 1,
+						version			: 1,
+						keywords		: req.body.questionnarie.keywords || [],
+						isVisible		: req.body.questionnarie.isVisible || true,
+						shuffle			: req.body.questionnarie.shuffle || false,
+						show				: req.body.questionnarie.show || 0,
+						diagnostic	: req.body.questionnarie.diagnostic || { aspects : [] },
+						own					: {
 							user: key_user.name,
 							org: key_user.org.name,
 							orgUnit: key_user.orgUnit.name

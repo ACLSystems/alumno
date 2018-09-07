@@ -2349,7 +2349,7 @@ module.exports = {
 									{
 										path: 'questionnarie',
 										match: { isVisible: true },
-										select: 'type begin minimum maxAttempts questions w shuffle show'
+										select: 'type begin minimum maxAttempts questions w shuffle show diagnostic'
 									},
 									{
 										path: 'task',
@@ -2472,6 +2472,9 @@ module.exports = {
 											w							: questionnarie.w,
 											questions			: send_questions_shuffle
 										};
+										if(questionnarie.diagnostic && questionnarie.diagnostic.aspects && questionnarie.diagnostic.aspects.length > 0) {
+											send_questionnarie.diagnostic = questionnarie.diagnostic;
+										}
 										send_block.questionnarie = send_questionnarie;
 									}
 									if(block.type === 'task' && block.task) {

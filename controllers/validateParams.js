@@ -1232,6 +1232,11 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1449: Please, give course code or course id by query to process'
 			});
+		} else if(!req.body.questionnarie) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give questionnarie object by query to process'
+			});
 		} else {
 			next();
 		}

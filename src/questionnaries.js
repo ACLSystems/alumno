@@ -189,7 +189,7 @@ const QuestionnarieSchema = new Schema ({
 	},
 	shuffle: {
 		type: Boolean,
-		default: true
+		default: false
 		// Indica si las preguntas se mostraran en orden aleatorio (true => aleatorio)
 	},
 	show: { // Si show es cero, entonces muestra todas las preguntas
