@@ -21,15 +21,36 @@ module.exports = {
 	create(req,res) {
 		const key_user 	= res.locals.user;
 		var group = req.body;
-		Course.findOne({ _id: group.course })
+		if(!group.instructor) {
+			group.instructor = key_user._id;
+		}
+		Promise.all([
+			Course.findOne({ _id: group.course })
 			// Esta parte sirve para recolectar la rúbrica
-			.populate({
-				path: 'blocks',
-				match: {type: {$in: ['task','questionnarie']}},
-				select: 'w wt wq'
-			})
+				.populate({
+					path: 'blocks',
+					match: {type: {$in: ['task','questionnarie']}},
+					select: 'w wt wq'
+				}),
 			// ----
-			.then((course) => {
+			// Hay que ver si el instructor es un usuario válido
+			User.findById(group.instructor).lean()
+		])
+			.then((results) => {
+				var [course,instructor] = results;
+				if(!instructor) {
+					res.status(200).json({
+						'status': 401,
+						'message': 'Instructor is not found. Please provide a valid user id'
+					});
+					return;
+				} else if(!instructor.roles.isInstructor) {
+					res.status(200).json({
+						'status': 401,
+						'message': 'User has no role of Instructor. Please provide a valid user id with valid role'
+					});
+					return;
+				}
 				if(course) {
 					const date = new Date();
 					group.org = key_user.org._id;
