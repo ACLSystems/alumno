@@ -800,7 +800,7 @@ module.exports = function(req, res, next) {
 		next();
 		break;
 
-	// RUTAS PARA ORGANIZACIONES -------------------------------------------------ORGANIZACIONES
+		// RUTAS PARA ORGANIZACIONES -------------------------------------------------ORGANIZACIONES
 
 	case '/api/v1/orgadm/user/massiveregister':
 		if(!req.body) {
@@ -919,7 +919,7 @@ module.exports = function(req, res, next) {
 		next();
 		break;
 
-	// RUTAS PARA UNIDADES ORGANIZACIONALES --------------------------------------UNIDADES ORGANIZACIONALES
+		// RUTAS PARA UNIDADES ORGANIZACIONALES --------------------------------------UNIDADES ORGANIZACIONALES
 
 	case '/api/orgunit/list':
 		if(!req.query) {
@@ -1060,7 +1060,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	/*
+		/*
 	case '/api/v1/file/upload':
 		if(!req.file) {  // POST
 			res.status(406).json({
@@ -1470,7 +1470,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	// RUTAS PARA GRUPOS ---------------------------------------------------------GRUPOS
+		// RUTAS PARA GRUPOS ---------------------------------------------------------GRUPOS
 
 	case '/api/v1/instructor/group/create':
 		if(!req.body) {  // POST
@@ -1836,7 +1836,7 @@ module.exports = function(req, res, next) {
 		next();
 		break;
 
-	// RUTAS PARA CARRERAS -------------------------------------------------------CARRERAS
+		// RUTAS PARA CARRERAS -------------------------------------------------------CARRERAS
 
 	case '/api/v1/orgadm/career/create':
 		if(!req.body) {  // POST
@@ -1876,7 +1876,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	// RUTAS PARA PERIODOS (TERMS) -----------------------------------------------TERMS
+		// RUTAS PARA PERIODOS (TERMS) -----------------------------------------------TERMS
 
 	case '/api/v1/orgadm/term/create':
 		if(!req.body) {  // POST
@@ -1910,7 +1910,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	// RUTAS PARA COMENTARIOS (DISCUSSIONS) --------------------------------------DISCUSSIONS
+		// RUTAS PARA COMENTARIOS (DISCUSSIONS) --------------------------------------DISCUSSIONS
 
 	case '/api/v1/user/comment/create':
 		if(!req.body) {  // POST
@@ -1951,7 +1951,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	// RUTAS PARA SUPERVISORES --------------------------------------------------
+		// RUTAS PARA SUPERVISORES --------------------------------------------------
 
 	case '/api/v1/supervisor/user/getdetails':
 		if(!req.query) {  // GET
@@ -2010,7 +2010,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	// NO HAY RUTAS --------------------------------------------------------------
+		// NO HAY RUTAS --------------------------------------------------------------
 
 	default:
 		res.status(404).json({
