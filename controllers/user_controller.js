@@ -279,7 +279,6 @@ module.exports = {
 					});
 				} else {
 					const result = permissions.access(key_user,user,'user');
-					//console.log(result); // eslint-disable-line
 					if(result.canRead) {
 						var send_user = {
 							userid	: user._id,
@@ -348,7 +347,6 @@ module.exports = {
 					});
 				} else {
 					//const result = permissions.access(key_user,user,'user');
-					//console.log(result); // eslint-disable-line
 					var send_user = {
 						username		: user.name,
 						org					: user.org.name,
@@ -408,8 +406,6 @@ module.exports = {
 							'message': 'User -' + username + '- does not exist'
 						});
 					} else {
-						//console.log(key_user); // eslint-disable-line
-						//console.log(user); // eslint-disable-line
 						const result = permissions.access(key_user,user,'user');
 						if(result.canRead) {
 							var send_user = {
@@ -731,7 +727,6 @@ module.exports = {
 						what: 'User change',
 						when: now
 					});
-					//console.log(JSON.stringify(user,null,2));
 					user.save()
 						.then((user) => {
 							res.status(200).json({

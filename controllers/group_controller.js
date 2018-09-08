@@ -36,6 +36,13 @@ module.exports = {
 					if(key_user.roles.isAdmin || key_user.roles.isBusiness) {
 						if(!group.orgUnit) {
 							group.orgUnit = key_user.orgUnit._id;
+						} else {
+							if(!mongoose.Types.ObjectId.isValid(req.body.orgUnit)) {
+								res.status(200).json({
+									'status': 401,
+									'message': 'Error: orgUnit is not a valid ObjectID'
+								});
+							}
 						}
 					} else {
 						group.orgUnit = key_user.orgUnit._id;
@@ -92,7 +99,7 @@ module.exports = {
 									'message': 'Error -: group -' + group.code + '- already exists'
 								});
 							} else {
-								Err.sendError(res,err,'group_controller','group_controller','create -- creating Group --');
+								Err.sendError(res,err,'group_controller','create -- creating Group --');
 							}
 						});
 				} else {
@@ -2097,7 +2104,7 @@ module.exports = {
 		Roster.findOne({student: key_user._id, group: groupid})
 			.populate([{
 				path: 'group',
-				select: 'course code admin presentBlockBy beginDate endDate dates lapse lapseBlocks',
+				select: 'course name code admin presentBlockBy beginDate endDate dates lapse lapseBlocks',
 				populate: [{
 					path: 'course',
 					match: { isVisible: true, status: 'published'},
@@ -2123,6 +2130,15 @@ module.exports = {
 				// o hay un error... posiblemente error de token?
 				if(item) {
 					const studentStatus = item.status;
+					// Detener el flujo aquí si el curso está inactivo
+					if(!item.group.course) {
+						res.status(200).json({
+							'status'	: 204,
+							'message'	: `Course for group -${item.group.name}- is not available, not visible or not published`
+						});
+						return;
+					}
+					//
 					const blocks = item.group.course.blocks;
 					// Averiguamos si el bloque debe presentarse por fecha y/o por lapso (también fecha)
 					// En todo caso, ambas fechas deben ser menores a la actual.
@@ -2349,7 +2365,7 @@ module.exports = {
 									{
 										path: 'questionnarie',
 										match: { isVisible: true },
-										select: 'type begin minimum maxAttempts questions w shuffle show'
+										select: 'type begin minimum maxAttempts questions w shuffle show diagnostic'
 									},
 									{
 										path: 'task',
@@ -2425,26 +2441,29 @@ module.exports = {
 												q.options.forEach(function(o) {
 													options.push({
 														name	: o.name,
-														value	: o.value
+														value	: o.value,
+														eval	: o.eval
 													});
 												});
 												send_question.options = options;
 											}
 											var answers = new Array();
 											var answer = {};
-											q.answers.forEach(function(a) {
-												answer = {
-													type	: a.type,
-													index	: a.index,
-													text	: a.text,
-													tf		: a.tf,
-												};
-												if(a.group && a.group.length > 0) {
-													answer.group = a.group;
-												}
-											});
-											answers.push(answer);
-											send_question.answers = answers;
+											if(q.answers && q.answers.length > 0){
+												q.answers.forEach(function(a) {
+													answer = {
+														type	: a.type,
+														index	: a.index,
+														text	: a.text,
+														tf		: a.tf,
+													};
+													if(a.group && a.group.length > 0) {
+														answer.group = a.group;
+													}
+													answers.push(answer);
+												});
+												send_question.answers = answers;
+											}
 											send_questions.push(send_question);
 										});
 										// si está configurado que se vayan en random, ponlas en random
@@ -2472,6 +2491,9 @@ module.exports = {
 											w							: questionnarie.w,
 											questions			: send_questions_shuffle
 										};
+										if(questionnarie.diagnostic && questionnarie.diagnostic.aspects && questionnarie.diagnostic.aspects.length > 0) {
+											send_questionnarie.diagnostic = questionnarie.diagnostic;
+										}
 										send_block.questionnarie = send_questionnarie;
 									}
 									if(block.type === 'task' && block.task) {
@@ -2540,7 +2562,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'group_controller','nextBlock -- Finding Roster -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid);
+				Err.sendError(res,err,'group_controller','nextBlock -- Finding Roster --',false,false, `User: ${key_user.name} Userid: ${key_user._id} GroupId: ${groupid} BlockId: ${blockid}`);
 			});
 	}, // nextBlock
 
@@ -2630,7 +2652,6 @@ module.exports = {
 									if(users[i]._id +'' === user + '') {
 										users.splice(i,1);
 										keep = false;
-										//console.log('cortando ' + user );
 									} else {
 										i++;
 									}

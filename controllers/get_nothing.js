@@ -18,7 +18,6 @@ module.exports = {
 		res.writeHead(200,{'Content-type':'text/html'});
 		while (i < loop) { // tic-tac
 			encrypted = encryptPass(unencrypted);
-			console.log(i + ': \t' + unencrypted + '\t' + encrypted);
 			sendResponse(res,'<b>'+ i + '</b>: \t' + unencrypted + '\t' + encrypted + '<br>');
 			i++;
 		}

@@ -16,7 +16,6 @@ module.exports = {
 					'status': 404,
 					'message': 'Error with log file: ' + err
 				});
-				//console.log(err);
 			} else {
 				var dataArray = (data).split('\n');
 				if(dataArray && dataArray.length > 0) {
@@ -30,7 +29,6 @@ module.exports = {
 					for(var i = 0; i < dataArray.length; i++) {
 						dataArray[i] = JSON.parse(dataArray[i]);
 					}
-					//console.log(dataArray)
 					res.status(200).json({
 						'status': 200,
 						'message': dataArray
@@ -51,7 +49,6 @@ module.exports = {
 		fs.truncate(todayLog,0,(err) => {
 			if(err) {
 				Err.sendError(res,err,'log_controller','truncate -- Emptying log file --');
-				//console.log(err);
 			} else {
 				logger.info('This log file was emptied by admin -' + key_user.name + ' at ' + moment().format('YYYY-MMM-DD HH:MM'));
 				res.status(200).json({

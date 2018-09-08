@@ -232,7 +232,6 @@ module.exports = {
 									}
 								});  // termina el bucle
 								if(ouTOinsert) {
-									//console.log(JSON.stringify(ouTOinsert,null,2));
 									OrgUnit.insertMany(ouTOinsert)
 										.catch((err) => {
 											sendError(res,err,'massiveRegister -- Inserting OrgUnits --');

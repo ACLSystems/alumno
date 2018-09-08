@@ -150,7 +150,6 @@ module.exports = {
 			.group({ _id: '$group', usersOnTrack:{$sum:1}})
 			.then((resultsT) => {
 				// Resultados de Track
-				//console.log(resultsT);
 				var group_ids = new Array();
 				var results 	= resultsT;
 				results.forEach(function(res) {
@@ -160,8 +159,6 @@ module.exports = {
 					.match({orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},pass:true})
 					.group({ _id: '$group', usersPassed:{$sum:1}})
 					.then((resultsP) => {
-						//console.log(resultsP);
-						//console.log(results.length);
 						if(resultsP.length > 0){
 							resultsP.forEach(function(res) {
 								var i = 0;
@@ -231,7 +228,6 @@ module.exports = {
 													i++;
 												}
 											});
-											//console.log(results);
 											var totalTracks = 0;
 											var totalPassed = 0;
 											var totalUsers 	= 0;
