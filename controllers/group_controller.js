@@ -9,6 +9,7 @@ const Block 			= require('../src/blocks'										);
 const Dependency 	= require('../src/dependencies'							);
 const Err 				= require('../controllers/err500_controller');
 const mailjet 		= require('../shared/mailjet'								);
+const Notification = require('../src/notifications'						);
 const TA 					= require('time-ago'												);
 //const winston 		= require('winston'													);
 
@@ -514,6 +515,19 @@ module.exports = {
 										new_roster.save()
 											.then(() => {
 												mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado al curso ' + group.course.title,339994,link,group.course.title);
+												var not = new Notification({
+													destination: {
+														kind: 'users',
+														item: student._id,
+														role: 'user'
+													},
+													type: 'system',
+													message: 'Has sido enrolado al curso ' + group.course.title
+												});
+												not.save()
+													.catch((err) => {
+														Err.sendError(res,err,'group_controller','createRoster -- Creating Notification --',false,false,`Group: ${group.name} Student: ${student.person.email}`);
+													});
 											})
 											.catch((err) => {
 												Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
