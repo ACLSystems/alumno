@@ -1,5 +1,6 @@
 const mongoose 		= require('mongoose');
 const User 				= require('../src/users'										);
+const orgUnit 		= require('../src/orgUnits'									);
 const Course 			= require('../src/courses'									);
 const Group 			= require('../src/groups'										);
 const Roster 			= require('../src/roster'										);
@@ -106,22 +107,35 @@ module.exports = {
 					//	---------
 					group.roster = new Array();
 					group.students = new Array();
-					Group.create(group)
-						.then((grp) => {
-							res.status(200).json({
-								'status': 200,
-								'message': 'Group -' + grp.code + '- created'
-							});
+					orgUnit.findById(group.orgUnit).lean()
+						.then((ou) => {
+							if(ou) {
+								Group.create(group)
+									.then((grp) => {
+										res.status(200).json({
+											'status': 200,
+											'message': 'Group -' + grp.code + '- created'
+										});
+									})
+									.catch((err) => {
+										if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
+											res.status(200).json({
+												'status': 406,
+												'message': 'Error -: group -' + group.code + '- already exists'
+											});
+										} else {
+											Err.sendError(res,err,'group_controller','create -- creating Group --');
+										}
+									});
+							} else {
+								res.status(200).json({
+									'status': 401,
+									'message': 'Error -: orgUnit -' + group.orgUnit + '- does not exists'
+								});
+							}
 						})
 						.catch((err) => {
-							if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
-								res.status(406).json({
-									'status': 406,
-									'message': 'Error -: group -' + group.code + '- already exists'
-								});
-							} else {
-								Err.sendError(res,err,'group_controller','create -- creating Group --');
-							}
+							Err.sendError(res,err,'group_controller','create -- Finding orgUnit --');
 						});
 				} else {
 					res.status(200).json({
