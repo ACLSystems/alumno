@@ -57,4 +57,4 @@ doc/Oferta*
 /src/*NO_USAR*
 /*/*_notUse*
 alumno.start.*
-*_alumno-test.sh
+*_alumno*.sh
