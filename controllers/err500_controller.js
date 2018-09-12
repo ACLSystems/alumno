@@ -1,5 +1,6 @@
 const mailjet 	= require('../shared/mailjet'	);
 const ErrorReg	= require('../src/errors'			);
+const version 	= require('../shared/version'	);
 
 //const devEmail		= 'arturocastro@aclsystems.mx';
 const devEmail		= process.env.DEV_EMAIL;
@@ -30,7 +31,8 @@ exports.sendError = function(res,errorObj,controller,section,send,send_mail,mess
 					'status'	: 500,
 					'message'	: 'Error',
 					'Error'		: stringError,
-					'id'			: errObj._id
+					'id'			: errObj._id,
+					'app'			: version.app
 				});
 			}
 		})

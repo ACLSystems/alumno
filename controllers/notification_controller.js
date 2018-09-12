@@ -149,7 +149,7 @@ module.exports = {
 							date						: notification.date,
 							objects					: notification.objects
 						};
-						if(not.source.kind === 'users') {
+						if(not.source.kind === 'users' && not.type === 'user') {
 							delete not.source.item.password;
 							delete not.source.item.perm;
 							delete not.source.item.admin;
