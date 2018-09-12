@@ -521,6 +521,20 @@ module.exports = {
 														item: student._id,
 														role: 'user'
 													},
+													objects: [
+														{
+															kind: 'courses',
+															item: group.course._id
+														},
+														{
+															kind: 'groups',
+															item: group._id
+														},
+														{
+															kind: 'blocks',
+															item: group.course.blocks[0]._id
+														}
+													],
 													type: 'system',
 													message: 'Has sido enrolado al curso ' + group.course.title
 												});
