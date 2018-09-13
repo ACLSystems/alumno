@@ -749,6 +749,7 @@ module.exports = {
 						groupid			: group._id,
 						groupcode		: group.code,
 						groupname		: group.name,
+						groupStatus : group.status,
 						coursetitle	: group.course.title,
 						courseid		: group.course._id,
 						instructor	: `${group.instructor.person.name} ${group.instructor.person.fatherName}`,
