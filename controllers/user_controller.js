@@ -733,6 +733,12 @@ module.exports = {
 								'status': 200,
 								'message': user.name
 							});
+							var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
+							var templateId = template_user_admin;
+							mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
+								.catch((err) => {
+									Err.sendError(res,err,'user_controller','changeUser -- Sending Mail --');
+								});
 						})
 						.catch((err) => {
 							var errString = err.toString();
