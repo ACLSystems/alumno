@@ -1757,6 +1757,7 @@ module.exports = {
 								minTrack					: item.minTrack + '%',
 								pass							: item.pass,
 								passDate					: item.passDate,
+								passDateSpa				: dateInSpanish(item.passDate),
 								blocks						: blocks
 							};
 							if(item.group.course.duration) {
