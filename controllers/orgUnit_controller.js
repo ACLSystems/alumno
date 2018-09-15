@@ -1,8 +1,7 @@
 const Org = require('../src/orgs');
 const OrgUnit = require('../src/orgUnits');
-//const Users = require('../src/users');
+const Err = require('../controllers/err500_controller');
 
-const logger = require('../shared/winston-logger');
 
 module.exports = {
 	//register(req, res, next) {
@@ -60,26 +59,18 @@ module.exports = {
 									ouProps.mod.push(mod);
 									OrgUnit.create(ouProps)
 										.then(() => {
-											logger.info('OU -' + ouProps.name + '- created under -' + org.name + '- org');
 											res.status(201).json({
 												'status': 201,
 												'message': 'OU -' + ouProps.name + '- created under -' + org.name + '- org'
 											});
 										})
 										.catch((err) => {
-											const mess = {id: 409, error: 'Error: OU -' + ouProps.name + '- already exists'};
-											logger.warn(mess);
-											res.status(409).json({
-												'status': 409,
-												'message': 'OU -' + ouProps.name + '- already exists'
-											});
+											Err.sendError(res,err,'orgUnit_controller','create -- orgUnit --');
 										});
 								} else {
 									OrgUnit.findOne({ name: ouProps.parent}, { name: true })
 										.then((orgunitParent) => {
 											if(!orgunitParent) {
-												const mess = {id: 404, error: 'Error: Parent OU -' + ouProps.parent + '- does not exist'};
-												logger.warn(mess);
 												res.status(404).json({
 													'status': 404,
 													'message': 'Parent OU -' + ouProps.parent + '- does not exist'
@@ -110,25 +101,24 @@ module.exports = {
 												ouProps.mod.push(mod);
 												OrgUnit.create(ouProps)
 													.then(() => {
-														logger.info('OU -' + ouProps.name + '- created under -' + org.name + '- org');
 														res.status(201).json({
 															'status': 201,
 															'message': 'OU -' + ouProps.name + '- created under -' + org.name + '- org'
 														});
 													})
 													.catch((err) => {
-														sendError(res,err,'register -- Create orgUnit --');
+														Err.sendError(res,err,'orgUnit_controller','create -- Finding orgUnit --');
 													});
 											}
 										})
 										.catch((err) => {
-											sendError(res,err,'register -- Finding parent orgUnit --');
+											Err.sendError(res,err,'orgUnit_controller','create -- Finding parent orgUnit --');
 										});
 								}
 							}
 						})
 						.catch((err) => {
-							sendError(res,err,'register -- Finding Org --');
+							Err.sendError(res,err,'orgUnit_controller','create -- Finding org --');
 						});
 				} //else3
 			} else { // else aqui
@@ -234,7 +224,7 @@ module.exports = {
 								if(ouTOinsert) {
 									OrgUnit.insertMany(ouTOinsert)
 										.catch((err) => {
-											sendError(res,err,'massiveRegister -- Inserting OrgUnits --');
+											Err.sendError(res,err,'orgUnit_controller','massiveRegister -- Inserting orgUnits --');
 										});
 									numOU.inserted = ouTOinsert.length;
 								}
@@ -242,7 +232,7 @@ module.exports = {
 									ouToUpdate.forEach(function(ou2Up) {
 										OrgUnit.update({_id: ou2Up._id}, {$set: ou2Up})
 											.catch((err) => {
-												sendError(res,err,'massiveRegister -- Updating OrgUnits --');
+												Err.sendError(res,err,'orgUnit_controller','massiveRegister -- updating orgUnits --');
 											});
 									});
 									numOU.updated = ouToUpdate.length;
@@ -256,7 +246,7 @@ module.exports = {
 								});
 							})
 							.catch((err) => {
-								sendError(res,err,'massiveRegister -- Finding OrgUnits --');
+								Err.sendError(res,err,'orgUnit_controller','massiveRegister -- Finding orgUnits --');
 							});
 					} else {
 						res.status(404).json({
@@ -266,7 +256,7 @@ module.exports = {
 					}
 				})
 				.catch((err) => {
-					sendError(res,err,'massiveRegister -- Finding Orgs --');
+					Err.sendError(res,err,'orgUnit_controller','massiveRegister -- Finding orgs --');
 				});
 		} // else2
 	}, //massiveRegister
@@ -366,11 +356,11 @@ module.exports = {
 						});
 					})
 					.catch((err) => {
-						sendError(res,err,'OU list -- Finding OrgUnits --');
+						Err.sendError(res,err,'orgUnit_controller','list -- Finding orgUnit --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'OU list -- Finding Org --');
+				Err.sendError(res,err,'orgUnit_controller','list -- Finding org --');
 			});
 	}, // list
 
@@ -406,23 +396,12 @@ module.exports = {
 						});
 					})
 					.catch((err) => {
-						sendError(res,err,'OU list -- Finding OrgUnits --');
+						Err.sendError(res,err,'orgUnit_controller','publiclist -- Finding orgUnit --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'OU list -- Finding Org --');
+				Err.sendError(res,err,'orgUnit_controller','publiclist -- Finding orgUnit --');
 			});
 	}, // publiclist
 
 };
-
-function sendError(res, err, section) {
-	logger.error('orgUnit controller -- Section: ' + section + '----');
-	logger.error(err);
-	res.status(500).json({
-		'status': 500,
-		'message': 'Error',
-		'Error': err.message
-	});
-	return;
-}
