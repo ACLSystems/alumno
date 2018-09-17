@@ -107,6 +107,10 @@ const CoursesSchema = new Schema ({
 		type: String,
 		enum: ['s', 'm', 'h', 'd', 'w', 'mo', 'y'],
 		default: 'h'
+	},
+	order: {
+		type: Number,
+		default: 0
 	}
 });
 

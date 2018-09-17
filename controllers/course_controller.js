@@ -88,18 +88,82 @@ module.exports = {
 		const date 			= new Date();
 		Promise.all([
 			Course.findById(req.body.tocourseid),
-			Course.findById(req.body.fromcourseid)
+			Course.findById(req.body.fromcourseid).populate('blocks')
 		])
 			.then((results) => {
 				if(results && results.length > 0) {
 					var [tocourse,fromcourse] = results;
 					if(fromcourse && fromcourse.blocks && fromcourse.blocks.length > 0){
-						tocourse.blocks.push(fromcourse.blocks);
+						var prefix 			= req.body.prefix;
+						var pad 				= parseInt(req.body.pad);
+						var postfix 		= tocourse.order || 0;
+						var section 		= tocourse.currentSection;
+						var number 			= tocourse.nextNumber;
+						var fromSection = section;
+						fromcourse.blocks.forEach(function(block) {
+							var padded 		= postfix + '';
+							padded = padded.padStart(pad,'0');
+							var newBlock = new Block({
+								org					: block.org,
+								code				: prefix + '-' + padded,
+								type				: block.type,
+								title				: block.title,
+								begin 			: block.begin,
+								content			: block.content,
+								media				: block.media,
+								keywords		: block.keywords,
+								defaultmin 	: block.defaultmin,
+								rules				: block.rules,
+								questionnarie : block.questionnarie,
+								task				: block.task,
+								w 					: block.w,
+								wq					: block.wq,
+								wt					: block.wt,
+								duration		: block.duration,
+								durationUnits	: block.durationUnits,
+								status			: 'draft',
+								version 		: 1,
+								isVisible 	: false,
+								own					: {
+									user: key_user.name,
+									org: key_user.org.name,
+									orgUnit: key_user.orgUnit.name
+								},
+								mod					: generateMod(key_user.name,'Block cloned from ' + block.code),
+								perm				: generatePerm(key_user.name,key_user.org.name,key_user.orgUnit.name)
+							});
+							if(tocourse.keywords) {
+								newBlock.keywords = parseArray(tocourse.keywords);
+							}
+							if(block.section !== fromSection) {
+								section++;
+								number = 0;
+								fromSection = block.section;
+							}
+							newBlock.section 	= section;
+							newBlock.number		= number;
+							newBlock.order		= postfix;
+							number++;
+							postfix++;
+							if(!newBlock.title && block.title) {
+								newBlock.title = block.title;
+							}
+							newBlock.save()
+								.catch((err) => {
+									sendError(res,err,'clonecourse -- Saving block -- order: ' + postfix);
+									return;
+								});
+							tocourse.blocks.push(newBlock._id);
+							tocourse.order = postfix;
+						});
 						tocourse.mod.push({
 							by: key_user.name,
 							when: date,
 							what: `Blocks cloned from ${fromcourse.code}`
 						});
+						tocourse.currentSection = section;
+						tocourse.nextNumber			= number;
+						tocourse.order 					= postfix;
 						tocourse.save()
 							.then(() => {
 								res.status(200).json({
