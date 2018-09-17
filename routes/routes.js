@@ -173,6 +173,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/author/course/modifyresource',			CourseController.modifyResource);
 	app.get ('/api/v1/author/course/getresource', 				CourseController.getResource);
 	app.post('/api/v1/author/course/createdependency', 		CourseController.createDependency);
+	app.put ('/api/v1/author/course/clone',								CourseController.clone);
 
 
 	// Rutas para roles de 'isAdmin'

@@ -83,6 +83,51 @@ module.exports = {
 			});
 	}, // fin del create
 
+	clone(req,res) {
+		const key_user 	= res.locals.user;
+		const date 			= new Date();
+		Promise.all([
+			Course.findById(req.body.tocourseid),
+			Course.findById(req.body.fromcourseid)
+		])
+			.then((results) => {
+				if(results && results.length > 0) {
+					var [tocourse,fromcourse] = results;
+					if(fromcourse && fromcourse.blocks && fromcourse.blocks.length > 0){
+						tocourse.blocks.push(fromcourse.blocks);
+						tocourse.mod.push({
+							by: key_user.name,
+							when: date,
+							what: `Blocks cloned from ${fromcourse.code}`
+						});
+						tocourse.save()
+							.then(() => {
+								res.status(200).json({
+									'status': 200,
+									'message': `Blocks from ${fromcourse.title} cloned to ${tocourse.title}`
+								});
+							})
+							.catch((err) => {
+								sendError(res,err,'clonecourse -- Saving tocourse --');
+							});
+					} else {
+						res.status(200).json({
+							'status': 404,
+							'message': 'fromcourse has no blocks. Please review and try again'
+						});
+					}
+				} else {
+					res.status(200).json({
+						'status': 404,
+						'message': 'Some courseid not found. Please review and try again'
+					});
+				}
+			})
+			.catch((err) => {
+				sendError(res,err,'clonecourse -- Finding Courses --');
+			});
+	}, //clone
+
 	listCategories(req,res) {
 		var sort = { name: 1 };
 		var skip = 0;

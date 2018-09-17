@@ -3,7 +3,7 @@ const Users 	= require('../src/users'										);
 const Session = require('../src/sessions'									);
 const Err 		= require('../controllers/err500_controller');
 
-const logger = require('../shared/winston-logger');
+//const logger = require('../shared/winston-logger');
 
 //const validateUser = require('../routes/auth').validateUser;
 

@@ -958,6 +958,28 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
+
+	case '/api/v1/author/course/clone':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by body to process'
+			});
+		} else if (!req.body.tocourseid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: tocourse id is required'
+			});
+		} else if (!req.body.fromcourseid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: fromcourse id is required'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/course/listcategories':
 		if(!req.query) {  // GET
 			res.status(406).json({
