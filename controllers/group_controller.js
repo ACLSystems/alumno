@@ -1257,7 +1257,7 @@ module.exports = {
 							});
 						})
 						.catch((err) => {
-							Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster -- Roster: ' + item._id + key_user.name);
+							Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster -- Roster: ' + item._id + ' User: '+ key_user.name + 'Quest: ' + quest);
 						});
 				} else {
 					res.status(200).json({
