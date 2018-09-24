@@ -65,7 +65,7 @@ var auth = {
 // private Methods
 
 function genToken(user) {
-	var expires = expiresIn(1);  // 7 días
+	var expires = expiresIn(parseInt(process.env.EXPIRES));  //número de días para que el token expire
 	var token = jwt.encode({
 		user: user.name,
 		exp: expires
