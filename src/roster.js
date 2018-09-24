@@ -1,5 +1,6 @@
 // Definir requerimientos
 const mongoose			= require('mongoose');
+const ModSchema			= require('./modified');
 const Certificate		= require('./certificates');
 const Schema 				= mongoose.Schema;
 
@@ -341,7 +342,8 @@ const RosterSchema = new Schema ({
 	certificateNumber: {
 		type: Number,
 		default: 0
-	}
+	},
+	mod: [ModSchema]
 });
 
 // Definir virtuals

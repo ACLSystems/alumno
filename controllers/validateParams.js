@@ -153,6 +153,32 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/admin/user/modrs':
+		if(!req.body){
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please give data by body to process'
+			});
+		} else if(!req.body.status) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please give status by body to process'
+			});
+		} else if(!req.body.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please give group id by body to process'
+			});
+		} else if(req.body.roster && !Array.isArray(req.body.roster)) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please give Array in roster by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/myroles':
 		next();
 		break;

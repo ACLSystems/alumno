@@ -137,7 +137,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/instructor/group/mylist', 					GroupController.myList);
 	app.put ('/api/v1/instructor/group/createroster',			GroupController.createRoster);
 	app.get ('/api/v1/instructor/group/listroster', 			GroupController.listRoster);
-	app.post('/api/v1/instructor/group/addstudent', 			GroupController.addStudent);
+	//app.post('/api/v1/instructor/group/addstudent', 			GroupController.addStudent);
 	app.get ('/api/v1/instructor/group/studenttask', 			GroupController.studentTask);
 	app.get ('/api/v1/instructor/group/studentgrades',		GroupController.studentGrades);
 	app.get ('/api/v1/instructor/group/studenthistoric',	GroupController.studentHistoric);
@@ -199,6 +199,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/admin/error/get', 					ErrorMessController.get);
 	app.put ('/api/v1/admin/error/close', 				ErrorMessController.close);
 	app.put ('/api/v1/admin/error/closeseveral', 	ErrorMessController.closeSeveral);
+	app.put ('/api/v1/admin/user/modrs',					GroupController.modifyRosterStatus);
 	app.delete ('/api/v1/admin/log/truncate', 		logController.truncate);
 
 	// Rutas para roles de 'isOrg'

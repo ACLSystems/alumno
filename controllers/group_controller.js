@@ -390,7 +390,7 @@ module.exports = {
 					var mod = {
 						by: key_user.name,
 						when: date,
-						what: 'Adding student to roster'
+						what: 'Adding student(s) to roster'
 					};
 					const blocks			= group.course.blocks;
 					Dependency.find({block: {$in: blocks}})
@@ -431,6 +431,7 @@ module.exports = {
 								.then((students) => {
 									var my_roster 		= new Array();
 									var new_students	= new Array();
+									var status				= roster.status || 'pending';
 									students.forEach(function(student) {
 										var grade = new Array();
 										var sec = 0;
@@ -497,7 +498,7 @@ module.exports = {
 										//
 										var new_roster = new Roster({
 											student		: student,
-											status		: 'pending',
+											status		: status,
 											grades		: grade,
 											group			: group._id,
 											minGrade	: group.minGrade,
@@ -509,7 +510,12 @@ module.exports = {
 												what		: 'Roster creation',
 												who			: key_user.name,
 												when		: date
-											}]
+											}],
+											mod 		: [{
+												what		: 'Roster creation',
+												who			: key_user.name,
+												when		: date
+											}],
 										});
 										new_students.push(student._id);
 										my_roster.push(new_roster._id);
@@ -634,7 +640,7 @@ module.exports = {
 			});
 	},
 
-	// FALTA ARREGLAR addStudent!!!
+	/*
 	addStudent(req,res) {
 		const key_user 	= res.locals.user;
 		var roster = req.body;
@@ -704,6 +710,58 @@ module.exports = {
 				Err.sendError(res,err,'group_controller','addStudent -- Finding Group --');
 			});
 	}, //addStudent
+	*/
+
+	modifyRosterStatus(req,res) {
+		const key_user 	= res.locals.user;
+		var groupid			= req.body.groupid;
+		var roster			= req.body.roster;
+		var status			= req.body.status;
+		var query				= { group: groupid };
+
+		if(roster && roster.length > 0) {
+			query.student = { $in: roster };
+		}
+		const date = new Date();
+		Roster.find(query).select('_id mod').lean()
+			.then((results) => {
+				if(results && results.length > 0) {
+					results.forEach(function(item) {
+						var mod = new Array();
+						if(item.mod && item.mod.length > 0){
+							mod = item.mod;
+							mod.push({
+								by: key_user.name,
+								when: date,
+								what: 'Changing status to ' + status
+							});
+						} else {
+							mod = [{
+								by: key_user.name,
+								when: date,
+								what: 'Changing status to ' + status
+							}];
+						}
+						Roster.findByIdAndUpdate(item._id,{$set: {status: status, mod: mod}})
+							.catch((err) => {
+								Err.sendError(res,err,'group_controller','modifyRosterStatus -- Updating status --', false,false,'Roster: ' + item + ' status: ' + status);
+							});
+					});
+					res.status(200).json({
+						'status': 200,
+						'message': 'Status modified'
+					});
+				} else {
+					res.status(200).json({
+						'status': 404,
+						'message': 'No rosters found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','modifyRosterStatus -- Finding rosters --');
+			});
+	}, //modifyRosterStatus
 
 	listRoster(req,res) {
 		// ESTE API debe arreglarse para listar solo a personal autorizado
