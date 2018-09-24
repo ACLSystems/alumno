@@ -38,7 +38,7 @@ const FiscalSchema = new Schema ({
 	id: { // se usará como el RFC
 		type: String
 	},
-	Address: {
+	address: {
 		type: String
 	},
 	type: {
@@ -194,6 +194,10 @@ const AdmUsrSchema = new Schema({
 		default: true
 	},
 	isVerified: {
+		type: Boolean,
+		default: false
+	},
+	isDataVerified: {
 		type: Boolean,
 		default: false
 	},

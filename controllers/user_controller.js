@@ -220,6 +220,7 @@ module.exports = {
 				if(user) {
 					if(token === user.admin.validationString){
 						user.admin.isVerified = true;
+						user.admin.isDataVerified = true;
 						user.admin.validationString = '';
 						user.admin.adminCreate = false;
 						user.admin.passwordSaved = 'saved';
@@ -303,22 +304,66 @@ module.exports = {
 						}
 						if(user.student){
 							send_user.student = {
-								studentid	: user.student.id,
+								id				: user.student.id,
 								career		: user.student.career,
 								term			: user.student.term,
 								isActive	: user.student.isActive,
-								type			: user.student.type
+								type			: user.student.type,
+								external	: user.student.external,
+								origin		: user.student.origin
 							};
 							if(user.student.external) { send_user.student.external 	= user.student.external;}
 							if(user.student.origin	) { send_user.student.origin 		= user.student.origin;  }
 						}
 						if(user.corporate) {
 							send_user.corporate = {
-								corporateid	: user.corporate.id,
+								id					: user.corporate.id,
 								isActive		: user.corporate.isActive,
 								type				: user.corporate.type
 							};
 						}
+						if(user.admin) {
+							send_user.admin = {
+								isActive		: user.admin.isActive,
+								isVerified	: user.admin.isVerified,
+								isDataVerified : user.admin.isDataVerified
+							};
+						}
+						if(user.address) {
+							send_user.address = {
+								line1				: user.address.line1,
+								line2				: user.address.line2,
+								postalCode	: user.address.postalCode,
+								locality		: user.address.locality,
+								city				: user.address.city,
+								state				: user.address.state,
+								country			: user.address.country
+							};
+						}
+						if(user.fiscal) {
+							send_user.fiscal = {
+								id					:	user.fiscal.id,
+								address			: user.fiscal.address,
+								type				: user.fiscal.type
+							};
+						}
+						if(user.geometry) {
+							send_user.geometry = {
+								type				: user.geometry.type,
+								coordinates	: user.geometry.coordinates
+							};
+						}
+						if(user.preferences) {
+							send_user.preferences = {
+								alwaysSendEmail : user.preferences.alwaysSendEmail
+							};
+						} else {
+							send_user.preferences = {
+								alwaysSendEmail : false
+							};
+						}
+						send_user.char1 = user.char1;
+						send_user.char2 = user.char2;
 						res.status(200).json(send_user);
 					} else {
 						res.status(403).json({
