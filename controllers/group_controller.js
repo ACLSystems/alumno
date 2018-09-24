@@ -10,6 +10,7 @@ const Dependency 	= require('../src/dependencies'							);
 const Err 				= require('../controllers/err500_controller');
 const mailjet 		= require('../shared/mailjet'								);
 const Notification = require('../src/notifications'						);
+const Attempt 		= require('../src/attempts'									);
 const TA 					= require('time-ago'												);
 //const winston 		= require('winston'													);
 
@@ -1249,15 +1250,27 @@ module.exports = {
 						}
 						item.grades = [myGrade];
 					}
-					item.save()
+					const attempt = new Attempt({
+						attempt : quest,
+						roster	: item._id,
+						block		: blockid,
+						user		: key_user._id
+					});
+					attempt.save()
 						.then(() => {
-							res.status(200).json({
-								'status': 200,
-								'message': 'Attempt saved'
-							});
+							item.save()
+								.then(() => {
+									res.status(200).json({
+										'status': 200,
+										'message': 'Attempt saved'
+									});
+								})
+								.catch((err) => {
+									Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + ' Quest: ' + quest, ' Attempt: ' + attempt._id);
+								});
 						})
 						.catch((err) => {
-							Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + 'Quest: ' + quest);
+							Err.sendError(res,err,'group_controller','createAttempt -- Saving attempt --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + ' Quest: ' + quest);
 						});
 				} else {
 					res.status(200).json({
