@@ -1324,11 +1324,11 @@ module.exports = {
 									});
 								})
 								.catch((err) => {
-									Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + ' Quest: ' + quest, ' Attempt: ' + attempt._id);
+									Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + ' Quest: ' + JSON.stringify(quest), ' Attempt: ' + attempt._id);
 								});
 						})
 						.catch((err) => {
-							Err.sendError(res,err,'group_controller','createAttempt -- Saving attempt --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + ' Quest: ' + quest);
+							Err.sendError(res,err,'group_controller','createAttempt -- Saving attempt --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + ' Quest: ' + JSON.stringify(quest));
 						});
 				} else {
 					res.status(200).json({
