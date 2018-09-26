@@ -817,92 +817,99 @@ module.exports = {
 		//userProps.person.birthDate = birthDate.toDate();
 		User.findOne({ 'name': userProps.name })
 			.then((user) => {
-				const result = permissions.access(key_user,user,'user');
-				if(result.canModify || key_user.roles.isAdmin) {
-					if(userProps.person && !user.admin.isDataVerified) {
-						if(userProps.person.hasOwnProperty('name')			) {user.person.name 			= properCase(userProps.person.name);}
-						if(userProps.person.hasOwnProperty('fatherName')) {user.person.fatherName	= properCase(userProps.person.fatherName);}
-						if(userProps.person.hasOwnProperty('motherName')) {user.person.motherName	= properCase(userProps.person.motherName);}
-						user.admin.isDataVerified = true;
-					}
-					if(userProps.person && (userProps.person.name || userProps.person.fatherName || userProps.person.motherName) && user.admin.isDataVerified) {
-						res.status(200).json({
-							'status'	: 401,
-							'message'	: 'You cannot modify name. Data already verified'
+				if(user) {
+					const result = permissions.access(key_user,user,'user');
+					if(result.canModify || key_user.roles.isAdmin) {
+						if(userProps.person && !user.admin.isDataVerified) {
+							if(userProps.person.hasOwnProperty('name')			) {user.person.name 			= properCase(userProps.person.name);}
+							if(userProps.person.hasOwnProperty('fatherName')) {user.person.fatherName	= properCase(userProps.person.fatherName);}
+							if(userProps.person.hasOwnProperty('motherName')) {user.person.motherName	= properCase(userProps.person.motherName);}
+							user.admin.isDataVerified = true;
+						}
+						if(userProps.person && (userProps.person.name || userProps.person.fatherName || userProps.person.motherName) && user.admin.isDataVerified) {
+							res.status(200).json({
+								'status'	: 401,
+								'message'	: 'You cannot modify name. Data already verified'
+							});
+							return;
+						}
+						if(userProps.person) {
+							if(userProps.person.hasOwnProperty('birthDate')	) {user.person.birthDate 	= userProps.person.birthDate;	}
+							if(userProps.person.hasOwnProperty('mainPhone')	) {user.person.mainPhone 	= userProps.person.mainPhone;	}
+							if(userProps.person.hasOwnProperty('cellPhone')	) {user.person.cellPhone 	= userProps.person.cellPhone;	}
+							if(userProps.person.hasOwnProperty('genre')			) {user.person.genre 			= userProps.person.genre;			}
+							if(userProps.person.hasOwnProperty('alias')			) {user.person.alias 			= userProps.person.alias;			}
+						}
+						if(userProps.student) {
+							if(userProps.student.hasOwnProperty('id')				) {user.student.id 				= userProps.student.id;				}
+							if(userProps.student.hasOwnProperty('career')		) {user.student.career		= userProps.student.career;		}
+							if(userProps.student.hasOwnProperty('term')			) {user.student.term			= userProps.student.term;			}
+							if(userProps.student.hasOwnProperty('isActive')	) {user.student.isActive	= userProps.student.isActive;	}
+							if(userProps.student.hasOwnProperty('type')			) {user.student.type			= userProps.student.type;			}
+							if(userProps.student.hasOwnProperty('external')	) {user.student.external	= userProps.student.external;	}
+							if(userProps.student.hasOwnProperty('origin')		) {user.student.origin		= userProps.student.origin;		}
+						}
+						if(userProps.fiscal) {
+							if(userProps.fiscal.hasOwnProperty('id')			) {user.fiscal.id				= userProps.fiscal.id;			}
+							if(userProps.fiscal.hasOwnProperty('address')	) {user.fiscal.address	= userProps.fiscal.address;	}
+							if(userProps.fiscal.hasOwnProperty('type')		) {user.fiscal.type			= userProps.fiscal.type;		}
+						}
+						if(userProps.address) {
+							if(userProps.address.hasOwnProperty('line1')			) {user.address.line1					= userProps.address.line1;			}
+							if(userProps.address.hasOwnProperty('line2')			) {user.address.line2					= userProps.address.line2;			}
+							if(userProps.address.hasOwnProperty('postalCode')	) {user.address.postalCode		= userProps.address.postalCode;	}
+							if(userProps.address.hasOwnProperty('locality')		) {user.address.locality			= userProps.address.locality;		}
+							if(userProps.address.hasOwnProperty('city')				) {user.address.city					= userProps.address.city;				}
+							if(userProps.address.hasOwnProperty('state')			) {user.address.state					= userProps.address.state;			}
+							if(userProps.address.hasOwnProperty('country')		) {user.address.country				= userProps.address.country;		}
+						}
+						if(userProps.geometry) {
+							if(userProps.geometry.hasOwnProperty('type')				) {user.geometry.type	= userProps.geometry.type;								}
+							if(userProps.geometry.hasOwnProperty('coordinates')	) {user.geometry.coordinates	= userProps.geometry.coordinates;	}
+						}
+						if(key_user.roles.isAdmin) {
+							if(userProps.hasOwnProperty('report'))	{user.report	= userProps.report;	}
+							if(userProps.hasOwnProperty('char1')) 	{user.char1 	= userProps.char1;	}
+							if(userProps.hasOwnProperty('char2')) 	{user.char2 	= userProps.char2;	}
+							if(userProps.hasOwnProperty('orgUnit')) {user.orgUnit = userProps.orgUnit;}
+							if(userProps.admin){
+								if(userProps.admin.hasOwnProperty('isActive')				) {user.admin.isActive 				= userProps.admin.isActive;				}
+								if(userProps.admin.hasOwnProperty('isVerified')			) {user.admin.isVerified			= userProps.admin.isVerified;			}
+								if(userProps.admin.hasOwnProperty('isDataVerified')	) {user.admin.isDataVerified	= userProps.admin.isDataVerified;	}
+								if(userProps.admin.hasOwnProperty('initialPassword')) {user.admin.initialPassword	= userProps.admin.initialPassword;}
+							}
+							if(userProps.corporate) {
+								if(userProps.corporate.hasOwnProperty('id')				) {user.corporate.id 				= userProps.corporate.id;				}
+								if(userProps.corporate.hasOwnProperty('isActive')	) {user.corporate.isActive 	= userProps.corporate.isActive;	}
+								if(userProps.corporate.hasOwnProperty('type')			) {user.corporate.type 			= userProps.corporate.type;			}
+							}
+						}
+						const date = new Date();
+						const mod = {
+							by: key_user.name,
+							when: date,
+							what: 'User modification'
+						};
+						user.mod.push(mod);
+						user.save().catch((err) => {
+							Err.sendError(res,err,'user_controller','modify -- Saving User--');
 						});
-						return;
+						res.status(200);
+						res.json({
+							'status':200,
+							'message': 'User ' + userProps.name + ' properties modified'
+						});
+					} else {
+						res.status(200);
+						res.json({
+							'status': 403,
+							'message': 'User ' + key_user.name + ' not authorized to modify ' + userProps.name + ' register'
+						});
 					}
-					if(userProps.person) {
-						if(userProps.person.hasOwnProperty('birthDate')	) {user.person.birthDate 	= userProps.person.birthDate;	}
-						if(userProps.person.hasOwnProperty('mainPhone')	) {user.person.mainPhone 	= userProps.person.mainPhone;	}
-						if(userProps.person.hasOwnProperty('cellPhone')	) {user.person.cellPhone 	= userProps.person.cellPhone;	}
-						if(userProps.person.hasOwnProperty('genre')			) {user.person.genre 			= userProps.person.genre;			}
-						if(userProps.person.hasOwnProperty('alias')			) {user.person.alias 			= userProps.person.alias;			}
-					}
-					if(userProps.student) {
-						if(userProps.student.hasOwnProperty('id')				) {user.student.id 				= userProps.student.id;				}
-						if(userProps.student.hasOwnProperty('career')		) {user.student.career		= userProps.student.career;		}
-						if(userProps.student.hasOwnProperty('term')			) {user.student.term			= userProps.student.term;			}
-						if(userProps.student.hasOwnProperty('isActive')	) {user.student.isActive	= userProps.student.isActive;	}
-						if(userProps.student.hasOwnProperty('type')			) {user.student.type			= userProps.student.type;			}
-						if(userProps.student.hasOwnProperty('external')	) {user.student.external	= userProps.student.external;	}
-						if(userProps.student.hasOwnProperty('origin')		) {user.student.origin		= userProps.student.origin;		}
-					}
-					if(userProps.fiscal) {
-						if(userProps.fiscal.hasOwnProperty('id')			) {user.fiscal.id				= userProps.fiscal.id;			}
-						if(userProps.fiscal.hasOwnProperty('address')	) {user.fiscal.address	= userProps.fiscal.address;	}
-						if(userProps.fiscal.hasOwnProperty('type')		) {user.fiscal.type			= userProps.fiscal.type;		}
-					}
-					if(userProps.address) {
-						if(userProps.address.hasOwnProperty('line1')			) {user.address.line1					= userProps.address.line1;			}
-						if(userProps.address.hasOwnProperty('line2')			) {user.address.line2					= userProps.address.line2;			}
-						if(userProps.address.hasOwnProperty('postalCode')	) {user.address.postalCode		= userProps.address.postalCode;	}
-						if(userProps.address.hasOwnProperty('locality')		) {user.address.locality			= userProps.address.locality;		}
-						if(userProps.address.hasOwnProperty('city')				) {user.address.city					= userProps.address.city;				}
-						if(userProps.address.hasOwnProperty('state')			) {user.address.state					= userProps.address.state;			}
-						if(userProps.address.hasOwnProperty('country')		) {user.address.country				= userProps.address.country;		}
-					}
-					if(userProps.geometry) {
-						if(userProps.geometry.hasOwnProperty('type')				) {user.geometry.type	= userProps.geometry.type;								}
-						if(userProps.geometry.hasOwnProperty('coordinates')	) {user.geometry.coordinates	= userProps.geometry.coordinates;	}
-					}
-					if(key_user.roles.isAdmin) {
-						if(userProps.hasOwnProperty('report'))	{user.report	= userProps.report;	}
-						if(userProps.hasOwnProperty('char1')) 	{user.char1 	= userProps.char1;	}
-						if(userProps.hasOwnProperty('char2')) 	{user.char2 	= userProps.char2;	}
-						if(userProps.hasOwnProperty('orgUnit')) {user.orgUnit = userProps.orgUnit;}
-						if(userProps.admin){
-							if(userProps.admin.hasOwnProperty('isActive')				) {user.admin.isActive 				= userProps.admin.isActive;				}
-							if(userProps.admin.hasOwnProperty('isVerified')			) {user.admin.isVerified			= userProps.admin.isVerified;			}
-							if(userProps.admin.hasOwnProperty('isDataVerified')	) {user.admin.isDataVerified	= userProps.admin.isDataVerified;	}
-							if(userProps.admin.hasOwnProperty('initialPassword')) {user.admin.initialPassword	= userProps.admin.initialPassword;}
-						}
-						if(userProps.corporate) {
-							if(userProps.corporate.hasOwnProperty('id')				) {user.corporate.id 				= userProps.corporate.id;				}
-							if(userProps.corporate.hasOwnProperty('isActive')	) {user.corporate.isActive 	= userProps.corporate.isActive;	}
-							if(userProps.corporate.hasOwnProperty('type')			) {user.corporate.type 			= userProps.corporate.type;			}
-						}
-					}
-					const date = new Date();
-					const mod = {
-						by: key_user.name,
-						when: date,
-						what: 'User modification'
-					};
-					user.mod.push(mod);
-					user.save().catch((err) => {
-						Err.sendError(res,err,'user_controller','modify -- Saving User--');
-					});
-					res.status(200);
-					res.json({
-						'status':200,
-						'message': 'User properties modified'
-					});
 				} else {
-					res.status(403);
-					res.json({
-						'status': 403,
-						'message': 'User ' + key_user.name + ' not authorized'
+					res.status(200).json({
+						'status': 404,
+						'message': 'User ' + userProps.name + ' not found'
 					});
 				}
 			})
