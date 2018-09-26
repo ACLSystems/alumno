@@ -813,9 +813,6 @@ module.exports = {
 	modify(req, res) {
 		const key_user = res.locals.user;
 		const userProps = req.body;
-		if(userProps.person.name) 			{ userProps.person.name 			= properCase(userProps.person.name); 			}
-		if(userProps.person.fatherName) { userProps.person.fatherName = properCase(userProps.person.fatherName);}
-		if(userProps.person.motherName) { userProps.person.motherName = properCase(userProps.person.motherName);}
 		//var birthDate = moment.utc(userProps.person.birthDate);
 		//userProps.person.birthDate = birthDate.toDate();
 		User.findOne({ 'name': userProps.name })
@@ -823,10 +820,17 @@ module.exports = {
 				const result = permissions.access(key_user,user,'user');
 				if(result.canModify || key_user.roles.isAdmin) {
 					if(userProps.person && !user.admin.isDataVerified) {
-						if(userProps.person.hasOwnProperty('name')			) {user.person.name 			= userProps.person.name;}
-						if(userProps.person.hasOwnProperty('fatherName')) {user.person.fatherName	= userProps.person.fatherName;}
-						if(userProps.person.hasOwnProperty('motherName')) {user.person.motherName	= userProps.person.motherName;}
+						if(userProps.person.hasOwnProperty('name')			) {user.person.name 			= properCase(userProps.person.name);}
+						if(userProps.person.hasOwnProperty('fatherName')) {user.person.fatherName	= properCase(userProps.person.fatherName);}
+						if(userProps.person.hasOwnProperty('motherName')) {user.person.motherName	= properCase(userProps.person.motherName);}
 						user.admin.isDataVerified = true;
+					}
+					if(userProps.person && (userProps.person.name || userProps.person.fatherName || userProps.person.motherName) && user.admin.isDataVerified) {
+						res.status(200).json({
+							'status'	: 401,
+							'message'	: 'You cannot modify name. Data already verified'
+						});
+						return;
 					}
 					if(userProps.person) {
 						if(userProps.person.hasOwnProperty('birthDate')	) {user.person.birthDate 	= userProps.person.birthDate;	}
@@ -849,7 +853,19 @@ module.exports = {
 						if(userProps.fiscal.hasOwnProperty('address')	) {user.fiscal.address	= userProps.fiscal.address;	}
 						if(userProps.fiscal.hasOwnProperty('type')		) {user.fiscal.type			= userProps.fiscal.type;		}
 					}
-
+					if(userProps.address) {
+						if(userProps.address.hasOwnProperty('line1')			) {user.address.line1					= userProps.address.line1;			}
+						if(userProps.address.hasOwnProperty('line2')			) {user.address.line2					= userProps.address.line2;			}
+						if(userProps.address.hasOwnProperty('postalCode')	) {user.address.postalCode		= userProps.address.postalCode;	}
+						if(userProps.address.hasOwnProperty('locality')		) {user.address.locality			= userProps.address.locality;		}
+						if(userProps.address.hasOwnProperty('city')				) {user.address.city					= userProps.address.city;				}
+						if(userProps.address.hasOwnProperty('state')			) {user.address.state					= userProps.address.state;			}
+						if(userProps.address.hasOwnProperty('country')		) {user.address.country				= userProps.address.country;		}
+					}
+					if(userProps.geometry) {
+						if(userProps.geometry.hasOwnProperty('type')				) {user.geometry.type	= userProps.geometry.type;								}
+						if(userProps.geometry.hasOwnProperty('coordinates')	) {user.geometry.coordinates	= userProps.geometry.coordinates;	}
+					}
 					if(key_user.roles.isAdmin) {
 						if(userProps.hasOwnProperty('report'))	{user.report	= userProps.report;	}
 						if(userProps.hasOwnProperty('char1')) 	{user.char1 	= userProps.char1;	}
