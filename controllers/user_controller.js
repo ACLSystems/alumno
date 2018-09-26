@@ -820,20 +820,24 @@ module.exports = {
 				if(user) {
 					const result = permissions.access(key_user,user,'user');
 					if(result.canModify || key_user.roles.isAdmin) {
-						if(userProps.person && !user.admin.isDataVerified) {
-							if(userProps.person.hasOwnProperty('name')			) {user.person.name 			= properCase(userProps.person.name);}
-							if(userProps.person.hasOwnProperty('fatherName')) {user.person.fatherName	= properCase(userProps.person.fatherName);}
-							if(userProps.person.hasOwnProperty('motherName')) {user.person.motherName	= properCase(userProps.person.motherName);}
-							user.admin.isDataVerified = true;
-						}
-						if(userProps.person && (userProps.person.name || userProps.person.fatherName || userProps.person.motherName) && user.admin.isDataVerified) {
-							res.status(200).json({
-								'status'	: 401,
-								'message'	: 'You cannot modify name. Data already verified'
-							});
-							return;
+						if(userProps.person && (userProps.person.name || userProps.person.fatherName || userProps.person.motherName)) {
+							if(user.admin.isDataVerified && !key_user.roles.isAdmin) {
+								res.status(200).json({
+									'status'	: 401,
+									'message'	: 'You cannot modify name. Data already verified'
+								});
+								return;
+							} else {
+								if(userProps.person.hasOwnProperty('name')			) {user.person.name 			= properCase(userProps.person.name);}
+								if(userProps.person.hasOwnProperty('fatherName')) {user.person.fatherName	= properCase(userProps.person.fatherName);}
+								if(userProps.person.hasOwnProperty('motherName')) {user.person.motherName	= properCase(userProps.person.motherName);}
+								user.admin.isDataVerified = true;
+							}
 						}
 						if(userProps.person) {
+							if(!user.hasOwnProperty('student')) {
+								user.student = {};
+							}
 							if(userProps.person.hasOwnProperty('birthDate')	) {user.person.birthDate 	= userProps.person.birthDate;	}
 							if(userProps.person.hasOwnProperty('mainPhone')	) {user.person.mainPhone 	= userProps.person.mainPhone;	}
 							if(userProps.person.hasOwnProperty('cellPhone')	) {user.person.cellPhone 	= userProps.person.cellPhone;	}
@@ -841,6 +845,9 @@ module.exports = {
 							if(userProps.person.hasOwnProperty('alias')			) {user.person.alias 			= userProps.person.alias;			}
 						}
 						if(userProps.student) {
+							if(!user.hasOwnProperty('student')) {
+								user.student = {};
+							}
 							if(userProps.student.hasOwnProperty('id')				) {user.student.id 				= userProps.student.id;				}
 							if(userProps.student.hasOwnProperty('career')		) {user.student.career		= userProps.student.career;		}
 							if(userProps.student.hasOwnProperty('term')			) {user.student.term			= userProps.student.term;			}
@@ -850,11 +857,17 @@ module.exports = {
 							if(userProps.student.hasOwnProperty('origin')		) {user.student.origin		= userProps.student.origin;		}
 						}
 						if(userProps.fiscal) {
+							if(!user.hasOwnProperty('fiscal')) {
+								user.fiscal = {};
+							}
 							if(userProps.fiscal.hasOwnProperty('id')			) {user.fiscal.id				= userProps.fiscal.id;			}
 							if(userProps.fiscal.hasOwnProperty('address')	) {user.fiscal.address	= userProps.fiscal.address;	}
 							if(userProps.fiscal.hasOwnProperty('type')		) {user.fiscal.type			= userProps.fiscal.type;		}
 						}
 						if(userProps.address) {
+							if(!user.hasOwnProperty('address')) {
+								user.student = {};
+							}
 							if(userProps.address.hasOwnProperty('line1')			) {user.address.line1					= userProps.address.line1;			}
 							if(userProps.address.hasOwnProperty('line2')			) {user.address.line2					= userProps.address.line2;			}
 							if(userProps.address.hasOwnProperty('postalCode')	) {user.address.postalCode		= userProps.address.postalCode;	}
@@ -864,6 +877,9 @@ module.exports = {
 							if(userProps.address.hasOwnProperty('country')		) {user.address.country				= userProps.address.country;		}
 						}
 						if(userProps.geometry) {
+							if(!user.hasOwnProperty('geometry')) {
+								user.student = {};
+							}
 							if(userProps.geometry.hasOwnProperty('type')				) {user.geometry.type	= userProps.geometry.type;								}
 							if(userProps.geometry.hasOwnProperty('coordinates')	) {user.geometry.coordinates	= userProps.geometry.coordinates;	}
 						}
