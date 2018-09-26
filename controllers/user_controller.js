@@ -821,7 +821,52 @@ module.exports = {
 		User.findOne({ 'name': userProps.name })
 			.then((user) => {
 				const result = permissions.access(key_user,user,'user');
-				if(result.canModify) {
+				if(result.canModify || key_user.roles.isAdmin) {
+					if(userProps.person && !user.admin.isDataVerified) {
+						if(userProps.person.hasOwnProperty('name')			) {user.person.name 			= userProps.person.name;}
+						if(userProps.person.hasOwnProperty('fatherName')) {user.person.fatherName	= userProps.person.fatherName;}
+						if(userProps.person.hasOwnProperty('motherName')) {user.person.motherName	= userProps.person.motherName;}
+						user.admin.isDataVerified = true;
+					}
+					if(userProps.person) {
+						if(userProps.person.hasOwnProperty('birthDate')	) {user.person.birthDate 	= userProps.person.birthDate;	}
+						if(userProps.person.hasOwnProperty('mainPhone')	) {user.person.mainPhone 	= userProps.person.mainPhone;	}
+						if(userProps.person.hasOwnProperty('cellPhone')	) {user.person.cellPhone 	= userProps.person.cellPhone;	}
+						if(userProps.person.hasOwnProperty('genre')			) {user.person.genre 			= userProps.person.genre;			}
+						if(userProps.person.hasOwnProperty('alias')			) {user.person.alias 			= userProps.person.alias;			}
+					}
+					if(userProps.student) {
+						if(userProps.student.hasOwnProperty('id')				) {user.student.id 				= userProps.student.id;				}
+						if(userProps.student.hasOwnProperty('career')		) {user.student.career		= userProps.student.career;		}
+						if(userProps.student.hasOwnProperty('term')			) {user.student.term			= userProps.student.term;			}
+						if(userProps.student.hasOwnProperty('isActive')	) {user.student.isActive	= userProps.student.isActive;	}
+						if(userProps.student.hasOwnProperty('type')			) {user.student.type			= userProps.student.type;			}
+						if(userProps.student.hasOwnProperty('external')	) {user.student.external	= userProps.student.external;	}
+						if(userProps.student.hasOwnProperty('origin')		) {user.student.origin		= userProps.student.origin;		}
+					}
+					if(userProps.fiscal) {
+						if(userProps.fiscal.hasOwnProperty('id')			) {user.fiscal.id				= userProps.fiscal.id;			}
+						if(userProps.fiscal.hasOwnProperty('address')	) {user.fiscal.address	= userProps.fiscal.address;	}
+						if(userProps.fiscal.hasOwnProperty('type')		) {user.fiscal.type			= userProps.fiscal.type;		}
+					}
+
+					if(key_user.roles.isAdmin) {
+						if(userProps.hasOwnProperty('report'))	{user.report	= userProps.report;	}
+						if(userProps.hasOwnProperty('char1')) 	{user.char1 	= userProps.char1;	}
+						if(userProps.hasOwnProperty('char2')) 	{user.char2 	= userProps.char2;	}
+						if(userProps.hasOwnProperty('orgUnit')) {user.orgUnit = userProps.orgUnit;}
+						if(userProps.admin){
+							if(userProps.admin.hasOwnProperty('isActive')				) {user.admin.isActive 				= userProps.admin.isActive;				}
+							if(userProps.admin.hasOwnProperty('isVerified')			) {user.admin.isVerified			= userProps.admin.isVerified;			}
+							if(userProps.admin.hasOwnProperty('isDataVerified')	) {user.admin.isDataVerified	= userProps.admin.isDataVerified;	}
+							if(userProps.admin.hasOwnProperty('initialPassword')) {user.admin.initialPassword	= userProps.admin.initialPassword;}
+						}
+						if(userProps.corporate) {
+							if(userProps.corporate.hasOwnProperty('id')				) {user.corporate.id 				= userProps.corporate.id;				}
+							if(userProps.corporate.hasOwnProperty('isActive')	) {user.corporate.isActive 	= userProps.corporate.isActive;	}
+							if(userProps.corporate.hasOwnProperty('type')			) {user.corporate.type 			= userProps.corporate.type;			}
+						}
+					}
 					const date = new Date();
 					const mod = {
 						by: key_user.name,
