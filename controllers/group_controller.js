@@ -1814,6 +1814,7 @@ module.exports = {
 							var send_grade = {
 								name							: key_user.person.fullName,
 								rosterid					: item._id,
+								status						: item.status,
 								course						: item.group.course.title,
 								courseDuration		: item.group.course.duration,
 								courseDurUnits		: units(item.group.course.durationUnits),
