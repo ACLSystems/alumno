@@ -268,7 +268,7 @@ module.exports = {
 	//getDetails(req, res, next) {
 	getDetails(req, res) {
 		const key_user = res.locals.user;
-		const username = req.query.name;
+		const username = req.query.name || key_user.name;
 		User.findOne({ name: username })
 			.populate('org','name')
 			.populate('orgUnit', 'name')
@@ -813,11 +813,20 @@ module.exports = {
 	modify(req, res) {
 		const key_user = res.locals.user;
 		const userProps = req.body;
-		//var birthDate = moment.utc(userProps.person.birthDate);
-		//userProps.person.birthDate = birthDate.toDate();
-		User.findOne({ 'name': userProps.name })
+		var username = key_user.name;
+		if(userProps.name) {
+			username = userProps.name;
+		}
+		User.findOne({ 'name': username })
 			.then((user) => {
 				if(user) {
+					if(!user.admin) {
+						res.status(200).json({
+							'status': 406,
+							'message': 'Object inconsistent. Please contact admin. user.admin not found'
+						});
+						return;
+					}
 					const result = permissions.access(key_user,user,'user');
 					if(result.canModify || key_user.roles.isAdmin) {
 						if(userProps.person && (userProps.person.name || userProps.person.fatherName || userProps.person.motherName)) {
@@ -835,9 +844,6 @@ module.exports = {
 							}
 						}
 						if(userProps.person) {
-							if(!user.hasOwnProperty('student')) {
-								user.student = {};
-							}
 							if(userProps.person.hasOwnProperty('birthDate')	) {user.person.birthDate 	= userProps.person.birthDate;	}
 							if(userProps.person.hasOwnProperty('mainPhone')	) {user.person.mainPhone 	= userProps.person.mainPhone;	}
 							if(userProps.person.hasOwnProperty('cellPhone')	) {user.person.cellPhone 	= userProps.person.cellPhone;	}
@@ -845,7 +851,7 @@ module.exports = {
 							if(userProps.person.hasOwnProperty('alias')			) {user.person.alias 			= userProps.person.alias;			}
 						}
 						if(userProps.student) {
-							if(!user.hasOwnProperty('student')) {
+							if(!user.student) {
 								user.student = {};
 							}
 							if(userProps.student.hasOwnProperty('id')				) {user.student.id 				= userProps.student.id;				}
@@ -857,7 +863,7 @@ module.exports = {
 							if(userProps.student.hasOwnProperty('origin')		) {user.student.origin		= userProps.student.origin;		}
 						}
 						if(userProps.fiscal) {
-							if(!user.hasOwnProperty('fiscal')) {
+							if(!user.fiscal) {
 								user.fiscal = {};
 							}
 							if(userProps.fiscal.hasOwnProperty('id')			) {user.fiscal.id				= userProps.fiscal.id;			}
@@ -865,8 +871,8 @@ module.exports = {
 							if(userProps.fiscal.hasOwnProperty('type')		) {user.fiscal.type			= userProps.fiscal.type;		}
 						}
 						if(userProps.address) {
-							if(!user.hasOwnProperty('address')) {
-								user.student = {};
+							if(!user.address) {
+								user.address = {};
 							}
 							if(userProps.address.hasOwnProperty('line1')			) {user.address.line1					= userProps.address.line1;			}
 							if(userProps.address.hasOwnProperty('line2')			) {user.address.line2					= userProps.address.line2;			}
@@ -877,8 +883,8 @@ module.exports = {
 							if(userProps.address.hasOwnProperty('country')		) {user.address.country				= userProps.address.country;		}
 						}
 						if(userProps.geometry) {
-							if(!user.hasOwnProperty('geometry')) {
-								user.student = {};
+							if(!user.geometry) {
+								user.geometry = {};
 							}
 							if(userProps.geometry.hasOwnProperty('type')				) {user.geometry.type	= userProps.geometry.type;								}
 							if(userProps.geometry.hasOwnProperty('coordinates')	) {user.geometry.coordinates	= userProps.geometry.coordinates;	}
@@ -904,7 +910,7 @@ module.exports = {
 						const mod = {
 							by: key_user.name,
 							when: date,
-							what: 'User modification'
+							what: 'User modification. Data: ' + JSON.stringify(userProps,null,2)
 						};
 						user.mod.push(mod);
 						user.save().catch((err) => {
@@ -919,7 +925,8 @@ module.exports = {
 						res.status(200);
 						res.json({
 							'status': 403,
-							'message': 'User ' + key_user.name + ' not authorized to modify ' + userProps.name + ' register'
+							'message': 'User ' + key_user.name + ' not authorized to modify ' + userProps.name + ' register',
+							'debug': result
 						});
 					}
 				} else {

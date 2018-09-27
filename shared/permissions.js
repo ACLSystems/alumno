@@ -37,6 +37,7 @@ module.exports = {
 
 		// Checar si el usuario tiene rol isBusiness
 
+		/*
 		if(user.roles.isBusiness) {
 			if(obj_type === 'org' || obj_type === 'orgunit' || obj_type === 'user'  || obj_type === 'content'  || obj_type === 'group') {
 				var returnObj = {
@@ -49,7 +50,7 @@ module.exports = {
 				return returnObj;
 			}
 		}
-
+		*/
 
 		// Checar acceso al objeto con permiso para usuario
 		// ---------------------------------------

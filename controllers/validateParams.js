@@ -242,11 +242,13 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1730: Please, give data by query to process'
 			});
+			/*
 		} else if(!req.query.name) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1731: Please, give user name by query or by header to process'
 			});
+			*/
 		} else {
 			next();
 		}
@@ -401,11 +403,13 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1760: Please, give data by query to process'
 			});
+			/*
 		} else if(!req.body.name) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1761: Please, give user name by query to process'
 			});
+			*/
 		} else {
 			next();
 		}
