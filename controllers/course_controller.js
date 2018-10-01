@@ -400,7 +400,7 @@ module.exports = {
 								course.nextNumber			= number + 1;
 								course.save()
 									.then(() => {
-										res.status(201).json({
+										res.status(200).json({
 											'status': 200,
 											'message': 'block -' + block.code + '- of course -' + course.code + '- was saved.'
 										});
@@ -408,6 +408,11 @@ module.exports = {
 									.catch((err) => {
 										sendError(res,err,'createBlock -- Relating block, saving course --');
 									});
+							} else {
+								res.status(200).json({
+									'status': 403,
+									'message': 'User ' + key_user.name + ' has no permissions to create block on ' + course.title
+								});
 							}
 						})
 						.catch((err) => {

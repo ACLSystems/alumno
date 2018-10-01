@@ -1,5 +1,5 @@
 module.exports = {
 	app: 'alumno',
-	version: '1.3.8'
+	version: '1.3.9'
 	// se utiliza semver
 };
