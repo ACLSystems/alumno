@@ -129,6 +129,271 @@ module.exports = {
 			});
 	}, //rosterSummary
 
+	orgTree(req,res) {
+		const key_user  = res.locals.user;
+		var query 	= {};
+		var type 	= 'campus';
+		if(key_user.orgUnit.type === 'org' || key_user.orgUnit.type === 'country') {
+			query = {org: key_user.org._id};
+			type 		= 'org';
+		} else if(key_user.orgUnit.type === 'state') {
+			query = {$or:[{parent: key_user.orgUnit.name},{name: key_user.orgUnit.name}]};
+			type 		= 'state';
+		}
+		if(type === 'org' || type === 'state') {
+			OrgUnit.find(query)
+				.select('name parent type longName')
+				.lean()
+				.then((resOUs) => {
+					if(resOUs && resOUs.length > 0){
+						var ouIds = new Array();
+						resOUs.forEach(ou => {ouIds.push(mongoose.Types.ObjectId(ou._id));});
+						Group.aggregate()
+							.match({orgUnit:{$in:ouIds}})
+							.project({
+								code		: 1,
+								name		: 1,
+								course	: 1,
+								orgUnit	: 1
+							})
+							.lookup({
+								from				: 'courses',
+								localField	: 'course',
+								foreignField: '_id',
+								as					: 'course'
+							})
+							.project({
+								groupCode		: '$code',
+								groupName		: '$name',
+								orgUnit			: 1,
+								courseTitle	: '$course.title'
+							})
+							.unwind('courseTitle')
+							.group({
+								_id: '$orgUnit',
+								groups: {
+									$push: {
+										groupCode		: '$groupCode',
+										groupName		: '$groupName',
+										courseTitle	: '$courseTitle'
+									}
+								}
+							})
+							.project({
+								ou					: '$_id',
+								groups	 		: '$groups'
+							})
+							.lookup({
+								from				: 'orgunits',
+								localField	: '_id',
+								foreignField: '_id',
+								as					: 'ou'
+							})
+							.unwind('ou')
+							.project({
+								ouName			: '$ou.name',
+								ouLongName	: '$ou.longName',
+								ouId				: '$ou._id',
+								ouType			: '$ou.type',
+								ouParent		: '$ou.parent',
+								groups	 		: '$groups',
+								_id					: false
+							})
+							.group({
+								_id: {
+									ouName: '$ouParent',
+								},
+								ous: {
+									$push: {
+										ouName			: '$ouName',
+										ouLongName	: '$ouLongName',
+										ouId				: '$ouId',
+										ouType			: '$ouType',
+										ouParent		: '$ouParent',
+										groups	 		: '$groups'
+									}
+								}
+							})
+							.project({
+								ouName		: '$_id.ouName',
+								ous				: '$ous',
+								_id				: false
+							})
+							.then((resultGrps) => {
+								var allGroups = new Array();
+								if(resultGrps && resultGrps.length > 0) {
+									var firstLiners = resultGrps.map(a => a.ouName);
+									if(firstLiners && firstLiners.length > 0) {
+										var i=0;
+										firstLiners.forEach(fl => {
+											var j=0;
+											resultGrps.forEach(gps => {
+												if(gps.ous && gps.ous.length > 0) {
+													var k=0;
+													gps.ous.forEach(ou => {
+														if(fl === ou.ouName) {
+															if(ou.ouType === 'org') {
+																resultGrps[i].ouType 			= ou.ouType;
+																resultGrps[i].ouId	 			= ou.ouId;
+																resultGrps[i].ouLongName 	= ou.ouLongName;
+																resultGrps[i].groups 			= ou.groups;
+																resultGrps[i].ous.splice(k,1);
+															} else {
+																resultGrps[j].ous[k].ous 	= resultGrps[i].ous;
+																resultGrps.splice(i,1);
+															}
+														}
+														k++;
+													});
+												}
+												j++;
+											});
+											i++;
+										});
+									}
+								}
+								if(type === 'org') {
+									resultGrps.forEach(rg => {
+										if(rg.groups && rg.groups.length > 0) {
+											rg.groups.forEach(g => {
+												allGroups.push(g.groupCode);
+											});
+										}
+										if(rg.ous && rg.ous.length > 0){
+											rg.ous.forEach(ou => {
+												if(ou.groups && ou.groups.length > 0) {
+													ou.groups.forEach(g => {
+														allGroups.push(g.groupCode);
+													});
+												}
+												if(ou.ous && ou.ous.length > 0) {
+													ou.ous.forEach(gou => {
+														if(gou.groups && gou.groups.length > 0) {
+															gou.groups.forEach(goug => {
+																allGroups.push(goug.groupCode);
+															});
+														}
+													});
+												}
+											});
+										}
+									});
+								} else
+								if(type === 'state') {
+									resultGrps = resultGrps[0].ous;
+									resultGrps.forEach(ou => {
+										if(ou.groups && ou.groups.length > 0) {
+											ou.groups.forEach(g => {
+												allGroups.push(g.groupCode);
+											});
+										}
+										if(ou.ous && ou.ous.length > 0) {
+											ou.ous.forEach(gou => {
+												if(gou.groups && gou.groups.length > 0) {
+													gou.groups.forEach(goug => {
+														allGroups.push(goug.groupCode);
+													});
+												}
+											});
+										}
+									});
+								}
+								res.status(200).json({
+									'status'		: 200,
+									'groups' 		: resultGrps,
+									'allGroups'	: allGroups
+								});
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'report_controller','orgTree -- Aggregate Groups --',false,false,'User: ' + key_user.name);
+							});
+					} else {
+						res.status(200).json({
+							'status': 200,
+							'message' : 'No OUs found'
+						});
+					}
+				})
+				.catch((err) => {
+					Err.sendError(res,err,'report_controller','orgTree -- Finding OUs --',false,false,'User: ' + key_user.name);
+				});
+		} else {
+			Group.aggregate()
+				.match({orgUnit:mongoose.Types.ObjectId(key_user.orgUnit._id)})
+				.project({
+					code		: 1,
+					name		: 1,
+					course	: 1,
+					orgUnit	: 1
+				})
+				.lookup({
+					from				: 'courses',
+					localField	: 'course',
+					foreignField: '_id',
+					as					: 'course'
+				})
+				.project({
+					groupCode		: '$code',
+					groupName		: '$name',
+					orgUnit			: 1,
+					courseTitle	: '$course.title'
+				})
+				.unwind('courseTitle')
+				.group({
+					_id: '$orgUnit',
+					groups: {
+						$push: {
+							groupCode		: '$groupCode',
+							groupName		: '$groupName',
+							courseTitle	: '$courseTitle'
+						}
+					}
+				})
+				.project({
+					ou					: '$_id',
+					groups	 		: '$groups'
+				})
+				.lookup({
+					from				: 'orgunits',
+					localField	: '_id',
+					foreignField: '_id',
+					as					: 'ou'
+				})
+				.unwind('ou')
+				.project({
+					ouName			: '$ou.name',
+					ouLongName	: '$ou.longName',
+					ouId				: '$ou._id',
+					ouType			: '$ou.type',
+					ouParent		: '$ou.parent',
+					groups	 		: '$groups',
+					_id					: false
+				})
+				.then((resultGrps) => {
+					var allGroups = new Array();
+					var campus = {};
+					if(resultGrps && resultGrps.length > 0) {
+						if(resultGrps.length === 1) {
+							campus = resultGrps[0];
+							if(campus.groups && campus.groups.length > 0) {
+								campus.groups.forEach(g => {
+									allGroups.push(g.groupCode);
+								});
+							}
+						}
+					}
+					res.status(200).json({
+						'status'		: 200,
+						'groups' 		: resultGrps,
+						'allGroups'	: allGroups
+					});
+				})
+				.catch((err) => {
+					Err.sendError(res,err,'report_controller','orgTree -- Aggregate Groups --',false,false,'User: ' + key_user.name);
+				});
+		}
+	}, // orgTree
+
 	percentil(req,res) {
 		const key_user  = res.locals.user;
 		var 	ou				= '';
