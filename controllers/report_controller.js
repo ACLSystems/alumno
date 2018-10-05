@@ -396,7 +396,8 @@ module.exports = {
 
 	percentil(req,res) {
 		const key_user  = res.locals.user;
-		var 	ou				= '';
+		var 	ou				= req.query.ou || key_user.orgUnit._id;
+		/*
 		if(key_user.roles.isAdmin && req.query.ou) {
 			ou = req.query.ou;
 		} else {
@@ -409,134 +410,149 @@ module.exports = {
 				});
 			}
 		}
+		*/
 
-		Roster.aggregate() // Buscar Track
-			.match({orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},track:{$gt:0}})
-			.group({ _id: '$group', usersOnTrack:{$sum:1}})
-			.then((resultsT) => {
+		var query = {};
+
+		if(key_user.orgUnit.type === 'campus') {
+			ou = key_user.orgUnit._id;
+		} else {
+			if(!mongoose.Types.ObjectId.isValid(ou)) {
+				ou = JSON.parse(ou);
+			}
+		}
+
+		var ouIds = new Array();
+
+		if(Array.isArray(ou)) {
+			if(ou.length > 0) {
+				ou.forEach(o => {ouIds.push(mongoose.Types.ObjectId(o));});
+				query = {orgUnit: {$in:ouIds},report: {$ne:false},track:{$gt:0}};
+			}
+		} else {
+			query = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},track:{$gt:0}};
+		}
+
+		Promise.all([
+			Roster.aggregate() // Buscar Track
+				.match({orgUnit: query,report: {$ne:false},track:{$gt:0}})
+				.group({ _id: '$group', usersOnTrack:{$sum:1}}),
+			Roster.aggregate() // Buscar Aprobados
+				.match({orgUnit: query,report: {$ne:false},pass:true})
+				.group({ _id: '$group', usersPassed:{$sum:1}}),
+			Roster.aggregate() // Total de usuarios
+				.match({orgUnit: query,report: {$ne:false}})
+				.group({ _id: '$group', totalUsers:{$sum:1}})
+		])
+			.then((globalResults) => {
+				var [resultsT,resultsP,resultsR] = globalResults;
 				// Resultados de Track
 				var group_ids = new Array();
 				var results 	= resultsT;
 				results.forEach(function(res) {
 					group_ids.push(res._id);
 				});
-				Roster.aggregate() // Buscar Track
-					.match({orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},pass:true})
-					.group({ _id: '$group', usersPassed:{$sum:1}})
-					.then((resultsP) => {
-						if(resultsP.length > 0){
-							resultsP.forEach(function(res) {
+				// Resultados de aprobados
+				if(resultsP.length > 0){
+					resultsP.forEach(function(res) {
+						var i = 0;
+						var found = false;
+						while(!found && i < results.length) {
+							if(results[i]){
+								if(res._id + '' === results[i]._id +'')  {
+									found=true;
+									results[i].usersPassed = res.usersPassed;
+								}
+							}
+							i++;
+						}
+						if(!found) {
+							group_ids.push(res._id);
+							results.push(res);
+						}
+					});
+				}
+				// Resultados de totales
+				if(resultsR.length > 0){
+					resultsR.forEach(function(res) {
+						var i = 0;
+						var found = false;
+						while(!found && i < results.length) {
+							if(results[i]){
+								if(res._id + '' === results[i]._id +'')  {
+									found=true;
+									results[i].totalUsers = res.totalUsers;
+								}
+							}
+							i++;
+						}
+						if(!found) {
+							group_ids.push(res._id);
+							results.push(res);
+						}
+					});
+				}
+				if(results.length === 0) {
+					res.status(200).json({
+						'status': 200,
+						'totalUsers'	: 0,
+						'usersOnTrack': 0,
+						'usersPassed'	: 0,
+						'results'			: 'No results'
+					});
+					return;
+				}
+
+				Group.find({_id: {$in: group_ids}})
+					.select('name orgUnit')
+					.populate('orgUnit', 'name longName')
+					.then((groups) => {
+						if(groups.length > 0 ) {
+							groups.forEach(function(group) {
 								var i = 0;
 								var found = false;
 								while(!found && i < results.length) {
-									if(results[i]){
-										if(res._id + '' === results[i]._id +'')  {
-											found=true;
-											results[i].usersPassed = res.usersPassed;
-										}
+									if(results[i]._id + '' === group._id +'') {
+										found = true;
+										results[i].group  = group.name;
 									}
 									i++;
 								}
-								if(!found) {
-									group_ids.push(res._id);
-									results.push(res);
-								}
+							});
+							var totalTracks = 0;
+							var totalPassed = 0;
+							var totalUsers 	= 0;
+							results.forEach(function(res) {
+								if(res.usersOnTrack	)	{totalTracks += res.usersOnTrack; }
+								if(res.usersPassed	)	{totalPassed += res.usersPassed;  }
+								if(res.totalUsers		)	{totalUsers  += res.totalUsers;   }
+							});
+
+							res.status(200).json({
+								'status'			: 200,
+								'orgUnit'			: groups[0].orgUnit.name,
+								'orgUnitName' : groups[0].orgUnit.longName,
+								'totalUsers'	: totalUsers,
+								'usersOnTrack': totalTracks,
+								'usersPassed'	: totalPassed,
+								'results'			: results
+							});
+							// esto es del total
+
+						// del total
+						} else {
+							res.status(200).json({
+								'status': 200,
+								'results': 'No groups found'
 							});
 						}
-						Roster.aggregate()
-							.match({orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false}})
-							.group({ _id: '$group', totalUsers:{$sum:1}})
-							.then((resultsR) => {
-								if(resultsR.length > 0){
-									resultsR.forEach(function(res) {
-										var i = 0;
-										var found = false;
-										while(!found && i < results.length) {
-											if(results[i]){
-												if(res._id + '' === results[i]._id +'')  {
-													found=true;
-													results[i].totalUsers = res.totalUsers;
-												}
-											}
-											i++;
-										}
-										if(!found) {
-											group_ids.push(res._id);
-											results.push(res);
-										}
-									});
-								}
-								if(results.length === 0) {
-									res.status(200).json({
-										'status': 200,
-										'totalUsers'	: 0,
-										'usersOnTrack': 0,
-										'usersPassed'	: 0,
-										'results'			: 'No results'
-									});
-									return;
-								}
-
-								Group.find({_id: {$in: group_ids}})
-									.select('name orgUnit')
-									.populate('orgUnit', 'name longName')
-									.then((groups) => {
-										if(groups.length > 0 ) {
-											groups.forEach(function(group) {
-												var i = 0;
-												var found = false;
-												while(!found && i < results.length) {
-													if(results[i]._id + '' === group._id +'') {
-														found = true;
-														results[i].group  = group.name;
-													}
-													i++;
-												}
-											});
-											var totalTracks = 0;
-											var totalPassed = 0;
-											var totalUsers 	= 0;
-											results.forEach(function(res) {
-												if(res.usersOnTrack	)	{totalTracks += res.usersOnTrack; }
-												if(res.usersPassed	)	{totalPassed += res.usersPassed;  }
-												if(res.totalUsers		)	{totalUsers  += res.totalUsers;   }
-											});
-
-											res.status(200).json({
-												'status'			: 200,
-												'orgUnit'			: groups[0].orgUnit.name,
-												'orgUnitName' : groups[0].orgUnit.longName,
-												'totalUsers'	: totalUsers,
-												'usersOnTrack': totalTracks,
-												'usersPassed'	: totalPassed,
-												'results'			: results
-											});
-											// esto es del total
-
-										// del total
-										} else {
-											res.status(200).json({
-												'status': 200,
-												'results': 'No groups found'
-											});
-										}
-									})
-									.catch((err) => {
-										Err.sendError(res,err,'report_controller','percentil -- Searching group names --');
-									});
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'report_controller','percentil -- Searching totalUsers --');
-							});
 					})
 					.catch((err) => {
-						Err.sendError(res,err,'report_controller','percentil -- Counting Passed --');
+						Err.sendError(res,err,'report_controller','percentil -- Searching group names --');
 					});
-				// Resultados de track
-
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'report_controller','percentil -- Counting track --');
+				Err.sendError(res,err,'report_controller','percentil -- Promises for Results --');
 			});
 	}, //percentil
 
