@@ -141,6 +141,8 @@ module.exports = {
 			type 		= 'state';
 		}
 		if(type === 'org' || type === 'state') {
+
+
 			OrgUnit.find(query)
 				.select('name parent type longName')
 				.lean()
@@ -148,175 +150,158 @@ module.exports = {
 					if(resOUs && resOUs.length > 0){
 						var ouIds = new Array();
 						resOUs.forEach(ou => {ouIds.push(mongoose.Types.ObjectId(ou._id));});
-						Group.aggregate()
-							.match({orgUnit:{$in:ouIds}})
-							.project({
-								code		: 1,
-								name		: 1,
-								course	: 1,
-								orgUnit	: 1
-							})
-							.lookup({
-								from				: 'courses',
-								localField	: 'course',
-								foreignField: '_id',
-								as					: 'course'
-							})
-							.project({
-								groupCode		: '$code',
-								groupName		: '$name',
-								orgUnit			: 1,
-								courseTitle	: '$course.title'
-							})
-							.unwind('courseTitle')
-							.group({
-								_id: '$orgUnit',
-								groups: {
-									$push: {
-										groupCode		: '$groupCode',
-										groupName		: '$groupName',
-										courseTitle	: '$courseTitle'
-									}
-								}
-							})
-							.project({
-								ou					: '$_id',
-								groups	 		: '$groups'
-							})
-							.lookup({
-								from				: 'orgunits',
-								localField	: '_id',
-								foreignField: '_id',
-								as					: 'ou'
-							})
-							.unwind('ou')
-							.project({
-								ouName			: '$ou.name',
-								ouLongName	: '$ou.longName',
-								ouId				: '$ou._id',
-								ouType			: '$ou.type',
-								ouParent		: '$ou.parent',
-								groups	 		: '$groups',
-								_id					: false
-							})
-							.group({
-								_id: {
-									ouName: '$ouParent',
-								},
-								ous: {
-									$push: {
-										ouName			: '$ouName',
-										ouLongName	: '$ouLongName',
-										ouId				: '$ouId',
-										ouType			: '$ouType',
-										ouParent		: '$ouParent',
-										groups	 		: '$groups'
-									}
-								}
-							})
-							.project({
-								ouName		: '$_id.ouName',
-								ous				: '$ous',
-								_id				: false
-							})
-							.then((resultGrps) => {
-								var allGroups = new Array();
-								if(resultGrps && resultGrps.length > 0) {
-									var firstLiners = resultGrps.map(a => a.ouName);
-									if(firstLiners && firstLiners.length > 0) {
-										var i=0;
-										firstLiners.forEach(fl => {
-											var j=0;
-											resultGrps.forEach(gps => {
-												if(gps.ous && gps.ous.length > 0) {
-													var k=0;
-													gps.ous.forEach(ou => {
-														if(fl === ou.ouName) {
-															if(ou.ouType === 'org') {
-																resultGrps[i].ouType 			= ou.ouType;
-																resultGrps[i].ouId	 			= ou.ouId;
-																resultGrps[i].ouLongName 	= ou.ouLongName;
-																resultGrps[i].groups 			= ou.groups;
-																resultGrps[i].ous.splice(k,1);
-															} else {
-																resultGrps[j].ous[k].ous 	= resultGrps[i].ous;
-																resultGrps.splice(i,1);
+						Group.find({orgUnit: {$in: resOUs}})
+							.select('name code orgUnit course')
+							.populate('orgUnit', 'name parent longName type')
+							.populate('course', 'title')
+							.lean()
+							.then((grps) => {
+								if(grps && grps.length > 0) {
+									// parents necesita ser un arreglo con valores únicos
+									// por lo que vamos a conseguirlo usando un SET y luego
+									// convirtiendolo en un arreglo
+									let parents = [...new Set(grps.map(a => a.orgUnit.parent))];
+									let uniqueOUs = [...new Set(grps.map(a => a.orgUnit.name))];
+									var fullList = [...new Set(parents.concat(uniqueOUs))];
+									OrgUnit.aggregate()
+										.match({name: {$in:fullList}})
+										.project('name type parent longName')
+										.group({
+											_id: '$parent',
+											ous: {
+												$push: {
+													ouId				: '$_id',
+													ouName			: '$name',
+													ouLongName	: '$longName',
+													ouType			: '$type',
+													ouParent		: '$parent',
+													groups			: [],
+													ous					: []
+												}
+											}
+										})
+										.project({
+											ouName		: '$_id',
+											ous				: '$ous',
+											_id				: false
+										})
+										.then((orgOus) => {
+											// Acomodamos el arbol
+											var cut = [];
+											if(orgOus && orgOus.length > 0) {
+												var firstLiners = orgOus.map(a => a.ouName);
+												if(firstLiners  && firstLiners .length > 0) {
+													var i=0;
+													firstLiners .forEach(fl => {
+														var j=0;
+														orgOus.forEach(gps => {
+															if(gps.ous && gps.ous.length > 0) {
+																var k=0;
+																gps.ous.forEach(ou => {
+																	if(fl === ou.ouName) {
+																		if(ou.ouType === 'org') {
+																			orgOus[i].ouType 			= ou.ouType;
+																			orgOus[i].ouId	 			= ou.ouId;
+																			orgOus[i].ouLongName 	= ou.ouLongName;
+																			orgOus[i].groups 			= ou.groups;
+																			orgOus[i].ous.splice(k,1);
+																		} else {
+																			orgOus[j].ous[k].ous 	= orgOus[i].ous;
+																			cut.push(fl);
+																		}
+																	}
+																	k++;
+																});
 															}
-														}
-														k++;
+															j++;
+														});
+														i++;
 													});
 												}
-												j++;
-											});
-											i++;
-										});
-									}
-								}
-								if(type === 'org') {
-									resultGrps.forEach(rg => {
-										if(rg.groups && rg.groups.length > 0) {
-											rg.groups.forEach(g => {
-												allGroups.push(g.groupCode);
-											});
-										}
-										if(rg.ous && rg.ous.length > 0){
-											rg.ous.forEach(ou => {
-												if(ou.groups && ou.groups.length > 0) {
-													ou.groups.forEach(g => {
-														allGroups.push(g.groupCode);
-													});
-												}
-												if(ou.ous && ou.ous.length > 0) {
-													ou.ous.forEach(gou => {
-														if(gou.groups && gou.groups.length > 0) {
-															gou.groups.forEach(goug => {
-																allGroups.push(goug.groupCode);
+											}
+											// Cortamos lo que sobra del arbol
+											for (i = 0; i < orgOus.length; i++){
+												cut.forEach((cutty) => {
+													if(orgOus[i].ouName===cutty){orgOus.splice(i,1);}
+												});
+											}
+											var tempGrps = grps;
+											// Ahora metemos los grupos dentro del árbol
+											orgOus.forEach(n1 => {
+												// Primero vemos si hay grupos para el primer nivel
+												i=0;
+												cut=[];
+												tempGrps.forEach(g => {
+													if(g.orgUnit.name === n1.ouName) {
+														n1.groups.push({
+															groupName		: g.name,
+															groupCode		: g.code,
+															courseTitle	: g.course.title
+														});
+														cut.push(i);
+													}
+
+												});
+												// listo... ahora nos vamos al segundo nivel
+												n1.ous.forEach(n2 => {
+													// Vemos si hay grupos para el segundo nivel
+													i=0;
+													cut=[];
+													tempGrps.forEach(g => {
+														if(g.orgUnit.name === n2.ouName) {
+															n2.groups.push({
+																groupName		: g.name,
+																groupCode		: g.code,
+																courseTitle	: g.course.title
 															});
+															cut.push(i);
 														}
+														i++;
 													});
-												}
-											});
-										}
-									});
-								} else
-								if(type === 'state') {
-									resultGrps = resultGrps[0].ous;
-									resultGrps.forEach(ou => {
-										if(ou.groups && ou.groups.length > 0) {
-											ou.groups.forEach(g => {
-												allGroups.push(g.groupCode);
-											});
-										}
-										if(ou.ous && ou.ous.length > 0) {
-											ou.ous.forEach(gou => {
-												if(gou.groups && gou.groups.length > 0) {
-													gou.groups.forEach(goug => {
-														allGroups.push(goug.groupCode);
+													// listo... ahora nos vamos al tercer nivel
+													i=0;
+													cut=[];
+													n2.ous.forEach(n3 => {
+														tempGrps.forEach(g => {
+															if(g.orgUnit.name === n3.ouName) {
+																n3.groups.push({
+																	groupName		: g.name,
+																	groupCode		: g.code,
+																	courseTitle	: g.course.title
+																});
+																cut.push(i);
+															}
+															i++;
+														});
 													});
-												}
+												});
 											});
-										}
-									});
+											// Por último, si estamos con un 'state' hay que quitar la raiz del 'org'
+											if(key_user.orgUnit.type === 'state') {
+												if(orgOus[0].ouType === 'org' || orgOus[0].ouName === key_user.org.name) {
+													orgOus = orgOus[0].ous;
+												}
+											}
+											res.status(200).json({
+												'status'		: 200,
+												'groups' 		: grps.length,
+												'tree'			: orgOus
+											});
+										})
+										.catch((err) => {
+											Err.sendError(res,err,'report_controller','orgTree -- Finding Groups --',false,false,'User: ' + key_user.name);
+										});
 								}
-								res.status(200).json({
-									'status'		: 200,
-									'groups' 		: resultGrps,
-									'allGroups'	: allGroups
-								});
 							})
 							.catch((err) => {
-								Err.sendError(res,err,'report_controller','orgTree -- Aggregate Groups --',false,false,'User: ' + key_user.name);
+								Err.sendError(res,err,'report_controller','orgTree -- Finding Groups --',false,false,'User: ' + key_user.name);
 							});
-					} else {
-						res.status(200).json({
-							'status': 200,
-							'message' : 'No OUs found'
-						});
 					}
 				})
 				.catch((err) => {
 					Err.sendError(res,err,'report_controller','orgTree -- Finding OUs --',false,false,'User: ' + key_user.name);
 				});
+
 		} else {
 			Group.aggregate()
 				.match({orgUnit:mongoose.Types.ObjectId(key_user.orgUnit._id)})
@@ -382,6 +367,7 @@ module.exports = {
 							}
 						}
 					}
+
 					res.status(200).json({
 						'status'		: 200,
 						'groups' 		: resultGrps,
