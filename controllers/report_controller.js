@@ -572,13 +572,13 @@ module.exports = {
 							fatherName	:	'$myUser.person.fatherName',
 							motherName	: '$myUser.person.motherName',
 							email				: '$myUser.person.email',
-							rfc					: '$myUser.fiscal.id'
+							//rfc					: '$myUser.fiscal.id'
 						})
 						.unwind('name')
 						.unwind('fatherName')
 						.unwind('motherName')
 						.unwind('email')
-						.unwind('rfc')
+						//.unwind('rfc')
 						.unwind('grades')
 						.match({$or: [{'grades.wq': {$gt:0}},{'grades.wt': {$gt:0}}]})
 						.lookup({
@@ -597,7 +597,7 @@ module.exports = {
 							fatherName	:	1,
 							motherName	:	1,
 							email				:	1,
-							rfc 				: 1,
+							//rfc 				: 1,
 							blockTitle	:	'$myBlocks.title',
 							blockGrade	:	'$grades.finalGrade',
 							blockPond		:	'$grades.w'
@@ -605,7 +605,7 @@ module.exports = {
 						.unwind('blockTitle')
 						.group({
 							_id: {
-								rfc					: '$rfc',
+								//rfc					: '$rfc',
 								name				: '$name',
 								fatherName	: '$fatherName',
 								motherName	: '$motherName',
@@ -625,7 +625,7 @@ module.exports = {
 							}
 						})
 						.project({
-							rfc 				: '$_id.rfc',
+							//rfc 				: '$_id.rfc',
 							name				: '$_id.name',
 							fatherName	: '$_id.fatherName',
 							motherName	: '$_id.motherName',
