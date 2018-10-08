@@ -306,6 +306,7 @@ module.exports = {
 			Group.aggregate()
 				.match({orgUnit:mongoose.Types.ObjectId(key_user.orgUnit._id)})
 				.project({
+					_id			: 1,
 					code		: 1,
 					name		: 1,
 					course	: 1,
@@ -318,6 +319,7 @@ module.exports = {
 					as					: 'course'
 				})
 				.project({
+					groupId			: '$_id',
 					groupCode		: '$code',
 					groupName		: '$name',
 					orgUnit			: 1,
@@ -328,15 +330,20 @@ module.exports = {
 					_id: '$orgUnit',
 					groups: {
 						$push: {
+							groupId			: '$groupId',
 							groupCode		: '$groupCode',
 							groupName		: '$groupName',
 							courseTitle	: '$courseTitle'
 						}
+					},
+					groupIds: {
+						$addToSet: '$groupId'
 					}
 				})
 				.project({
 					ou					: '$_id',
-					groups	 		: '$groups'
+					groups	 		: '$groups',
+					groupIds		: '$groupIds'
 				})
 				.lookup({
 					from				: 'orgunits',
@@ -352,6 +359,7 @@ module.exports = {
 					ouType			: '$ou.type',
 					ouParent		: '$ou.parent',
 					groups	 		: '$groups',
+					groupIds		: '$groupIds',
 					_id					: false
 				})
 				.then((resultGrps) => {
@@ -370,8 +378,7 @@ module.exports = {
 
 					res.status(200).json({
 						'status'		: 200,
-						'groups' 		: resultGrps,
-						'allGroups'	: allGroups
+						'groups' 		: resultGrps
 					});
 				})
 				.catch((err) => {
@@ -398,7 +405,9 @@ module.exports = {
 		}
 		*/
 
-		var query = {};
+		var query1 = {}; // Users on track
+		var query2 = {}; // Users Passed
+		var query3 = {}; // Total users
 
 		if(key_user.orgUnit.type === 'campus') {
 			ou = key_user.orgUnit._id;
@@ -413,21 +422,25 @@ module.exports = {
 		if(Array.isArray(ou)) {
 			if(ou.length > 0) {
 				ou.forEach(o => {ouIds.push(mongoose.Types.ObjectId(o));});
-				query = {orgUnit: {$in:ouIds},report: {$ne:false},track:{$gt:0}};
+				query1 = {orgUnit: {$in:ouIds},report: {$ne:false},track:{$gt:0}};
+				query2 = {orgUnit: {$in:ouIds},report: {$ne:false},pass:true};
+				query3 = {orgUnit: {$in:ouIds},report: {$ne:false}};
 			}
 		} else {
-			query = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},track:{$gt:0}};
+			query1 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},track:{$gt:0}};
+			query2 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},pass:true};
+			query3 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false}};
 		}
 
 		Promise.all([
 			Roster.aggregate() // Buscar Track
-				.match({orgUnit: query,report: {$ne:false},track:{$gt:0}})
+				.match(query1)
 				.group({ _id: '$group', usersOnTrack:{$sum:1}}),
 			Roster.aggregate() // Buscar Aprobados
-				.match({orgUnit: query,report: {$ne:false},pass:true})
+				.match(query2)
 				.group({ _id: '$group', usersPassed:{$sum:1}}),
 			Roster.aggregate() // Total de usuarios
-				.match({orgUnit: query,report: {$ne:false}})
+				.match(query3)
 				.group({ _id: '$group', totalUsers:{$sum:1}})
 		])
 			.then((globalResults) => {
@@ -639,6 +652,11 @@ module.exports = {
 							_id 				: false
 						})
 						.then((items) => {
+							if(items && items.length > 0 ){
+								items.forEach(i => {
+									if(i.passDate) {i.passDateSpa = dateInSpanish(i.passDate);}
+								});
+							}
 							res.status(200).json({
 								'status'				: 200,
 								'group'					: group.name,
