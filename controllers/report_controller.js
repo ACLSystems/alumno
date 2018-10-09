@@ -240,7 +240,6 @@ module.exports = {
 															groupCode		: g.code,
 															courseTitle	: g.course.title
 														});
-														g1.push(g._id);
 													}
 												});
 												// listo... ahora nos vamos al segundo nivel
@@ -256,8 +255,6 @@ module.exports = {
 																groupCode		: g.code,
 																courseTitle	: g.course.title
 															});
-															g1.push(g._id);
-															g2.push(g._id);
 														}
 														i++;
 													});
@@ -265,7 +262,7 @@ module.exports = {
 													i=0;
 
 													n2.ous.forEach(n3 => {
-														var g3 = [];
+														g2.push(n3.ouId);
 														grps.forEach(g => {
 															if(g.orgUnit.name === n3.ouName) {
 																n3.groups.push({
@@ -274,16 +271,16 @@ module.exports = {
 																	groupCode		: g.code,
 																	courseTitle	: g.course.title
 																});
-																g1.push(g._id);
-																g2.push(g._id);
-																g3.push(g._id);
 															}
 															i++;
 														});
-														n3.query = g3;
+														n3.query = n3.ouId;
 													});
+													g2.push(n2.ouId);
+													g1 = g1.concat(g2);
 													n2.query = g2;
 												});
+												g1.push(n1.ouId);
 												n1.query = g1;
 											});
 											// Por último, si estamos con un 'state' hay que quitar la raiz del 'org'
@@ -349,15 +346,12 @@ module.exports = {
 							groupName		: '$groupName',
 							courseTitle	: '$courseTitle'
 						}
-					},
-					query: {
-						$addToSet: '$groupId'
 					}
 				})
 				.project({
 					ou					: '$_id',
 					groups	 		: '$groups',
-					query				: '$query'
+					query				: key_user.orgUnit._id
 				})
 				.lookup({
 					from				: 'orgunits',

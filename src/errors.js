@@ -11,7 +11,7 @@ const ErrorsSchema = new Schema ({
 	},
 	errorType: {
 		type: String,
-		enum: ['EvalError', 'InternalError', 'RangeError','ReferenceError','SyntaxError','TypeError','URIError','CastError','ValidationError']
+		enum: ['EvalError', 'InternalError', 'RangeError','ReferenceError','SyntaxError','TypeError','URIError','CastError','ValidationError','MongoError']
 	},
 	controller: {
 		type: String
