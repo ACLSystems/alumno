@@ -176,6 +176,7 @@ module.exports = {
 													ouType			: '$type',
 													ouParent		: '$parent',
 													groups			: [],
+													query				: [],
 													ous					: []
 												}
 											}
@@ -225,56 +226,65 @@ module.exports = {
 													if(orgOus[i].ouName===cutty){orgOus.splice(i,1);}
 												});
 											}
-											var tempGrps = grps;
 											// Ahora metemos los grupos dentro del árbol
+
 											orgOus.forEach(n1 => {
+												var g1 = [];
 												// Primero vemos si hay grupos para el primer nivel
 												i=0;
-												cut=[];
-												tempGrps.forEach(g => {
+												grps.forEach(g => {
 													if(g.orgUnit.name === n1.ouName) {
 														n1.groups.push({
+															groupId 		: g._id,
 															groupName		: g.name,
 															groupCode		: g.code,
 															courseTitle	: g.course.title
 														});
-														cut.push(i);
+														g1.push(g._id);
 													}
-
 												});
 												// listo... ahora nos vamos al segundo nivel
 												n1.ous.forEach(n2 => {
+													var g2 = [];
 													// Vemos si hay grupos para el segundo nivel
 													i=0;
-													cut=[];
-													tempGrps.forEach(g => {
+													grps.forEach(g => {
 														if(g.orgUnit.name === n2.ouName) {
 															n2.groups.push({
+																groupId			: g._id,
 																groupName		: g.name,
 																groupCode		: g.code,
 																courseTitle	: g.course.title
 															});
-															cut.push(i);
+															g1.push(g._id);
+															g2.push(g._id);
 														}
 														i++;
 													});
 													// listo... ahora nos vamos al tercer nivel
 													i=0;
-													cut=[];
+
 													n2.ous.forEach(n3 => {
-														tempGrps.forEach(g => {
+														var g3 = [];
+														grps.forEach(g => {
 															if(g.orgUnit.name === n3.ouName) {
 																n3.groups.push({
+																	groupId 		: g._id,
 																	groupName		: g.name,
 																	groupCode		: g.code,
 																	courseTitle	: g.course.title
 																});
-																cut.push(i);
+																g1.push(g._id);
+																g2.push(g._id);
+																g3.push(g._id);
 															}
 															i++;
 														});
+														n3.query = g3;
 													});
+													n2.query = g2;
 												});
+												n1.query = g1;
 											});
 											// Por último, si estamos con un 'state' hay que quitar la raiz del 'org'
 											if(key_user.orgUnit.type === 'state') {
@@ -284,7 +294,7 @@ module.exports = {
 											}
 											res.status(200).json({
 												'status'		: 200,
-												'groups' 		: grps.length,
+												'groupNumber' : grps.length,
 												'tree'			: orgOus
 											});
 										})
@@ -336,14 +346,14 @@ module.exports = {
 							courseTitle	: '$courseTitle'
 						}
 					},
-					groupIds: {
+					query: {
 						$addToSet: '$groupId'
 					}
 				})
 				.project({
 					ou					: '$_id',
 					groups	 		: '$groups',
-					groupIds		: '$groupIds'
+					query				: '$query'
 				})
 				.lookup({
 					from				: 'orgunits',
@@ -359,7 +369,7 @@ module.exports = {
 					ouType			: '$ou.type',
 					ouParent		: '$ou.parent',
 					groups	 		: '$groups',
-					groupIds		: '$groupIds',
+					query				: '$query',
 					_id					: false
 				})
 				.then((resultGrps) => {
@@ -378,7 +388,8 @@ module.exports = {
 
 					res.status(200).json({
 						'status'		: 200,
-						'groups' 		: resultGrps
+						'groupNumber' : resultGrps.length,
+						'tree'			: resultGrps
 					});
 				})
 				.catch((err) => {
@@ -584,14 +595,12 @@ module.exports = {
 							name				:	'$myUser.person.name',
 							fatherName	:	'$myUser.person.fatherName',
 							motherName	: '$myUser.person.motherName',
-							email				: '$myUser.person.email',
-							//rfc					: '$myUser.fiscal.id'
+							email				: '$myUser.person.email'
 						})
 						.unwind('name')
 						.unwind('fatherName')
 						.unwind('motherName')
 						.unwind('email')
-						//.unwind('rfc')
 						.unwind('grades')
 						.match({$or: [{'grades.wq': {$gt:0}},{'grades.wt': {$gt:0}}]})
 						.lookup({
@@ -618,7 +627,6 @@ module.exports = {
 						.unwind('blockTitle')
 						.group({
 							_id: {
-								//rfc					: '$rfc',
 								name				: '$name',
 								fatherName	: '$fatherName',
 								motherName	: '$motherName',
@@ -638,7 +646,6 @@ module.exports = {
 							}
 						})
 						.project({
-							//rfc 				: '$_id.rfc',
 							name				: '$_id.name',
 							fatherName	: '$_id.fatherName',
 							motherName	: '$_id.motherName',
