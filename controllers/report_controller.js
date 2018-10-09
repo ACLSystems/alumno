@@ -884,9 +884,6 @@ module.exports = {
 							var start						= new Date().getTime();
 							var end 						= new Date().getTime();
 							var timelimit				= 60000;
-							res.writeHead(200, {
-								'Content-Type': 'application/json'
-							});
 							rosters.forEach(function(roster) {
 								var send_roster = {};
 								if(lastOU === '') {
