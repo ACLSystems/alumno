@@ -292,6 +292,10 @@ module.exports = {
 													orgOus = orgOus[0].ous;
 												}
 											}
+
+											if(orgOus.length === 1) {
+												orgOus = orgOus[0];
+											}
 											res.status(200).json({
 												'status'		: 200,
 												'groupNumber' : grps.length,
@@ -384,6 +388,10 @@ module.exports = {
 								});
 							}
 						}
+					}
+
+					if(resultGrps.length === 1) {
+						resultGrps = resultGrps[0];
 					}
 
 					res.status(200).json({

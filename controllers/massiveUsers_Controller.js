@@ -127,13 +127,17 @@ module.exports = {
 											adminCreate: true
 										};
 										val.admin = admin;
+
 										if(val.name !== val.person.email) {
 											val.name === val.person.email;
 										}
 										if(val.person.name) { val.person.name = properCase(val.person.name); }
 										if(val.person.fatherName) { val.person.fatherName = properCase(val.person.fatherName); }
 										if(val.person.motherName) { val.person.motherName = properCase(val.person.motherName); }
-										if(val.password) { val.password = encryptPass(val.password); }
+										if(val.password) {
+											val.admin.initialPassword = val.password;
+											val.password = encryptPass(val.password);
+										}
 										val.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
 										val.admin.passwordSaved = 'saved';
 										usersToInsert.push(val);
