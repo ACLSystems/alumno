@@ -459,7 +459,7 @@ module.exports = {
 			.then((globalResults) => {
 				var [resultsT,resultsP,resultsR] = globalResults;
 				// Resultados de Track
-				var group_ids = new Array();
+				var group_ids = [];
 				var results 	= resultsT;
 				results.forEach(function(res) {
 					group_ids.push(res._id);
