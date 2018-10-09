@@ -517,7 +517,7 @@ module.exports = {
 
 				Group.find({_id: {$in: group_ids}})
 					.select('name orgUnit')
-					.populate('orgUnit', 'name longName')
+					.populate('orgUnit', 'name longName parent')
 					.then((groups) => {
 						if(groups.length > 0 ) {
 							groups.forEach(function(group) {
@@ -526,7 +526,12 @@ module.exports = {
 								while(!found && i < results.length) {
 									if(results[i]._id + '' === group._id +'') {
 										found = true;
-										results[i].group  = group.name;
+										results[i].groupId 		= group._id;
+										results[i].group  		= group.name;
+										results[i].ouName 		= group.orgUnit.name;
+										results[i].ouLongName = group.orgUnit.longName;
+										results[i].ouId 			= group.orgUnit._id;
+										results[i].ouParent 	= group.orgUnit.parent;
 									}
 									i++;
 								}
@@ -540,14 +545,46 @@ module.exports = {
 								if(res.totalUsers		)	{totalUsers  += res.totalUsers;   }
 							});
 
+							var send_results = [];
+
+							if(results.length > 0) {
+								let uniqueOUs = [...new Set(results.map(a => a.ouName))];
+								uniqueOUs.forEach(a => {
+									send_results.push({
+										ouName : a,
+										ous: []
+									});
+								});
+								send_results.forEach(a => {
+									results.forEach(b => {
+										if(b.ouName === a.ouName) {
+											a.ous.push({
+												usersOnTrack	: b.usersOnTrack,
+												usersPassed		: b.usersPassed,
+												totalUsers		: b.totalUsers,
+												groupId				: b.groupId,
+												groupName			: b.group,
+												//ouName				: b.ouName,
+												//ouLongName		: b.ouLongName,
+												//ouParent			: b.ouParent
+											});
+											if(!a.ouLongName) {
+												a.ouLongName 	= b.ouLongName;
+												a.ouId				= b.ouId;
+											}
+										}
+									});
+								});
+							}
+
 							res.status(200).json({
 								'status'			: 200,
-								'orgUnit'			: groups[0].orgUnit.name,
-								'orgUnitName' : groups[0].orgUnit.longName,
+								//'orgUnit'			: groups[0].orgUnit.name,
+								//'orgUnitName' : groups[0].orgUnit.longName,
 								'totalUsers'	: totalUsers,
 								'usersOnTrack': totalTracks,
 								'usersPassed'	: totalPassed,
-								'results'			: results
+								'results'			: send_results
 							});
 							// esto es del total
 
