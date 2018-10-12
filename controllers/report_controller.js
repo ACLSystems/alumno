@@ -1,10 +1,12 @@
-const mongoose 	= require('mongoose');
-const User 			= require('../src/users');
-const Roster 		= require('../src/roster');
-const File 			= require('../src/files');
-const OrgUnit 	= require('../src/orgUnits');
-const Group 		= require('../src/groups');
+const mongoose 	= require('mongoose'												);
+const User 			= require('../src/users'										);
+const Roster 		= require('../src/roster'										);
+const File 			= require('../src/files'										);
+const OrgUnit 	= require('../src/orgUnits'									);
+const Group 		= require('../src/groups'										);
 const Err 			= require('../controllers/err500_controller');
+const Session		= require('../src/sessions'									);
+const TA 				= require('time-ago'												);
 
 module.exports = {
 
@@ -1172,7 +1174,83 @@ module.exports = {
 					Err.sendError(res,err,'report_controller','gradesByCampus -- Finding Roster --');
 				});
 		}
-	}
+	}, //gradesByCampus
+
+	studentHistory(req,res) {
+		const key_user 	= res.locals.user;
+		const userId		= req.query.userid;
+		Promise.all([
+			Session.find({user: userId}).select('url date token -_id'),
+			User.findById(userId).populate('orgUnit', 'name longName parent').select('name person orgUnit')
+		])
+			.then((results) => {
+				var [sessions,user]  = results;
+				if(user) {
+					var send_s = [];
+					if(sessions && sessions.length > 0) {
+						sessions.forEach(s => {
+							var obj = {
+								dateAgo : TA.ago(s.date),
+								date		: s.date
+							};
+							if(s.url) 	{obj.url 			= s.url;				}
+							if(s.token) {obj.message 	= 'User login';	}
+							send_s.push(obj);
+						});
+					}
+					if(key_user.orgUnit.type === 'org') {
+						if(sessions && sessions.length > 0) {
+							res.status(200).json({
+								'status': 200,
+								'sessions': send_s
+							});
+						} else {
+							res.status(200).json({
+								'status': 200,
+								'sessions': 'No sessions found for user: ' + user.name
+							});
+						}
+					} else if(key_user.orgUnit.type === 'state') {
+						if(user.orgUnit.parent === key_user.orgUnit.name || user.orgUnit._id +'' === key_user.orgUnit._id + '') {
+							res.status(200).json({
+								'status': 200,
+								'sessions': send_s
+							});
+						} else {
+							res.status(200).json({
+								'status': 200,
+								'message': 'User ' + user.name + ' is not on same state as you'
+							});
+						}
+					} else if(key_user.orgUnit.type === 'campus') {
+						if(user.orgUnit._id +'' === key_user.orgUnit._id + '') {
+							res.status(200).json({
+								'status': 200,
+								'sessions': send_s
+							});
+						} else {
+							res.status(200).json({
+								'status': 200,
+								'message': 'User ' + user.name + ' is not on same campus as you'
+							});
+						}
+					} else {
+						res.status(200).json({
+							'status': 200,
+							'message': 'You do not have access to this user'
+						});
+					}
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'User not found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','studentHistory -- Finding User and Sessions --');
+			});
+	} //studentHistory
 };
 
 // PRIVATE Functions
