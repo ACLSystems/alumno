@@ -393,6 +393,7 @@ module.exports = {
 				} else {
 					//const result = permissions.access(key_user,user,'user');
 					var send_user = {
+						userid			: user._id,
 						username		: user.name,
 						org					: user.org.name,
 						orgUnit			: user.orgUnit.name,
@@ -688,57 +689,45 @@ module.exports = {
 		const key_user 	= res.locals.user;
 		const username 	= req.query.username;
 		var query 			= { name: username };
-		if(key_user.roles.isOrg && !key_user.roles.isAdmin) {
-			query.orgUnit = key_user.orgUnit;
-		}
 		User.findOne(query)
 			.then((user) => {
 				if(user) {
-					if(user.fiscal && user.fiscal.id) {
-						user.admin.passwordSaved = 'saved';
-						//user.password = encryptPass(user.fiscal.id);
+					user.admin.passwordSaved = 'saved';
+					//user.password = encryptPass(user.fiscal.id);
+
+					if(user.admin.initialPassword){
 						user.password = user.admin.initialPassword;
-						const date = new Date();
-						var mod = {
-							by: key_user.name,
-							when: date,
-							what: 'Password reset'
-						};
-						user.mod.push(mod);
-						//const result = permissions.access(key_user,user,'user');
-						//if(result.canModify) {
-						user.save()
-							.then (() => {
-								//mailjet.sendMail(user.person.email, user.person.name, 'Tu contraseña ha sido modificada por el administrador',393450)
-								//.then(() => {
-								res.status(200).json({
-									'status': 200,
-									'message': 'Password for user -' + username + '- reset by -' + key_user.name + '-'
-								});
-								//})
-								//.catch((err) => {
-
-								//	Err.sendError(res,err,'user_controller','adminPasswordReset -- Sending email--');
-								//});
-
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'user_controller','adminPasswordReset -- Saving User--');
-							});
-						/*
-						} else {
-							res.status(403).json({
-								'status': 403,
-								'message': 'User ' + key_user.name + ' not authorized'
-							});
-						}
-						*/
 					} else {
-						res.status(200).json({
-							'status': 200,
-							'message': 'User does not have fiscal id'
-						});
+						user.password = req.query.password;
+						user.admin.initialPassword = req.query.password;
 					}
+					const date = new Date();
+					var mod = {
+						by: key_user.name,
+						when: date,
+						what: 'Password reset'
+					};
+					user.mod.push(mod);
+					//const result = permissions.access(key_user,user,'user');
+					//if(result.canModify) {
+					user.save()
+						.then (() => {
+							//mailjet.sendMail(user.person.email, user.person.name, 'Tu contraseña ha sido modificada por el administrador',393450)
+							//.then(() => {
+							res.status(200).json({
+								'status': 200,
+								'message': 'Password for user -' + username + '- reset by -' + key_user.name + '-'
+							});
+							//})
+							//.catch((err) => {
+
+							//	Err.sendError(res,err,'user_controller','adminPasswordReset -- Sending email--');
+							//});
+
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'user_controller','adminPasswordReset -- Saving User--');
+						});
 				} else {
 					res.status(200).json({
 						'status': 200,

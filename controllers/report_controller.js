@@ -1180,7 +1180,7 @@ module.exports = {
 		const key_user 	= res.locals.user;
 		const userId		= req.query.userid;
 		Promise.all([
-			Session.find({user: userId}).select('url date token -_id'),
+			Session.find({user: userId}).select('url date token -_id').sort({date: -1}),
 			User.findById(userId).populate('orgUnit', 'name longName parent').select('name person orgUnit')
 		])
 			.then((results) => {
