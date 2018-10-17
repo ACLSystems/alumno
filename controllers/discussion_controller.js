@@ -56,37 +56,45 @@ module.exports = {
 				} else if(discussion.pubtype === 'discussion' || discussion.pubtype === 'question') {
 					if(commentObj.group) {
 						Group.findById(commentObj.group)
-							.select('type instructor')
+							.select('type instructor course')
 							.populate('instructor', 'person preferences')
 							.then((group) => {
-								if(group) {
+								if(group && group.instructor) {
 									if(group.type === 'tutor') {
-										var message = {};
-										message.destination = {
-											kind: 'users',
-											item: group.instructor._id,
-											role: 'instructor'
-										};
-										message.source = {
-											kind: 'users',
-											item: key_user._id,
-											role: 'user'
-										};
-										message.type = 'user';
-										message.objects = [{
-											item: discussion._id,
-											kind: 'discussions'
-										}];
-										message.message = 'Han creado una discusión/pregunta en el foro';
-										Notification.create(message)
-											.then(() => {
-												if(group.instructor.preferences.alwaysSendEmail) {
-													mailjet.sendMail(group.instructor.person.email, group.instructor.person.name, 'Tienes una notificación',493237,'curso',message.message);
-												}
-											})
-											.catch((err) => {
-												Err.sendError(res,err,'discussion_controller','create -- sending notification for discussion ' + key_user.name);
-											});
+										if(group.instructor._id + '' !== key_user._id + ''){
+											var message = {};
+											message.destination = {
+												kind: 'users',
+												item: group.instructor._id,
+												role: 'instructor'
+											};
+											message.source = {
+												kind: 'users',
+												item: key_user._id,
+												role: 'user'
+											};
+											message.type = 'user';
+											message.objects = [{
+												item: discussion._id,
+												kind: 'discussions'
+											},{
+												item: group._id,
+												kind: 'groups'
+											},{
+												item: group.course,
+												kind: 'courses'
+											}];
+											message.message = 'Ha creado una discusión/pregunta en el foro';
+											Notification.create(message)
+												.then(() => {
+													if(group.instructor && (!group.instructor.hasOwnProperty('preferences')  || !group.instructor.preferences.hasOwnProperty('alwaysSendEmail') || group.instructor.preferences.alwaysSendEmail)) {
+														mailjet.sendMail(group.instructor.person.email, group.instructor.person.name, 'Tienes una notificación',493237,'curso',message.message);
+													}
+												})
+												.catch((err) => {
+													Err.sendError(res,err,'discussion_controller','create -- sending notification for discussion ' + key_user.name);
+												});
+										}
 									}
 								}
 							})
