@@ -1164,7 +1164,7 @@ module.exports = {
 						grades					: send_group
 					});
 					//res.status(200).json({
-					res.end({
+					res.status(200).json({
 						'status': 200,
 						'campus': key_user.orgUnit.longName + ' (' + key_user.orgUnit.name + '), -' + key_user.orgUnit.parent + '-',
 						'message': send_rosters
