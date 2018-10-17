@@ -1,6 +1,7 @@
 const Discussion 		= require('../src/discussions'							);
 const Notification 	= require('../src/notifications'						);
 const Follow 				= require('../src/follow'										);
+const Group 				= require('../src/groups'										);
 const Err 					= require('../controllers/err500_controller');
 const mailjet 			= require('../shared/mailjet'								);
 const TA 						= require('time-ago'												);
@@ -32,21 +33,67 @@ module.exports = {
 					var message = new Notification({
 						source: {
 							item: key_user._id,
-							kind: 'users'
+							kind: 'users',
+							role: 'instructor'
 						},
 						destination: {
 							item: discussion.group,
-							kind: 'groups'
+							kind: 'groups',
+							role: 'user'
 						},
-						sourceType: commentObj.sourceType,
+						type: commentObj.sourceType,
 						sourceRole: commentObj.sourceRole,
 						message		: commentObj.message,
-						object		: discussion._id
+						objects		: [{
+							item: discussion._id,
+							kind: 'discussion'
+						}]
 					});
 					message.save()
 						.catch((err) => {
 							Err.sendError(res,err,'discussion_controller','create -- Creating notification for announcement' + key_user.name + ' text: ' + commentObj.text);
 						});
+				} else if(discussion.pubtype === 'discussion' || discussion.pubtype === 'question') {
+					if(commentObj.group) {
+						Group.findById(commentObj.group)
+							.select('type instructor')
+							.populate('instructor', 'person preferences')
+							.then((group) => {
+								if(group) {
+									if(group.type === 'tutor') {
+										var message = {};
+										message.destination = {
+											kind: 'users',
+											item: group.instructor._id,
+											role: 'instructor'
+										};
+										message.source = {
+											kind: 'users',
+											item: key_user._id,
+											role: 'user'
+										};
+										message.type = 'user';
+										message.objects = [{
+											item: discussion._id,
+											kind: 'discussions'
+										}];
+										message.message = 'Han creado una discusión/pregunta en el foro';
+										Notification.create(message)
+											.then(() => {
+												if(group.instructor.preferences.alwaysSendEmail) {
+													mailjet.sendMail(group.instructor.person.email, group.instructor.person.name, 'Tienes una notificación',493237,'curso',message.message);
+												}
+											})
+											.catch((err) => {
+												Err.sendError(res,err,'discussion_controller','create -- sending notification for discussion ' + key_user.name);
+											});
+									}
+								}
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'discussion_controller','create -- Finding group ' + key_user.name + ' group: ' + commentObj.group);
+							});
+					}
 				} else {
 					Follow.find({$or: [{'object.item': discussion.root},{'object.item': discussion.comment},{'object.item': discussion.replyto}],'who.item': key_user._id})
 						.populate('who.item')
@@ -57,19 +104,19 @@ module.exports = {
 								var message = {};
 								message.destination = {
 									kind: 'users',
-									item: f.who.item._id
+									item: f.who.item._id,
+									role: 'user'
 								};
 								message.source = {
 									kind: 'users',
-									item: key_user._id
+									item: key_user._id,
+									role: 'user'
 								};
-								message.sourceRole = 'user';
-								message.destinationRole = 'user';
-								message.sourceType = 'system';
-								message.object = {
+								message.type = 'system';
+								message.objects = [{
 									item: discussion._id,
 									kind: 'discussions'
-								};
+								}];
 								message.message = 'Han respondido a una discusión/pregunta que tú estás siguiendo';
 								Notification.create(message)
 									.then(() => {
