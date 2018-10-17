@@ -787,7 +787,7 @@ module.exports = {
 				select: 'blocks title',
 				populate: {
 					path: 'blocks',
-					select: 'section number'
+					select: 'section number title'
 				}
 			})
 			//.populate('students','name status person student')
@@ -841,6 +841,8 @@ module.exports = {
 						var send_grades = new Array();
 
 						if(s.grades && s.grades.length > 0) {
+							var lastBlockSeen = -1;
+							var acc 					= 0;
 							s.grades.forEach(function(g) {
 								var send_grade 	= {};
 								var flag 				= false;
@@ -882,10 +884,27 @@ module.exports = {
 										}
 									}
 								}
+								if(g.track > 0) {
+									lastBlockSeen = acc;
+								}
+								acc++;
 								if(flag) {
 									send_grades.push(send_grade);
 								}
 							});
+							if(lastBlockSeen > -1) {
+								send_student.lastBlock = {
+									section	: group.course.blocks[lastBlockSeen].section,
+									number	: group.course.blocks[lastBlockSeen].number,
+									title		: group.course.blocks[lastBlockSeen].title
+								};
+							} else {
+								send_student.lastBlock = {
+									section	: 0,
+									number	: 0,
+									title		: 'Alumno no ha comenzado el curso'
+								};
+							}
 						}
 						send_student.grades = send_grades;
 						students.push(send_student);
@@ -2003,7 +2022,7 @@ module.exports = {
 					var blocks	= new Array();
 					const bs 		= item.group.course.blocks;
 					item.grades.forEach(function(grade) {
-						if(grade.wq > 0 || grade.wt > 0) {
+						if((grade.wq > 0 || grade.wt > 0 ) && grade.track > 0) {
 							var i = 0;
 							var block = {};
 							while (i < bs.length) {
@@ -2036,6 +2055,7 @@ module.exports = {
 						endDate						: item.group.endDate,
 						finalGrade				: item.finalGrade,
 						minGrade					: item.minGrade,
+						status						: item.status,
 						track							: parseInt(item.track) + '%',
 						minTrack					: item.minTrack + '%',
 						pass							: item.pass,
