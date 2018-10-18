@@ -231,6 +231,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/user/settracking', 			GroupController.setTracking);
 	app.get ('/api/v1/supervisor/user/gethistory', 				ReportController.studentHistory);
 	app.get ('/api/v1/supervisor/user/getgroups', 				GroupController.getGroups);
+	app.post('/api/v1/supervisor/user/masssearch',				ReportController.userMassSearch);
 	app.get ('/api/v1/supervisor/group/listroster', 			GroupController.listRoster);
 	app.get ('/api/v1/supervisor/group/getfilelist', 			ReportController.filesBygroup);
 	app.get ('/api/v1/supervisor/group/studentgrades',		GroupController.studentGrades);

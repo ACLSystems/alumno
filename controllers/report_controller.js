@@ -1250,7 +1250,29 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'report_controller','studentHistory -- Finding User and Sessions --');
 			});
-	} //studentHistory
+	}, //studentHistory
+
+	userMassSearch(req,res) {
+		User.aggregate()
+			.match({name:{$in:req.body.users}})
+			.project('name person char1 char2')
+			.then((users) => {
+				if(users && users.length > 0){
+					res.status(200).json({
+						'status': 200,
+						'users'	: users
+					});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message'	: 'No users found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','userMassSearch -- Finding Users --');
+			});
+	} //userMassSearch
 };
 
 // PRIVATE Functions

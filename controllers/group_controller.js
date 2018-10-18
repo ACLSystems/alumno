@@ -893,10 +893,31 @@ module.exports = {
 								}
 							});
 							if(lastBlockSeen > -1) {
+								let section = 0;
+								let number = 0;
+								let title  = 'Alumno no ha comenzado el curso';
+								if(group.course &&
+									group.course.blocks &&
+									group.course.blocks[lastBlockSeen] &&
+									group.course.blocks[lastBlockSeen].section ) {
+									section = group.course.blocks[lastBlockSeen].section;
+								}
+								if(group.course &&
+									group.course.blocks &&
+									group.course.blocks[lastBlockSeen] &&
+									group.course.blocks[lastBlockSeen].number ) {
+									number = group.course.blocks[lastBlockSeen].number;
+								}
+								if(group.course &&
+									group.course.blocks &&
+									group.course.blocks[lastBlockSeen] &&
+									group.course.blocks[lastBlockSeen].title ) {
+									title = group.course.blocks[lastBlockSeen].title;
+								}
 								send_student.lastBlock = {
-									section	: group.course.blocks[lastBlockSeen].section,
-									number	: group.course.blocks[lastBlockSeen].number,
-									title		: group.course.blocks[lastBlockSeen].title
+									section	: section,
+									number	: number,
+									title		: title
 								};
 							} else {
 								send_student.lastBlock = {

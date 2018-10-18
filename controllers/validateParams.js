@@ -397,6 +397,22 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/supervisor/user/masssearch':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by body to process'
+			});
+		} else if(!req.body.users) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give user (users) array by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/supervisor/user/gethistory':
 	/*
 		if(!req.query) {
