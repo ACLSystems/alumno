@@ -46,7 +46,7 @@ module.exports = {
 						message		: commentObj.message,
 						objects		: [{
 							item: discussion._id,
-							kind: 'discussion'
+							kind: 'discussions'
 						}]
 					});
 					message.save()
