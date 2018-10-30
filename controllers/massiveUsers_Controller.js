@@ -272,9 +272,14 @@ module.exports = {
 			.select('_id')
 			.then((users) => {
 				if(users && users.length > 0) {
+					var send_users = [];
+					users.forEach(user => {
+						send_users.push(user._id);
+					});
 					res.status(200).json({
 						'status'	: 200,
 						'usersNum': users.length,
+						'usersArray': send_users,
 						'users'		: users
 					});
 				} else {
