@@ -1,4 +1,4 @@
-const mongoose 		= require('mongoose');
+const mongoose = require('mongoose');
 
 module.exports = function(req, res, next) {
 	var url = req.url;
@@ -876,6 +876,18 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
+
+	case '/api/v1/supervisor/user/massiveregister':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -1770: Please, give data by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/orgadm/orgunit/massiveregister':
 		if(!req.body) {
 			res.status(406).json({
@@ -1615,7 +1627,80 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/supervisor/group/create':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else if (!req.body.code) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group code by body to process'
+			});
+		} else if (!req.body.name) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group name by body to process'
+			});
+		} else if (!req.body.course) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give course id by body to process'
+			});
+		} else if (req.body.endDate && !req.body.beginDate) {
+			var endDate2 = Date.parse(req.body.endDate);
+			var now2 = new Date();
+			if(endDate2 <= now2) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error -: endDate is past. Please use a future date or none'
+				});
+			} else {
+				next();
+			}
+		} else if(req.body.beginDate && req.body.endDate) {
+			var beginDate2 = Date.parse(req.body.beginDate);
+			if(endDate2 <= beginDate2) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error -: endDate is less than beginDate. Please use valid dates'
+				});
+			} else if (endDate2 <= now2) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error -: endDate is past. Please use a future date or none'
+				});
+			} else {
+				next();
+			}
+		} else if (!mongoose.Types.ObjectId.isValid(req.body.orgUnit)) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: orgUnit is not a valid ObjectID'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/instructor/group/get':
+		if(!req.query) { // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group id by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/supervisor/group/get':
 		if(!req.query) { // GET
 			res.status(406).json({
 				'status': 406,
@@ -1647,7 +1732,27 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/supervisor/group/modify':
+		if(!req.body) { // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else if (!req.body.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group id by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/instructor/group/list':
+		next();
+		break;
+
+	case '/api/v1/supervisor/group/list':
 		next();
 		break;
 
@@ -1671,7 +1776,44 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/supervisor/group/createroster':
+		if(!req.body) {  // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else if (!req.body.code) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group code by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/instructor/group/notify':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group id by query to process'
+			});
+		} else if (!req.query.message) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give message by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/supervisor/group/notify':
 		if(!req.query) {  // GET
 			res.status(406).json({
 				'status': 406,
