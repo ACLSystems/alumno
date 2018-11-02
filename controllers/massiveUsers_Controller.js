@@ -1,23 +1,17 @@
-//const winston = require('winston');
 const User = require('../src/users');
 const Org = require('../src/orgs');
 const OrgUnit = require('../src/orgUnits');
-//const generate = require('nanoid/generate');
-//const moment = require('moment');
 const bcrypt = require('bcrypt-nodejs');
 const mailjet = require('../shared/mailjet');
 const generate = require('nanoid/generate');
 const Err = require('../controllers/err500_controller');
-
 const logger = require('../shared/winston-logger');
-
 const url 								= process.env.LIBRETA_URI;
 //const template_user				= 310518; // plantilla para el usuario que se registra por su cuenta
 const template_user_admin = 339990; // plantilla para el usuario que es registrado por el administrador
 
 
 module.exports = {
-	//massiveRegister(req,res,next) {
 	massiveRegister(req,res) {
 		if(!req.body ) {
 			res.status(406).json({
@@ -57,15 +51,7 @@ module.exports = {
 								var usersToInsertNames = new Array();
 								var usersToUpdate = new Array();
 								var usersToUpdateNames = new Array();
-								//var start						= new Date().getTime();
-								//var end 						= new Date().getTime();
-								//var timelimit				= 10000;
-								//var counter					= 0;
-								//res.writeHead(200, JSON.stringify({
-								//	'Content-Type': 'application/json'
-								//}));
 								usersReq.forEach(function(val) {
-									//console.time("concatenation");
 									objOrg = orgs.find(function(objOrg) {return objOrg.name === val.org; });
 									objOrgUnit = orgUnits.find(function(objOrgUnit) {return  objOrgUnit.name === val.orgUnit && objOrgUnit.org.name === val.org; });
 									var orgStatus = 'ok';
@@ -143,13 +129,6 @@ module.exports = {
 										usersToInsert.push(val);
 										usersToInsertNames.push(val.name);
 									}
-									//console.timeEnd("concatenation");
-									//counter++;
-									//end = new Date().getTime();
-									//if(end - start > timelimit) {
-									//	start = new Date().getTime();
-									//	res.write(JSON.stringify({'counter': counter}));
-									//}
 								});
 
 								User.find({name: {$in: usersToInsertNames}})
@@ -167,33 +146,6 @@ module.exports = {
 											});
 										});
 										if(usersToInsert) {
-											/*
-											usersToInsert.forEach(function(userToInsert){
-												User.create(usersToInsert)
-													.then((user) => {
-														user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
-														user.save()
-															.then((user) => {
-																var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
-																var templateId = template_user_admin;
-
-																mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
-																	.catch((err) => {
-																		Err.sendError(res,err,'massiveUser_controller','register -- Sending Mail --');
-																	});
-
-															})
-															.catch((err) => {
-																sendError(res,err,'Saving each');
-															});
-													})
-													.catch((err) => {
-														sendError(res,err,'Insert Many');
-													});
-
-											});
-											*/
-
 											User.insertMany(usersToInsert)
 												.then(() => {
 													usersToInsert.forEach(function(user) {
@@ -234,15 +186,20 @@ module.exports = {
 											});
 											numUsers.updated = usersToUpdate.length;
 										}
+										var userIds = [];
+										usersToInsert.forEach(u => {
+											userIds.push(u._id);
+										});
+										usersToUpdate.forEach(u => {
+											userIds.push(u._id);
+										});
 										numUsers.failed = failed.length;
 										var result = numUsers;
 										result.details = failed;
-										res.status(200);
-										res.json({
-										//res.end(JSON.stringify({
+										res.status(200).json({
 											'status': 200,
-											'message': result
-										//}));
+											'message': result,
+											'userIds': userIds
 										});
 									})
 									.catch((err) => {
@@ -292,7 +249,7 @@ module.exports = {
 			.catch((err) => {
 				sendError(res,err,'orgs');
 			});
-	}
+	} // get
 };
 
 // Private Functions
