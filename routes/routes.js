@@ -234,6 +234,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/user/getgroups', 				GroupController.getGroups);
 	app.post('/api/v1/supervisor/user/masssearch',				ReportController.userMassSearch);
 	app.post('/api/v1/supervisor/user/massiveregister', 	MassUsersController.massiveRegister);
+	app.post('/api/v1/supervisor/user/mur',								MassUsersController.mur);
 	app.post('/api/v1/supervisor/group/create', 					GroupController.create);
 	app.get ('/api/v1/supervisor/group/get',							GroupController.get);
 	app.put ('/api/v1/supervisor/group/modify',						GroupController.modify);

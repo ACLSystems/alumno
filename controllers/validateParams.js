@@ -888,6 +888,22 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/supervisor/user/mur':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -1770: Please, give data by body to process'
+			});
+		} else if(!req.body.users) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -1770: Please, give users data by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/orgadm/orgunit/massiveregister':
 		if(!req.body) {
 			res.status(406).json({
