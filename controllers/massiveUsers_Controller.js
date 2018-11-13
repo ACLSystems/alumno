@@ -229,6 +229,7 @@ module.exports = {
 													userToUpdate.admin.passwordSaved = 'saved';
 												}
 												*/
+												delete userToUpdate.password;
 												User.update({_id: userToUpdate._id}, {$set: userToUpdate})
 													.catch((err) => {
 														sendError(res,err,'User update');
