@@ -444,7 +444,7 @@ module.exports = {
 		if(key_user.roles.isAdmin || (key_user.roles.isOrg)) {
 			User.findOne({ name: username })
 				.populate('org','name')
-				.populate('orgUnit', 'name')
+				.populate('orgUnit', 'name longName parent type')
 				.then((user) => {
 					if (!user) {
 						res.status(404).json({
@@ -454,10 +454,28 @@ module.exports = {
 					} else {
 						const result = permissions.access(key_user,user,'user');
 						if(result.canRead) {
+							if(user.orgUnit && user.orgUnit.parent && user.orgUnit.type) {
+								if(user.orgUnit.type === 'campus') {
+									user.orgUnit.state = user.orgUnit.parent;
+								}
+								if(user.orgUnit.type === 'state') {
+									user.orgUnit.state = user.orgUnit.name;
+								}
+								if(user.orgUnit.type === 'org') {
+									user.orgUnit.state = user.orgUnit.name;
+								}
+							}
 							var send_user = {
 								name: user.name,
 								org: user.org.name,
-								orgUnit: user.orgUnit.name,
+								orgUnit: {
+									name: user.orgUnit.name,
+									longName: user.orgUnit.longName,
+									_id: user.orgUnit._id,
+									type: user.orgUnit.type,
+									parent: user.orgUnit.parent,
+									state: user.orgUnit.state
+								},
 							};
 							if(user.roles) {
 								if(key_user.roles.isAdmin) {
@@ -1103,10 +1121,80 @@ module.exports = {
 				if(item) {
 					myroles.isUser 	= true;
 				}
-				res.status(200).json({
-					'status'			: 200,
-					'message'			: myroles
-				});
+				OrgUnit.findById(key_user.orgUnit._id)
+					.select('name longName parent type')
+					.lean()
+					.then((ou) => {
+						if(ou)	{
+							myroles.ou = {
+								id: ou._id,
+								name: ou.name,
+								longName: ou.longName,
+								parent: ou.parent
+							};
+							if(ou.parent && ou.type) {
+								if(ou.type === 'campus') {
+									myroles.ou.state = ou.parent;
+								}
+								if(ou.type === 'state') {
+									myroles.ou.state = ou.name;
+									OrgUnit.find({parent:ou.name})
+										.select('name')
+										.lean()
+										.then((ous) => {
+											if(ous && ous.length > 0) {
+												var send_ous = [];
+												ous.forEach(ou => {
+													send_ous.push(ou.name);
+												});
+												myroles.ous = send_ous;
+												res.status(200).json({
+													'status'			: 200,
+													'message'			: myroles
+												});
+												return;
+											}
+										})
+										.catch((err) => {
+											Err.sendError(res,err,'user_controller','myRoles -- Finding Ous --');
+										});
+								}
+								if(ou.type === 'org') {
+									myroles.ou.state = ou.name;
+									OrgUnit.find({type:'campus'})
+										.select('name parent')
+										.lean()
+										.then((ous) => {
+											if(ous && ous.length > 0) {
+												var send_ous = [];
+												ous.forEach(ou => {
+													if(!send_ous[ou.parent]) {
+														send_ous[ou.parent] = [];
+													}
+													send_ous[ou.parent].push(ou.name);
+												});
+												myroles.ous = send_ous;
+												res.status(200).json({
+													'status'			: 200,
+													'message'			: myroles
+												});
+												return;
+											}
+										})
+										.catch((err) => {
+											Err.sendError(res,err,'user_controller','myRoles -- Finding Ous --');
+										});
+								}
+							}
+						}
+						res.status(200).json({
+							'status'			: 200,
+							'message'			: myroles
+						});
+					})
+					.catch((err) => {
+						Err.sendError(res,err,'user_controller','myRoles -- Finding User OU --');
+					});
 			})
 			.catch((err) => {
 				Err.sendError(res,err,'user_controller','myRoles -- Finding Roster --');
