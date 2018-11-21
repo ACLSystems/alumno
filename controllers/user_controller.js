@@ -265,6 +265,37 @@ module.exports = {
 			});
 	},
 
+	getDetailsPublic(req,res) {
+		const username = req.query.name;
+		User.findOne({ name: username })
+			.select('name person orgUnit')
+			.populate('orgUnit', 'name')
+			.then((user) => {
+				if (!user) {
+					res.status(200).json({
+						'status': 404,
+						'message': 'User -' + username + '- does not exist'
+					});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'user': {
+							email			: user.name,
+							person		: user.person
+						},
+						'ou': {
+							id				: user.orgUnit._id,
+							name			: user.orgUnit.name,
+							longName	: user.orgUnit.longName
+						}
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','getDetailsPublic -- Finding Email --');
+			});
+	},
+
 	//getDetails(req, res, next) {
 	getDetails(req, res) {
 		const key_user = res.locals.user;
