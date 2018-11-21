@@ -1830,10 +1830,10 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give data by query to process'
 			});
-		} else if (!req.query.groupid) {
+		} else if (!req.query.groupid && ! req.query.query) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give group id by query to process'
+				'message': 'Error -: Please, give group id or query by query to process'
 			});
 		} else if (!req.query.message) {
 			res.status(406).json({
@@ -1851,10 +1851,10 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give data by query to process'
 			});
-		} else if (!req.query.groupid) {
+		} else if (!req.query.groupid && ! req.query.query) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give group id by query to process'
+				'message': 'Error -: Please, give group id or query by query to process'
 			});
 		} else if (!req.query.message) {
 			res.status(406).json({

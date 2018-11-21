@@ -613,9 +613,15 @@ module.exports = {
 	}, //createRoster
 
 	notify(req,res) {
-		var groupid 		= req.query.groupid;
+		var query				= {};
+		if(req.query.groupid) {
+			query = {group: req.query.groupid};
+		}
+		if(req.query.query) {
+			query = JSON.parse(req.query.query);
+		}
 		const message  	= req.query.message;
-		Roster.find({group: groupid})
+		Roster.find(query)
 			.populate([
 				{
 					path: 'student',
