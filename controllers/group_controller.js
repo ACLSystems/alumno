@@ -629,7 +629,7 @@ module.exports = {
 				},
 				{
 					path: 'group',
-					select: 'course',
+					select: 'course code',
 					populate: {
 						path: 'course',
 						select: 'title'
@@ -639,12 +639,15 @@ module.exports = {
 			.lean()
 			.then((items)  => {
 				if(items.length > 0) {
+					var groups = [];
 					items.forEach(function(roster) {
 						mailjet.sendMail(roster.student.person.email, roster.student.person.name, 'Mensaje del curso ' + roster.group.course.title,391119,roster.group.course.title,message);
+						groups[roster.group.code] ++;
 					});
 					res.status(200).json({
-						'status': 20,
-						'message': 'Notification sent'
+						'status'	: 20,
+						'message'	: items.length + ' emails sent',
+						'groups' 	:	groups
 					});
 				} else {
 					res.status(200).json({
