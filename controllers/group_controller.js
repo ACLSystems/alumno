@@ -614,50 +614,70 @@ module.exports = {
 
 	notify(req,res) {
 		var query				= {};
-		if(req.query.groupid) {
-			query = {group: req.query.groupid};
+		if(req.body.courseid) {
+			query.course = req.body.courseid;
 		}
-		if(req.query.query) {
-			query = JSON.parse(req.query.query);
+		if(req.body.ouid) {
+			query.orgUnit = req.body.ouid;
 		}
-		const message  	= req.query.message;
-		Roster.find(query)
-			.populate([
-				{
-					path: 'student',
-					select: 'person'
-				},
-				{
-					path: 'group',
-					select: 'course code',
-					populate: {
-						path: 'course',
-						select: 'title'
-					}
-				}])
-			.select('student group')
-			.lean()
-			.then((items)  => {
-				if(items.length > 0) {
-					var groups = [];
-					items.forEach(function(roster) {
-						mailjet.sendMail(roster.student.person.email, roster.student.person.name, 'Mensaje del curso ' + roster.group.course.title,391119,roster.group.course.title,message);
-						groups[roster.group.code] ++;
+		if(req.body.groupid) {
+			query = {_id : req.body.groupid};
+		}
+		const message  	= req.body.message;
+		var find_groups = [];
+		var send_groups = [];
+		Group.find(query)
+			.select('_id name code')
+			.then((groups) => {
+				if(groups && groups.length > 0) {
+					groups.forEach(g => {
+						find_groups.push(g._id);
+						send_groups.push({
+							name: g.name,
+							code: g.code
+						});
 					});
-					res.status(200).json({
-						'status'	: 20,
-						'message'	: items.length + ' emails sent',
-						'groups' 	:	groups
-					});
-				} else {
-					res.status(200).json({
-						'status': 200,
-						'message': 'Students not found. Maybe wrong group id?'
-					});
+					Roster.find({group: {$in: find_groups}})
+						.populate([
+							{
+								path: 'student',
+								select: 'person'
+							},
+							{
+								path: 'group',
+								select: 'course code',
+								populate: {
+									path: 'course',
+									select: 'title'
+								}
+							}])
+						.select('student group')
+						.lean()
+						.then((items)  => {
+							if(items.length > 0) {
+								res.status(200).json({
+									'status'	: 20,
+									'message'	: items.length + ' emails are being sending',
+									'groups'	: send_groups
+								});
+								items.forEach(function(roster) {
+									mailjet.sendMail(roster.student.person.email, roster.student.person.name, 'Mensaje del curso ' + roster.group.course.title,391119,roster.group.course.title,message);
+								});
+							} else {
+								res.status(200).json({
+									'status'	: 200,
+									'message'	: 'Students not found. Maybe wrong group id?',
+									'query'		: query
+								});
+							}
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'group_controller','notify -- Finding Roster --');
+						});
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'group_controller','notify -- Finding Roster --');
+				Err.sendError(res,err,'group_controller','notify -- Finding Groups --');
 			});
 	},
 

@@ -1825,20 +1825,20 @@ module.exports = function(req, res, next) {
 		break;
 
 	case '/api/v1/instructor/group/notify':
-		if(!req.query) {  // GET
+		if(!req.body) {  // GET
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give data by query to process'
+				'message': 'Error -: Please, give data by body to process'
 			});
-		} else if (!req.query.groupid && ! req.query.query) {
+		} else if (!req.body.groupid && ! req.body.courseid && ! req.body.ouid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give group id or query by query to process'
+				'message': 'Error -: Please, give groupid or courseid or ouid by body to process'
 			});
-		} else if (!req.query.message) {
+		} else if (!req.body.message) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give message by query to process'
+				'message': 'Error -: Please, give message by body to process'
 			});
 		} else {
 			next();
@@ -1846,20 +1846,20 @@ module.exports = function(req, res, next) {
 		break;
 
 	case '/api/v1/supervisor/group/notify':
-		if(!req.query) {  // GET
+		if(!req.body) {  // GET
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give data by query to process'
+				'message': 'Error -: Please, give data by body to process'
 			});
-		} else if (!req.query.groupid && ! req.query.query) {
+		} else if (!req.body.groupid && ! req.body.courseid && ! req.body.ouid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give group id or query by query to process'
+				'message': 'Error -: Please, give groupid or courseid or ouid by body to process'
 			});
-		} else if (!req.query.message) {
+		} else if (!req.body.message) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give message by query to process'
+				'message': 'Error -: Please, give message by body to process'
 			});
 		} else {
 			next();
