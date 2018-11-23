@@ -15,7 +15,8 @@ var auth = {
 			res.status(401);
 			res.json({
 				'status': 401,
-				'message': 'Please, give credentials'
+				//'message': 'Please, give credentials'
+				'message': 'Error: Por favor, proporcione las credenciales para acceder'
 			});
 			return;
 		}
@@ -25,7 +26,8 @@ var auth = {
 				if(!user) {
 					res.status(404).json({
 						'status': 404,
-						'message': 'User -' + username + '- not found'
+						//'message': 'User -' + username + '- not found'
+						'message': 'Error: el usuario o el password no son correctos'
 					});
 				} else {
 					user.validatePassword(password, function(err, isOk) {
@@ -49,7 +51,8 @@ var auth = {
 						} else {
 							res.status(400).json({
 								'status': 400,
-								'message': 'Password incorrect'
+								//'message': 'Password incorrect'
+								'message': 'Error: el usuario o el password no son correctos'
 							});
 						}
 					});
