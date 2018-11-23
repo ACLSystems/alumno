@@ -12,8 +12,7 @@ var auth = {
 		var password = req.body.password || '';
 
 		if (username == '' || password == '') {
-			res.status(401);
-			res.json({
+			res.status(401).json({
 				'status': 401,
 				//'message': 'Please, give credentials'
 				'message': 'Error: Por favor, proporcione las credenciales para acceder'
