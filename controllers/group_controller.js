@@ -435,11 +435,11 @@ module.exports = {
 								User.find({_id: { $in: roster.roster}})
 									.select('person')
 									.then((students) => {
-										var my_roster 		= new Array();
-										var new_students	= new Array();
+										var my_roster 		= [];
+										var new_students	= [];
 										var status				= roster.status || 'pending';
 										students.forEach(function(student) {
-											var grade = new Array();
+											var grade = [];
 											var sec = 0;
 											blocks.forEach(function(block) {
 												var gradePushed = {
@@ -568,9 +568,19 @@ module.exports = {
 												Err.sendError(res,err,'group_controller','createRoster -- Saving group -- user: ' +
 													key_user.name + ' groupid: ' + group._id);
 											});
+										var newStudents = 0;
+										var totalRoster = 0;
+										if(new_students && new_students.length > 0) {
+											newStudents = new_students.length;
+										}
+										if(group.students && group.students.length > 0) {
+											totalRoster = group.students.length;
+										}
 										res.status(200).json({
 											'status': 200,
-											'message': 'Roster created'
+											'message': 'Roster created',
+											'newStudents': newStudents,
+											'totalRoster': totalRoster
 										});
 										/*
 										group.mod.push(mod);
@@ -790,7 +800,8 @@ module.exports = {
 					});
 					res.status(200).json({
 						'status': 200,
-						'message': 'Status modified'
+						'message': 'Status modified',
+						'rostersModified': results.length
 					});
 				} else {
 					res.status(200).json({
@@ -859,11 +870,15 @@ module.exports = {
 						orgUnitLong	: group.orgUnit.longName,
 						numStudents : group.roster.length,
 					};
-					var students = new Array();
+					var students 	= [];
+					var pending 	= 0;
+					var active 		= 0;
 					group.roster.forEach(function(s) {
 						if(!s.pass) {
 							s.pass = false;
 						}
+						if(s.status === 'pending')	{ pending++;}
+						if(s.status === 'active')		{ active++;	}
 						var send_student = {
 							userid					: s.student._id,
 							userName				: s.student.person.name,
@@ -971,6 +986,8 @@ module.exports = {
 						send_student.grades = send_grades;
 						students.push(send_student);
 					});
+					send_group.totalActive = active;
+					send_group.totalPending = pending;
 					send_group.students = students;
 					res.status(200).json({
 						'status': 200,
