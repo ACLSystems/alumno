@@ -38,6 +38,9 @@ const FiscalSchema = new Schema ({
 	id: { // se usará como el RFC
 		type: String
 	},
+	idAPIExternal: { // Id que se utiliza en el sistema externo de facturación
+		type: Number
+	},
 	address: {
 		type: String
 	},

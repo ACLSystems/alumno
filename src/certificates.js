@@ -17,6 +17,10 @@ const CertificateSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'rosters',
 		unique: true
+	},
+	date: {
+		type: Date,
+		default: Date.now
 	}
 });
 
