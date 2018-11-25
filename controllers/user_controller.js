@@ -430,6 +430,11 @@ module.exports = {
 						orgUnit			: user.orgUnit.name,
 						orgUnitLong	: user.orgUnit.longName
 					};
+					if(user.admin && user.admin.initialPassword) {
+						send_user.initialPassword = user.admin.initialPassword;
+					} else {
+						send_user.initialPassword = 'No initial Password set for user';
+					}
 					if(user.person) {
 						send_user.person = {
 							name			: user.person.name,
@@ -736,19 +741,23 @@ module.exports = {
 
 	adminPasswordReset(req, res) {
 		const key_user 	= res.locals.user;
-		const username 	= req.query.username;
-		var query 			= { name: username };
-		User.findOne(query)
+		User.findOne({ name: req.body.username })
 			.then((user) => {
 				if(user) {
 					user.admin.passwordSaved = 'saved';
-					//user.password = encryptPass(user.fiscal.id);
-
 					if(user.admin.initialPassword){
-						user.password = user.admin.initialPassword;
+						user.password = encryptPass(user.admin.initialPassword);
 					} else {
-						user.password = req.query.password;
-						user.admin.initialPassword = req.query.password;
+						if(req.body.password){
+							user.password = encryptPass(req.body.password);
+							user.admin.initialPassword = req.body.password;
+						} else {
+							res.status(200).json({
+								'status': 200,
+								'message': 'Error: User -' + req.body.username + '- does not have initial Password. Password must be present in body'
+							});
+							return;
+						}
 					}
 					const date = new Date();
 					var mod = {
@@ -757,22 +766,14 @@ module.exports = {
 						what: 'Password reset'
 					};
 					user.mod.push(mod);
-					//const result = permissions.access(key_user,user,'user');
-					//if(result.canModify) {
 					user.save()
 						.then (() => {
 							//mailjet.sendMail(user.person.email, user.person.name, 'Tu contraseña ha sido modificada por el administrador',393450)
 							//.then(() => {
 							res.status(200).json({
 								'status': 200,
-								'message': 'Password for user -' + username + '- reset by -' + key_user.name + '-'
+								'message': 'Password for user -' + req.body.username + '- reset by -' + key_user.name + '-'
 							});
-							//})
-							//.catch((err) => {
-
-							//	Err.sendError(res,err,'user_controller','adminPasswordReset -- Sending email--');
-							//});
-
 						})
 						.catch((err) => {
 							Err.sendError(res,err,'user_controller','adminPasswordReset -- Saving User--');
@@ -780,7 +781,7 @@ module.exports = {
 				} else {
 					res.status(200).json({
 						'status': 200,
-						'message': 'User not found'
+						'message': 'Error: User not found'
 					});
 				}
 			})

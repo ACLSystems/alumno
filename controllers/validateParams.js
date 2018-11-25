@@ -320,12 +320,12 @@ module.exports = function(req, res, next) {
 
 
 	case '/api/v1/admin/user/passwordreset':
-		if(!req.query) {
+		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1750: Please, give data by query to process'
 			});
-		} else if(!req.query.username) {
+		} else if(!req.body.username) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1752: Please, give username by query to process'
@@ -335,17 +335,33 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/supervisor/user/passwordreset':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by body to process'
+			});
+		} else if(!req.body.username) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give username by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 
 	case '/api/v1/orgadm/user/passwordreset':
-		if(!req.query) {
+		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1750: Please, give data by query to process'
+				'message': 'Error: Please, give data by query to process'
 			});
-		} else if(!req.query.username) {
+		} else if(!req.body.username) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1752: Please, give username by query to process'
+				'message': 'Error: Please, give username by query to process'
 			});
 		} else {
 			next();

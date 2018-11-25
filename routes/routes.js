@@ -192,7 +192,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/admin/user/encrypt', 				UserController.encrypt);
 	app.get ('/api/v1/admin/user/validate', 			UserController.validateUsers);
 	app.get ('/api/v1/admin/group/repair',				GroupController.repairGroup);
-	app.get ('/api/v1/admin/user/passwordreset',  UserController.adminPasswordReset);
+	app.put ('/api/v1/admin/user/passwordreset',  UserController.adminPasswordReset);
 	app.put ('/api/v1/admin/user/changeuser', 		UserController.changeUser);
 	app.put ('/api/v1/admin/user/correctusers', 	UserController.correctUsers);
 	app.get ('/api/v1/admin/certs/rosters', 			GroupController.addCertToRoster);
@@ -211,7 +211,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/orgadm/orgunit/list', 						OrgUnitController.list);
 	app.get ('/api/v1/orgadm/user/list', 								UserController.list);
 	app.get ('/api/v1/orgadm/user/count', 							UserController.count);
-	app.get ('/api/v1/orgadm/user/passwordreset', 			UserController.adminPasswordReset);
+	app.put ('/api/v1/orgadm/user/passwordreset', 			UserController.adminPasswordReset);
 	app.get ('/api/v1/orgadm/org/getdetails', 					OrgController.getDetails);
 	app.post('/api/v1/orgadm/career/create', 						CareerController.create);
 	app.post('/api/v1/orgadm/career/massivecreate',			CareerController.massiveCreation);
@@ -233,6 +233,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/user/settracking', 			GroupController.setTracking);
 	app.get ('/api/v1/supervisor/user/gethistory', 				ReportController.studentHistory);
 	app.get ('/api/v1/supervisor/user/getgroups', 				GroupController.getGroups);
+	app.put ('/api/v1/supervisor/user/passwordreset', 		UserController.adminPasswordReset);
 	app.post('/api/v1/supervisor/user/masssearch',				ReportController.userMassSearch);
 	app.post('/api/v1/supervisor/user/massiveregister', 	MassUsersController.massiveRegister);
 	app.post('/api/v1/supervisor/user/mur',								MassUsersController.mur);
