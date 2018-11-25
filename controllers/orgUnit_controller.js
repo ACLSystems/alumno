@@ -365,6 +365,13 @@ module.exports = {
 	}, // list
 
 	publiclist(req,res) {
+		if(!req.query.org) {
+			res.status(200).json({
+				'status': 404,
+				'message': 'Error: missing org name by query'
+			});
+			return;
+		}
 		var sort = { longName: 1 };
 		var skip = 0;
 		var limit = 15;
