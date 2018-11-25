@@ -384,6 +384,8 @@ module.exports = {
 						var send_ous = new Array();
 						ous.forEach(function(ou) {
 							send_ous.push({
+								id: ou._id,
+								name: ou.name,
 								longName: ou.longName,
 								address: ou.address
 							});
