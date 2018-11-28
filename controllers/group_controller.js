@@ -23,6 +23,27 @@ const url = process.env.LIBRETA_URI;
 module.exports = {
 	create(req,res) {
 		const key_user 	= res.locals.user;
+		if(!mongoose.Types.ObjectId.isValid(req.body.course)) {
+			res.status(200).json({
+				'status': 406,
+				'message': 'Error: course must be an ObjectID'
+			});
+			return;
+		}
+		if(!mongoose.Types.ObjectId.isValid(req.body.instructor)) {
+			res.status(200).json({
+				'status': 406,
+				'message': 'Error: instructor must be an ObjectID'
+			});
+			return;
+		}
+		if(!mongoose.Types.ObjectId.isValid(req.body.orgUnit)) {
+			res.status(200).json({
+				'status': 406,
+				'message': 'Error: orgUnit must be an ObjectID'
+			});
+			return;
+		}
 		var group = req.body;
 		if(!group.instructor) {
 			group.instructor = key_user._id;
