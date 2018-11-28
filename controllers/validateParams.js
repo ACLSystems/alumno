@@ -26,6 +26,7 @@ module.exports = function(req, res, next) {
 
 	// RUTAS PARA USUARIOS ---------------------------------------------------------USUARIOS
 	case '/api/user/register':
+		var remail = new RegExp(/\S+@\S+\.\S+/);
 		if(!req.body){
 			res.status(406).json({
 				'status': 406,
@@ -76,6 +77,34 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1709: Please give person email for ' + req.body.name
 			});
+		} else if(req.body.name){
+			var found = req.body.name.match(remail);
+			if(!found) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error: El dato proporcionado no es una cuenta de correo válida: ' + req.body.name + ' Nota: Un correo electrónico tiene la forma: nombre@dominio.com'
+				});
+			} else {
+				var f2 = req.body.person.email.match(remail);
+				if(!f2) {
+					res.status(406).json({
+						'status': 406,
+						'message': 'Error: El dato proporcionado no es una cuenta de correo válida: ' + req.body.person.email + ' Nota: Un correo electrónico tiene la forma: nombre@dominio.com'
+					});
+				} else {
+					next();
+				}
+			}
+		} else if(req.body.person.email){
+			var f3 = req.body.person.email.match(remail);
+			if(!f3) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error: El dato proporcionado no es una cuenta de correo válida: ' + req.body.person.email + ' Nota: Un correo electrónico tiene la forma: nombre@dominio.com'
+				});
+			} else {
+				next();
+			}
 		} else {
 			next();
 		}
@@ -132,6 +161,34 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1709: Please give person email for ' + req.body.name
 			});
+		} else if(req.body.name){
+			var f4 = req.body.name.match(remail);
+			if(!f4) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error: El dato proporcionado no es una cuenta de correo válida: ' + req.body.name + ' Nota: Un correo electrónico tiene la forma: nombre@dominio.com'
+				});
+			} else {
+				var f5 = req.body.person.email.match(remail);
+				if(!f5) {
+					res.status(406).json({
+						'status': 406,
+						'message': 'Error: El dato proporcionado no es una cuenta de correo válida: ' + req.body.person.email + ' Nota: Un correo electrónico tiene la forma: nombre@dominio.com'
+					});
+				} else {
+					next();
+				}
+			}
+		} else if(req.body.person.email){
+			var f6 = req.body.person.email.match(remail);
+			if(!f6) {
+				res.status(406).json({
+					'status': 406,
+					'message': 'Error: El dato proporcionado no es una cuenta de correo válida: ' + req.body.person.email + ' Nota: Un correo electrónico tiene la forma: nombre@dominio.com'
+				});
+			} else {
+				next();
+			}
 		} else {
 			next();
 		}
