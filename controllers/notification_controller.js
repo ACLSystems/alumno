@@ -115,10 +115,13 @@ module.exports = {
 		};
 		if('read' in req.query) {
 			query.read = req.query.read;
+		} else {
+			query.read = false;
 		}
 		Notification.find(query)
 			.populate([{
-				path: 'objects.item'
+				path: 'objects.item',
+				select: '_id'
 			},
 			{
 				path: 'source.item'
@@ -131,11 +134,9 @@ module.exports = {
 			.limit(limit)
 			.lean()
 			.then((notifications) => {
-				if(notifications.length > 0) {
-
-					var nots = new Array();
+				if(notifications && notifications.length > 0) {
+					var nots = [];
 					notifications.forEach(function(notification) {
-
 						var not = {
 							notificationid	: notification._id,
 							source					: notification.source,
@@ -149,36 +150,45 @@ module.exports = {
 							date						: notification.date,
 							objects					: notification.objects
 						};
-						if(not.source.kind === 'users' && not.type === 'user') {
-							delete not.source.item.password;
-							delete not.source.item.perm;
-							delete not.source.item.admin;
-							delete not.source.item.roles;
-							delete not.source.item.mod;
-							delete not.source.item.fiscal;
-							delete not.source.item.__v;
-							delete not.source.item.person._id;
+						if(not.source.kind === 'users' || not.sourceType === 'user') {
+							if(not.source.item){
+								if(not.source.item.password	) {delete not.source.item.password;	}
+								if(not.source.item.perm			)	{delete not.source.item.perm;			}
+								if(not.source.item.admin		) {delete not.source.item.admin;		}
+								if(not.source.item.roles		) {delete not.source.item.roles;		}
+								if(not.source.item.mod			)	{delete not.source.item.mod;			}
+								if(not.source.item.fiscal		)	{delete not.source.item.fiscal;		}
+								if(not.source.item.student	)	{delete not.source.item.student;	}
+								if(not.source.item.corporate)	{delete not.source.item.corporate;}
+								if(not.source.item.__v			)	{delete not.source.item.__v;			}
+								if(not.source.item._id			)	{delete not.source.item.person._id;}
+								if(not.source.item.char1		)	{delete not.source.item.char1;		}
+								if(not.source.item.char2		)	{delete not.source.item.char2;		}
+								if(not.source.item.report		)	{delete not.source.item.report;		}
+							}
 						}
 						if(not.destination.kind === 'users') {
-							delete not.destination.item.password;
-							delete not.destination.item.perm;
-							delete not.destination.item.admin;
-							delete not.destination.item.roles;
-							delete not.destination.item.mod;
-							delete not.destination.item.fiscal;
-							delete not.destination.item.__v;
-							delete not.destination.item.person._id;
+							if(not.destination.item){
+								if(not.destination.item.password	) {delete not.destination.item.password;}
+								if(not.destination.item.perm			)	{delete not.destination.item.perm;		}
+								if(not.destination.item.admin			)	{delete not.destination.item.admin;		}
+								if(not.destination.item.roles			) {delete not.destination.item.roles;		}
+								if(not.destination.item.mod				) {delete not.destination.item.mod;			}
+								if(not.destination.item.fiscal		) {delete not.destination.item.fiscal;	}
+								if(not.destination.item.student		) {delete not.destination.item.student;	}
+								if(not.destination.item.corporate	) {delete not.destination.item.corporate;}
+								if(not.destination.item.__v				) {delete not.destination.item.__v;			}
+								if(not.destination.item._id				) {delete not.destination.item.person._id;}
+								if(not.destination.item.char1			) {delete not.destination.item.char1;		}
+								if(not.destination.item.char2			) {delete not.destination.item.char2;		}
+								if(not.destination.item.report		) {delete not.destination.item.report;	}
+							}
 						}
 						if(not.objects && not.objects.length > 0){
 							not.objects.forEach(function(object) {
-								delete object.item.__v;
-								delete object._id;
+								if(object._id) {delete object._id;}
 								if(object && object.kind === 'discussions') {
 									if(object.item.date) { object.item.dateAgo = TA.ago(object.item.date); }
-								} else {
-									delete object.item.mod;
-									delete object.item.own;
-									delete object.item.perm;
 								}
 							});
 						}
