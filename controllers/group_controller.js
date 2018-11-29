@@ -460,46 +460,55 @@ module.exports = {
 										var new_students	= [];
 										var status				= roster.status || 'pending';
 										students.forEach(function(student) {
-											var grade = [];
-											var sec = 0;
-											blocks.forEach(function(block) {
-												var gradePushed = {
-													block					: block._id,
-													track					: 0,
-													maxGradeQ 		: 0,
-													gradeT				: 0,
-													w							: block.w,
-													wq						: block.wq,
-													wt						: block.wt,
-													dependencies	: block.dependencies
-												};
-												var gradeIndex = -1;
-												if(group.rubric && group.rubric.length > 0) { gradeIndex = group.rubric.findIndex(rubric => rubric.block + '' === gradePushed.block + ''); }
-												if(gradeIndex > -1 ) {
-													gradePushed.w 	= group.rubric[gradeIndex].w;
-													gradePushed.wt 	= group.rubric[gradeIndex].wt;
-													gradePushed.wq 	= group.rubric[gradeIndex].wq;
-												}
-												grade.push(gradePushed);
-												if(block.section !== sec) {
+											// el siguiente código es para validar si el usuario ya está registrado en este grupo
+											// si ya existe el id del usuario, se lo brinca
+											var found = false;
+											if(group.students){
+												found = group.students.find(function(st) {
+													return st + '' === student._id + '';
+												});
+											}
+											if(!found) { // Si no encontramos el id del usuario, no hagas nada... 
+												var grade = [];
+												var sec = 0;
+												blocks.forEach(function(block) {
+													var gradePushed = {
+														block					: block._id,
+														track					: 0,
+														maxGradeQ 		: 0,
+														gradeT				: 0,
+														w							: block.w,
+														wq						: block.wq,
+														wt						: block.wt,
+														dependencies	: block.dependencies
+													};
+													var gradeIndex = -1;
+													if(group.rubric && group.rubric.length > 0) { gradeIndex = group.rubric.findIndex(rubric => rubric.block + '' === gradePushed.block + ''); }
+													if(gradeIndex > -1 ) {
+														gradePushed.w 	= group.rubric[gradeIndex].w;
+														gradePushed.wt 	= group.rubric[gradeIndex].wt;
+														gradePushed.wq 	= group.rubric[gradeIndex].wq;
+													}
+													grade.push(gradePushed);
+													if(block.section !== sec) {
+														sec++;
+													}
+												});
+												if(blocks[0].section === 0) {
 													sec++;
 												}
-											});
-											if(blocks[0].section === 0) {
-												sec++;
-											}
-											var sections = new Array();
-											var j = 0;
-											while (j < sec) {
-												var section = {};
-												if (group.presentBlockBy && group.presentBlockBy === 'dates' && group.dates && group.dates.length > 0) {
-													section.beginDate = group.dates[j].beginDate;
-													section.endDate		= group.dates[j].endDate;
+												var sections = new Array();
+												var j = 0;
+												while (j < sec) {
+													var section = {};
+													if (group.presentBlockBy && group.presentBlockBy === 'dates' && group.dates && group.dates.length > 0) {
+														section.beginDate = group.dates[j].beginDate;
+														section.endDate		= group.dates[j].endDate;
+													}
+													sections.push(section);
+													j++;
 												}
-												sections.push(section);
-												j++;
-											}
-											/*
+												/*
 										// Modificar la rúbrica que trajimos el curso y colocar la del grupo
 										if(group.rubric && group.rubric.length > 0) {
 											var rubcount = 0;
@@ -522,64 +531,65 @@ module.exports = {
 											});
 										}
 										*/
-											//
-											var new_roster = new Roster({
-												student		: student,
-												status		: status,
-												grades		: grade,
-												group			: group._id,
-												minGrade	: group.minGrade,
-												minTrack	: group.minTrack,
-												org				: group.org,
-												orgUnit		: group.orgUnit,
-												sections 	: sections,
-												admin 		: [{
-													what		: 'Roster creation',
-													who			: key_user.name,
-													when		: date
-												}],
-												mod 		: [{
-													what		: 'Roster creation',
-													who			: key_user.name,
-													when		: date
-												}],
-											});
-											new_students.push(student._id);
-											my_roster.push(new_roster._id);
-											new_roster.save()
-												.then(() => {
-													mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado al curso ' + group.course.title,339994,link,group.course.title);
-													var not = new Notification({
-														destination: {
-															kind: 'users',
-															item: student._id,
-															role: 'user'
-														},
-														objects: [
-															{
-																kind: 'courses',
-																item: group.course._id
-															},
-															{
-																kind: 'groups',
-																item: group._id
-															},
-															{
-																kind: 'blocks',
-																item: group.course.blocks[0]._id
-															}
-														],
-														type: 'system',
-														message: 'Has sido enrolado al curso ' + group.course.title
-													});
-													not.save()
-														.catch((err) => {
-															Err.sendError(res,err,'group_controller','createRoster -- Creating Notification --',false,false,`Group: ${group.name} Student: ${student.person.email}`);
-														});
-												})
-												.catch((err) => {
-													Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
+												//
+												var new_roster = new Roster({
+													student		: student,
+													status		: status,
+													grades		: grade,
+													group			: group._id,
+													minGrade	: group.minGrade,
+													minTrack	: group.minTrack,
+													org				: group.org,
+													orgUnit		: group.orgUnit,
+													sections 	: sections,
+													admin 		: [{
+														what		: 'Roster creation',
+														who			: key_user.name,
+														when		: date
+													}],
+													mod 		: [{
+														what		: 'Roster creation',
+														who			: key_user.name,
+														when		: date
+													}],
 												});
+												new_students.push(student._id);
+												my_roster.push(new_roster._id);
+												new_roster.save()
+													.then(() => {
+														mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado al curso ' + group.course.title,339994,link,group.course.title);
+														var not = new Notification({
+															destination: {
+																kind: 'users',
+																item: student._id,
+																role: 'user'
+															},
+															objects: [
+																{
+																	kind: 'courses',
+																	item: group.course._id
+																},
+																{
+																	kind: 'groups',
+																	item: group._id
+																},
+																{
+																	kind: 'blocks',
+																	item: group.course.blocks[0]._id
+																}
+															],
+															type: 'system',
+															message: 'Has sido enrolado al curso ' + group.course.title
+														});
+														not.save()
+															.catch((err) => {
+																Err.sendError(res,err,'group_controller','createRoster -- Creating Notification --',false,false,`Group: ${group.name} Student: ${student.person.email}`);
+															});
+													})
+													.catch((err) => {
+														Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
+													});
+											}
 										});
 										group.students 	= group.students.concat(new_students);
 										group.roster		= group.roster.concat(my_roster);
