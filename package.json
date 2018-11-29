@@ -24,30 +24,30 @@
   "dependencies": {
     "bcrypt-nodejs": "^0.0.3",
     "body-parser": "^1.18.3",
-    "dropbox": "^4.0.12",
+    "dropbox": "^4.0.13",
     "es6-promise": "^4.2.5",
     "express": "^4.16.4",
     "express-body-parser-json-error": "^0.1.0",
-    "helmet": "^3.14.0",
+    "helmet": "^3.15.0",
     "isomorphic-fetch": "^2.2.1",
     "jwt-simple": "^0.5.5",
     "moment": "^2.22.2",
     "mongodb-uri": "^0.9.7",
-    "mongoose": "^5.3.7",
+    "mongoose": "^5.3.14",
     "mongoose-sequence": "^4.0.1",
     "multer": "^1.4.1",
-    "nanoid": "^1.3.1",
+    "nanoid": "^1.3.4",
     "node-mailjet": "^3.3.1",
-    "nodemon": "^1.18.5",
+    "nodemon": "^1.18.7",
     "randomatic": "^3.1.1",
     "time-ago": "^0.2.1",
     "urlencode": "^1.1.0",
     "winston": "^3.1.0",
-    "winston-daily-rotate-file": "^3.4.0"
+    "winston-daily-rotate-file": "^3.5.1"
   },
   "devDependencies": {
     "babel-cli": "6.26.0",
     "babel-preset-env": "^1.7.0",
-    "eslint": "^5.8.0"
+    "eslint": "^5.9.0"
   }
 }
