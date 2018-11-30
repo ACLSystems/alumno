@@ -1437,15 +1437,15 @@ module.exports = {
 						}
 						item.grades = [myGrade];
 					}
-					const attempt = new Attempt({
-						attempt : quest,
-						roster	: item._id,
-						block		: blockid,
-						user		: key_user._id
-					});
-					attempt.save()
-						.then(() => {
-							item.save()
+					item.save()
+						.then((item) => {
+							const attempt = new Attempt({
+								attempt : quest,
+								roster	: item._id,
+								block		: blockid,
+								user		: key_user._id
+							});
+							attempt.save()
 								.then(() => {
 									res.status(200).json({
 										'status': 200,
@@ -1453,11 +1453,21 @@ module.exports = {
 									});
 								})
 								.catch((err) => {
-									Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + ' Quest: ' + JSON.stringify(quest), ' Attempt: ' + attempt._id);
+									Err.sendError(res,err,'group_controller','createAttempt -- Saving attempt --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + ' Quest: ' + JSON.stringify(quest));
 								});
 						})
 						.catch((err) => {
-							Err.sendError(res,err,'group_controller','createAttempt -- Saving attempt --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + ' Quest: ' + JSON.stringify(quest));
+							var errString = err.toString();
+							var re = new RegExp('VersionError: No matching document found for id');
+							var found = errString.match(re);
+							if(found) {
+								res.status(200).json({
+									'status': 200,
+									'message': 'Attempt saved',
+									'warning': 'VersionError'
+								});
+							}
+							Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + ' Quest: ' + JSON.stringify(quest));
 						});
 				} else {
 					res.status(200).json({
