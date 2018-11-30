@@ -468,7 +468,7 @@ module.exports = {
 													return st + '' === student._id + '';
 												});
 											}
-											if(!found) { // Si no encontramos el id del usuario, no hagas nada... 
+											if(!found) { // Si no encontramos el id del usuario, no hagas nada...
 												var grade = [];
 												var sec = 0;
 												blocks.forEach(function(block) {
@@ -2554,6 +2554,7 @@ module.exports = {
 									}
 								}
 								if(!item.sections[nextSection]){
+									item.sections[nextSection] = {};
 									if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]){
 										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
 									} else if(item.group.lapse){
