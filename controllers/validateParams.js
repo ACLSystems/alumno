@@ -2279,6 +2279,9 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give query by query to process'
 			});
+		} else if (req.query.query.hasOwnProperty('block') && !req.query.query.block) {
+			delete req.query.query.block;
+			next();
 		} else {
 			next();
 		}
