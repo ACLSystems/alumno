@@ -2251,12 +2251,12 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give data by body to process'
 			});
-			/*
 		} else if(!req.body.text) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error -: Please, give text comment by body to process'
 			});
+			/*
 		} else if(!req.body.title && !req.body.discussion && !req.body.replyto) {
 			res.status(406).json({
 				'status': 406,
