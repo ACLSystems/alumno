@@ -657,6 +657,11 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1780: Please, give grade by body to process'
 			});
+		} else if (req.body.grade && req.body.grade > 100) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: grade must not be greater than 100: ' + req.body.grade
+			});
 		} else {
 			next();
 		}
@@ -2251,12 +2256,12 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give data by body to process'
 			});
-			/*
 		} else if(!req.body.text) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error -: Please, give text comment by body to process'
 			});
+			/*
 		} else if(!req.body.title && !req.body.discussion && !req.body.replyto) {
 			res.status(406).json({
 				'status': 406,
@@ -2279,6 +2284,9 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give query by query to process'
 			});
+		} else if (req.query.query.hasOwnProperty('block') && !req.query.query.block) {
+			delete req.query.query.block;
+			next();
 		} else {
 			next();
 		}
