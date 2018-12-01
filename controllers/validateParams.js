@@ -657,6 +657,11 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1780: Please, give grade by body to process'
 			});
+		} else if (req.body.grade && req.body.grade > 100) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: grade must not be greater than 100: ' + req.body.grade
+			});
 		} else {
 			next();
 		}
