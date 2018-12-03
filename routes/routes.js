@@ -17,6 +17,7 @@ const ReportController 			= require('../controllers/report_controller'				);
 const NotificationController = require('../controllers/notification_controller'	);
 const FollowController 			= require('../controllers/follow_controller'				);
 const logController 				= require('../controllers/log_controller'						);
+const RequestController 		= require('../controllers/request_controller'				);
 const multer 								= require('multer'																	);
 var dir 										= process.env.ORDIR;
 const fileSize 							= 1048576;
@@ -247,6 +248,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/group/getfilelist', 			ReportController.filesBygroup);
 	app.get ('/api/v1/supervisor/group/studentgrades',		GroupController.studentGrades);
 	app.get ('/api/v1/supervisor/group/studenthistoric',	GroupController.studentHistoric);
+	app.post('/api/v1/supervisor/request/create',					RequestController.create);
 
 	// Rutas para archivos
 

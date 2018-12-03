@@ -1737,6 +1737,17 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/supervisor/request/create':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1455: Please, give request by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/supervisor/group/create':
 		if(!req.body) {  // POST
 			res.status(406).json({

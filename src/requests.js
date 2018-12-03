@@ -1,7 +1,10 @@
 // Definir requerimientos
-const mongoose 	= require('mongoose');
-const auto 			= require('mongoose-sequence')(mongoose);
-const Schema = mongoose.Schema;
+const mongoose 					= require('mongoose');
+const ModSchema 				= require('./modified');
+const OwnerSchema 			= require('./owner');
+const PermissionsSchema = require('./permissions');
+const auto 							= require('mongoose-sequence')(mongoose);
+const Schema 						= mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -47,7 +50,8 @@ const RequestSchema = new Schema ({
 	},
 	status: {				// Estatus del proceso general: 'Solicitud', 'Cotización', 'Pago'
 		type: String,
-		enum: ['init','payment','done','canceled']
+		enum: ['init','payment','done','canceled'],
+		default: 'init'
 	// 												 Estado 'init': el usuario está generando la solicitud.
 	// 												 Estado 'payment': el usuario ha terminado y el proceso avanza a la etapa de pago.
 	// 												 Estado 'done': Se recibe el pago de la solicitud.
@@ -85,7 +89,10 @@ const RequestSchema = new Schema ({
 	paymentNotes: [],
 	paymentDates: [],
 	files:[],
-	fiscalFiles:[]
+	fiscalFiles:[],
+	mod: [ModSchema],
+	own: OwnerSchema,
+	perm: PermissionsSchema
 });
 
 // Definir virtuals
