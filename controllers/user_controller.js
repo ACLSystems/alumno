@@ -1321,6 +1321,31 @@ module.exports = {
 			});
 		}
 	} // correctUsers
+	,
+	validatePassword(req,res){
+		User.findOne({$or: [{name: req.body.username},{'person.email': req.body.username}]})
+			.then((user) => {
+				user.validatePassword(req.body.password,function(err,isOk){
+					if(isOk) {
+						res.status(200).json({
+							'status': 200,
+							'message': 'Password valid for user ' + req.body.username,
+							'pass': 'VALID'
+						});
+					} else {
+						res.status(406).json({
+							'status': 406,
+							'message': 'Error: Password NOT valid for user ' + req.body.username,
+							'pass': 'ERROR'
+						});
+					}
+				});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','validatePassword -- Finding user--' + req.body.username);
+			});
+	}
+
 };
 
 

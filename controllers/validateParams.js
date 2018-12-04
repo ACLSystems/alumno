@@ -210,6 +210,27 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/admin/user/valpwd':
+		if(!req.body){
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by body to process'
+			});
+		} else if(!req.query.username) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please give username by body to process'
+			});
+		} else if(!req.query.password) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please give password by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/admin/user/modrs':
 		if(!req.body){
 			res.status(406).json({

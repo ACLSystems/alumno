@@ -203,6 +203,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/admin/user/modrs',					GroupController.modifyRosterStatus);
 	app.put ('/api/v1/admin/user/resetattempt', 	GroupController.resetAttempt);
 	app.put ('/api/v1/admin/user/setgrade', 			GroupController.setGrade);
+	app.get ('/api/v1/admin/user/valpwd', 				UserController.validatePassword);
 	app.put ('/api/v1/admin/group/setrubric',			GroupController.setRubric);
 	app.delete ('/api/v1/admin/log/truncate', 		logController.truncate);
 
@@ -231,6 +232,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/report/gradesbygroup', 	ReportController.gradesByGroup);
 	app.get ('/api/v1/supervisor/report/orgtree', 				ReportController.orgTree);
 	app.get ('/api/v1/supervisor/report/userswoactivity',	GroupController.usersWOActivity);
+	app.get ('/api/v1/supervisor/report/groupsquery', 		ReportController.groupsQuery);
 	app.get ('/api/v1/supervisor/user/get', 							MassUsersController.get);
 	app.get ('/api/v1/supervisor/user/getdetails',				UserController.getDetailsSuper);
 	app.get ('/api/v1/supervisor/user/settracking', 			GroupController.setTracking);
