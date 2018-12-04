@@ -1272,7 +1272,64 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'report_controller','userMassSearch -- Finding Users --');
 			});
-	} //userMassSearch
+	}, //userMassSearch
+
+	groupsQuery(req,res) {
+		var query = {};
+		var query2 = {};
+		if(req.query.course) {query = {course:mongoose.Types.ObjectId(req.query.course)};}
+		if(req.query.parent) {query2 = {ouParent:req.query.parent};}
+		Group.aggregate()
+			.match(query)
+			.project('code name orgUnit')
+			.group({
+				_id: '$orgUnit',
+				groups: {
+					$push: {
+						id		: '$_id',
+						code	: '$code',
+						name	: '$name'
+					}
+				}
+			})
+			.lookup({
+				from				: 'orgunits',
+				localField	: '_id',
+				foreignField: '_id',
+				as					: 'ou'
+			})
+			.unwind('ou')
+			.project({
+				ouName			: '$ou.name',
+				ouLongName	: '$ou.longName',
+				ouParent		: '$ou.parent',
+				groups	 		: '$groups',
+				_id					: false
+			})
+			.match(query2)
+			.then((ous) => {
+				if(ous){
+					var gps = 0;
+					ous.forEach(ou => {
+						gps = gps + ou.groups.length;
+					});
+					res.status(200).json({
+						'status': 200,
+						'ous': ous.length,
+						'groups': gps,
+						'message': ous
+					});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'No groups found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','groupsQuery -- Finding groups --');
+			});
+	}
 };
 
 // PRIVATE Functions

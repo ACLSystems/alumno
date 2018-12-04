@@ -210,6 +210,27 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/admin/user/valpwd':
+		if(!req.body){
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by body to process'
+			});
+		} else if(!req.query.username) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please give username by body to process'
+			});
+		} else if(!req.query.password) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please give password by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/admin/user/modrs':
 		if(!req.body){
 			res.status(406).json({
@@ -661,6 +682,104 @@ module.exports = function(req, res, next) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error: grade must not be greater than 100: ' + req.body.grade
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/admin/user/resetattempt':
+		if(!req.query) { //PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by query to process'
+			});
+		} else if (!req.query.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give group id by query to process'
+			});
+		} else if (!req.query.blockid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give block id by query to process'
+			});
+		} else if (!mongoose.Types.ObjectId.isValid(req.query.groupid)) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: groupid is not a valid ObjectId'
+			});
+		} else if (!mongoose.Types.ObjectId.isValid(req.query.blockid)) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: blockid is not a valid ObjectId'
+			});
+		} else if (req.query.userid && !mongoose.Types.ObjectId.isValid(req.query.userid)) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: userid is not a valid ObjectId'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/admin/user/setgrade':
+		if(!req.query) { //PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by query to process'
+			});
+		} else if (!req.query.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give group id by query to process'
+			});
+		} else if (!req.query.blockid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give block id by query to process'
+			});
+		} else if (!req.query.grade) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give grade by query to process. Grade must be greater than 0'
+			});
+		} else if (!mongoose.Types.ObjectId.isValid(req.query.groupid)) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: groupid is not a valid ObjectId'
+			});
+		} else if (!mongoose.Types.ObjectId.isValid(req.query.blockid)) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: blockid is not a valid ObjectId'
+			});
+		} else if (req.query.userid && !mongoose.Types.ObjectId.isValid(req.query.userid)) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: userid is not a valid ObjectId'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/admin/group/setrubric':
+		if(!req.body) { //PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by body to process'
+			});
+		} else if (!req.body.group && !req.body.course) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give group id or course id by body to process'
+			});
+		} else if (!req.body.rubric) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give block id by body to process'
 			});
 		} else {
 			next();
