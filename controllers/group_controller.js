@@ -2440,7 +2440,7 @@ module.exports = {
 						}
 					}
 
-					var grades = new Array();
+					var grades = [];
 					var currentBlockGrade = 0;
 					var lastAttempt = 0;
 					var numAttempts = 0;
@@ -2464,14 +2464,13 @@ module.exports = {
 						//var length 	= grades.length;
 						grades.forEach(function(grade) {
 							if(grade && grade.block && grade.block._id) {
-								const blockString = grade.block._id + '';
-								if(blockString === lastid) {
+								if(grade.block._id + '' === lastid + '') {
 									//myGrade = grade.block;
 									lastIndex 	= i;
 									lastSection = grade.block.section;
 									nextSection = grade.block.section + 1;
 								}
-								if(blockString === blockid) {
+								if(grade.block._id + '' === blockid + '') {
 									currentBlockGrade = grade.maxGradeQ;
 									lastAttempt				= grade.lastAttemptQ;
 									numAttempts				= grade.numAttempts;
@@ -2995,6 +2994,174 @@ module.exports = {
 					userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
 			});
 	}, // createAttempt
+
+	resetAttempt(req,res) {
+		const blockid 	= req.query.blockid;
+		var query = {group:req.query.groupid};
+		if(req.query.userid) {
+			query.student = req.query.userid;
+		}
+		Roster.find(query)
+			.then((items) => {
+				if(items && items.length > 0) {
+					items.forEach(item => {
+						var found = false;
+						if(item.grades && item.grades.length > 0) {
+							item.grades.forEach(grade => {
+
+								if(grade.block + '' === blockid + '') {
+									grade.maxGradeQ = 0;
+									grade.gradedQ = false;
+									grade.finalGrade = false;
+									grade.quests = [];
+									found = true;
+								}
+							});
+						}
+						if(found) {
+							item.save()
+								.catch((err) => {
+									Err.sendError(res,err,'group_controller','resetAttempt -- Saving grades -- groupid: ' + item.group + ' blockid: ' + req.query.blockid + ' student: ' + item.student);
+								});
+						}
+					});
+					res.status(200).json({
+						'status': 200,
+						'message': 'Attempts reset',
+						'rosters': items.length
+					});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'No rosters found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','resetAttempt -- Finding Rosters -- groupid: ' + req.query.groupid + ' blockid: ' + req.query.blockid );
+			});
+	}, //resetAttempt
+
+	setGrade(req,res) {
+		const blockid 	= req.query.blockid;
+		const newGrade	= parseInt(req.query.grade);
+		if(newGrade < 1) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'grade must be greater than 0'
+			});
+			return;
+		}
+		if(newGrade > 100) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'grade must be less than 100'
+			});
+			return;
+		}
+		var query = {group:req.query.groupid};
+		if(req.query.userid) {
+			query.student = req.query.userid;
+		}
+		Roster.find(query)
+			.then((items) => {
+				if(items && items.length > 0) {
+					items.forEach(item => {
+						var found = false;
+						if(item.grades && item.grades.length > 0) {
+							item.grades.forEach(grade => {
+								if(grade.block + '' === blockid + '') {
+									grade.track = 100;
+									grade.maxGradeQ = newGrade;
+									grade.gradedQ = true;
+									grade.finalGrade = newGrade;
+									found = true;
+								}
+							});
+						}
+						if(found) {
+							item.save()
+								.catch((err) => {
+									Err.sendError(res,err,'group_controller','setGrade -- Saving grades -- groupid: ' + item.group + ' blockid: ' + req.query.blockid + ' student: ' + item.student);
+								});
+						}
+					});
+					res.status(200).json({
+						'status': 200,
+						'message': 'Grades set',
+						'rosters': items.length
+					});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'No rosters found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','setGrade -- Finding Rosters -- groupid: ' + req.query.groupid + ' blockid: ' + req.query.blockid );
+			});
+	}, //setGrade
+
+	setRubric(req,res) {
+		const rubric = req.body.rubric;
+		if(rubric && rubric.length < 0) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'No rubric found. Please provide some rubric'
+			});
+			return;
+		}
+		var query = {course: req.body.course};
+		if(req.body.group) {
+			query = {_id: req.body.group};
+		}
+		Group.find(query)
+			.then((groups) => {
+				if(groups && groups.length > 0) {
+					groups.forEach(group => {
+						if(group.rubric && group.rubric.length > 0) {
+							rubric.forEach(r => {
+								var found = false;
+								group.rubric.forEach(rub => {
+									if(rub.block + '' === r.block + '') {
+										rub.w 	= r.w;
+										rub.wq 	= r.wq;
+										rub.wt 	= r.wt;
+										found = true;
+									}
+								});
+								if(!found) {
+									group.rubric.push({
+										w			: r.w,
+										wq		:	r.wq,
+										wt		: r.wt,
+										block	: mongoose.Types.ObjectId(r.block)
+									});
+								}
+							});
+						}
+						group.save()
+							.catch((err) => {
+								Err.sendError(res,err,'group_controller','setRubric -- Saving group -- group: ' + group._id);
+							});
+					});
+					res.status(200).json({
+						'status': 200,
+						'message': 'Rubric set',
+						'groups': groups.length
+					});
+				} else {
+					res.status(200).json({
+						'status': 200,
+						'message': 'No groups found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','setGrade -- Finding Rosters -- groupid: ' + req.query.groupid + ' blockid: ' + req.query.blockid );
+			});
+	}, //setGrade
 
 	touchGrade(req,res) {
 		const userid		= req.query.userid;

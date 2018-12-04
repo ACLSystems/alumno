@@ -201,6 +201,9 @@ module.exports = (app) => {
 	app.put ('/api/v1/admin/error/close', 				ErrorMessController.close);
 	app.put ('/api/v1/admin/error/closeseveral', 	ErrorMessController.closeSeveral);
 	app.put ('/api/v1/admin/user/modrs',					GroupController.modifyRosterStatus);
+	app.put ('/api/v1/admin/user/resetattempt', 	GroupController.resetAttempt);
+	app.put ('/api/v1/admin/user/setgrade', 			GroupController.setGrade);
+	app.put ('/api/v1/admin/group/setrubric',			GroupController.setRubric);
 	app.delete ('/api/v1/admin/log/truncate', 		logController.truncate);
 
 	// Rutas para roles de 'isOrg'
