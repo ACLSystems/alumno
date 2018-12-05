@@ -15,6 +15,9 @@ const RequestSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'users'
 	},
+	label: {
+		type: String
+	},
 	reqNumber: {
 		type: Number,
 		unique: true
@@ -23,7 +26,17 @@ const RequestSchema = new Schema ({
 		type: Date,
 		default: Date.now
 	},
-	details: [],	// aquí se agregan los ids de grupos generados
+	details: [{
+		kind: {
+			type: String,
+			enum: ['users', 'discussions', 'blocks', 'groups', 'certificates','courses', 'files','notifications','orgs', 'orgUnits', 'requests', 'rosters', 'tasks', 'questionnaries'],
+			default: 'groups'
+		},
+		item: {
+			type: Schema.Types.ObjectId,
+			refPath: 'objects.kind'
+		}
+	}],	// aquí se agregan los ids de grupos generados
 	subtotal: {
 		type: Number,
 		min: [0,'Minimum value is 0'],
@@ -43,6 +56,11 @@ const RequestSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'couponHolders'
 	},
+	tax: {
+		type: Number,
+		min: [0,'Minimum value is 0'],
+		default: 0
+	},
 	total: {
 		type: Number,
 		min: [0,'Minimum value is 0'],
@@ -50,7 +68,7 @@ const RequestSchema = new Schema ({
 	},
 	status: {				// Estatus del proceso general: 'Solicitud', 'Cotización', 'Pago'
 		type: String,
-		enum: ['init','payment','done','canceled'],
+		enum: ['init','payment','done','cancelled'],
 		default: 'init'
 	// 												 Estado 'init': el usuario está generando la solicitud.
 	// 												 Estado 'payment': el usuario ha terminado y el proceso avanza a la etapa de pago.
@@ -100,6 +118,11 @@ const RequestSchema = new Schema ({
 // Definir middleware
 
 // Definir índices
+
+RequestSchema.index( { 'requester'		: 1 	} );
+RequestSchema.index( { 'label'				: 1 	} );
+RequestSchema.index( { 'date'					: 1 	} );
+RequestSchema.index( { 'status'				: 1 	} );
 
 // Compilar esquema
 
