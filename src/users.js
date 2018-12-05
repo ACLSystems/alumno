@@ -38,11 +38,25 @@ const FiscalSchema = new Schema ({
 	id: { // se usará como el RFC
 		type: String
 	},
+	name: {
+		type: String
+	},
 	idAPIExternal: { // Id que se utiliza en el sistema externo de facturación
 		type: Number
 	},
 	address: {
-		type: String
+		street: { type: String},
+		extNum: { type: String},
+		intNum: { type: String},
+		colony: { type: String},
+		locality: { type: String},
+		town: { type: String},
+		cp: { type: String},
+		state: { type: String},
+		country: {
+			type: String,
+			default: 'México'
+		},
 	},
 	type: {
 		type: String,

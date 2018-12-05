@@ -44,7 +44,6 @@ module.exports = {
 	}, //create
 
 	get(req,res) {
-		const key_user 	= res.locals.user;
 		var query 			= {};
 		if(req.query.number) {
 			query = {reqNumber: req.query.number};
@@ -53,7 +52,7 @@ module.exports = {
 			query = {_id: req.query.id};
 		}
 		Request.findOne(query)
-			.populate('requester','name')
+			.populate('requester','name fiscal')
 			.select('label details subtotal discount tax total status paymentNotes paymentDates files fiscalFiles requester date reqNumber')
 			.then((request)  => {
 				if(request) {
@@ -105,15 +104,44 @@ module.exports = {
 
 	finish(req,res) {
 		const key_user 	= res.locals.user;
-		Request.findOne({reqNumber:req.query.number})
+		var   query 		= {};
+		if(req.query.number) {
+			query = {reqNumber: req.query.number};
+		}
+		if(req.query.id) {
+			query = {_id: req.query.id};
+		}
+		Request.findOne(query)
 			.then((request)  => {
+				if(request.status === 'done') {
+					res.status(406).json({
+						'status': 406,
+						'message': 'Request -' + request.reqNumber + '- is in status done. Cannot be changed'
+					});
+					return;
+				}
+				if(request.status === 'cancelled') {
+					res.status(406).json({
+						'status': 406,
+						'message': 'Request -' + request.reqNumber + '- is cancelled. Cannot be finished'
+					});
+					return;
+				}
+				if(request.status === 'payment') {
+					res.status(406).json({
+						'status': 406,
+						'message': 'Request -' + request.reqNumber + '- is already in status Payment. Cannot be finished'
+					});
+					return;
+				}
 				if(request){
-					request.mod.push = {
+					request.mod.push({
 						by: key_user.name,
 						when: new Date,
 						what: 'Request change status to Payment'
-					};
+					});
 					request.status = 'payment';
+					request.dateFinished = new Date;
 					request.save()
 						.then(() => {
 							res.status(200).json({
@@ -129,5 +157,135 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'request_controller','finish -- Finding request --');
 			});
-	}, //my
+	}, //finish
+
+	modify(req,res) {
+		const key_user 	= res.locals.user;
+		var   query 		= {};
+		if(req.body.number) {
+			query = {reqNumber: req.body.number};
+		}
+		if(req.body.id) {
+			query = {_id: req.body.id};
+		}
+		Request.findOne(query)
+			.then((request)  => {
+				if(request.status === 'done') {
+					res.status(406).json({
+						'status': 406,
+						'message': 'Request -' + request.reqNumber + '- is in status done. Cannot be changed'
+					});
+					return;
+				}
+				if(request.status === 'cancelled') {
+					res.status(406).json({
+						'status': 406,
+						'message': 'Request -' + request.reqNumber + '- is cancelled. Cannot be changed'
+					});
+					return;
+				}
+				if(request.status === 'payment') {
+					res.status(406).json({
+						'status': 406,
+						'message': 'Request -' + request.reqNumber + '- is in status Payment. Cannot be changed'
+					});
+					return;
+				}
+				if(request){
+					request.mod.push({
+						by: key_user.name,
+						when: new Date,
+						what: 'Request modified'
+					});
+					if(req.body.details	) {request.details 	= req.body.details;	}
+					if(req.body.subtotal) {request.subtotal = req.body.subtotal;}
+					if(req.body.tax			) {request.tax 			= req.body.tax;			}
+					if(req.body.total		) {request.total 		= req.body.total;		}
+					if(req.body.files		) {request.files 		= req.body.files;		}
+					if(!req.body.details 	&&
+						!req.body.subtotal	&&
+						!req.body.tax				&&
+						!req.body.total			&&
+						!req.body.files			) {
+						res.status(406).json({
+							'status': 406,
+							'message': 'Request -' + request.reqNumber + '- is not modified. Nothing valid to modify.'
+						});
+						return;
+					}
+					request.save()
+						.then(() => {
+							res.status(200).json({
+								'status': 200,
+								'message': 'Request -' + request.reqNumber + '- updated'
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'request_controller','modify -- Updating request --');
+						});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'request_controller','modify -- Finding request --');
+			});
+	}, //modify
+
+	cancel(req,res) {
+		const key_user 	= res.locals.user;
+		var   query 		= {};
+		if(req.body.number) {
+			query = {reqNumber: req.body.number};
+		}
+		if(req.body.id) {
+			query = {_id: req.body.id};
+		}
+		Request.findOne(query)
+			.then((request)  => {
+				if(request){
+					if(request.status === 'payment') {
+						res.status(406).json({
+							'status': 406,
+							'message': 'Request -' + request.reqNumber + '- is already in process to payment and cannot be cancelled'
+						});
+						return;
+					}
+					if(request.status === 'done') {
+						res.status(406).json({
+							'status': 406,
+							'message': 'Request -' + request.reqNumber + '- is already in status done. Cannot be cancelled'
+						});
+						return;
+					}
+					if(request.status === 'cancelled') {
+						res.status(406).json({
+							'status': 406,
+							'message': 'Request -' + request.reqNumber + '- is already cancelled'
+						});
+						return;
+					}
+					request.mod.push({
+						by: key_user.name,
+						when: new Date,
+						what: 'Request status change to Cancelled'
+					});
+					request.statusReason = req.body.statusReason;
+					request.status = 'cancelled';
+					request.dateCancelled = new Date;
+					request.save()
+						.then(() => {
+							res.status(200).json({
+								'status': 200,
+								'message': 'Request -' + request.reqNumber + '- cancelled succesfully'
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'request_controller','cancel -- Updating request --');
+						});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'request_controller','cancel -- Finding request --');
+			});
+	}, //cancel
+
 };

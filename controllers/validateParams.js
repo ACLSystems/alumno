@@ -1856,17 +1856,6 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/request/create':
-		if(!req.body) {  // POST
-			res.status(406).json({
-				'status': 406,
-				'message': 'Error 1455: Please, give request by body to process'
-			});
-		} else {
-			next();
-		}
-		break;
-
 	case '/api/v1/supervisor/group/create':
 		if(!req.body) {  // POST
 			res.status(406).json({
@@ -2476,6 +2465,90 @@ module.exports = function(req, res, next) {
 			} else {
 				next();
 			}
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/supervisor/request/create':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/supervisor/request/get':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give data by body to process'
+			});
+		} else if (!req.query.number && !req.query.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give request number or id by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/supervisor/request/my':
+		next();
+		break;
+
+	case '/api/v1/supervisor/request/finish':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give data by body to process'
+			});
+		} else if (!req.query.number && !req.query.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give request number or id by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/supervisor/request/cancel':
+		if(!req.body) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give data by body to process'
+			});
+		} else if (!req.body.number && !req.body.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give request number or id by body to process'
+			});
+		} else if (!req.body.statusReason) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give status reason (statusreason) by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/supervisor/request/modify':
+		if(!req.body) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give data by body to process'
+			});
+		} else if (!req.body.number && !req.body.id) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give request number or id by body to process'
+			});
 		} else {
 			next();
 		}

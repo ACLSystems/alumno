@@ -80,6 +80,9 @@ const RequestSchema = new Schema ({
 	statusReason: {	// Documentación del estado 'cancelado' en status
 		type: String
 	},
+	dateFinished: {
+		type: Date
+	},
 	dateCancelled: {
 		type: Date
 	},
