@@ -208,6 +208,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/admin/user/valpwd', 				UserController.validatePassword);
 	app.put ('/api/v1/admin/group/setrubric',			GroupController.setRubric);
 	app.delete ('/api/v1/admin/log/truncate', 		logController.truncate);
+	app.delete ('/api/v1/admin/:name/delete', 		UserController.delete);
 
 	// Rutas para roles de 'isOrg'
 
@@ -243,7 +244,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/supervisor/user/passwordreset', 		UserController.adminPasswordReset);
 	app.post('/api/v1/supervisor/user/masssearch',				ReportController.userMassSearch);
 	app.post('/api/v1/supervisor/user/massiveregister', 	MassUsersController.massiveRegister);
-	app.post('/api/v1/supervisor/user/mur',								MassUsersController.mur);
+	app.post('/api/v1/supervisor/user/muir',								MassUsersController.muir);
 	app.post('/api/v1/supervisor/group/create', 					GroupController.create);
 	app.get ('/api/v1/supervisor/group/get',							GroupController.get);
 	app.put ('/api/v1/supervisor/group/modify',						GroupController.modify);

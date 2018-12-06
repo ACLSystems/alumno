@@ -1101,16 +1101,31 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/user/mur':
+	case '/api/v1/supervisor/user/muir':
 		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -1770: Please, give data by body to process'
+				'message': 'Error: Please, give data by body to process'
 			});
-		} else if(!req.body.users) {
+		} else if(!req.body.person) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -1770: Please, give users data by body to process'
+				'message': 'Error: Please, give person data by body to process'
+			});
+		} else if(req.body.person && !(req.body.person.email && req.body.person.name && req.body.person.fatherName && req.body.person.motherName)) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give person data (name, fatherName, motherName and email, all are requierd) by body to process'
+			});
+		} else if(!req.body.name && !req.body.person.email) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give username or person email by body to process'
+			});
+		} else if(!req.body.password) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give password by body to process'
 			});
 		} else {
 			next();

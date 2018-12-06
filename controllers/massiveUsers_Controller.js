@@ -1,18 +1,13 @@
-//
-const User = require('../src/users');
-const Org = require('../src/orgs');
-const OrgUnit = require('../src/orgUnits');
-//const generate = require('nanoid/generate');
-//const moment = require('moment');
-const bcrypt = require('bcrypt-nodejs');
-const mailjet = require('../shared/mailjet');
-const generate = require('nanoid/generate');
-const Err = require('../controllers/err500_controller');
-
-const logger = require('../shared/winston-logger');
-
+const User 								= require('../src/users');
+const Org 								= require('../src/orgs');
+const OrgUnit 						= require('../src/orgUnits');
+const bcrypt 							= require('bcrypt-nodejs');
+const mailjet 						= require('../shared/mailjet');
+const generate						= require('nanoid/generate');
+const Err 								= require('../controllers/err500_controller');
+const logger 							= require('../shared/winston-logger');
 const url 								= process.env.LIBRETA_URI;
-//const template_user				= 310518; // plantilla para el usuario que se registra por su cuenta
+const urlencode 					= require('urlencode');
 const template_user_admin = 339990; // plantilla para el usuario que es registrado por el administrador
 
 
@@ -269,156 +264,128 @@ module.exports = {
 		}
 	}, // massiveRegister
 
-	mur(req,res) {
-		// Se genera este nuevo API que tiene la misma funcionalidad del massiveRegister
-		// pero armado desde otra perspectiva y considerando varios puntos de vista
+	muir(req,res) {
 		const key_user 	= res.locals.user;
-		var usersReq 		= req.body.users;
-		var orgReq 			= key_user.org.name;
-		var orgUnitReq	= key_user.orgUnit.name;
-		if (req.body.org) 		{ orgReq 			= req.body.org; 		}
-		if (req.body.orgUnit) { orgUnitReq 	= req.body.orgUnit; }
-		var users = {
-			requested: usersReq.length
-		};
+		var userProps 	= req.body;
+		userProps.person.email = userProps.person.email.toLowerCase();
+		if(userProps.name !== userProps.person.email) { // que el nombre de usuario sera igual a su correo
+			userProps.name = userProps.person.email;
+		}
 		Promise.all([
-			Org.findOne({name: orgReq}).lean(),
-			OrgUnit.findOne({name: orgUnitReq}).lean()
+			Org.findOne({name: userProps.org })
+				.select('name'),
+			OrgUnit.findOne({$or: [{ name: userProps.orgUnit}, {longName: userProps.orgUnit}]})
+				.select('name org'),
+			User.findOne({name:userProps.name})
+				.select('name person')
 		])
-			.then((results) => {
-				if(results && results.length > 0){
-					var [org,orgUnit] = results;
-					if(org) {
-						if(orgUnit){
-							var usersProcessed = [];
-							var usersIds = [];
-							var errors = 0;
-							var permRoles = [];
-							var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
-							permRoles.push(permRole);
-							permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
-							permRoles.push(permRole);
-							permRole = { name: 'isSupervisor', canRead: true, canModify: true, canSec: true };
-							permRoles.push(permRole);
-							usersReq.forEach(user => {
-								var permUsers = [];
-								var permUser = { name: key_user.name, canRead: true, canModify: true, canSec: true };
-								permUsers.push(permUser);
-								permUser = { name: user.name, canRead: true, canModify: true, canSec: false };
-								permUsers.push(permUser);
-								var permOrgs = new Array();
-								var permOrg = { name: org.name, canRead: true, canModify: true, canSec: false };
-								permOrgs.push(permOrg);
-								user.perm = { users: permUsers, roles: permRoles, orgs: permOrgs };
-								const date = new Date();
-								user.mod = [{
-									by: key_user.name,
-									when: date,
-									what: 'User creation'
-								}];
-								user.org = org._id;
-								user.orgUnit = orgUnit._id;
-								user.admin = {
-									isActive: true,
-									isVerified: false,
-									recoverString: '',
-									passwordSaved: '',
-									adminCreate: true
-								};
+			.then((results) =>{
+				var [org,ou,user] = results;
+				if(!org) {
+					res.status(200).json({
+						'status': 404,
+						'message': 'Error: Org not found or not valid. Please check'
+					});
+					return;
+				}
+				if(!ou) {
+					res.status(200).json({
+						'status': 404,
+						'message': 'Error: OrgUnit not found or not valid. Please check'
+					});
+					return;
+				}
+				if(ou.org + '' !== org._id + '') {
+					res.status(200).json({
+						'status': 406,
+						'message': 'Error: OrgUnit not valid. OrgUnit provided does not belong to org. Please check',
+						'org': org._id,
+						'ou': ou.org
+					});
+					return;
+				}
+				if(user) {
+					res.status(200).json({
+						'status': 406,
+						'message': 'Error: User already registered',
+						'user': {
+							'id': user.id,
+							'name': user.name,
+							'person': user.person
+						}
 
-								if(user.name !== user.person.email) {
-									user.name === user.person.email;
-								}
-								if(user.person.name) { user.person.name = properCase(user.person.name); }
-								if(user.person.fatherName) { user.person.fatherName = properCase(user.person.fatherName); }
-								if(user.person.motherName) { user.person.motherName = properCase(user.person.motherName); }
-								if(user.password) {
-									user.admin.initialPassword = user.password;
-									user.password = encryptPass(user.password);
-								}
-								user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
-								user.admin.passwordSaved = 'saved';
-								User.findOne({name: user.name})
-									.then((userFound) => {
-										if(userFound) {
-											delete user.password;
-											if(userFound.admin && userFound.admin.initialPassword) {
-												delete user.admin.initialPassword;
-											}
-											delete user.mod;
-											user.mod.push({
-												by: key_user.name,
-												when: date,
-												what: 'Massive User Modification'
-											});
-											User.update({_id: userFound._id}, {$set: user})
-												.then(() => {
-													usersProcessed.push({
-														user	: userFound.name,
-														userId: userFound._id,
-														status: 'User updated'
-													});
-													usersIds.push(userFound._id);
-												})
-												.catch((err) => {
-													usersProcessed.push({
-														user	: userFound.name,
-														userId: userFound._id,
-														status: 'Error: ' + err
-													});
-													errors ++;
-												});
-										} else {
-											User.create(user)
-												.then((u) => {
-													usersProcessed.push({
-														user	: u.name,
-														userId: u._id,
-														status: 'User created'
-													});
-													usersIds.push(userFound._id);
-												})
-												.catch((err) => {
-													usersProcessed.push({
-														user	: user.name,
-														status: 'Error: ' + err
-													});
-													errors ++;
-												});
-										}
+					});
+					return;
+				}
+				var admin = {
+					isActive: true,
+					isVerified: false,
+					recoverString: '',
+					passwordSaved: '',
+					adminCreate: true,
+					initialPassword: userProps.password
+				};
+				userProps.admin = admin;
+				var permUsers = [];
+				var permUser = { name: userProps.name, canRead: true, canModify: true, canSec: false };
+				permUsers.push(permUser);
+				if (userProps.name !== key_user.name) {
+					permUser = { name: key_user.name, canRead: true, canModify: true, canSec: false };
+					permUsers.push(permUser);
+				}
+				var permRoles = [];
+				var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
+				permRoles.push(permRole);
+				permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
+				permRoles.push(permRole);
+				var permOrgs = [];
+				const permOrg = { name: userProps.org, canRead: true, canModify: true, canSec: false };
+				permOrgs.push(permOrg);
+				userProps.perm = { users: permUsers, roles: permRoles, orgs: permOrgs };
+				userProps.org = org._id;
+				userProps.orgUnit = ou._id;
+				const mod = {
+					by: key_user.name,
+					when: new Date(),
+					what: 'User creation'
+				};
+				userProps.mod = [];
+				userProps.mod.push(mod);
+				if(userProps.student && userProps.student.type === 'internal') {
+					delete userProps.student.external;
+					delete userProps.student.origin;
+				}
+				User.create(userProps)
+					.then((user) => {
+						user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
+						user.save()
+							.then((user) => {
+								var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
+								mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',template_user_admin,link)
+									.then(() => {
+										res.status(201).json({
+											'status': 201,
+											'message': 'User -' + userProps.name + '- created',
+											'userid': user._id,
+											'uri': link
+										});
 									})
 									.catch((err) => {
-										Err.sendError(res,err,'massiveRegister_controller','mur -- finding user --',false,false,user.name);
+										Err.sendError(res,err,'user_controller','muir -- Sending Mail --');
 									});
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'user_controller','muir -- Saving User validation String --');
 							});
-							res.status(200).json({
-								'status': 400,
-								'usersProcessed': usersProcessed,
-								'usersIds': usersIds
-							});
-						} else {
-							res.status(200).json({
-								'status': 400,
-								'message': 'Given orgUnit -'+ orgUnitReq +'- not found. Please check'
-							});
-						}
-					} else {
-						res.status(200).json({
-							'status': 400,
-							'message': 'Given Org -'+ orgReq +'- not found. Please check'
-						});
-					}
-				} else {
-					res.status(200).json({
-						'status': 400,
-						'message': 'Given Org or Orgunit not found. Please check'
+					})
+					.catch((err) => {
+						Err.sendError(res,err,'user_controller','muir -- User Creation --');
 					});
-				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'massiveRegister_controller','mur -- Promises ORG & ORGUNIT --');
+				sendError(res,err,'massiveUser_controller','muir -- Finding Courses --');
 			});
-	}, // mur (Massive User Register)
+	}, // mur (Massive User Individual Register)
 
 
 	get(req,res) {

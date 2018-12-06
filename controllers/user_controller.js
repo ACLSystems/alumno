@@ -1,15 +1,15 @@
 //const winston = require('winston');
-const User = require('../src/users');
-const Org = require('../src/orgs');
-const OrgUnit = require('../src/orgUnits');
-const generate = require('nanoid/generate');
-const bcrypt = require('bcrypt-nodejs');
-//const moment = require('moment');
-const Err = require('../controllers/err500_controller');
-const permissions = require('../shared/permissions');
-const mailjet = require('../shared/mailjet');
-const Roster = require('../src/roster');
-const urlencode = require('urlencode');
+const User 								= require('../src/users');
+const Org 								= require('../src/orgs');
+const OrgUnit 						= require('../src/orgUnits');
+const generate 						= require('nanoid/generate');
+const bcrypt 							= require('bcrypt-nodejs');
+const Err 								= require('../controllers/err500_controller');
+const permissions 				= require('../shared/permissions');
+const mailjet							= require('../shared/mailjet');
+const Roster 							= require('../src/roster');
+const Notification 				= require('../src/notifications');
+const urlencode 					= require('urlencode');
 
 const url 								= process.env.LIBRETA_URI;
 const template_user				= 310518; // plantilla para el usuario que se registra por su cuenta
@@ -204,6 +204,45 @@ module.exports = {
 				Err.sendError(res,err,'user_controller','register -- Finding org --');
 			});
 	},
+
+	delete(req,res) {
+		User.findOne({name:req.params.name})
+			.then((user) => {
+				if(!user) {
+					res.status(200).json({
+						'status': 404,
+						'message': 'No user ' + req.params.name + ' found'
+					});
+				} else {
+					Promise.all([
+						Roster.deleteMany({student:user._id}),
+						Notification.deleteMany({
+							$or: [
+								{'destination.item': user._id},
+								{'source.item': user._id}
+							]})
+					])
+						.then(() => {
+							User.findByIdAndDelete(user._id)
+								.then(() => {
+									res.status(200).json({
+										'status': 200,
+										'message': 'User -' + req.params.name + '- deleted'
+									});
+								})
+								.catch((err) => {
+									Err.sendError(res,err,'user_controller','delete -- Deleting main document --');
+								});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'user_controller','delete -- Deleting secondary documents --');
+						});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','delete -- Finding user --');
+			});
+	}, // delete
 
 	confirm(req,res) {
 		const email 		= req.body.email;
@@ -428,7 +467,9 @@ module.exports = {
 						username		: user.name,
 						org					: user.org.name,
 						orgUnit			: user.orgUnit.name,
-						orgUnitLong	: user.orgUnit.longName
+						orgUnitLong	: user.orgUnit.longName,
+						char1				: user.char1,
+						char2				: user.char2
 					};
 					if(user.admin && user.admin.initialPassword) {
 						send_user.initialPassword = user.admin.initialPassword;
