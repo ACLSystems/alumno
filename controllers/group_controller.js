@@ -2148,6 +2148,7 @@ module.exports = {
 							while (i < bs.length) {
 								if(grade.block + '' === bs[i]._id + '') {
 									block = {
+										blockid			: bs[i]._id,
 										blockTitle	: bs[i].title,
 										blockSection: bs[i].section,
 										blockNumber	: bs[i].number,
