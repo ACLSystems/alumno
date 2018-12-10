@@ -285,7 +285,7 @@ module.exports = {
 																	.catch((err) => {
 																		Err.sendError(res,err,'report_controller','orgTree -- Saving Query 3 --',false,false,'User: ' + key_user.name);
 																	});
-																n3.query = query3._id;
+																n3.query = [query3._id];
 															});
 															g2.push(n2.ouId);
 															g1 = g1.concat(g2);
@@ -297,7 +297,7 @@ module.exports = {
 																.catch((err) => {
 																	Err.sendError(res,err,'report_controller','orgTree -- Saving Query 2 --',false,false,'User: ' + key_user.name);
 																});
-															n2.query = query2._id;
+															n2.query = [query2._id];
 														});
 														g1.push(n1.ouId);
 														var query1 = new Query({
@@ -308,7 +308,7 @@ module.exports = {
 															.catch((err) => {
 																Err.sendError(res,err,'report_controller','orgTree -- Saving Query 1 --',false,false,'User: ' + key_user.name);
 															});
-														n1.query = query1._id;
+														n1.query = [query1._id];
 													});
 													// Por último, si estamos con un 'state' hay que quitar la raiz del 'org'
 													if(key_user.orgUnit.type === 'state') {
@@ -424,7 +424,7 @@ module.exports = {
 								.catch((err) => {
 									Err.sendError(res,err,'report_controller','orgTree -- Saving Query --',false,false,'User: ' + key_user.name);
 								});
-							resultGrps.query = query._id;
+							resultGrps.query = [query._id];
 							res.status(200).json({
 								'status'		: 200,
 								'groupNumber' : resultGrps.length,
@@ -447,8 +447,13 @@ module.exports = {
 		var query1 = {}; // Users on track
 		var query2 = {}; // Users Passed
 		var query3 = {}; // Total users
-
-		Query.findOne({user:key_user._id,_id:ou})
+		if(!mongoose.Types.ObjectId.isValid(ou)) {
+			ou = JSON.parse(ou);
+		}
+		if(Array.isArray(ou)) {
+			ou = ou[0];
+		}
+		Query.findOne({user:key_user._id,_id:ou}).lean()
 			.then((query) => {
 				if(query && query.query) {
 					ou = query.query;
@@ -1050,13 +1055,13 @@ module.exports = {
 							});
 						})
 						.catch((err) => {
-							Err.sendError(res,err,'report_controller','gradesByCampus -- Finding Roster --');
+							Err.sendError(res,err,'report_controller','gradesByCampus -- Finding Roster --',false,false,'User: -' + key_user.name + '-');
 						});
 				})
 				.catch((err) => {
-					Err.sendError(res,err,'report_controller','gradesByCampus -- Finding Roster by State --');
+					Err.sendError(res,err,'report_controller','gradesByCampus -- Finding Roster by State --',false,false,'User: -' + key_user.name + '-');
 				});
-		}
+		} else
 		if(key_user.orgUnit.type === 'campus') {
 			Roster.find({ orgUnit: key_user.orgUnit._id, report: true })
 				.populate('student', 'name person')
@@ -1207,7 +1212,7 @@ module.exports = {
 					});
 				})
 				.catch((err) => {
-					Err.sendError(res,err,'report_controller','gradesByCampus -- Finding Roster --');
+					Err.sendError(res,err,'report_controller','gradesByCampus -- Finding Roster --',false,false,'User: -' + key_user.name + '-');
 				});
 		}
 	}, //gradesByCampus
@@ -1284,11 +1289,12 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'report_controller','studentHistory -- Finding User and Sessions --');
+				Err.sendError(res,err,'report_controller','studentHistory -- Finding User and Sessions --',false,false,'User: -' + key_user.name + '-');
 			});
 	}, //studentHistory
 
 	userMassSearch(req,res) {
+		const key_user = res.locals.user;
 		User.aggregate()
 			.match({name:{$in:req.body.users}})
 			.project('name person char1 char2')
@@ -1306,11 +1312,12 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'report_controller','userMassSearch -- Finding Users --');
+				Err.sendError(res,err,'report_controller','userMassSearch -- Finding Users --',false,false,'User: -' + key_user.name + '-');
 			});
 	}, //userMassSearch
 
 	groupsQuery(req,res) {
+		const key_user = res.locals.user;
 		var query = {};
 		var query2 = {};
 		if(req.query.course) {query = {course:mongoose.Types.ObjectId(req.query.course)};}
@@ -1363,7 +1370,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'report_controller','groupsQuery -- Finding groups --');
+				Err.sendError(res,err,'report_controller','groupsQuery -- Finding groups --',false,false,'User: -' + key_user.name + '-');
 			});
 	}
 };
