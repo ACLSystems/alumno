@@ -285,7 +285,7 @@ module.exports = {
 																	.catch((err) => {
 																		Err.sendError(res,err,'report_controller','orgTree -- Saving Query 3 --',false,false,'User: ' + key_user.name);
 																	});
-																n3.query = [query3._id];
+																n3.query = query3._id;
 															});
 															g2.push(n2.ouId);
 															g1 = g1.concat(g2);
@@ -424,7 +424,7 @@ module.exports = {
 								.catch((err) => {
 									Err.sendError(res,err,'report_controller','orgTree -- Saving Query --',false,false,'User: ' + key_user.name);
 								});
-							resultGrps.query = [query._id];
+							resultGrps.query = query._id;
 							res.status(200).json({
 								'status'		: 200,
 								'groupNumber' : resultGrps.length,
