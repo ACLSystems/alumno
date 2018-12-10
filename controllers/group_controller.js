@@ -2168,6 +2168,7 @@ module.exports = {
 						}
 					});
 					var send_grade = {
+						rosterid					: item._id,
 						name							: item.student.person.fullName,
 						email 						: item.student.person.email,
 						course						: item.group.course.title,
