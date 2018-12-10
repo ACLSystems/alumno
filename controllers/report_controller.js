@@ -6,6 +6,7 @@ const OrgUnit 	= require('../src/orgUnits'									);
 const Group 		= require('../src/groups'										);
 const Err 			= require('../controllers/err500_controller');
 const Session		= require('../src/sessions'									);
+const Query 		= require('../src/queries'									);
 const TA 				= require('time-ago'												);
 
 module.exports = {
@@ -142,469 +143,504 @@ module.exports = {
 			query = {$or:[{parent: key_user.orgUnit.name},{name: key_user.orgUnit.name}]};
 			type 		= 'state';
 		}
-		if(type === 'org' || type === 'state') {
-
-
-			OrgUnit.find(query)
-				.select('name parent type longName')
-				.lean()
-				.then((resOUs) => {
-					if(resOUs && resOUs.length > 0){
-						var ouIds = new Array();
-						resOUs.forEach(ou => {ouIds.push(mongoose.Types.ObjectId(ou._id));});
-						Group.find({orgUnit: {$in: resOUs}})
-							.select('name code orgUnit course')
-							.populate('orgUnit', 'name parent longName type')
-							.populate('course', 'title')
-							.lean()
-							.then((grps) => {
-								if(grps && grps.length > 0) {
-									// parents necesita ser un arreglo con valores únicos
-									// por lo que vamos a conseguirlo usando un SET y luego
-									// convirtiendolo en un arreglo
-									let parents = [...new Set(grps.map(a => a.orgUnit.parent))];
-									let uniqueOUs = [...new Set(grps.map(a => a.orgUnit.name))];
-									var fullList = [...new Set(parents.concat(uniqueOUs))];
-									OrgUnit.aggregate()
-										.match({name: {$in:fullList}})
-										.project('name type parent longName')
-										.group({
-											_id: '$parent',
-											ous: {
-												$push: {
-													ouId				: '$_id',
-													ouName			: '$name',
-													ouLongName	: '$longName',
-													ouType			: '$type',
-													ouParent		: '$parent',
-													groups			: [],
-													query				: [],
-													ous					: []
-												}
-											}
-										})
-										.project({
-											ouName		: '$_id',
-											ous				: '$ous',
-											_id				: false
-										})
-										.then((orgOus) => {
-											// Acomodamos el arbol
-											var cut = [];
-											if(orgOus && orgOus.length > 0) {
-												var firstLiners = orgOus.map(a => a.ouName);
-												if(firstLiners  && firstLiners .length > 0) {
-													var i=0;
-													firstLiners .forEach(fl => {
-														var j=0;
-														orgOus.forEach(gps => {
-															if(gps.ous && gps.ous.length > 0) {
-																var k=0;
-																gps.ous.forEach(ou => {
-																	if(fl === ou.ouName) {
-																		if(ou.ouType === 'org') {
-																			orgOus[i].ouType 			= ou.ouType;
-																			orgOus[i].ouId	 			= ou.ouId;
-																			orgOus[i].ouLongName 	= ou.ouLongName;
-																			orgOus[i].groups 			= ou.groups;
-																			orgOus[i].ous.splice(k,1);
-																		} else {
-																			orgOus[j].ous[k].ous 	= orgOus[i].ous;
-																			cut.push(fl);
-																		}
-																	}
-																	k++;
-																});
-															}
-															j++;
-														});
-														i++;
-													});
-												}
-											}
-											// Cortamos lo que sobra del arbol
-											for (i = 0; i < orgOus.length; i++){
-												cut.forEach((cutty) => {
-													if(orgOus[i].ouName===cutty){orgOus.splice(i,1);}
-												});
-											}
-											// Ahora metemos los grupos dentro del árbol
-
-											orgOus.forEach(n1 => {
-												var g1 = [];
-												// Primero vemos si hay grupos para el primer nivel
-												i=0;
-												grps.forEach(g => {
-													if(g.orgUnit.name === n1.ouName) {
-														n1.groups.push({
-															groupId 		: g._id,
-															groupName		: g.name,
-															groupCode		: g.code,
-															courseTitle	: g.course.title
-														});
+		Query.deleteMany({user:key_user._id})
+			.then(() => {
+				if(type === 'org' || type === 'state') {
+					OrgUnit.find(query)
+						.select('name parent type longName')
+						.lean()
+						.then((resOUs) => {
+							if(resOUs && resOUs.length > 0){
+								var ouIds = new Array();
+								resOUs.forEach(ou => {ouIds.push(mongoose.Types.ObjectId(ou._id));});
+								Group.find({orgUnit: {$in: resOUs}})
+									.select('name code orgUnit course')
+									.populate('orgUnit', 'name parent longName type')
+									.populate('course', 'title')
+									.lean()
+									.then((grps) => {
+										if(grps && grps.length > 0) {
+											// parents necesita ser un arreglo con valores únicos
+											// por lo que vamos a conseguirlo usando un SET y luego
+											// convirtiendolo en un arreglo
+											let parents = [...new Set(grps.map(a => a.orgUnit.parent))];
+											let uniqueOUs = [...new Set(grps.map(a => a.orgUnit.name))];
+											var fullList = [...new Set(parents.concat(uniqueOUs))];
+											OrgUnit.aggregate()
+												.match({name: {$in:fullList}})
+												.project('name type parent longName')
+												.group({
+													_id: '$parent',
+													ous: {
+														$push: {
+															ouId				: '$_id',
+															ouName			: '$name',
+															ouLongName	: '$longName',
+															ouType			: '$type',
+															ouParent		: '$parent',
+															groups			: [],
+															query				: [],
+															ous					: []
+														}
 													}
-												});
-												// listo... ahora nos vamos al segundo nivel
-												n1.ous.forEach(n2 => {
-													var g2 = [];
-													// Vemos si hay grupos para el segundo nivel
-													i=0;
-													grps.forEach(g => {
-														if(g.orgUnit.name === n2.ouName) {
-															n2.groups.push({
-																groupId			: g._id,
-																groupName		: g.name,
-																groupCode		: g.code,
-																courseTitle	: g.course.title
+												})
+												.project({
+													ouName		: '$_id',
+													ous				: '$ous',
+													_id				: false
+												})
+												.then((orgOus) => {
+													// Acomodamos el arbol
+													var cut = [];
+													if(orgOus && orgOus.length > 0) {
+														var firstLiners = orgOus.map(a => a.ouName);
+														if(firstLiners  && firstLiners .length > 0) {
+															var i=0;
+															firstLiners .forEach(fl => {
+																var j=0;
+																orgOus.forEach(gps => {
+																	if(gps.ous && gps.ous.length > 0) {
+																		var k=0;
+																		gps.ous.forEach(ou => {
+																			if(fl === ou.ouName) {
+																				if(ou.ouType === 'org') {
+																					orgOus[i].ouType 			= ou.ouType;
+																					orgOus[i].ouId	 			= ou.ouId;
+																					orgOus[i].ouLongName 	= ou.ouLongName;
+																					orgOus[i].groups 			= ou.groups;
+																					orgOus[i].ous.splice(k,1);
+																				} else {
+																					orgOus[j].ous[k].ous 	= orgOus[i].ous;
+																					cut.push(fl);
+																				}
+																			}
+																			k++;
+																		});
+																	}
+																	j++;
+																});
+																i++;
 															});
 														}
-														i++;
-													});
-													// listo... ahora nos vamos al tercer nivel
-													i=0;
+													}
+													// Cortamos lo que sobra del arbol
+													for (i = 0; i < orgOus.length; i++){
+														cut.forEach((cutty) => {
+															if(orgOus[i].ouName===cutty){orgOus.splice(i,1);}
+														});
+													}
+													// Ahora metemos los grupos dentro del árbol
 
-													n2.ous.forEach(n3 => {
-														g2.push(n3.ouId);
+													orgOus.forEach(n1 => {
+														var g1 = [];
+														// Primero vemos si hay grupos para el primer nivel
+														i=0;
 														grps.forEach(g => {
-															if(g.orgUnit.name === n3.ouName) {
-																n3.groups.push({
+															if(g.orgUnit.name === n1.ouName) {
+																n1.groups.push({
 																	groupId 		: g._id,
 																	groupName		: g.name,
 																	groupCode		: g.code,
 																	courseTitle	: g.course.title
 																});
 															}
-															i++;
 														});
-														n3.query = n3.ouId;
+														// listo... ahora nos vamos al segundo nivel
+														n1.ous.forEach(n2 => {
+															var g2 = [];
+															// Vemos si hay grupos para el segundo nivel
+															i=0;
+															grps.forEach(g => {
+																if(g.orgUnit.name === n2.ouName) {
+																	n2.groups.push({
+																		groupId			: g._id,
+																		groupName		: g.name,
+																		groupCode		: g.code,
+																		courseTitle	: g.course.title
+																	});
+																}
+																i++;
+															});
+															// listo... ahora nos vamos al tercer nivel
+															i=0;
+
+															n2.ous.forEach(n3 => {
+																g2.push(n3.ouId);
+																grps.forEach(g => {
+																	if(g.orgUnit.name === n3.ouName) {
+																		n3.groups.push({
+																			groupId 		: g._id,
+																			groupName		: g.name,
+																			groupCode		: g.code,
+																			courseTitle	: g.course.title
+																		});
+																	}
+																	i++;
+																});
+																var query3 = new Query({
+																	query: n3.ouId,
+																	user: key_user._id
+																});
+																query3.save()
+																	.catch((err) => {
+																		Err.sendError(res,err,'report_controller','orgTree -- Saving Query 3 --',false,false,'User: ' + key_user.name);
+																	});
+																n3.query = query3._id;
+															});
+															g2.push(n2.ouId);
+															g1 = g1.concat(g2);
+															var query2 = new Query({
+																query: g2,
+																user: key_user._id
+															});
+															query2.save()
+																.catch((err) => {
+																	Err.sendError(res,err,'report_controller','orgTree -- Saving Query 2 --',false,false,'User: ' + key_user.name);
+																});
+															n2.query = query2._id;
+														});
+														g1.push(n1.ouId);
+														var query1 = new Query({
+															query: g1,
+															user: key_user._id
+														});
+														query1.save()
+															.catch((err) => {
+																Err.sendError(res,err,'report_controller','orgTree -- Saving Query 1 --',false,false,'User: ' + key_user.name);
+															});
+														n1.query = query1._id;
 													});
-													g2.push(n2.ouId);
-													g1 = g1.concat(g2);
-													n2.query = g2;
+													// Por último, si estamos con un 'state' hay que quitar la raiz del 'org'
+													if(key_user.orgUnit.type === 'state') {
+														if(orgOus[0].ouType === 'org' || orgOus[0].ouName === key_user.org.name) {
+															orgOus = orgOus[0].ous;
+														}
+													}
+
+													if(orgOus.length === 1) {
+														orgOus = orgOus[0];
+													}
+													res.status(200).json({
+														'status'		: 200,
+														'groupNumber' : grps.length,
+														'tree'			: orgOus
+													});
+												})
+												.catch((err) => {
+													Err.sendError(res,err,'report_controller','orgTree -- Finding Groups --',false,false,'User: ' + key_user.name);
 												});
-												g1.push(n1.ouId);
-												n1.query = g1;
-											});
-											// Por último, si estamos con un 'state' hay que quitar la raiz del 'org'
-											if(key_user.orgUnit.type === 'state') {
-												if(orgOus[0].ouType === 'org' || orgOus[0].ouName === key_user.org.name) {
-													orgOus = orgOus[0].ous;
-												}
-											}
-
-											if(orgOus.length === 1) {
-												orgOus = orgOus[0];
-											}
-											res.status(200).json({
-												'status'		: 200,
-												'groupNumber' : grps.length,
-												'tree'			: orgOus
-											});
-										})
-										.catch((err) => {
-											Err.sendError(res,err,'report_controller','orgTree -- Finding Groups --',false,false,'User: ' + key_user.name);
-										});
-								}
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'report_controller','orgTree -- Finding Groups --',false,false,'User: ' + key_user.name);
-							});
-					}
-				})
-				.catch((err) => {
-					Err.sendError(res,err,'report_controller','orgTree -- Finding OUs --',false,false,'User: ' + key_user.name);
-				});
-
-		} else {
-			Group.aggregate()
-				.match({orgUnit:mongoose.Types.ObjectId(key_user.orgUnit._id)})
-				.project({
-					_id			: 1,
-					code		: 1,
-					name		: 1,
-					course	: 1,
-					orgUnit	: 1
-				})
-				.lookup({
-					from				: 'courses',
-					localField	: 'course',
-					foreignField: '_id',
-					as					: 'course'
-				})
-				.project({
-					groupId			: '$_id',
-					groupCode		: '$code',
-					groupName		: '$name',
-					orgUnit			: 1,
-					courseTitle	: '$course.title'
-				})
-				.unwind('courseTitle')
-				.group({
-					_id: '$orgUnit',
-					groups: {
-						$push: {
-							groupId			: '$groupId',
-							groupCode		: '$groupCode',
-							groupName		: '$groupName',
-							courseTitle	: '$courseTitle'
-						}
-					}
-				})
-				.project({
-					ou					: '$_id',
-					groups	 		: '$groups',
-					query				: key_user.orgUnit._id
-				})
-				.lookup({
-					from				: 'orgunits',
-					localField	: '_id',
-					foreignField: '_id',
-					as					: 'ou'
-				})
-				.unwind('ou')
-				.project({
-					ouName			: '$ou.name',
-					ouLongName	: '$ou.longName',
-					ouId				: '$ou._id',
-					ouType			: '$ou.type',
-					ouParent		: '$ou.parent',
-					groups	 		: '$groups',
-					query				: '$query',
-					_id					: false
-				})
-				.then((resultGrps) => {
-					var allGroups = new Array();
-					var campus = {};
-					if(resultGrps && resultGrps.length > 0) {
-						if(resultGrps.length === 1) {
-							campus = resultGrps[0];
-							if(campus.groups && campus.groups.length > 0) {
-								campus.groups.forEach(g => {
-									allGroups.push(g.groupCode);
-								});
+										}
+									})
+									.catch((err) => {
+										Err.sendError(res,err,'report_controller','orgTree -- Finding Groups --',false,false,'User: ' + key_user.name);
+									});
 							}
-						}
-					}
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'report_controller','orgTree -- Finding OUs --',false,false,'User: ' + key_user.name);
+						});
 
-					if(resultGrps.length === 1) {
-						resultGrps = resultGrps[0];
-					}
+				} else {
+					Group.aggregate()
+						.match({orgUnit:mongoose.Types.ObjectId(key_user.orgUnit._id)})
+						.project({
+							_id			: 1,
+							code		: 1,
+							name		: 1,
+							course	: 1,
+							orgUnit	: 1
+						})
+						.lookup({
+							from				: 'courses',
+							localField	: 'course',
+							foreignField: '_id',
+							as					: 'course'
+						})
+						.project({
+							groupId			: '$_id',
+							groupCode		: '$code',
+							groupName		: '$name',
+							orgUnit			: 1,
+							courseTitle	: '$course.title'
+						})
+						.unwind('courseTitle')
+						.group({
+							_id: '$orgUnit',
+							groups: {
+								$push: {
+									groupId			: '$groupId',
+									groupCode		: '$groupCode',
+									groupName		: '$groupName',
+									courseTitle	: '$courseTitle'
+								}
+							}
+						})
+						.project({
+							ou					: '$_id',
+							groups	 		: '$groups',
+							query				: key_user.orgUnit._id
+						})
+						.lookup({
+							from				: 'orgunits',
+							localField	: '_id',
+							foreignField: '_id',
+							as					: 'ou'
+						})
+						.unwind('ou')
+						.project({
+							ouName			: '$ou.name',
+							ouLongName	: '$ou.longName',
+							ouId				: '$ou._id',
+							ouType			: '$ou.type',
+							ouParent		: '$ou.parent',
+							groups	 		: '$groups',
+							query				: '$query',
+							_id					: false
+						})
+						.then((resultGrps) => {
 
-					res.status(200).json({
-						'status'		: 200,
-						'groupNumber' : resultGrps.length,
-						'tree'			: resultGrps
-					});
-				})
-				.catch((err) => {
-					Err.sendError(res,err,'report_controller','orgTree -- Aggregate Groups --',false,false,'User: ' + key_user.name);
-				});
-		}
+							var allGroups = new Array();
+							var campus = {};
+							if(resultGrps && resultGrps.length > 0) {
+								if(resultGrps.length === 1) {
+									campus = resultGrps[0];
+									if(campus.groups && campus.groups.length > 0) {
+										campus.groups.forEach(g => {
+											allGroups.push(g.groupCode);
+										});
+									}
+								}
+							}
+
+							if(resultGrps.length === 1) {
+								resultGrps = resultGrps[0];
+							}
+
+							var query = new Query({
+								query: resultGrps.query,
+								user: key_user._id
+							});
+							query.save()
+								.catch((err) => {
+									Err.sendError(res,err,'report_controller','orgTree -- Saving Query --',false,false,'User: ' + key_user.name);
+								});
+							resultGrps.query = query._id;
+							res.status(200).json({
+								'status'		: 200,
+								'groupNumber' : resultGrps.length,
+								'tree'			: resultGrps
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'report_controller','orgTree -- Aggregate Groups --',false,false,'User: ' + key_user.name);
+						});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','orgtree -- Delete prev queries --');
+			});
 	}, // orgTree
 
 	percentil(req,res) {
 		const key_user  = res.locals.user;
 		var 	ou				= req.query.ou || key_user.orgUnit._id;
-		/*
-		if(key_user.roles.isAdmin && req.query.ou) {
-			ou = req.query.ou;
-		} else {
-			if(key_user.orgUnit._id) {
-				ou = key_user.orgUnit._id;
-			} else {
-				res.status(200).json({
-					'status': 200,
-					'message': 'User has not orgUnit. -  Please contact Admin'
-				});
-			}
-		}
-		*/
-
 		var query1 = {}; // Users on track
 		var query2 = {}; // Users Passed
 		var query3 = {}; // Total users
 
-		if(key_user.orgUnit.type === 'campus') {
-			ou = key_user.orgUnit._id;
-		} else {
-			if(!mongoose.Types.ObjectId.isValid(ou)) {
-				ou = JSON.parse(ou);
-			}
-		}
+		Query.findOne({user:key_user._id,_id:ou})
+			.then((query) => {
+				if(query && query.query) {
+					ou = query.query;
+				}
+				if(key_user.orgUnit.type === 'campus') {
+					ou = key_user.orgUnit._id;
+					/*
+				} else {
+					console.log(ou);
+					if(!mongoose.Types.ObjectId.isValid(ou)) {
+						ou = JSON.parse(ou);
+					}
+					*/
+				}
+				var ouIds = new Array();
+				if(Array.isArray(ou)) {
+					if(ou.length > 0) {
+						ou.forEach(o => {ouIds.push(mongoose.Types.ObjectId(o));});
+						query1 = {orgUnit: {$in:ouIds},report: {$ne:false},track:{$gt:0}};
+						query2 = {orgUnit: {$in:ouIds},report: {$ne:false},pass:true};
+						query3 = {orgUnit: {$in:ouIds},report: {$ne:false}};
+					}
+				} else {
+					query1 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},track:{$gt:0}};
+					query2 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},pass:true};
+					query3 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false}};
+				}
 
-		var ouIds = new Array();
-
-		if(Array.isArray(ou)) {
-			if(ou.length > 0) {
-				ou.forEach(o => {ouIds.push(mongoose.Types.ObjectId(o));});
-				query1 = {orgUnit: {$in:ouIds},report: {$ne:false},track:{$gt:0}};
-				query2 = {orgUnit: {$in:ouIds},report: {$ne:false},pass:true};
-				query3 = {orgUnit: {$in:ouIds},report: {$ne:false}};
-			}
-		} else {
-			query1 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},track:{$gt:0}};
-			query2 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},pass:true};
-			query3 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false}};
-		}
-
-		Promise.all([
-			Roster.aggregate() // Buscar Track
-				.match(query1)
-				.group({ _id: '$group', usersOnTrack:{$sum:1}}),
-			Roster.aggregate() // Buscar Aprobados
-				.match(query2)
-				.group({ _id: '$group', usersPassed:{$sum:1}}),
-			Roster.aggregate() // Total de usuarios
-				.match(query3)
-				.group({ _id: '$group', totalUsers:{$sum:1}})
-		])
-			.then((globalResults) => {
-				var [resultsT,resultsP,resultsR] = globalResults;
-				// Resultados de Track
-				var group_ids = [];
-				var results 	= resultsT;
-				results.forEach(function(res) {
-					group_ids.push(res._id);
-				});
-				// Resultados de aprobados
-				if(resultsP.length > 0){
-					resultsP.forEach(function(res) {
-						var i = 0;
-						var found = false;
-						while(!found && i < results.length) {
-							if(results[i]){
-								if(res._id + '' === results[i]._id +'')  {
-									found=true;
-									results[i].usersPassed = res.usersPassed;
-								}
-							}
-							i++;
-						}
-						if(!found) {
+				Promise.all([
+					Roster.aggregate() // Buscar Track
+						.match(query1)
+						.group({ _id: '$group', usersOnTrack:{$sum:1}}),
+					Roster.aggregate() // Buscar Aprobados
+						.match(query2)
+						.group({ _id: '$group', usersPassed:{$sum:1}}),
+					Roster.aggregate() // Total de usuarios
+						.match(query3)
+						.group({ _id: '$group', totalUsers:{$sum:1}})
+				])
+					.then((globalResults) => {
+						var [resultsT,resultsP,resultsR] = globalResults;
+						// Resultados de Track
+						var group_ids = [];
+						var results 	= resultsT;
+						results.forEach(function(res) {
 							group_ids.push(res._id);
-							results.push(res);
-						}
-					});
-				}
-				// Resultados de totales
-				if(resultsR.length > 0){
-					resultsR.forEach(function(res) {
-						var i = 0;
-						var found = false;
-						while(!found && i < results.length) {
-							if(results[i]){
-								if(res._id + '' === results[i]._id +'')  {
-									found=true;
-									results[i].totalUsers = res.totalUsers;
-								}
-							}
-							i++;
-						}
-						if(!found) {
-							group_ids.push(res._id);
-							results.push(res);
-						}
-					});
-				}
-				if(results.length === 0) {
-					res.status(200).json({
-						'status': 200,
-						'totalUsers'	: 0,
-						'usersOnTrack': 0,
-						'usersPassed'	: 0,
-						'results'			: 'No results'
-					});
-					return;
-				}
-
-				Group.find({_id: {$in: group_ids}})
-					.select('name orgUnit')
-					.populate('orgUnit', 'name longName parent')
-					.then((groups) => {
-						if(groups.length > 0 ) {
-							groups.forEach(function(group) {
+						});
+						// Resultados de aprobados
+						if(resultsP.length > 0){
+							resultsP.forEach(function(res) {
 								var i = 0;
 								var found = false;
 								while(!found && i < results.length) {
-									if(results[i]._id + '' === group._id +'') {
-										found = true;
-										results[i].groupId 		= group._id;
-										results[i].group  		= group.name;
-										results[i].ouName 		= group.orgUnit.name;
-										results[i].ouLongName = group.orgUnit.longName;
-										results[i].ouId 			= group.orgUnit._id;
-										results[i].ouParent 	= group.orgUnit.parent;
+									if(results[i]){
+										if(res._id + '' === results[i]._id +'')  {
+											found=true;
+											results[i].usersPassed = res.usersPassed;
+										}
 									}
 									i++;
 								}
-							});
-							var totalTracks = 0;
-							var totalPassed = 0;
-							var totalUsers 	= 0;
-							results.forEach(function(res) {
-								if(res.usersOnTrack	)	{totalTracks += res.usersOnTrack; }
-								if(res.usersPassed	)	{totalPassed += res.usersPassed;  }
-								if(res.totalUsers		)	{totalUsers  += res.totalUsers;   }
-							});
-
-							var send_results = [];
-
-							if(results.length > 0) {
-								let uniqueOUs = [...new Set(results.map(a => a.ouName))];
-								uniqueOUs.forEach(a => {
-									send_results.push({
-										ouName : a,
-										ous: []
-									});
-								});
-								send_results.forEach(a => {
-									results.forEach(b => {
-										if(b.ouName === a.ouName) {
-											a.ous.push({
-												usersOnTrack	: b.usersOnTrack,
-												usersPassed		: b.usersPassed,
-												totalUsers		: b.totalUsers,
-												groupId				: b.groupId,
-												groupName			: b.group,
-												//ouName				: b.ouName,
-												//ouLongName		: b.ouLongName,
-												//ouParent			: b.ouParent
-											});
-											if(!a.ouLongName) {
-												a.ouLongName 	= b.ouLongName;
-												a.ouId				= b.ouId;
-											}
-										}
-									});
-								});
-							}
-
-							res.status(200).json({
-								'status'			: 200,
-								//'orgUnit'			: groups[0].orgUnit.name,
-								//'orgUnitName' : groups[0].orgUnit.longName,
-								'totalUsers'	: totalUsers,
-								'usersOnTrack': totalTracks,
-								'usersPassed'	: totalPassed,
-								'results'			: send_results
-							});
-							// esto es del total
-
-						// del total
-						} else {
-							res.status(200).json({
-								'status': 200,
-								'results': 'No groups found'
+								if(!found) {
+									group_ids.push(res._id);
+									results.push(res);
+								}
 							});
 						}
+						// Resultados de totales
+						if(resultsR.length > 0){
+							resultsR.forEach(function(res) {
+								var i = 0;
+								var found = false;
+								while(!found && i < results.length) {
+									if(results[i]){
+										if(res._id + '' === results[i]._id +'')  {
+											found=true;
+											results[i].totalUsers = res.totalUsers;
+										}
+									}
+									i++;
+								}
+								if(!found) {
+									group_ids.push(res._id);
+									results.push(res);
+								}
+							});
+						}
+						if(results.length === 0) {
+							res.status(200).json({
+								'status': 200,
+								'totalUsers'	: 0,
+								'usersOnTrack': 0,
+								'usersPassed'	: 0,
+								'results'			: 'No results'
+							});
+							return;
+						}
+
+						Group.find({_id: {$in: group_ids}})
+							.select('name orgUnit')
+							.populate('orgUnit', 'name longName parent')
+							.then((groups) => {
+								if(groups.length > 0 ) {
+									groups.forEach(function(group) {
+										var i = 0;
+										var found = false;
+										while(!found && i < results.length) {
+											if(results[i]._id + '' === group._id +'') {
+												found = true;
+												results[i].groupId 		= group._id;
+												results[i].group  		= group.name;
+												results[i].ouName 		= group.orgUnit.name;
+												results[i].ouLongName = group.orgUnit.longName;
+												results[i].ouId 			= group.orgUnit._id;
+												results[i].ouParent 	= group.orgUnit.parent;
+											}
+											i++;
+										}
+									});
+									var totalTracks = 0;
+									var totalPassed = 0;
+									var totalUsers 	= 0;
+									results.forEach(function(res) {
+										if(res.usersOnTrack	)	{totalTracks += res.usersOnTrack; }
+										if(res.usersPassed	)	{totalPassed += res.usersPassed;  }
+										if(res.totalUsers		)	{totalUsers  += res.totalUsers;   }
+									});
+
+									var send_results = [];
+
+									if(results.length > 0) {
+										let uniqueOUs = [...new Set(results.map(a => a.ouName))];
+										uniqueOUs.forEach(a => {
+											send_results.push({
+												ouName : a,
+												ous: []
+											});
+										});
+										send_results.forEach(a => {
+											results.forEach(b => {
+												if(b.ouName === a.ouName) {
+													a.ous.push({
+														usersOnTrack	: b.usersOnTrack,
+														usersPassed		: b.usersPassed,
+														totalUsers		: b.totalUsers,
+														groupId				: b.groupId,
+														groupName			: b.group,
+														//ouName				: b.ouName,
+														//ouLongName		: b.ouLongName,
+														//ouParent			: b.ouParent
+													});
+													if(!a.ouLongName) {
+														a.ouLongName 	= b.ouLongName;
+														a.ouId				= b.ouId;
+													}
+												}
+											});
+										});
+									}
+
+									res.status(200).json({
+										'status'			: 200,
+										//'orgUnit'			: groups[0].orgUnit.name,
+										//'orgUnitName' : groups[0].orgUnit.longName,
+										'totalUsers'	: totalUsers,
+										'usersOnTrack': totalTracks,
+										'usersPassed'	: totalPassed,
+										'results'			: send_results
+									});
+									// esto es del total
+
+								// del total
+								} else {
+									res.status(200).json({
+										'status': 200,
+										'results': 'No groups found'
+									});
+								}
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'report_controller','percentil -- Searching group names --');
+							});
 					})
 					.catch((err) => {
-						Err.sendError(res,err,'report_controller','percentil -- Searching group names --');
+						Err.sendError(res,err,'report_controller','percentil -- Promises for Results --');
 					});
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'report_controller','percentil -- Promises for Results --');
+				Err.sendError(res,err,'report_controller','percentil -- Finding Query --');
 			});
+
+
 	}, //percentil
 
 	gradesByGroup(req,res) {
