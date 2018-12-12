@@ -343,7 +343,11 @@ const RosterSchema = new Schema ({
 		type: Number,
 		default: 0
 	},
-	mod: [ModSchema]
+	mod: [ModSchema],
+	createDate: {
+		type: Date,
+		default: Date.now
+	}
 });
 
 // Definir virtuals

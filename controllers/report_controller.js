@@ -4,6 +4,7 @@ const Roster 		= require('../src/roster'										);
 const File 			= require('../src/files'										);
 const OrgUnit 	= require('../src/orgUnits'									);
 const Group 		= require('../src/groups'										);
+const Course 		= require('../src/courses'									);
 const Err 			= require('../controllers/err500_controller');
 const Session		= require('../src/sessions'									);
 const Query 		= require('../src/queries'									);
@@ -1982,6 +1983,98 @@ module.exports = {
 				Err.sendError(res,err,'report_controller','minicube -- roster aggregate --');
 			});
 	}, // minicubeP
+
+	listRoster(req,res){
+		//const key_user 	= res.locals.user;
+		var course	= '';
+		if(req.query.course) {
+			course = req.query.course;
+		} else {
+			res.status(200).json({
+				'message': 'Please give course code'
+			});
+			return;
+		}
+		Roster.aggregate()
+			.project({
+				student	: true,
+				orgUnit	: true,
+				group		: true
+			})
+			.lookup({
+				from				: 'groups',
+				localField	: 'group',
+				foreignField: '_id',
+				as					: 'group'
+			})
+			.unwind('group')
+			.project({
+				student	: true,
+				orgUnit	:	true,
+				course	:	'$group.course'
+			})
+			.lookup({
+				from				: 'courses',
+				localField	: 'course',
+				foreignField: '_id',
+				as					: 'course'
+			})
+			.unwind('course')
+			.match({'course.code': course})
+			.project({
+				student	: true,
+				orgUnit	:	true,
+				courseCode	:	'$course.code',
+				courseTitle : '$course.title'
+			})
+			.lookup({
+				from				: 'orgunits',
+				localField	: 'orgUnit',
+				foreignField: '_id',
+				as					: 'ou'
+			})
+			.unwind('ou')
+			.project({
+				student	: true,
+				courseCode	:	true,
+				courseTitle	:	true,
+				ouname: '$ou.name',
+				ouLongName: '$ou.longName',
+				ouParent: '$ou.parent'
+			})
+			.lookup({
+				from				: 'users',
+				localField	: 'student',
+				foreignField: '_id',
+				as					: 'student'
+			})
+			.unwind('student')
+			.project({
+				nombre			: '$student.person.name',
+				apellidoPaterno	: '$student.person.fatherName',
+				apellidoMaterno	: '$student.person.motherName',
+				email 			: '$student.person.email',
+				courseCode	:	true,
+				courseTitle	:	true,
+				ouname			: true,
+				ouLongName	: true,
+				ouParent		: true,
+				_id					: false
+			})
+			.then((results) => {
+				if(results && results.length > 0){
+					res.status(200).json(results);
+				} else {
+					res.status(200).json({
+						'message': 'No students found with that criteria'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','listRoster -- roster aggregate --');
+			});
+
+	} // listRoster
 };
 
 
