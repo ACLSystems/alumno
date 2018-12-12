@@ -236,6 +236,9 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/report/orgtree', 				ReportController.orgTree);
 	app.get ('/api/v1/supervisor/report/userswoactivity',	GroupController.usersWOActivity);
 	app.get ('/api/v1/supervisor/report/groupsquery', 		ReportController.groupsQuery);
+	app.get ('/api/v1/supervisor/report/minicube', 				ReportController.minicube);
+	app.get ('/api/v1/supervisor/report/minicubet', 			ReportController.minicubeT);
+	app.get ('/api/v1/supervisor/report/minicubep', 			ReportController.minicubeP);
 	app.get ('/api/v1/supervisor/user/get', 							MassUsersController.get);
 	app.get ('/api/v1/supervisor/user/getdetails',				UserController.getDetailsSuper);
 	app.get ('/api/v1/supervisor/user/settracking', 			GroupController.setTracking);

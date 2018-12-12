@@ -460,13 +460,6 @@ module.exports = {
 				}
 				if(key_user.orgUnit.type === 'campus') {
 					ou = key_user.orgUnit._id;
-					/*
-				} else {
-					console.log(ou);
-					if(!mongoose.Types.ObjectId.isValid(ou)) {
-						ou = JSON.parse(ou);
-					}
-					*/
 				}
 				var ouIds = new Array();
 				if(Array.isArray(ou)) {
@@ -1372,8 +1365,626 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'report_controller','groupsQuery -- Finding groups --',false,false,'User: -' + key_user.name + '-');
 			});
-	}
+	}, // groupsQuery
+
+	cube(req,res){
+		const key_user  = res.locals.user;
+		var 	ou				= req.query.ou || key_user.orgUnit._id;
+		var query1 = {}; // Users on track
+		var query2 = {}; // Users Passed
+		var query3 = {}; // Total users
+		if(!mongoose.Types.ObjectId.isValid(ou)) {
+			ou = JSON.parse(ou);
+		}
+		if(Array.isArray(ou)) {
+			ou = ou[0];
+		}
+		Query.findOne({user:key_user._id,_id:ou}).lean()
+			.then((query) => {
+				if(query && query.query) {
+					ou = query.query;
+				}
+				if(key_user.orgUnit.type === 'campus') {
+					ou = key_user.orgUnit._id;
+				}
+				var ouIds = new Array();
+				if(Array.isArray(ou)) {
+					if(ou.length > 0) {
+						ou.forEach(o => {ouIds.push(mongoose.Types.ObjectId(o));});
+						query1 = {orgUnit: {$in:ouIds},report: {$ne:false},track:{$gt:0}};
+						query2 = {orgUnit: {$in:ouIds},report: {$ne:false},pass:true};
+						query3 = {orgUnit: {$in:ouIds},report: {$ne:false}};
+					}
+				} else {
+					query1 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},track:{$gt:0}};
+					query2 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},pass:true};
+					query3 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false}};
+				}
+
+				Promise.all([
+					Roster.aggregate() // Buscar Track
+						.match(query1)
+						.project('orgUnit group')
+						.lookup({
+							from				: 'groups',
+							localField	: 'group',
+							foreignField: '_id',
+							as					: 'group'
+						})
+						.unwind('group')
+						.project({
+							orgUnit	:	true,
+							course	:	'$group.course'
+						})
+						.lookup({
+							from				: 'courses',
+							localField	: 'course',
+							foreignField: '_id',
+							as					: 'course'
+						})
+						.unwind('course')
+						.project({
+							orgUnit	:	true,
+							course	:	'$course.title'
+						})
+						.lookup({
+							from				: 'orgunits',
+							localField	: 'orgUnit',
+							foreignField: '_id',
+							as					: 'ou'
+						})
+						.unwind('ou')
+						.project({
+							course	:	true,
+							ou: {
+								name: '$ou.name',
+								longName: '$ou.longName',
+								parent: '$ou.parent'
+							}
+						})
+						.group({
+							_id: {
+								ou: '$ou',
+								course: '$course'
+							},
+							usersOnTrack: {$sum:1}
+						})
+						.group({
+							_id: {
+								ou: '$_id.ou'
+							},
+							results: {
+								$push: {
+									course		: '$_id.course',
+									usersOnTrack: '$usersOnTrack'
+								}
+							}
+						})
+						.project({
+							ou			: '$_id.ou',
+							results	: true,
+							_id			: false
+						})
+						.group({
+							_id: '$ou.parent',
+							results: {
+								$push: '$$ROOT'
+							}
+						})
+						.project({
+							state		: '$_id',
+							results	: true,
+							_id			: false
+						}),
+					Roster.aggregate() // Buscar Aprobados
+						.match(query2)
+						.project('orgUnit group')
+						.lookup({
+							from				: 'groups',
+							localField	: 'group',
+							foreignField: '_id',
+							as					: 'group'
+						})
+						.unwind('group')
+						.project({
+							orgUnit	:	true,
+							course	:	'$group.course'
+						})
+						.lookup({
+							from				: 'courses',
+							localField	: 'course',
+							foreignField: '_id',
+							as					: 'course'
+						})
+						.unwind('course')
+						.project({
+							orgUnit	:	true,
+							course	:	'$course.title'
+						})
+						.lookup({
+							from				: 'orgunits',
+							localField	: 'orgUnit',
+							foreignField: '_id',
+							as					: 'ou'
+						})
+						.unwind('ou')
+						.project({
+							course	:	true,
+							ou: {
+								name: '$ou.name',
+								longName: '$ou.longName',
+								parent: '$ou.parent'
+							}
+						})
+						.group({
+							_id: {
+								ou: '$ou',
+								course: '$course'
+							},
+							usersPassed: {$sum:1}
+						})
+						.group({
+							_id: {
+								ou: '$_id.ou'
+							},
+							results: {
+								$push: {
+									course		: '$_id.course',
+									usersPassed: '$usersPassed'
+								}
+							}
+						})
+						.project({
+							ou			: '$_id.ou',
+							results	: true,
+							_id			: false
+						})
+						.group({
+							_id: '$ou.parent',
+							results: {
+								$push: '$$ROOT'
+							}
+						})
+						.project({
+							state		: '$_id',
+							results	: true,
+							_id			: false
+						}),
+					Roster.aggregate() // Total de usuarios
+						.match(query3)
+						.project('orgUnit group')
+						.lookup({
+							from				: 'groups',
+							localField	: 'group',
+							foreignField: '_id',
+							as					: 'group'
+						})
+						.unwind('group')
+						.project({
+							orgUnit	:	true,
+							course	:	'$group.course'
+						})
+						.lookup({
+							from				: 'courses',
+							localField	: 'course',
+							foreignField: '_id',
+							as					: 'course'
+						})
+						.unwind('course')
+						.project({
+							orgUnit	:	true,
+							course	:	'$course.title'
+						})
+						.lookup({
+							from				: 'orgunits',
+							localField	: 'orgUnit',
+							foreignField: '_id',
+							as					: 'ou'
+						})
+						.unwind('ou')
+						.project({
+							course	:	true,
+							ou: {
+								name: '$ou.name',
+								longName: '$ou.longName',
+								parent: '$ou.parent'
+							}
+						})
+						.group({
+							_id: {
+								ou: '$ou',
+								course: '$course'
+							},
+							totalUsers: {$sum:1}
+						})
+						.group({
+							_id: {
+								ou: '$_id.ou'
+							},
+							results: {
+								$push: {
+									course		: '$_id.course',
+									totalUsers: '$totalUsers'
+								}
+							}
+						})
+						.project({
+							ou			: '$_id.ou',
+							results	: true,
+							_id			: false
+						})
+						.group({
+							_id: '$ou.parent',
+							results: {
+								$push: '$$ROOT'
+							}
+						})
+						.project({
+							state		: '$_id',
+							results	: true,
+							_id			: false
+						})
+				])
+					.then((globalResults) => {
+						var [resultsT,resultsP,resultsR] = globalResults;
+						// Resultados de Track
+						var group_ids = [];
+						var results 	= resultsT;
+						results.forEach(function(res) {
+							group_ids.push(res._id);
+						});
+						// Resultados de aprobados
+						if(resultsP.length > 0){
+							resultsP.forEach(function(res) {
+								var i = 0;
+								var found = false;
+								while(!found && i < results.length) {
+									if(results[i]){
+										if(res._id + '' === results[i]._id +'')  {
+											found=true;
+											results[i].usersPassed = res.usersPassed;
+										}
+									}
+									i++;
+								}
+								if(!found) {
+									group_ids.push(res._id);
+									results.push(res);
+								}
+							});
+						}
+						// Resultados de totales
+						if(resultsR.length > 0){
+							resultsR.forEach(function(res) {
+								var i = 0;
+								var found = false;
+								while(!found && i < results.length) {
+									if(results[i]){
+										if(res._id + '' === results[i]._id +'')  {
+											found=true;
+											results[i].totalUsers = res.totalUsers;
+										}
+									}
+									i++;
+								}
+								if(!found) {
+									group_ids.push(res._id);
+									results.push(res);
+								}
+							});
+						}
+						if(results.length === 0) {
+							res.status(200).json({
+								'status': 200,
+								'totalUsers'	: 0,
+								'usersOnTrack': 0,
+								'usersPassed'	: 0,
+								'results'			: 'No results'
+							});
+							return;
+						}
+
+						Group.find({_id: {$in: group_ids}})
+							.select('name orgUnit')
+							.populate('orgUnit', 'name longName parent')
+							.then((groups) => {
+								if(groups.length > 0 ) {
+									groups.forEach(function(group) {
+										var i = 0;
+										var found = false;
+										while(!found && i < results.length) {
+											if(results[i]._id + '' === group._id +'') {
+												found = true;
+												results[i].groupId 		= group._id;
+												results[i].group  		= group.name;
+												results[i].ouName 		= group.orgUnit.name;
+												results[i].ouLongName = group.orgUnit.longName;
+												results[i].ouId 			= group.orgUnit._id;
+												results[i].ouParent 	= group.orgUnit.parent;
+											}
+											i++;
+										}
+									});
+									var totalTracks = 0;
+									var totalPassed = 0;
+									var totalUsers 	= 0;
+									results.forEach(function(res) {
+										if(res.usersOnTrack	)	{totalTracks += res.usersOnTrack; }
+										if(res.usersPassed	)	{totalPassed += res.usersPassed;  }
+										if(res.totalUsers		)	{totalUsers  += res.totalUsers;   }
+									});
+
+									var send_results = [];
+
+									if(results.length > 0) {
+										let uniqueOUs = [...new Set(results.map(a => a.ouName))];
+										uniqueOUs.forEach(a => {
+											send_results.push({
+												ouName : a,
+												ous: []
+											});
+										});
+										send_results.forEach(a => {
+											results.forEach(b => {
+												if(b.ouName === a.ouName) {
+													a.ous.push({
+														usersOnTrack	: b.usersOnTrack,
+														usersPassed		: b.usersPassed,
+														totalUsers		: b.totalUsers,
+														groupId				: b.groupId,
+														groupName			: b.group,
+														//ouName				: b.ouName,
+														//ouLongName		: b.ouLongName,
+														//ouParent			: b.ouParent
+													});
+													if(!a.ouLongName) {
+														a.ouLongName 	= b.ouLongName;
+														a.ouId				= b.ouId;
+													}
+												}
+											});
+										});
+									}
+
+									res.status(200).json({
+										'status'			: 200,
+										//'orgUnit'			: groups[0].orgUnit.name,
+										//'orgUnitName' : groups[0].orgUnit.longName,
+										'totalUsers'	: totalUsers,
+										'usersOnTrack': totalTracks,
+										'usersPassed'	: totalPassed,
+										'results'			: send_results
+									});
+									// esto es del total
+
+								// del total
+								} else {
+									res.status(200).json({
+										'status': 200,
+										'results': 'No groups found'
+									});
+								}
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'report_controller','percentil -- Searching group names --');
+							});
+					})
+					.catch((err) => {
+						Err.sendError(res,err,'report_controller','percentil -- Promises for Results --');
+					});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','percentil -- Finding Query --');
+			});
+
+	}, // cube
+
+	minicube(req, res) {
+		//const ou = req.query.ou;
+		Roster.aggregate() // Total de usuarios
+			.match({report: {$ne:false}})
+			.project('orgUnit group')
+			.lookup({
+				from				: 'groups',
+				localField	: 'group',
+				foreignField: '_id',
+				as					: 'group'
+			})
+			.unwind('group')
+			.project({
+				orgUnit	:	true,
+				course	:	'$group.course'
+			})
+			.lookup({
+				from				: 'courses',
+				localField	: 'course',
+				foreignField: '_id',
+				as					: 'course'
+			})
+			.unwind('course')
+			.project({
+				orgUnit	:	true,
+				course	:	'$course.title'
+			})
+			.lookup({
+				from				: 'orgunits',
+				localField	: 'orgUnit',
+				foreignField: '_id',
+				as					: 'ou'
+			})
+			.unwind('ou')
+			.project({
+				course	:	true,
+				ou: {
+					name: '$ou.name',
+					longName: '$ou.longName',
+					parent: '$ou.parent'
+				}
+			})
+			.group({
+				_id: {
+					ou: '$ou',
+					course: '$course'
+				},
+				totalUsers: {$sum:1}
+			})
+			.project({
+				clavePlantel	: '$_id.ou.name',
+				nombrePlantel : '$_id.ou.longName',
+				estado				: '$_id.ou.parent',
+				curso 				: '$_id.course',
+				totalUsuarios : '$totalUsers',
+				_id						: false
+			})
+			.then((results) => {
+				res.status(200).json({
+					'status': 200,
+					'report': results
+				});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','minicube -- roster aggregate --');
+			});
+	}, // minicube
+
+	minicubeT(req, res) {
+		//const ou = req.query.ou;
+		Roster.aggregate() // Total de usuarios
+			.match({report: {$ne:false},track:{$gt:0}})
+			.project('orgUnit group')
+			.lookup({
+				from				: 'groups',
+				localField	: 'group',
+				foreignField: '_id',
+				as					: 'group'
+			})
+			.unwind('group')
+			.project({
+				orgUnit	:	true,
+				course	:	'$group.course'
+			})
+			.lookup({
+				from				: 'courses',
+				localField	: 'course',
+				foreignField: '_id',
+				as					: 'course'
+			})
+			.unwind('course')
+			.project({
+				orgUnit	:	true,
+				course	:	'$course.title'
+			})
+			.lookup({
+				from				: 'orgunits',
+				localField	: 'orgUnit',
+				foreignField: '_id',
+				as					: 'ou'
+			})
+			.unwind('ou')
+			.project({
+				course	:	true,
+				ou: {
+					name: '$ou.name',
+					longName: '$ou.longName',
+					parent: '$ou.parent'
+				}
+			})
+			.group({
+				_id: {
+					ou: '$ou',
+					course: '$course'
+				},
+				usersOnTrack: {$sum:1}
+			})
+			.project({
+				clavePlantel	: '$_id.ou.name',
+				nombrePlantel : '$_id.ou.longName',
+				estado				: '$_id.ou.parent',
+				curso 				: '$_id.course',
+				usuariosActivos : '$usersOnTrack',
+				_id						: false
+			})
+			.then((results) => {
+				res.status(200).json({
+					'status': 200,
+					'report': results
+				});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','minicube -- roster aggregate --');
+			});
+	}, // minicubeT
+
+	minicubeP(req, res) {
+		//const ou = req.query.ou;
+		Roster.aggregate() // Total de usuarios
+			.match({report: {$ne:false},pass:true})
+			.project('orgUnit group')
+			.lookup({
+				from				: 'groups',
+				localField	: 'group',
+				foreignField: '_id',
+				as					: 'group'
+			})
+			.unwind('group')
+			.project({
+				orgUnit	:	true,
+				course	:	'$group.course'
+			})
+			.lookup({
+				from				: 'courses',
+				localField	: 'course',
+				foreignField: '_id',
+				as					: 'course'
+			})
+			.unwind('course')
+			.project({
+				orgUnit	:	true,
+				course	:	'$course.title'
+			})
+			.lookup({
+				from				: 'orgunits',
+				localField	: 'orgUnit',
+				foreignField: '_id',
+				as					: 'ou'
+			})
+			.unwind('ou')
+			.project({
+				course	:	true,
+				ou: {
+					name: '$ou.name',
+					longName: '$ou.longName',
+					parent: '$ou.parent'
+				}
+			})
+			.group({
+				_id: {
+					ou: '$ou',
+					course: '$course'
+				},
+				usersPassed: {$sum:1}
+			})
+			.project({
+				clavePlantel	: '$_id.ou.name',
+				nombrePlantel : '$_id.ou.longName',
+				estado				: '$_id.ou.parent',
+				curso 				: '$_id.course',
+				usuariosAprobados : '$usersPassed',
+				_id						: false
+			})
+			.then((results) => {
+				res.status(200).json({
+					'status': 200,
+					'report': results
+				});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','minicube -- roster aggregate --');
+			});
+	}, // minicubeP
 };
+
+
 
 // PRIVATE Functions
 
