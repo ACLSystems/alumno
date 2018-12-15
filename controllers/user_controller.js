@@ -14,6 +14,7 @@ const urlencode 					= require('urlencode');
 const url 								= process.env.LIBRETA_URI;
 const template_user				= 310518; // plantilla para el usuario que se registra por su cuenta
 const template_user_admin = 339990; // plantilla para el usuario que es registrado por el administrador
+const template_user_change = 630058;
 
 /*
 const logger = require('../shared/winston-logger');
@@ -859,8 +860,8 @@ module.exports = {
 								'message': user.name
 							});
 							var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
-							var templateId = template_user_admin;
-							mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
+							var templateId = template_user_change;
+							mailjet.sendMail(user.person.email, user.person.name, 'Se ha modificado tu correo electrónico',templateId,link)
 								.catch((err) => {
 									Err.sendError(res,err,'user_controller','changeUser -- Sending Mail --');
 								});
