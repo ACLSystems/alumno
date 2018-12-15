@@ -1234,6 +1234,7 @@ module.exports = {
 								var send_items = new Array();
 								items.forEach(function(item) {
 									send_items.push({
+										status			: item.status,
 										groupid			: item.group._id,
 										group				: item.group.name,
 										groupCode		: item.group.code,
