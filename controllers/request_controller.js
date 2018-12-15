@@ -83,6 +83,7 @@ module.exports = {
 		}
 		Request.find(query)
 			.select('label date reqNumber status')
+			.sort('-reqNumber')
 			.then((requests)  => {
 				if(requests && requests.length > 0) {
 					res.status(200).json({

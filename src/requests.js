@@ -18,6 +18,9 @@ const RequestSchema = new Schema ({
 	label: {
 		type: String
 	},
+	tags: [{
+		type: String
+	}],
 	reqNumber: {
 		type: Number,
 		unique: true
@@ -127,8 +130,10 @@ const RequestSchema = new Schema ({
 
 RequestSchema.index( { 'requester'		: 1 	} );
 RequestSchema.index( { 'label'				: 1 	} );
+RequestSchema.index( { 'tags'					: 1 	} );
 RequestSchema.index( { 'date'					: 1 	} );
 RequestSchema.index( { 'status'				: 1 	} );
+RequestSchema.index( { 'reqNumber'		: -1 	} );
 
 // Compilar esquema
 
