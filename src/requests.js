@@ -37,6 +37,9 @@ const RequestSchema = new Schema ({
 			refPath: 'objects.kind'
 		}
 	}],	// aquí se agregan los ids de grupos generados
+	temp1: [],
+	temp2: [],
+	temp3: [],
 	subtotal: {
 		type: Number,
 		min: [0,'Minimum value is 0'],

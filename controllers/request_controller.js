@@ -53,7 +53,7 @@ module.exports = {
 		}
 		Request.findOne(query)
 			.populate('requester','name fiscal')
-			.select('label details subtotal discount tax total status paymentNotes paymentDates files fiscalFiles requester date reqNumber')
+			.select('label details subtotal discount tax total status paymentNotes paymentDates files fiscalFiles requester date reqNumber temp1 temp2 temp3')
 			.then((request)  => {
 				if(request) {
 					res.status(200).json({
@@ -142,6 +142,9 @@ module.exports = {
 					});
 					request.status = 'payment';
 					request.dateFinished = new Date;
+					request.temp1 = [];
+					request.temp2 = [];
+					request.temp3 = [];
 					request.save()
 						.then(() => {
 							res.status(200).json({
@@ -202,11 +205,17 @@ module.exports = {
 					if(req.body.tax			) {request.tax 			= req.body.tax;			}
 					if(req.body.total		) {request.total 		= req.body.total;		}
 					if(req.body.files		) {request.files 		= req.body.files;		}
+					if(req.body.temp1		) {request.temp1 		= req.body.temp1;		}
+					if(req.body.temp2		) {request.temp2 		= req.body.temp2;		}
+					if(req.body.temp3		) {request.temp3 		= req.body.temp3;		}
 					if(!req.body.details 	&&
 						!req.body.subtotal	&&
 						!req.body.tax				&&
 						!req.body.total			&&
-						!req.body.files			) {
+						!req.body.files			&&
+						!req.body.temp1			&&
+						!req.body.temp2			&&
+						!req.body.temp3) {
 						res.status(406).json({
 							'status': 406,
 							'message': 'Request -' + request.reqNumber + '- is not modified. Nothing valid to modify.'
