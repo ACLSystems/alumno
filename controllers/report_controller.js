@@ -1999,7 +1999,10 @@ module.exports = {
 			.project({
 				student	: true,
 				orgUnit	: true,
-				group		: true
+				group		: true,
+				finalGrade 	: true,
+				track				: true,
+				pass				: true
 			})
 			.lookup({
 				from				: 'groups',
@@ -2011,7 +2014,10 @@ module.exports = {
 			.project({
 				student	: true,
 				orgUnit	:	true,
-				course	:	'$group.course'
+				course	:	'$group.course',
+				finalGrade 	: true,
+				track				: true,
+				pass				: true
 			})
 			.lookup({
 				from				: 'courses',
@@ -2025,7 +2031,10 @@ module.exports = {
 				student	: true,
 				orgUnit	:	true,
 				courseCode	:	'$course.code',
-				courseTitle : '$course.title'
+				courseTitle : '$course.title',
+				finalGrade 	: true,
+				track				: true,
+				pass				: true
 			})
 			.lookup({
 				from				: 'orgunits',
@@ -2040,7 +2049,10 @@ module.exports = {
 				courseTitle	:	true,
 				ouname: '$ou.name',
 				ouLongName: '$ou.longName',
-				ouParent: '$ou.parent'
+				ouParent: '$ou.parent',
+				finalGrade 	: true,
+				track				: true,
+				pass				: true
 			})
 			.lookup({
 				from				: 'users',
@@ -2059,6 +2071,9 @@ module.exports = {
 				ouname			: true,
 				ouLongName	: true,
 				ouParent		: true,
+				finalGrade 	: true,
+				track				: true,
+				pass				: true,
 				_id					: false
 			})
 			.then((results) => {
