@@ -27,7 +27,7 @@ exports.sendMail = function(toEmail,toName,subject,templateID,param1,param2,para
 				'Name': 'Air traffic control'
 			}
 		};
-	if(templateID === 310518 || templateID === 339990) { // Plantilla para enviar registro de usuario
+	if(templateID === 310518 || templateID === 339990 || templateID === 630058) { // Plantilla para enviar registro de usuario
 		mail_message.Variables = {
 			'Nombre': toName,
 			'confirmation_link':param1 // link
@@ -63,6 +63,12 @@ exports.sendMail = function(toEmail,toName,subject,templateID,param1,param2,para
 			'Nombre': toName,					// Nombre
 			'curso': param1,					// curso
 			'mensaje': param2					// message
+		};
+	}
+	if(templateID === 493237) { // Plantilla para notificaciones a un usuario
+		mail_message.Variables = {
+			'Nombre': toName,					// Nombre
+			'mensaje': param1					// message
 		};
 	}
 	if(templateID === 393450) { // Plantilla para notificar cambio de contraseña

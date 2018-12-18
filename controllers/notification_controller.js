@@ -55,7 +55,7 @@ module.exports = {
 									'message': `Notification for: ${destination.name} created successfully`
 								});
 								if(send_email) {
-									mailjet.sendMail(destination.person.email, destination.person.name, 'Tienes una notificación',493237,'curso',message.message);
+									mailjet.sendMail(destination.person.email, destination.person.name, 'Tienes una notificación',493237,message.message);
 								}
 							})
 							.catch((err) => {
