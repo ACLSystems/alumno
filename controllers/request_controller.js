@@ -52,10 +52,25 @@ module.exports = {
 			query = {_id: req.query.id};
 		}
 		Request.findOne(query)
-			.populate('requester','name fiscal')
-			.select('label details subtotal discount tax total status paymentNotes paymentDates files fiscalFiles requester date reqNumber temp1 temp2 temp3')
+			.populate([
+				{
+					path: 'requester',
+					select: 'name fiscal'
+				},
+				{
+					path: 'details.item'
+				}])
+			.select('label tags details subtotal discount tax total status paymentNotes paymentDates files fiscalFiles requester date reqNumber temp1 temp2 temp3')
+			.lean()
 			.then((request)  => {
 				if(request) {
+					if(request.details && request.details.length > 0) {
+						request.details.forEach(details => {
+							if(details.item && details.item.own) 	{ delete details.item.own;	}
+							if(details.item && details.item.perm) { delete details.item.perm;	}
+							if(details.item && details.item.mod) 	{ delete details.item.mod;	}
+						});
+					}
 					res.status(200).json({
 						'status': 200,
 						'message': 'Request -' + request.reqNumber + '- found',

@@ -37,7 +37,7 @@ const RequestSchema = new Schema ({
 		},
 		item: {
 			type: Schema.Types.ObjectId,
-			refPath: 'objects.kind'
+			refPath: 'details.kind'
 		}
 	}],	// aquí se agregan los ids de grupos generados
 	temp1: [],
