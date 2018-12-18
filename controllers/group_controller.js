@@ -1108,7 +1108,6 @@ module.exports = {
 					});
 				} else {
 					res.status(200).json({
-						'status': 200,
 						'message': 'No groups found'
 					});
 				}
@@ -1187,7 +1186,6 @@ module.exports = {
 						new_blocks.push(new_block);
 					});
 					res.status(200).json({
-						'status': 200,
 						'message': {
 							student		: key_user.person.fullName,
 							studentid	: key_user._id,
@@ -1202,7 +1200,6 @@ module.exports = {
 					});
 				}	else {
 					res.status(200).json({
-						'status': 200,
 						'message': 'Group with id -' + groupid + '- not found'
 					});
 				}
@@ -1243,8 +1240,7 @@ module.exports = {
 									});
 								});
 								res.status(200).json({
-									'status'	: 200,
-									'messaage': {
+									'message': {
 										'name'	: user.person.fullName,
 										'id'		: user._id,
 										'groups': send_items
@@ -1252,7 +1248,6 @@ module.exports = {
 								});
 							} else {
 								res.status(200).json({
-									'status': 200,
 									'message': 'User ' + user.person.fullName + ' -'+ user._id +'- '+' has no groups'
 								});
 							}
@@ -1262,7 +1257,6 @@ module.exports = {
 						});
 				} else {
 					res.status(200).json({
-						'status': 200,
 						'message': 'User not found'
 					});
 				}
