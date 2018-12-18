@@ -1101,7 +1101,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/user/change':
+	case '/api/v1/supervisor/user/changeuser':
 		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
