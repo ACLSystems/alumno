@@ -271,6 +271,7 @@ module.exports = {
 		if(userProps.name !== userProps.person.email) { // que el nombre de usuario sera igual a su correo
 			userProps.name = userProps.person.email;
 		}
+
 		Promise.all([
 			Org.findOne({name: userProps.org })
 				.select('name'),
@@ -283,21 +284,18 @@ module.exports = {
 				var [org,ou,user] = results;
 				if(!org) {
 					res.status(200).json({
-						'status': 404,
 						'message': 'Error: Org not found or not valid. Please check'
 					});
 					return;
 				}
 				if(!ou) {
 					res.status(200).json({
-						'status': 404,
 						'message': 'Error: OrgUnit not found or not valid. Please check'
 					});
 					return;
 				}
 				if(ou.org + '' !== org._id + '') {
 					res.status(200).json({
-						'status': 406,
 						'message': 'Error: OrgUnit not valid. OrgUnit provided does not belong to org. Please check',
 						'org': org._id,
 						'ou': ou.org
@@ -306,14 +304,12 @@ module.exports = {
 				}
 				if(user) {
 					res.status(200).json({
-						'status': 406,
-						'message': 'Error: User already registered',
+						'message': 'User already registered',
 						'user': {
 							'id': user.id,
 							'name': user.name,
 							'person': user.person
 						}
-
 					});
 					return;
 				}
