@@ -457,9 +457,8 @@ module.exports = {
 			.populate('orgUnit', 'name longName')
 			.then((user) => {
 				if (!user) {
-					res.status(404).json({
-						'status': 404,
-						'message': 'User -' + username + '- does not exist'
+					res.status(200).json({
+						'message': 'Error: User -' + username + '- does not exist'
 					});
 				} else {
 					//const result = permissions.access(key_user,user,'user');
