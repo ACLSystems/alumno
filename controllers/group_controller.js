@@ -393,6 +393,7 @@ module.exports = {
 			org = key_user.org;
 		}
 		if(roster.roster && roster.roster.length > 0) {
+			roster.roster = unique(roster.roster);
 			const date = new Date();
 			const link = url;
 			Group.findOne({ org: org, code: roster.code })
@@ -601,17 +602,20 @@ module.exports = {
 											});
 										var newStudents = 0;
 										var totalRoster = 0;
+										var alreadyIn		= 0;
 										if(new_students && new_students.length > 0) {
 											newStudents = new_students.length;
 										}
 										if(group.students && group.students.length > 0) {
 											totalRoster = group.students.length;
 										}
+										alreadyIn = roster.roster.length - newStudents;
 										res.status(200).json({
 											'status': 200,
 											'message': 'Roster created',
 											'newStudents': newStudents,
-											'totalRoster': totalRoster
+											'totalRoster': totalRoster,
+											'alreadyIn': alreadyIn
 										});
 										/*
 										group.mod.push(mod);
@@ -3629,4 +3633,10 @@ function shuffle(array) {
 		[array[i], array[j]] = [array[j], array[i]];
 	}
 	return array;
+}
+
+function unique(arrAY) {
+	return arrAY.filter((elem, pos, arr) => {
+		return arr.indexOf(elem) == pos;
+	});
 }
