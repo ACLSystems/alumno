@@ -55,22 +55,20 @@ module.exports = {
 			.populate([
 				{
 					path: 'requester',
-					select: 'name fiscal'
+					select: 'name fiscal person'
 				},
 				{
-					path: 'details.item'
+					path: 'details.item',
+					select: '-own -perm -mod -rubric -__v',
+					populate: {
+						path: 'orgUnit',
+						select: 'name longName parent type'
+					}
 				}])
 			.select('label tags details subtotal discount tax total status paymentNotes paymentDates files fiscalFiles requester date reqNumber temp1 temp2 temp3')
 			.lean()
 			.then((request)  => {
 				if(request) {
-					if(request.details && request.details.length > 0) {
-						request.details.forEach(details => {
-							if(details.item && details.item.own) 	{ delete details.item.own;	}
-							if(details.item && details.item.perm) { delete details.item.perm;	}
-							if(details.item && details.item.mod) 	{ delete details.item.mod;	}
-						});
-					}
 					res.status(200).json({
 						'status': 200,
 						'message': 'Request -' + request.reqNumber + '- found',

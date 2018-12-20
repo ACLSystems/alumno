@@ -78,6 +78,10 @@ const GroupsSchema = new Schema ({
 		enum: ['self-paced','tutor','assisted'],
 		default: 'self-paced'
 	},
+	public: {
+		type: Boolean,
+		default: false
+	},
 	course: {
 		type: Schema.Types.ObjectId,
 		ref: 'courses'
