@@ -60,10 +60,13 @@ module.exports = {
 				{
 					path: 'details.item',
 					select: '-own -perm -mod -rubric -__v',
-					populate: {
+					populate: [{
 						path: 'orgUnit',
 						select: 'name longName parent type'
-					}
+					},{
+						path: 'course',
+						select: 'code title type price cost'
+					}]
 				}])
 			.select('label tags details subtotal discount tax total status paymentNotes paymentDates files fiscalFiles requester date reqNumber temp1 temp2 temp3')
 			.lean()

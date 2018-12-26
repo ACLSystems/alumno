@@ -259,6 +259,7 @@ module.exports = {
 						version			: course.version,
 						status			: course.status,
 						price				: course.price,
+						cost 				: course.cost,
 						author			: course.author,
 						duration		: course.duration + '' + course.durationUnits,
 						numBlocks		: course.numBlocks
@@ -319,6 +320,7 @@ module.exports = {
 								keywords: 		course.keywords,
 								isVisible: 		course.isVisible,
 								price: 				course.price,
+								cost: 				course.cost,
 								author: 			course.author,
 								duration		: course.duration + '' + course.durationUnits
 							});
