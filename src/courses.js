@@ -10,6 +10,30 @@ mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 // Definir esquema y subesquemas
 
+// Esquema para datos de API external de facturacion
+const APIExternalSchema = new Schema ({
+	idAPIExternal: {
+		type: Number
+	},
+	name: {
+		type: String,
+		maxlength: 150
+	},
+	description: {
+		type: String,
+		maxlength: 500
+	},
+	reference: {
+		type: String,
+		maxlength: 45
+	},
+	tax: [{
+		id: Number
+	}]
+},{ _id: false });
+
+module.exports = APIExternalSchema;
+
 const CoursesSchema = new Schema ({
 	code: {
 		type: String,
@@ -111,7 +135,8 @@ const CoursesSchema = new Schema ({
 	order: {
 		type: Number,
 		default: 0
-	}
+	},
+	apiExternal: APIExternalSchema
 });
 
 // Definir virtuals
@@ -122,6 +147,10 @@ CoursesSchema.virtual('numBlocks').get(function() {
 	}	else {
 		return 0;
 	}
+});
+
+CoursesSchema.virtual('IVA').get(function() {
+	return process.env.IVA;
 });
 
 // Definir middleware

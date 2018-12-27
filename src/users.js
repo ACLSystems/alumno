@@ -26,7 +26,7 @@ const CorporateSchema = new Schema ({
 		enum:['student', 'teacher', 'administrative'],
 		default: 'student'
 	}
-});
+},{ _id: false });
 
 // Definir virtuals
 
@@ -35,8 +35,10 @@ const CorporateSchema = new Schema ({
 module.exports = CorporateSchema;
 
 const FiscalSchema = new Schema ({
-	id: { // se usará como el RFC
-		type: String
+	identification: { // RFC del usuario
+		type: String,
+		alias: 'RFC',
+		match: /[A-Z](3-4)[0-9](6)[A-Z,0-9](3)/ //CALA72100734A
 	},
 	name: {
 		type: String
@@ -44,14 +46,38 @@ const FiscalSchema = new Schema ({
 	idAPIExternal: { // Id que se utiliza en el sistema externo de facturación
 		type: Number
 	},
+	//phonePrimary: Se toma del campo mainPhone de Person
+	//phoneSecondary: Se toma del campo secondaryPhone de Person
+	//mobile: Se toma del campo cellPhone de Person
+	observations: {
+		type: String
+	},
+	//email: Se toma del campo email de Person
+	priceList: { //Colocar el default de la lista de precios
+		type: String
+	},
+	seller: { //Colocar el vendedor por default
+		type: String
+	},
+	term: { //Colocar el término de pago por default
+		type:String
+	},
+
 	address: {
 		street: { type: String},
 		extNum: { type: String},
 		intNum: { type: String},
 		colony: { type: String},
 		locality: { type: String},
-		town: { type: String},
-		cp: { type: String},
+		municipality: {type: String},
+		town: {
+			type: String,
+			alias: 'city'
+		},
+		cp: {
+			type: String,
+			alias: 'zipCode'
+		},
 		state: { type: String},
 		country: {
 			type: String,
@@ -60,10 +86,13 @@ const FiscalSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum:['fisica', 'moral'],
-		default: 'fisica'
+		enum:['client', 'provider'],
+		default: 'client'
+	},
+	cfdiUse: {
+		type: String
 	}
-});
+},{ _id: false });
 
 // Definir virtuals
 
@@ -98,7 +127,7 @@ const StudentSchema = new Schema ({
 	origin: {
 		type: String
 	}
-});
+},{ _id: false });
 
 // Definir virtuals
 
@@ -128,6 +157,9 @@ const PersonSchema = new Schema ({
 	mainPhone: {
 		type: String
 	},
+	secondaryPhone: {
+		type: String
+	},
 	cellPhone: {
 		type: String
 	},
@@ -139,7 +171,7 @@ const PersonSchema = new Schema ({
 		type: String
 	}
 
-});
+},{ _id: false });
 
 // Definir virtuals
 PersonSchema.virtual('fullName').get(function () {
@@ -197,7 +229,7 @@ const RolesSchema = new Schema ({
 		default: false
 	}
 
-});
+},{ _id: false });
 
 // Definir virtuals
 
@@ -237,7 +269,7 @@ const AdmUsrSchema = new Schema({
 	initialPassword: {
 		type: String
 	}
-});
+},{ _id: false });
 
 // Definir virtuals
 
@@ -297,7 +329,7 @@ const UserSchema = new Schema ({
 	address: AddressSchema,
 	student: StudentSchema,
 	corporate: CorporateSchema,
-	fiscal: FiscalSchema,
+	fiscal: [FiscalSchema],
 	preferences: PrefsSchema,
 });
 // Definir virtuals
