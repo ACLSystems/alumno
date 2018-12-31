@@ -38,7 +38,7 @@ const FiscalSchema = new Schema ({
 	identification: { // RFC del usuario
 		type: String,
 		alias: 'RFC',
-		match: /[A-Z](3-4)[0-9](6)[A-Z,0-9](3)/ //CALA72100734A
+		match: /^([A-ZÑ&]{3,4}) ?(?:- ?)?(\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])) ?(?:- ?)?([A-Z\d]{2})([A\d])$/ //CALA72100734A
 	},
 	name: {
 		type: String
