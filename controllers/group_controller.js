@@ -1240,7 +1240,9 @@ module.exports = {
 										group				: item.group.name,
 										groupCode		: item.group.code,
 										course			: item.group.course.title,
-										courseCode 	:	item.group.course.code
+										courseCode 	:	item.group.course.code,
+										beginDate		: item.group.beginDate,
+										endDate			: item.group.endDate
 									});
 								});
 								res.status(200).json({
