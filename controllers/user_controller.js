@@ -412,11 +412,7 @@ module.exports = {
 							};
 						}
 						if(user.fiscal) {
-							send_user.fiscal = {
-								id					:	user.fiscal.id,
-								address			: user.fiscal.address,
-								type				: user.fiscal.type
-							};
+							send_user.fiscal = user.fiscal;
 						}
 						if(user.geometry) {
 							send_user.geometry = {
