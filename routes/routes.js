@@ -19,6 +19,7 @@ const FollowController 			= require('../controllers/follow_controller'				);
 const logController 				= require('../controllers/log_controller'						);
 const RequestController 		= require('../controllers/request_controller'				);
 const multer 								= require('multer'																	);
+const ConfigController 			= require('../controllers/config_controller'				);
 var dir 										= process.env.ORDIR;
 const fileSize 							= 1048576;
 const files 								= 1;
@@ -183,6 +184,7 @@ module.exports = (app) => {
 
 	app.post('/api/v1/admin/org/register', 				OrgController.register);
 	app.post('/api/v1/admin/user/register', 			UserController.register);
+	app.post('/api/v1/admin/config/create',				ConfigController.create);
 	app.get ('/api/v1/admin/user/list', 					UserController.list);
 	app.get ('/api/v1/admin/user/get', 						MassUsersController.get);
 	app.get ('/api/v1/admin/user/count', 					UserController.count);

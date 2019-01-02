@@ -1,12 +1,13 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt-nodejs');
-const ModSchema = require('./modified');
-const PermissionsSchema = require('./permissions');
-const PointSchema = require('./point');
-const AddressSchema = require('./address');
-const moment = require('moment');
-const Schema = mongoose.Schema;
+const mongoose 					= require('mongoose'			);
+const moment 						= require('moment'				);
+const bcrypt 						= require('bcrypt-nodejs'	);
+const ModSchema 				= require('./modified'		);
+const PermissionsSchema = require('./permissions'	);
+const PointSchema 			= require('./point'				);
+const AddressSchema 		= require('./address'			);
+
+const Schema 						= mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -34,6 +35,7 @@ const CorporateSchema = new Schema ({
 
 module.exports = CorporateSchema;
 
+/*
 const FiscalSchema = new Schema ({
 	identification: { // RFC del usuario
 		type: String,
@@ -99,6 +101,7 @@ const FiscalSchema = new Schema ({
 // Definir middleware
 
 module.exports = FiscalSchema;
+*/
 
 // Esquema para el usuario que es un estudiante
 const StudentSchema = new Schema ({
@@ -329,7 +332,10 @@ const UserSchema = new Schema ({
 	address: AddressSchema,
 	student: StudentSchema,
 	corporate: CorporateSchema,
-	fiscal: [FiscalSchema],
+	fiscal: [{
+		type: Schema.Types.ObjectId,
+		ref: 'fiscalContacts'
+	}],
 	preferences: PrefsSchema,
 });
 // Definir virtuals
@@ -376,8 +382,6 @@ UserSchema.index( { 'person.fatherName'	: 1	}	);
 UserSchema.index( { 'person.motherName'	: 1	}	);
 UserSchema.index( { 'person.email'			: 1	}	);
 UserSchema.index( { 'person.genre'			: 1	}, { sparse: true }	);
-UserSchema.index( { 'fiscal.id'					: 1	}, { sparse: true } );
-UserSchema.index( { 'fiscal.type'				: 1	}, { sparse: true } );
 UserSchema.index( { 'student.id'				: 1	}, { sparse: true }	);
 UserSchema.index( { 'student.term'			: 1	}, { sparse: true }	);
 UserSchema.index( { 'student.type'			: 1	}, { sparse: true }	);

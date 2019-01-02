@@ -1,7 +1,10 @@
-const mongoose 	= require('mongoose');
-const Request 	= require('../src/requests');
-const TA 				= require('time-ago'												);
-const Err 			= require('../controllers/err500_controller');
+const mongoose 			= require('mongoose');
+const requestU 			= require('request-promise-native');
+const Request 			= require('../src/requests');
+const FiscalContact = require('../src/fiscalContacts');
+const Config 				= require('../src/config');
+const TA 						= require('time-ago'												);
+const Err 					= require('../controllers/err500_controller');
 
 module.exports = {
 	create(req,res) {
@@ -121,12 +124,21 @@ module.exports = {
 
 	finish(req,res) {
 		const key_user 	= res.locals.user;
+		var		RFC				= 'XAXX010101000';
 		var   query 		= {};
-		if(req.query.number) {
-			query = {reqNumber: req.query.number};
+		if(req.body.number) {
+			query = {reqNumber: req.body.number};
 		}
-		if(req.query.id) {
-			query = {_id: req.query.id};
+		if(req.body.id) {
+			query = {_id: req.body.id};
+		}
+		var		fiscal		= {};
+		if(req.body.fiscal) {
+			fiscal	= req.body.fiscal;
+		}
+		var invoice 		= false;
+		if(req.body.invoice) {
+			invoice = true;
 		}
 		Request.findOne(query)
 			.then((request)  => {
@@ -162,6 +174,7 @@ module.exports = {
 					request.temp1 = [];
 					request.temp2 = [];
 					request.temp3 = [];
+					request.invoice = invoice;
 					request.save()
 						.then(() => {
 							res.status(200).json({

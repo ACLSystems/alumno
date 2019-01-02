@@ -1,27 +1,23 @@
-//const winston = require('winston');
-const User 								= require('../src/users');
-const Org 								= require('../src/orgs');
-const OrgUnit 						= require('../src/orgUnits');
-const generate 						= require('nanoid/generate');
-const bcrypt 							= require('bcrypt-nodejs');
-const Err 								= require('../controllers/err500_controller');
-const permissions 				= require('../shared/permissions');
-const mailjet							= require('../shared/mailjet');
-const Roster 							= require('../src/roster');
-const Notification 				= require('../src/notifications');
-const urlencode 					= require('urlencode');
 
-const url 								= process.env.LIBRETA_URI;
-const template_user				= 310518; // plantilla para el usuario que se registra por su cuenta
-const template_user_admin = 339990; // plantilla para el usuario que es registrado por el administrador
-const template_user_change = 630058;
+const generate 						= require('nanoid/generate'										);
+const bcrypt 							= require('bcrypt-nodejs'											);
+const urlencode 					= require('urlencode'													);
+const User 								= require('../src/users'											);
+const Org 								= require('../src/orgs'												);
+const OrgUnit 						= require('../src/orgUnits'										);
+const Roster 							= require('../src/roster'											);
+const FiscalContact 			= require('../src/fiscalContacts'							);
+const Notification 				= require('../src/notifications'							);
+const Err 								= require('../controllers/err500_controller'	);
+const permissions 				= require('../shared/permissions'							);
+const mailjet							= require('../shared/mailjet'									);
 
-/*
-const logger = require('../shared/winston-logger');
-*/
+const url 									= process.env.LIBRETA_URI;
+const template_user					= 310518; // plantilla para el usuario que se registra por su cuenta
+const template_user_admin 	= 339990; // plantilla para el usuario que es registrado por el administrador
+const template_user_change 	= 630058;
 
 module.exports = {
-	//register(req, res, next) {
 	register(req, res) {
 		var key = '';
 		const key_user 	= res.locals.user;
@@ -885,7 +881,6 @@ module.exports = {
 			});
 	}, //changeUser
 
-	//modify(req, res, next) {
 	modify(req, res) {
 		const key_user = res.locals.user;
 		const userProps = req.body;
@@ -938,14 +933,6 @@ module.exports = {
 							if(userProps.student.hasOwnProperty('external')	) {user.student.external	= userProps.student.external;	}
 							if(userProps.student.hasOwnProperty('origin')		) {user.student.origin		= userProps.student.origin;		}
 						}
-						if(userProps.fiscal) {
-							if(!user.fiscal) {
-								user.fiscal = {};
-							}
-							if(userProps.fiscal.hasOwnProperty('id')			) {user.fiscal.id				= userProps.fiscal.id;			}
-							if(userProps.fiscal.hasOwnProperty('address')	) {user.fiscal.address	= userProps.fiscal.address;	}
-							if(userProps.fiscal.hasOwnProperty('type')		) {user.fiscal.type			= userProps.fiscal.type;		}
-						}
 						if(userProps.address) {
 							if(!user.address) {
 								user.address = {};
@@ -982,21 +969,111 @@ module.exports = {
 								if(userProps.corporate.hasOwnProperty('type')			) {user.corporate.type 			= userProps.corporate.type;			}
 							}
 						}
-						const date = new Date();
-						const mod = {
-							by: key_user.name,
-							when: date,
-							what: 'User modification. Data: ' + JSON.stringify(userProps,null,2)
-						};
-						user.mod.push(mod);
-						user.save().catch((err) => {
-							Err.sendError(res,err,'user_controller','modify -- Saving User--');
-						});
-						res.status(200);
-						res.json({
-							'status':200,
-							'message': 'User ' + userProps.name + ' properties modified'
-						});
+						if(userProps.fiscal) {
+							if(!userProps.fiscal.tag) {
+								res.status(200).json({
+									'message': 'Tag for fiscal is required. Please provide in fiscal property'
+								});
+								return;
+							}
+							if(!userProps.fiscal.identification && !userProps.fiscal.RFC && !userProps.fiscal.tag) {
+								res.status(200).json({
+									'message': 'Identification (RFC) is required. Please provide in fiscal property'
+								});
+								return;
+							}
+							FiscalContact.findOne({tag: userProps.fiscal.tag})
+								.then((fc) => {
+									if(fc) {
+										if(userProps.fiscal.hasOwnProperty('identification'	)) {fc.identification = userProps.fiscal.identification;}
+										if(userProps.fiscal.hasOwnProperty('name'						)) {fc.name 					= userProps.fiscal.name;					}
+										if(userProps.fiscal.hasOwnProperty('observations'		)) {fc.observations 	= userProps.fiscal.observations;	}
+										if(userProps.fiscal.hasOwnProperty('phonePrimary'		)) {fc.phonePrimary 	= userProps.fiscal.phonePrimary;	}
+										if(userProps.fiscal.hasOwnProperty('phoneSecondary'	)) {fc.phoneSecondary = userProps.fiscal.phoneSecondary;}
+										if(userProps.fiscal.hasOwnProperty('mobile'					)) {fc.mobile 				= userProps.fiscal.mobile;				}
+										if(userProps.fiscal.hasOwnProperty('email'					)) {fc.email 					= userProps.fiscal.email;					}
+										if(userProps.fiscal.hasOwnProperty('address'				)) {
+											if(userProps.fiscal.address.hasOwnProperty('street'		)) {fc.address.street 	= userProps.fiscal.address.street;	}
+											if(userProps.fiscal.address.hasOwnProperty('extNum'		)) {fc.address.extNum 	= userProps.fiscal.address.extNum;	}
+											if(userProps.fiscal.address.hasOwnProperty('intNum'		)) {fc.address.intNum 	= userProps.fiscal.address.intNum;	}
+											if(userProps.fiscal.address.hasOwnProperty('colony'		)) {fc.address.colony		= userProps.fiscal.address.colony;	}
+											if(userProps.fiscal.address.hasOwnProperty('locality'	)) {fc.address.locality	= userProps.fiscal.address.locality;}
+											if(userProps.fiscal.address.hasOwnProperty('municipality')) {fc.address.municipality	= userProps.fiscal.address.municipality;}
+											if(userProps.fiscal.address.hasOwnProperty('city'			)) {fc.address.city			= userProps.fiscal.address.city;		}
+											if(userProps.fiscal.address.hasOwnProperty('zipCode'	)) {fc.address.zipCode	= userProps.fiscal.address.zipCode;	}
+											if(userProps.fiscal.address.hasOwnProperty('state'		)) {fc.address.state		= userProps.fiscal.address.state;	}
+											if(userProps.fiscal.address.hasOwnProperty('country'	)) {fc.address.country	= userProps.fiscal.address.country;	}
+										}
+										if(userProps.fiscal.hasOwnProperty('cfdiUse'			)) {fc.cfdiUse 			= userProps.fiscal.cfdiUse;			}
+										fc.mod.push({
+											by: key_user.name,
+											when: new Date(),
+											what: 'Fiscal modification. Data: ' + JSON.stringify(userProps.fiscal,null,2)
+										});
+										fc.save()
+											.then(() => {
+												res.status(200).json({
+													'message': 'User ' + userProps.name + ' properties modified'
+												});
+											})
+											.catch((err) => {
+												Err.sendError(res,err,'user_controller','modify -- FiscalContact Modify --');
+											});
+									} else {
+										var fiscal = userProps.fiscal;
+										fiscal.mod = [];
+										if(!fiscal.name) {
+											res.status(200).json({
+												'message': 'Fiscal name is required. Please provide in fiscal property'
+											});
+											return;
+										} else {
+											fiscal.mod.push({
+												by: key_user.name,
+												when: new Date(),
+												what: 'New fiscal: ' + JSON.stringify(fiscal,null,2)
+											});
+											FiscalContact.create(fiscal)
+												.then((fiscal) => {
+													if(user.fiscal && Array.isArray(user.fiscal)) {
+														user.fiscal.push(fiscal._id);
+													} else {
+														user.fiscal = [fiscal._id];
+													}
+													user.mod.push({ // FALTA VALIDAR QUE LOS IDs DEL ARREGLO SEAN UNICOS! Checar la creación de rosters
+														by: key_user.name,
+														when: new Date(),
+														what: 'User modification. Data: ' + JSON.stringify(userProps,null,2)
+													});
+													user.save().catch((err) => {
+														Err.sendError(res,err,'user_controller','modify -- Saving User--');
+													});
+													res.status(200).json({
+														'message': 'User ' + userProps.name + ' properties modified'
+													});
+												})
+												.catch((err) => {
+													Err.sendError(res,err,'user_controller','modify -- Creating fiscal --');
+												});
+										}
+									}
+								})
+								.catch((err) => {
+									Err.sendError(res,err,'user_controller','modify -- Finding fiscal to modify --');
+								});
+						} else {
+							user.mod.push({
+								by: key_user.name,
+								when: new Date(),
+								what: 'User modification. Data: ' + JSON.stringify(userProps,null,2)
+							});
+							user.save().catch((err) => {
+								Err.sendError(res,err,'user_controller','modify -- Saving User--');
+							});
+							res.status(200).json({
+								'message': 'User ' + userProps.name + ' properties modified'
+							});
+						}
 					} else {
 						res.status(200);
 						res.json({

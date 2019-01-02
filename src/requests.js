@@ -117,6 +117,9 @@ const RequestSchema = new Schema ({
 	paymentDates: [],
 	files:[],
 	fiscalFiles:[],
+	invoice: {
+		type: Boolean
+	},
 	mod: [ModSchema],
 	own: OwnerSchema,
 	perm: PermissionsSchema
