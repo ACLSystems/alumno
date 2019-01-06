@@ -45,7 +45,8 @@ mongoose.connection.on('connected', function () {
 	message = 'DB connection open successfully';
 	logger.info(message);
 	console.log(message); // eslint-disable-line
-	init.initDB(version);
+	init.initDB(version); // generar el registro de control
+	init.initConfig();		// generar el registro de configuración
 	if(systemInit) {
 		// Colocar los procesos que deben arrancar junto con el servidor
 

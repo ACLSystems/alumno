@@ -1,15 +1,13 @@
+
+const mongoose 	= require( 'mongoose' );
+const bcrypt 		= require('bcrypt-nodejs'			);
+const logger 		= require('../shared/winston-logger');
+const newpass 	= require('../config/newpass'	);
 const Control 	= require('./control'					);
+const Config 		= require('./config'					);
 const Users 		= require('./users'						);
 const Orgs 			= require('./orgs'						);
 const OrgUnits 	= require('./orgUnits'				);
-const bcrypt 		= require('bcrypt-nodejs'			);
-const newpass 	= require('../config/newpass'	);
-const mongoose 	= require( 'mongoose' );
-
-
-const logger = require('../shared/winston-logger');
-
-
 
 module.exports = {
 	initDB(version){
@@ -23,18 +21,16 @@ module.exports = {
 					// Comenzamos inicializacion de la base si la base no tiene datos
 
 					// Inicializacion de la organizacion "publica"
-					var date = new Date();
-					var mod = {
-						by: 'init',
-						when: date,
-						what: 'Org creation'
-					};
 					const orgPublic = new Orgs({
 						name: 'public',
 						longName: 'Público en General',
 						alias: ['Público', 'Pública', 'General'],
 						isActive: true,
-						mod: [mod],
+						mod: [{
+							by: 'init',
+							when: new Date(),
+							what: 'Org creation'
+						}],
 						perm: {
 							users: [{
 								name: 'admin',
@@ -60,19 +56,16 @@ module.exports = {
 
 					// Inicializacion de la organizacion "ACL Systems"
 
-					date = new Date();
-					mod = {
-						by: 'init',
-						when: date,
-						what: 'Org creation'
-					};
-
 					const orgACL = new Orgs({
 						name: 'acl',
 						longName: 'ACL Systems S.A. de C.V.',
 						alias: ['acl systems', 'ACL', 'ACL Systems'],
 						isActive: true,
-						mod: [mod],
+						mod: [{
+							by: 'init',
+							when: new Date(),
+							what: 'Org creation'
+						}],
 						perm: {
 							users: [{
 								name: 'admin',
@@ -110,12 +103,6 @@ module.exports = {
 
 					// Unidad Organizacional "Pública"
 
-					date = new Date();
-					mod = {
-						by: 'init',
-						when: date,
-						what: 'Org Unit creation'
-					};
 					const ouPublic = new OrgUnits({
 						name: 'public',
 						longName: 'Público en General',
@@ -124,7 +111,11 @@ module.exports = {
 						parent: 'public',
 						type: 'org',
 						isActive: true,
-						mod: [mod],
+						mod: [{
+							by: 'init',
+							when: new Date(),
+							what: 'Org Unit creation'
+						}],
 						perm: {
 							users: [{
 								name: 'admin',
@@ -150,12 +141,6 @@ module.exports = {
 
 					// Unidad Organizacional "ACL Systems"
 
-					date = new Date();
-					mod = {
-						by: 'init',
-						when: date,
-						what: 'Org Unit creation'
-					};
 					const ouACL = new OrgUnits({
 						name: 'acl',
 						longName: 'ACL Systems S.A. de C.V.',
@@ -164,7 +149,11 @@ module.exports = {
 						parent: 'acl',
 						type: 'org',
 						isActive: true,
-						mod: [mod],
+						mod: [{
+							by: 'init',
+							when: new Date(),
+							what: 'Org Unit creation'
+						}],
 						perm: {
 							users: [{
 								name: 'admin',
@@ -203,13 +192,6 @@ module.exports = {
 
 					// Creacion del usuario admin
 
-					date = new Date();
-					mod = {
-						by: 'init',
-						when: date,
-						what: 'User creation'
-					};
-
 					const salt = bcrypt.genSaltSync(10);
 					const password = bcrypt.hashSync(newpass.admin(), salt);
 					const admin = new Users({
@@ -221,7 +203,11 @@ module.exports = {
 							isAdmin: true,
 							isOrg: true
 						},
-						mod: [mod],
+						mod: [{
+							by: 'init',
+							when: new Date(),
+							what: 'User creation'
+						}],
 						perm: {
 							users: [{
 								name: 'admin',
@@ -273,13 +259,11 @@ module.exports = {
 								console.log(message); //eslint-disable-line
 								logger.error(err);
 								console.log(err); //eslint-disable-line
-							})
-								.catch((err) => {
-									logger.error(err);
-									console.log(err); //eslint-disable-line
-								});
-						})
-						.catch((err) => {
+							}).catch((err) => {
+								logger.error(err);
+								console.log(err); //eslint-disable-line
+							});
+						}).catch((err) => {
 							logger.error(err);
 							console.log(err); //eslint-disable-line
 						});
@@ -304,19 +288,43 @@ module.exports = {
 								logger.error(err);
 								console.log(err); //eslint-disable-line
 							});
-						})
-						.catch((err) => {
+						}).catch((err) => {
 							logger.error(err);
 							console.log(err); //eslint-disable-line
 						});
 				}
-			})
-			.catch((err) => {
+			}).catch((err) => {
 				logger.error(err);
 				console.log(err); //eslint-disable-line
 			});
 	},
-	initConsumer(){
-
+	initConfig(){
+		Config.findOne({})
+			.then((config) => {
+				if(!config){
+					Config.create({
+						fiscal: {
+							pricelist: {
+								id: '',name: ''
+							},
+							seller: {
+								id: '', name: '', identification: ''
+							},
+							term: {
+								id: '', name: '', days: ''
+							}
+						},
+						apiExternal: {
+							uri: '', username: '', token: '', enabled: false
+						}
+					}).catch((err) => {
+						logger.error(err);
+						console.log(err); //eslint-disable-line
+					});
+				}
+			}).catch((err) => {
+				logger.error(err);
+				console.log(err); //eslint-disable-line
+			});
 	}
 };
