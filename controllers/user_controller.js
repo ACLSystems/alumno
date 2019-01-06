@@ -893,8 +893,7 @@ module.exports = {
 				if(user) {
 					if(!user.admin) {
 						res.status(200).json({
-							'status': 406,
-							'message': 'Object inconsistent. Please contact admin. user.admin not found'
+							'message': 'Object inconsistent. Please contact admin: user.admin not found'
 						});
 						return;
 					}
@@ -903,25 +902,32 @@ module.exports = {
 						if(userProps.person && (userProps.person.name || userProps.person.fatherName || userProps.person.motherName)) {
 							if(user.admin.isDataVerified && !key_user.roles.isAdmin) {
 								res.status(200).json({
-									'status'	: 401,
 									'message'	: 'You cannot modify name. Data already verified'
 								});
 								return;
 							} else {
+								/*
 								if(userProps.person.hasOwnProperty('name')			) {user.person.name 			= properCase(userProps.person.name);}
 								if(userProps.person.hasOwnProperty('fatherName')) {user.person.fatherName	= properCase(userProps.person.fatherName);}
 								if(userProps.person.hasOwnProperty('motherName')) {user.person.motherName	= properCase(userProps.person.motherName);}
+								*/
+								user.person = mergeDeep(user.person,userProps.person);
 								user.admin.isDataVerified = true;
 							}
 						}
 						if(userProps.person) {
+							/*
 							if(userProps.person.hasOwnProperty('birthDate')	) {user.person.birthDate 	= userProps.person.birthDate;	}
 							if(userProps.person.hasOwnProperty('mainPhone')	) {user.person.mainPhone 	= userProps.person.mainPhone;	}
 							if(userProps.person.hasOwnProperty('cellPhone')	) {user.person.cellPhone 	= userProps.person.cellPhone;	}
 							if(userProps.person.hasOwnProperty('genre')			) {user.person.genre 			= userProps.person.genre;			}
 							if(userProps.person.hasOwnProperty('alias')			) {user.person.alias 			= userProps.person.alias;			}
+							*/
+							user.person = mergeDeep(user.person,userProps.person);
 						}
 						if(userProps.student) {
+							user.student = mergeDeep(user.student,userProps.student);
+							/*
 							if(!user.student) {
 								user.student = {};
 							}
@@ -932,8 +938,11 @@ module.exports = {
 							if(userProps.student.hasOwnProperty('type')			) {user.student.type			= userProps.student.type;			}
 							if(userProps.student.hasOwnProperty('external')	) {user.student.external	= userProps.student.external;	}
 							if(userProps.student.hasOwnProperty('origin')		) {user.student.origin		= userProps.student.origin;		}
+							*/
 						}
 						if(userProps.address) {
+							user.address = mergeDeep(user.address,userProps.address);
+							/*
 							if(!user.address) {
 								user.address = {};
 							}
@@ -944,13 +953,10 @@ module.exports = {
 							if(userProps.address.hasOwnProperty('city')				) {user.address.city					= userProps.address.city;				}
 							if(userProps.address.hasOwnProperty('state')			) {user.address.state					= userProps.address.state;			}
 							if(userProps.address.hasOwnProperty('country')		) {user.address.country				= userProps.address.country;		}
+							*/
 						}
 						if(userProps.geometry) {
-							if(!user.geometry) {
-								user.geometry = {};
-							}
-							if(userProps.geometry.hasOwnProperty('type')				) {user.geometry.type	= userProps.geometry.type;								}
-							if(userProps.geometry.hasOwnProperty('coordinates')	) {user.geometry.coordinates	= userProps.geometry.coordinates;	}
+							user.geometry = mergeDeep(user.geometry,userProps.geometry);
 						}
 						if(key_user.roles.isAdmin) {
 							if(userProps.hasOwnProperty('report'))	{user.report	= userProps.report;	}
@@ -958,15 +964,10 @@ module.exports = {
 							if(userProps.hasOwnProperty('char2')) 	{user.char2 	= userProps.char2;	}
 							if(userProps.hasOwnProperty('orgUnit')) {user.orgUnit = userProps.orgUnit;}
 							if(userProps.admin){
-								if(userProps.admin.hasOwnProperty('isActive')				) {user.admin.isActive 				= userProps.admin.isActive;				}
-								if(userProps.admin.hasOwnProperty('isVerified')			) {user.admin.isVerified			= userProps.admin.isVerified;			}
-								if(userProps.admin.hasOwnProperty('isDataVerified')	) {user.admin.isDataVerified	= userProps.admin.isDataVerified;	}
-								if(userProps.admin.hasOwnProperty('initialPassword')) {user.admin.initialPassword	= userProps.admin.initialPassword;}
+								user.admin = mergeDeep(user.admin,userProps.admin);
 							}
 							if(userProps.corporate) {
-								if(userProps.corporate.hasOwnProperty('id')				) {user.corporate.id 				= userProps.corporate.id;				}
-								if(userProps.corporate.hasOwnProperty('isActive')	) {user.corporate.isActive 	= userProps.corporate.isActive;	}
-								if(userProps.corporate.hasOwnProperty('type')			) {user.corporate.type 			= userProps.corporate.type;			}
+								user.corporate = mergeDeep(user.corporate,userProps.corporate);
 							}
 						}
 						if(userProps.fiscal) {
@@ -976,35 +977,10 @@ module.exports = {
 								});
 								return;
 							}
-							if(!userProps.fiscal.identification && !userProps.fiscal.RFC && !userProps.fiscal.tag) {
-								res.status(200).json({
-									'message': 'Identification (RFC) is required. Please provide in fiscal property'
-								});
-								return;
-							}
 							FiscalContact.findOne({tag: userProps.fiscal.tag})
 								.then((fc) => {
 									if(fc) {
-										if(userProps.fiscal.hasOwnProperty('identification'	)) {fc.identification = userProps.fiscal.identification;}
-										if(userProps.fiscal.hasOwnProperty('name'						)) {fc.name 					= userProps.fiscal.name;					}
-										if(userProps.fiscal.hasOwnProperty('observations'		)) {fc.observations 	= userProps.fiscal.observations;	}
-										if(userProps.fiscal.hasOwnProperty('phonePrimary'		)) {fc.phonePrimary 	= userProps.fiscal.phonePrimary;	}
-										if(userProps.fiscal.hasOwnProperty('phoneSecondary'	)) {fc.phoneSecondary = userProps.fiscal.phoneSecondary;}
-										if(userProps.fiscal.hasOwnProperty('mobile'					)) {fc.mobile 				= userProps.fiscal.mobile;				}
-										if(userProps.fiscal.hasOwnProperty('email'					)) {fc.email 					= userProps.fiscal.email;					}
-										if(userProps.fiscal.hasOwnProperty('address'				)) {
-											if(userProps.fiscal.address.hasOwnProperty('street'		)) {fc.address.street 	= userProps.fiscal.address.street;	}
-											if(userProps.fiscal.address.hasOwnProperty('extNum'		)) {fc.address.extNum 	= userProps.fiscal.address.extNum;	}
-											if(userProps.fiscal.address.hasOwnProperty('intNum'		)) {fc.address.intNum 	= userProps.fiscal.address.intNum;	}
-											if(userProps.fiscal.address.hasOwnProperty('colony'		)) {fc.address.colony		= userProps.fiscal.address.colony;	}
-											if(userProps.fiscal.address.hasOwnProperty('locality'	)) {fc.address.locality	= userProps.fiscal.address.locality;}
-											if(userProps.fiscal.address.hasOwnProperty('municipality')) {fc.address.municipality	= userProps.fiscal.address.municipality;}
-											if(userProps.fiscal.address.hasOwnProperty('city'			)) {fc.address.city			= userProps.fiscal.address.city;		}
-											if(userProps.fiscal.address.hasOwnProperty('zipCode'	)) {fc.address.zipCode	= userProps.fiscal.address.zipCode;	}
-											if(userProps.fiscal.address.hasOwnProperty('state'		)) {fc.address.state		= userProps.fiscal.address.state;	}
-											if(userProps.fiscal.address.hasOwnProperty('country'	)) {fc.address.country	= userProps.fiscal.address.country;	}
-										}
-										if(userProps.fiscal.hasOwnProperty('cfdiUse'			)) {fc.cfdiUse 			= userProps.fiscal.cfdiUse;			}
+										fc = mergeDeep(fc,userProps.fiscal);
 										fc.mod.push({
 											by: key_user.name,
 											when: new Date(),
@@ -1016,11 +992,17 @@ module.exports = {
 													'message': 'User ' + userProps.name + ' properties modified'
 												});
 											})
-											.catch((err) => {
-												Err.sendError(res,err,'user_controller','modify -- FiscalContact Modify --');
+											.catch((err) => { // Manejo de errores
+												processError(err,res,'modify -- Fiscal contact modify --');
 											});
 									} else {
-										var fiscal = userProps.fiscal;
+										if(!userProps.fiscal.identification || !userProps.fiscal.RFC) {
+											res.status(200).json({
+												'message': 'Identification (RFC) is required. Please provide in fiscal property'
+											});
+											return;
+										}
+										var fiscal = mergeDeep({},userProps.fiscal);
 										fiscal.mod = [];
 										if(!fiscal.name) {
 											res.status(200).json({
@@ -1036,11 +1018,22 @@ module.exports = {
 											FiscalContact.create(fiscal)
 												.then((fiscal) => {
 													if(user.fiscal && Array.isArray(user.fiscal)) {
-														user.fiscal.push(fiscal._id);
+														if(user.fiscal.length > 0){
+
+															var found = false;
+															found = user.fiscal.find(function(u) {
+																if(u + '' === fiscal._id + ''){
+																	return true;
+																}
+															});
+															if(!found) {user.fiscal.push(fiscal._id);}
+														} else {
+															user.fiscal.push(fiscal._id);
+														}
 													} else {
 														user.fiscal = [fiscal._id];
 													}
-													user.mod.push({ // FALTA VALIDAR QUE LOS IDs DEL ARREGLO SEAN UNICOS! Checar la creación de rosters
+													user.mod.push({
 														by: key_user.name,
 														when: new Date(),
 														what: 'User modification. Data: ' + JSON.stringify(userProps,null,2)
@@ -1049,11 +1042,11 @@ module.exports = {
 														Err.sendError(res,err,'user_controller','modify -- Saving User--');
 													});
 													res.status(200).json({
-														'message': 'User ' + userProps.name + ' properties modified'
+														'message': 'User ' + userProps.name + ' properties modified. Fiscal contact created/modified'
 													});
 												})
 												.catch((err) => {
-													Err.sendError(res,err,'user_controller','modify -- Creating fiscal --');
+													processError(err,res,'modify -- Creating fiscal contact--');
 												});
 										}
 									}
@@ -1075,16 +1068,14 @@ module.exports = {
 							});
 						}
 					} else {
-						res.status(200);
+						res.status(403);
 						res.json({
-							'status': 403,
 							'message': 'User ' + key_user.name + ' not authorized to modify ' + userProps.name + ' register',
 							'debug': result
 						});
 					}
 				} else {
 					res.status(200).json({
-						'status': 404,
 						'message': 'User ' + userProps.name + ' not found'
 					});
 				}
@@ -1093,6 +1084,51 @@ module.exports = {
 				Err.sendError(res,err,'user_controller','modify -- Finding User to modify --');
 			});
 	}, // Modify
+
+	listFiscals(req,res) { // Solo lista contactos fiscales de tipo corporate = true y de la orgUnit indicada
+		const key_user = res.locals.user;
+		function orgUnitsFind(){ // Esta función nos permite leer el valor de una consulta esperando a que se resuelva
+			if(key_user.orgUnit.type === 'state') { // Aquí mandamos llamar la consulta si el criterio aplica
+				return OrgUnit.find({parent: key_user.orgUnit.name})
+					.select('_id')
+					.then((ous) => { // No ponemos catch porque la vamos a resolver después
+						let temp = [key_user.orgUnit._id];
+						if(ous && ous.length > 0){
+							ous.forEach(ou => {
+								temp.push(ou._id);
+							});
+						}
+						return temp;
+					});
+			} else { // Si no aplica el criterio, se manda una promesa resolvible
+				return new Promise((resolve) => {
+					resolve([key_user.orgUnit._id]);
+				});
+			}
+		}
+		orgUnitsFind()
+			.then(ous => {
+				var query = {
+					orgUnit: {$in: ous},
+					corporate: true
+				};
+				FiscalContact.find(query)
+					.select('-mod -__v -_id -createNew -create -corporate')
+					.then((fiscals) => {
+						res.status(200).json({
+							'message': fiscals
+						});
+					})
+					.catch((err) => {
+						Err.sendError(res,err,'user_controller','listFiscals -- Finding fiscal contacts --');
+					});
+			})
+			.catch((err) => { // Este catch es de la función orgUnitsFind, solo que acá la estamos resolviendo
+				Err.sendError(res,err,'user_controller','listFiscals -- Finding orgUnits --');
+			});
+		//console.log(orgUnits);
+
+	}, //listFiscals
 
 	list(req,res) {
 		const key_user = res.locals.user;
@@ -1307,7 +1343,6 @@ module.exports = {
 												longName: oun.longName
 											});
 										});
-										console.log(send_ous);
 										res.status(200).json({
 											'status'			: 200,
 											'message'			: myroles,
@@ -1462,6 +1497,7 @@ module.exports = {
 
 };
 
+// private functions
 
 function properCase(obj) {
 	var name = new String(obj);
@@ -1479,4 +1515,39 @@ function encryptPass(obj) {
 	var salt = bcrypt.genSaltSync(10);
 	obj = bcrypt.hashSync(obj, salt);
 	return obj;
+}
+
+function isObject(item) {
+	return (item && typeof item === 'object' && !Array.isArray(item) && item !== null);
+}
+
+function mergeDeep(target, source) {
+	if (isObject(target) && isObject(source)) {
+		for (const key in source) {
+			if (isObject(source[key])) {
+				if (!target[key]) Object.assign(target, { [key]: {} });
+				mergeDeep(target[key], source[key]);
+			} else {
+				Object.assign(target, { [key]: source[key] });
+			}
+		}
+	}
+	return target;
+}
+
+function processError(err,res,controllerMessage) {
+	if(err.statusCode && err.error) {
+		const messageHeader = 'Hubo un error al intentar comunicarse con el sistema de facturación. Favor de contactar al administrador e indicar este mensaje: ';
+		var message = {};
+		if(typeof err.error === 'string') {
+			message = err.error;
+		} else if(typeof err.error === 'object') {
+			message = err.error.message;
+		}
+		res.status(err.statusCode).json({
+			'message': messageHeader + message
+		});
+	} else {
+		Err.sendError(res,err,'user_controller',controllerMessage);
+	}
 }

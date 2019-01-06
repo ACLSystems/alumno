@@ -268,6 +268,8 @@ module.exports = (app) => {
 	app.put ('/api/v1/supervisor/request/finish', 				RequestController.finish);
 	app.put ('/api/v1/supervisor/request/cancel', 				RequestController.cancel);
 	app.put ('/api/v1/supervisor/request/modify', 				RequestController.modify);
+	app.get ('/api/v1/supervisor/fiscal/list',						UserController.listFiscals);
+
 
 	// Rutas para archivos
 

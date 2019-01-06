@@ -469,7 +469,7 @@ module.exports = {
 													return st + '' === student._id + '';
 												});
 											}
-											if(!found) { // Si no encontramos el id del usuario, no hagas nada...
+											if(!found) { // Si encontramos el id del usuario, no hagas nada...
 												var grade = [];
 												var sec = 0;
 												blocks.forEach(function(block) {

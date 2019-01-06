@@ -81,10 +81,19 @@ const FiscalContactSchema = new Schema({
 	dateSync: {
 		type: Date
 	},
-	createNew: {
+	create: {
 		type: Boolean,
 		default: false
 	},
+	orgUnit: {
+		type: Schema.Types.ObjectId,
+		ref: 'orgUnits'
+	},
+	corporate: {
+		type: Boolean,
+		default: false
+	},
+	lastResponse: {},
 	mod: [ModSchema],
 	perm: PermissionsSchema
 });
@@ -118,7 +127,7 @@ FiscalContactSchema.pre('save', function(next) {
 					send.seller			= config.fiscal.seller;
 					send.term				= config.fiscal.term;
 					if(this.idAPIExternal) {
-						request({
+						return request({
 							method	: 'PUT',
 							uri			: config.apiExternal.uri + '/api/v1/contacts/' + this.idAPIExternal,
 							headers	: {
@@ -126,20 +135,9 @@ FiscalContactSchema.pre('save', function(next) {
 							},
 							body 		: send,
 							json		: true
-						})
-							.then((response) =>  {
-								if(response && response.id) {
-									next();
-								} else {
-									logger.error(response);
-									console.log(response); //eslint-disable-line
-									next();
-								}
-							})
-							.catch((err) => {
-								logger.error(err);
-								console.log(err); //eslint-disable-line
-							});
+						}).then((response) =>  {
+							this.lastResponse = response;
+						});
 					} else { // Vamos a crear un registro nuevo en apiExternal si no existe en apiExternal
 						request({
 							method	: 'GET',
@@ -155,7 +153,7 @@ FiscalContactSchema.pre('save', function(next) {
 							.then((responses) =>  {
 								if(responses && responses.length > 0) {
 									this.idAPIExternal = responses[0].id;
-									request({
+									return request({
 										method	: 'PUT',
 										uri			: config.apiExternal.uri + '/api/v1/contacts/' + this.idAPIExternal,
 										headers	: {
@@ -163,18 +161,11 @@ FiscalContactSchema.pre('save', function(next) {
 										},
 										body 		: send,
 										json		: true
-									})
-										.then((response) =>  {
-											if(response && response.id) {
-												next();
-											}
-										})
-										.catch((err) => {
-											logger.error(err);
-											console.log(err); //eslint-disable-line
-										});
+									}).then((response) =>  {
+										this.lastResponse = response;
+									});
 								} else {
-									request({
+									return request({
 										method	: 'POST',
 										uri			: config.apiExternal.uri + '/api/v1/contacts',
 										headers	: {
@@ -182,36 +173,24 @@ FiscalContactSchema.pre('save', function(next) {
 										},
 										body 		: send,
 										json		: true
-									})
-										.then((response) =>  {
-											if(response && response.id) {
-												this.idAPIExternal = response.id;
-												next();
-											} else {
-												logger.error(response);
-												console.log(response); //eslint-disable-line
-												next();
-											}
-										})
-										.catch((err) => {
-											logger.error(err);
-											console.log(err); //eslint-disable-line
-											next();
-										});
+									}).then((response) =>  {
+										this.lastResponse = response;
+									});
 								}
 							})
 							.catch((err) => {
-								logger.error(err);
-								console.log(err); //eslint-disable-line
+								next(err);
 							});
 					}
+				} else {
+					next();
 				}
+			} else {
+				next(new Error('Error: No conection active to fiscal system or not URI configured. Please contact Admin'));
 			}
 		})
 		.catch((err) => {
-			logger.error(err);
-			console.log(err); //eslint-disable-line
-			next();
+			next(err);
 		});
 });
 
@@ -221,6 +200,8 @@ FiscalContactSchema.index( { 'tag'						: 1 } );
 FiscalContactSchema.index( { 'identification'	: 1 } );
 FiscalContactSchema.index( { 'name'						: 1 } );
 FiscalContactSchema.index( { 'idAPIExternal'	: 1 } );
+FiscalContactSchema.index( { 'corporate'			: 1 } );
+FiscalContactSchema.index( { 'orgUnit'				: 1 }, {sparse: true});
 
 // Compilar esquema
 
