@@ -93,7 +93,7 @@ const FiscalContactSchema = new Schema({
 		type: Boolean,
 		default: false
 	},
-	lastResponse: {},
+	//lastResponse: {},
 	mod: [ModSchema],
 	perm: PermissionsSchema
 });
@@ -117,17 +117,9 @@ FiscalContactSchema.pre('save', function(next) {
 			if(config && config.apiExternal && config.apiExternal.enabled && config.apiExternal.uri){
 				if(config.apiExternal.username && config.apiExternal.token) {
 					const auth = new Buffer.from(config.apiExternal.username + ':' + config.apiExternal.token);
-					var send = JSON.parse(JSON.stringify(this));
-					if(send.tag				) {delete send.tag;				}
-					if(send.mod				) {delete send.mod;				}
-					if(send.perm			) {delete send.perm;			}
-					if(send.dateSync	) {delete send.dateSync;	}
-					if(send.createNew	) {delete send.createNew;	}
-					send.pricelist 	= config.fiscal.pricelist;
-					send.seller			= config.fiscal.seller;
-					send.term				= config.fiscal.term;
+					var send = cleanSend(this,config);
 					if(this.idAPIExternal) {
-						return request({
+						request({
 							method	: 'PUT',
 							uri			: config.apiExternal.uri + '/api/v1/contacts/' + this.idAPIExternal,
 							headers	: {
@@ -137,6 +129,9 @@ FiscalContactSchema.pre('save', function(next) {
 							json		: true
 						}).then((response) =>  {
 							this.lastResponse = response;
+							next();
+						}).catch((err) => {
+							next(err);
 						});
 					} else { // Vamos a crear un registro nuevo en apiExternal si no existe en apiExternal
 						request({
@@ -153,7 +148,7 @@ FiscalContactSchema.pre('save', function(next) {
 							.then((responses) =>  {
 								if(responses && responses.length > 0) {
 									this.idAPIExternal = responses[0].id;
-									return request({
+									request({
 										method	: 'PUT',
 										uri			: config.apiExternal.uri + '/api/v1/contacts/' + this.idAPIExternal,
 										headers	: {
@@ -163,6 +158,9 @@ FiscalContactSchema.pre('save', function(next) {
 										json		: true
 									}).then((response) =>  {
 										this.lastResponse = response;
+										next();
+									}).catch((err) => {
+										next(err);
 									});
 								} else {
 									return request({
@@ -175,6 +173,8 @@ FiscalContactSchema.pre('save', function(next) {
 										json		: true
 									}).then((response) =>  {
 										this.lastResponse = response;
+									}).catch((err) => {
+										next(err);
 									});
 								}
 							})
@@ -186,7 +186,8 @@ FiscalContactSchema.pre('save', function(next) {
 					next();
 				}
 			} else {
-				next(new Error('Error: No conection active to fiscal system or not URI configured. Please contact Admin'));
+				//next(new Error('Error: No conection active to fiscal system or not URI configured. Please contact Admin'));
+				next();
 			}
 		})
 		.catch((err) => {
@@ -207,3 +208,21 @@ FiscalContactSchema.index( { 'orgUnit'				: 1 }, {sparse: true});
 
 const FiscalContacts = mongoose.model('fiscalContacts', FiscalContactSchema);
 module.exports = FiscalContacts;
+
+
+function cleanSend(temp, config) {
+	var s = JSON.parse(JSON.stringify(temp));
+	if(s.tag					) {delete s.tag;					}
+	if(s.mod					) {delete s.mod;					}
+	if(s.perm					) {delete s.perm;					}
+	if(s.dateSync			) {delete s.dateSync;			}
+	if(s.create				) {delete s.create;				}
+	if(s.corporate		) {delete s.corporate;		}
+	//if(s.lastResponse	) {delete s.lastResponse;	}
+	s.pricelist 			= config.fiscal.pricelist;
+	s.seller					= config.fiscal.seller;
+	s.term						= config.fiscal.term;
+	delete s.__v;
+	delete s._id;
+	return s;
+}
