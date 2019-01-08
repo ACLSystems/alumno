@@ -1069,7 +1069,7 @@ module.exports = {
 														});
 														if(!found) {user.fiscal.push(fiscal._id);}
 														var fiscalcurrent = user.fiscal.findIndex(idx => {
-															return idx + '' === fc._id + '';
+															return idx + '' === fiscal._id + '';
 														});
 														user.fiscalcurrent = fiscalcurrent;
 													} else {
