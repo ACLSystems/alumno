@@ -337,7 +337,6 @@ module.exports = {
 		const key_user = res.locals.user;
 		const username = req.query.name || key_user.name;
 		User.findOne({ name: username })
-			.select('name org orgUnit person address student corporate fiscal fiscalcurrent geometry preferences char1 char2')
 			.populate('org','name')
 			.populate('orgUnit', 'name')
 			.populate({
