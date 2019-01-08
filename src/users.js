@@ -336,6 +336,9 @@ const UserSchema = new Schema ({
 		type: Schema.Types.ObjectId,
 		ref: 'fiscalContacts'
 	}],
+	fiscalcurrent: {
+		type: Number
+	},
 	preferences: PrefsSchema,
 });
 // Definir virtuals

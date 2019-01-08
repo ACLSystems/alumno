@@ -337,8 +337,17 @@ module.exports = {
 		const key_user = res.locals.user;
 		const username = req.query.name || key_user.name;
 		User.findOne({ name: username })
+			.select('name org orgUnit person address student corporate fiscal fiscalcurrent geometry preferences char1 char2')
 			.populate('org','name')
 			.populate('orgUnit', 'name')
+			.populate({
+				path: 'fiscal',
+				select: 'tag identification name phonePrimary phoneSecondary mobile fax observations email address type cfdiUse corporate orgUnit -_id idAPIExternal',
+				populate: {
+					path: 'orgUnit',
+					select: 'name parent longName type'
+				}
+			})
 			.then((user) => {
 				if (!user) {
 					res.status(404).json({
@@ -427,6 +436,7 @@ module.exports = {
 						}
 						send_user.char1 = user.char1;
 						send_user.char2 = user.char2;
+						send_user.fiscalcurrent = user.fiscalcurrent;
 						res.status(200).json(send_user);
 					} else {
 						res.status(403).json({
@@ -986,15 +996,48 @@ module.exports = {
 											when: new Date(),
 											what: 'Fiscal modification. Data: ' + JSON.stringify(userProps.fiscal,null,2)
 										});
-										fc.save()
-											.then((fiscal) => {
-												res.status(200).json({
-													'message': 'User ' + userProps.name + ' properties modified and Fiscal Contact: ' + fiscal.tag + ' modified'
+										fc.save().then((fiscal) => {
+											if(!Array.isArray(user.fiscal)) {
+												user.fiscal = [fiscal._id];
+												user.fiscalcurrent = 0;
+											} else {
+												var found = false;
+												found = user.fiscal.find(function(u) {
+													if(u + '' === fiscal._id + ''){
+														return true;
+													}
 												});
-											})
-											.catch((err) => { // Manejo de errores
-												processError(err,res,'modify -- Fiscal contact modify --');
+												if(!found) {user.fiscal.push(fiscal._id);}
+												var fiscalcurrent = user.fiscal.findIndex(idx => {
+													return idx + '' === fiscal._id + '';
+												});
+												user.fiscalcurrent = fiscalcurrent;
+											}
+											if(userProps.fiscal.fiscalcurrent) {
+												if(user.fiscal.length > 0){
+													fiscalcurrent = user.fiscal.findIndex(idx => {
+														return idx + '' === fiscal._id + '';
+													});
+													user.fiscalcurrent = fiscalcurrent;
+												} else {
+													user.fiscalcurrent = 0;
+												}
+											}
+											user.mod.push({
+												by: key_user.name,
+												when: new Date(),
+												what: 'User modification. Data: ' + JSON.stringify(userProps,null,2)
 											});
+											user.save().then(() => {
+												res.status(200).json({
+													'message': 'User ' + user.name + ' properties modified and Fiscal Contact: ' + fiscal.tag + ' modified'
+												});
+											}).catch((err) => {
+												Err.sendError(res,err,'user_controller','modify -- Saving User--');
+											});
+										}).catch((err) => { // Manejo de errores
+											processError(err,res,'modify -- Fiscal contact modify --');
+										});
 									} else {
 										if(!userProps.fiscal.identification) {
 											res.status(200).json({
@@ -1026,22 +1069,29 @@ module.exports = {
 															}
 														});
 														if(!found) {user.fiscal.push(fiscal._id);}
+														var fiscalcurrent = user.fiscal.findIndex(idx => {
+															return idx + '' === fc._id + '';
+														});
+														user.fiscalcurrent = fiscalcurrent;
 													} else {
 														user.fiscal.push(fiscal._id);
+														user.fiscalcurrent = 0;
 													}
 												} else {
 													user.fiscal = [fiscal._id];
+													user.fiscalcurrent = 0;
 												}
 												user.mod.push({
 													by: key_user.name,
 													when: new Date(),
 													what: 'User modification. Data: ' + JSON.stringify(userProps,null,2)
 												});
-												user.save().catch((err) => {
+												user.save().then(() => {
+													res.status(200).json({
+														'message': 'User ' + user.name + ' properties modified. Fiscal contact '+ fiscal.tag + ' created/modified'
+													});
+												}).catch((err) => {
 													Err.sendError(res,err,'user_controller','modify -- Saving User--');
-												});
-												res.status(200).json({
-													'message': 'User ' + userProps.name + ' properties modified. Fiscal contact '+ fiscal.tag + 'created/modified'
 												});
 											})
 											.catch((err) => {
@@ -1058,11 +1108,12 @@ module.exports = {
 								when: new Date(),
 								what: 'User modification. Data: ' + JSON.stringify(userProps,null,2)
 							});
-							user.save().catch((err) => {
+							user.save().then(() => {
+								res.status(200).json({
+									'message': 'User ' + user.name + ' properties modified'
+								});
+							}).catch((err) => {
 								Err.sendError(res,err,'user_controller','modify -- Saving User--');
-							});
-							res.status(200).json({
-								'message': 'User ' + userProps.name + ' properties modified'
 							});
 						}
 					} else {

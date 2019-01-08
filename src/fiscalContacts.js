@@ -186,7 +186,6 @@ FiscalContactSchema.pre('save', function(next) {
 					next();
 				}
 			} else {
-				//next(new Error('Error: No conection active to fiscal system or not URI configured. Please contact Admin'));
 				next();
 			}
 		})
@@ -201,7 +200,7 @@ FiscalContactSchema.index( { 'tag'						: 1 } );
 FiscalContactSchema.index( { 'identification'	: 1 } );
 FiscalContactSchema.index( { 'name'						: 1 } );
 FiscalContactSchema.index( { 'idAPIExternal'	: 1 } );
-FiscalContactSchema.index( { 'corporate'			: 1 } );
+FiscalContactSchema.index( { 'corporate'			: 1 }, {sparse: true});
 FiscalContactSchema.index( { 'orgUnit'				: 1 }, {sparse: true});
 
 // Compilar esquema
