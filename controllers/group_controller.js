@@ -1223,7 +1223,7 @@ module.exports = {
 					Roster.find({student:user._id})
 						.populate({
 							path: 'group',
-							select: 'course code name',
+							select: 'course code name beginDate endDate',
 							populate: {
 								path: 'course',
 								select: 'code title'
@@ -1232,8 +1232,13 @@ module.exports = {
 						.lean()
 						.then((items) => {
 							if(items.length > 0 ) {
-								var send_items = new Array();
+								var send_items = [];
+								const options = { year: 'numeric', month: 'long', day: 'numeric', timezone: 'America/Mexico_City'};
 								items.forEach(function(item) {
+									var beginDate = 'No date';
+									var endDate 	= 'No date';
+									if(item.group.beginDate) {beginDate = new Date(item.group.beginDate);}
+									if(item.group.endDate) {endDate = new Date(item.group.endDate);}
 									send_items.push({
 										status			: item.status,
 										groupid			: item.group._id,
@@ -1241,8 +1246,8 @@ module.exports = {
 										groupCode		: item.group.code,
 										course			: item.group.course.title,
 										courseCode 	:	item.group.course.code,
-										beginDate		: item.group.beginDate,
-										endDate			: item.group.endDate
+										beginDate		: beginDate.toLocaleDateString('es-MX', options),
+										endDate			: endDate.toLocaleDateString('es-MX', options)
 									});
 								});
 								res.status(200).json({
