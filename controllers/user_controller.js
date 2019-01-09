@@ -417,6 +417,11 @@ module.exports = {
 						}
 						if(user.fiscal) {
 							send_user.fiscal = user.fiscal;
+							if(Array.isArray(user.fiscal) && user.fiscal.length > 0 && user.hasOwnProperty('fiscalcurrent')) {
+								if(user.fiscal.length >= user.fiscalcurrent){
+									send_user.fiscal[user.fiscalcurrent].fiscalcurrent = true;
+								}
+							}
 						}
 						if(user.geometry) {
 							send_user.geometry = {
