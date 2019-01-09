@@ -1155,11 +1155,16 @@ module.exports = {
 			}
 		}
 		orgUnitsFind()
-			.then(ous => {
+			.then((ous) => {
 				var query = {
-					orgUnit: {$in: ous},
 					corporate: true
 				};
+				if(key_user.orgUnit.type !== 'org'){
+					query = {
+						orgUnit: {$in: ous},
+						corporate: true
+					};
+				}
 				FiscalContact.find(query)
 					.select('-mod -__v -_id -createNew -create -corporate')
 					.then((fiscals) => {
