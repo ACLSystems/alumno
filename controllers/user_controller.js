@@ -416,10 +416,14 @@ module.exports = {
 							};
 						}
 						if(user.fiscal) {
-							send_user.fiscal = user.fiscal;
-							if(Array.isArray(user.fiscal) && user.fiscal.length > 0 && user.hasOwnProperty('fiscalcurrent')) {
+							send_user.fiscal = mergeDeep(user.fiscal);
+							if(Array.isArray(user.fiscal) &&
+							user.fiscal.length > 0 &&
+							typeof user.fiscalcurrent === 'number') {
 								if(user.fiscal.length >= user.fiscalcurrent){
-									send_user.fiscal[user.fiscalcurrent].fiscalcurrent = true;
+									var temp = JSON.parse(JSON.stringify(send_user.fiscal[user.fiscalcurrent]));
+									temp.fiscalcurrent = true;
+									send_user.fiscal[user.fiscalcurrent] = JSON.parse(JSON.stringify(temp));
 								}
 							}
 						}
