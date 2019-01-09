@@ -1,9 +1,5 @@
-const mongoose 			= require('mongoose');
-const requestU 			= require('request-promise-native');
+
 const Request 			= require('../src/requests');
-const FiscalContact = require('../src/fiscalContacts');
-const Config 				= require('../src/config');
-const TA 						= require('time-ago'												);
 const Err 					= require('../controllers/err500_controller');
 
 module.exports = {
@@ -124,7 +120,6 @@ module.exports = {
 
 	finish(req,res) {
 		const key_user 	= res.locals.user;
-		var		RFC				= 'XAXX010101000';
 		var   query 		= {};
 		if(req.body.number) {
 			query = {reqNumber: req.body.number};
