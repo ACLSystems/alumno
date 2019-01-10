@@ -37,7 +37,7 @@ module.exports = {
 			])
 			.then((myFws) => {
 				if(myFws.length > 0) {
-					var follows = new Array();
+					var follows = [];
 					myFws.forEach(function(follow) {
 						var f = { _id: follow._id};
 						if(follow.object && follow.object.kind === 'discussions') {

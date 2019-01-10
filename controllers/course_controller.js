@@ -15,8 +15,7 @@ module.exports = {
 	create(req,res) {
 		const key_user 	= res.locals.user;
 		var course = req.body;
-		const date = new Date();
-		course.org = key_user.org._id,
+		course.org = key_user.org._id;
 		course.own = {
 			user: key_user.name,
 			org: key_user.org.name,
@@ -25,7 +24,7 @@ module.exports = {
 		course.author = key_user.person.name + ' ' + key_user.person.fatherName;
 		course.mod = {
 			by: key_user.name,
-			when: date,
+			when: new Date(),
 			what: 'Course Creation'
 		};
 		course.perm = {
@@ -205,7 +204,7 @@ module.exports = {
 			.skip(skip)
 			.limit(limit)
 			.then((cats) => {
-				var send_cats = new Array();
+				var send_cats = [];
 				cats.forEach(function(cat) {
 					send_cats.push(cat.name);
 				});
@@ -223,12 +222,7 @@ module.exports = {
 		var query = {};
 		const key_user 	= res.locals.user;
 		var sort = { name: 1 };
-		//var skip = 0;
-		//var limit = 15;
 		query = { org: key_user.org._id };
-		//if(req.query.sort) 	{ sort 	= { name: req.query.sort }; 		}
-		//if(req.query.skip) 	{ skip 	= parseInt( req.query.skip 	); 	}
-		//if(req.query.limit) { limit = parseInt( req.query.limit ); 	}
 		if(req.query.categories) {
 			query.categories = JSON.parse(req.query.categories);
 		}
@@ -243,10 +237,8 @@ module.exports = {
 		}
 		Course.find(query)
 			.sort(sort)
-			//.skip(skip)
-			//.limit(limit)
 			.then((courses) => {
-				var send_courses = new Array();
+				var send_courses = [];
 				courses.forEach(function(course) {
 					send_courses.push({
 						id					: course._id,
@@ -261,6 +253,7 @@ module.exports = {
 						price				: course.price,
 						cost 				: course.cost,
 						author			: course.author,
+						apiExternal : course.apiExternal,
 						duration		: course.duration + '' + course.durationUnits,
 						numBlocks		: course.numBlocks
 					});
@@ -308,7 +301,7 @@ module.exports = {
 					//.skip(skip)
 					//.limit(limit)
 					.then((courses) => {
-						var send_courses = new Array();
+						var send_courses = [];
 						courses.forEach(function(course) {
 							send_courses.push({
 								id: 					course._id,
@@ -322,6 +315,7 @@ module.exports = {
 								price: 				course.price,
 								cost: 				course.cost,
 								author: 			course.author,
+								apiExternal: 	course.apiExternal,
 								duration		: course.duration + '' + course.durationUnits
 							});
 						});
@@ -356,7 +350,7 @@ module.exports = {
 					var order 		= course.blocks.length;
 					var section 	= course.currentSection;
 					var number 		= course.nextNumber;
-					var block 		= new Block;
+					var block 		= new Block();
 					block.org 		= key_user.org._id;
 					block.code 		= req.body.code;
 					block.type 		= req.body.type;
@@ -489,8 +483,8 @@ module.exports = {
 							qstnnMinimum			: qn.minumim,
 							qstnnType					: qn.type
 						};
+						var send_questions = [];
 						if(qn.questions && qn.questions.length > 0) {
-							var send_questions = new Array();
 							qn.questions.forEach(function(q) {
 								var send_question = {
 									questId					: q._id,
@@ -503,7 +497,7 @@ module.exports = {
 									questFooter			: q.footer
 								};
 								if(q.answers && q.answers.length > 0){
-									var answers = new Array();
+									var answers = [];
 									q.answers.forEach(function(a) {
 										var answer = {
 											ansId			: a._id,
@@ -526,7 +520,7 @@ module.exports = {
 									send_question.answers = answers;
 								}
 								if(q.options && q.options.length > 0){
-									var options = new Array();
+									var options = [];
 									q.options.forEach(function(o) {
 										options.push({
 											optId			: o._id,
@@ -556,7 +550,7 @@ module.exports = {
 							taskIsVisible	: ts.isVisible,
 						};
 						if(ts.items && ts.items.length > 0) {
-							var send_items = new Array();
+							var send_items = [];
 							ts.items.forEach(function(i) {
 								var send_item = {
 									itemId			: i._id,
@@ -609,12 +603,14 @@ module.exports = {
 			.populate('blocks')
 			.then((course) => {
 				if(course){
+					var send_block = {};
+					var bobj = {};
 					const result = permissions.access(key_user,course,'content');
 					if(result.canRead) {
 						if(req.query.index) {
 							var index = parseInt(req.query.index);
 							if(course.blocks[index]) {
-								var send_block = prettyGetBlockBy(course.blocks[index]);
+								send_block = prettyGetBlockBy(course.blocks[index]);
 								res.status(200).json({
 									'status': 200,
 									'message': send_block
@@ -626,7 +622,7 @@ module.exports = {
 								});
 							}
 						} else if(req.query.section && req.query.number) {
-							var bobj = {};
+							bobj = {};
 							var section = parseInt(req.query.section);
 							var number = parseInt(req.query.number);
 							bobj = course.blocks.find(function(bobj) { return bobj.section === section && bobj.number === number; });
@@ -731,7 +727,7 @@ module.exports = {
 				if(course) {
 					const result = permissions.access(key_user,course,'content');
 					if(result.canRead) {
-						var send_blocks = new Array();
+						var send_blocks = [];
 						const blocks = course.blocks;
 						blocks.forEach(function(block) {
 							send_blocks.push({
@@ -797,7 +793,7 @@ module.exports = {
 				if(course) {
 					if(course.isVisible || course.status === 'published') {
 						const blocks = course.blocks;
-						var send_blocks = new Array();
+						var send_blocks = [];
 						blocks.forEach(function(block) {
 							if(block.isVisible && block.status === 'published') {
 								var send_block = {};
@@ -921,10 +917,10 @@ module.exports = {
 							block.w 		= 1;
 							block.wq		= 1;
 							if(req.body.w === 0) {
-								block.w === 0;
+								block.w = 0;
 							}
 							if(req.body.wq === 0) {
-								block.wq === 0;
+								block.wq = 0;
 							}
 							block.save()
 								.then(() => {
@@ -974,7 +970,7 @@ module.exports = {
 										keywords			: quest.keywords,
 										isVisible			: quest.isVisible
 									};
-									var send_questions = new Array();
+									var send_questions = [];
 									if(quest.questions) {
 										var question = {};
 										quest.questions.forEach(function(q) {
@@ -990,7 +986,7 @@ module.exports = {
 												w						: q.w
 											};
 											if(q.options && q.options.length > 0) {
-												var options = new Array();
+												var options = [];
 												q.options.forEach(function(o) {
 													options.push({
 														name	: o.name,
@@ -999,7 +995,7 @@ module.exports = {
 												});
 												question.options = options;
 											}
-											var answers = new Array();
+											var answers = [];
 											var answer = {};
 											q.answers.forEach(function(a) {
 												answer = {
@@ -1097,7 +1093,7 @@ module.exports = {
 			.then((block) => {
 				if(block) {
 					var date = new Date();
-					var task = new Task;
+					var task = new Task();
 					task.items 		= req.body.tasks;
 					task.justDelivery = justDelivery;
 					task.org 			= key_user.org._id;
@@ -1182,7 +1178,7 @@ module.exports = {
 		Course.findOne(queryCourse)
 			.then((course) => {
 				if(course) {
-					var resource 			= new Resource;
+					var resource 			= new Resource();
 					resource.org 			= key_user.org._id;
 					resource.content 	= req.body.content;
 					resource.title 		= req.body.title;
@@ -1254,7 +1250,7 @@ module.exports = {
 			.then((course) => {
 				if(course) {
 					if(course.resources && course.resources.length > 0) {
-						var send_resources = new Array();
+						var send_resources = [];
 						course.resources.forEach(function(resource) {
 							send_resources.push({
 								resourceid	: resource._id,
@@ -1706,7 +1702,7 @@ module.exports = {
 							.sort({order:1})
 							.then((blocks) => {
 								var status = 'ok';
-								var details = new Array();
+								var details = [];
 								blocks.forEach(function(block) {
 									block.isVisible = true;
 									block.status = 'published';
@@ -1825,6 +1821,7 @@ function prettyCourse(course) {
 		price: 				course.price,
 		status: 			course.status,
 		isVisible: 		course.isVisible,
+		apiExternal: 	course.apiExternal
 	};
 }
 
@@ -1848,9 +1845,9 @@ function prettyGetBlockBy(obj){
 }
 
 function prettyQuests(obj){
-	var quests = new Array();
+	var quests = [];
 	obj.questionnaries.forEach(function(quest) {
-		var qqs = new Array();
+		var qqs = [];
 		var tempquest = {
 			isVisible : quest.isVisible,
 			id: quest._id,
@@ -1865,7 +1862,7 @@ function prettyQuests(obj){
 				isVisible: qq.isVisible,
 				w: qq.w
 			};
-			var qqans = new Array();
+			var qqans = [];
 			qq.answers.forEach(function(qqan) {
 				qqans.push({
 					type: qqan.type,
@@ -1873,7 +1870,7 @@ function prettyQuests(obj){
 				});
 			});
 			tempqq.answers = qqans;
-			var qqopt = new Array();
+			var qqopt = [];
 			qq.options.forEach(function(qqop) {
 				qqopt.push({
 					name: qqop.name,

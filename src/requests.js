@@ -47,6 +47,7 @@ const RequestSchema = new Schema ({
 	temp1: [],
 	temp2: [],
 	temp3: [],
+	items: [],
 	subtotal: {
 		type: Number,
 		min: [0,'Minimum value is 0'],
@@ -124,11 +125,14 @@ const RequestSchema = new Schema ({
 	//																						el pago. Se debe documentar en el campo 'paymentStatusReason'
 	//																						indicando quién autoriza esta liberación
 	paymentNotes: [],
-	paymentDates: [],
 	files:[],
 	fiscalFiles:[],
-	invoice: {
+	invoiceFlag: {
 		type: Boolean
+	},
+	invoice: {
+		type: Schema.Types.ObjectId,
+		ref: 'invoices'
 	},
 	mod: [ModSchema],
 	own: OwnerSchema,

@@ -61,7 +61,7 @@ module.exports = {
 									admin.adminCreate = true;
 								}
 								userProps.admin = admin;
-								var permUsers = new Array();
+								var permUsers = [];
 								var permUser = { name: userProps.name, canRead: true, canModify: true, canSec: false };
 								permUsers.push(permUser);
 								if (userProps.name !== key) {
@@ -70,12 +70,12 @@ module.exports = {
 								}
 								var author = userProps.name;
 								author = key;
-								var permRoles = new Array();
+								var permRoles = [];
 								var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
 								permRoles.push(permRole);
 								permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
 								permRoles.push(permRole);
-								var permOrgs = new Array();
+								var permOrgs = [];
 								const permOrg = { name: userProps.org, canRead: true, canModify: true, canSec: false };
 								permOrgs.push(permOrg);
 								userProps.perm = { users: permUsers, roles: permRoles, orgs: permOrgs };
@@ -87,7 +87,7 @@ module.exports = {
 									when: date,
 									what: 'User creation'
 								};
-								userProps.mod = new Array();
+								userProps.mod = [];
 								userProps.mod.push(mod);
 								if(userProps.student && userProps.student.type === 'internal') {
 									delete userProps.student.external;
@@ -1005,6 +1005,7 @@ module.exports = {
 											what: 'Fiscal modification. Data: ' + JSON.stringify(userProps.fiscal,null,2)
 										});
 										fc.save().then((fiscal) => {
+											var fiscalcurrent = 0;
 											if(!Array.isArray(user.fiscal)) {
 												user.fiscal = [fiscal._id];
 												user.fiscalcurrent = 0;
@@ -1016,7 +1017,7 @@ module.exports = {
 													}
 												});
 												if(!found) {user.fiscal.push(fiscal._id);}
-												var fiscalcurrent = user.fiscal.findIndex(idx => {
+												fiscalcurrent = user.fiscal.findIndex(idx => {
 													return idx + '' === fiscal._id + '';
 												});
 												user.fiscalcurrent = fiscalcurrent;
@@ -1220,7 +1221,7 @@ module.exports = {
 					} else {
 						message = usersCount + ' users found from -' + key_user.org.name + '-';
 					}
-					var users_send = new Array();
+					var users_send = [];
 					users.forEach(function(user) {
 						users_send.push({
 							id: user._id,
@@ -1260,7 +1261,7 @@ module.exports = {
 								} else {
 									message = usersCount + ' users found from -' + org.name + '-';
 								}
-								var send_users = new Array();
+								var send_users = [];
 								if(listing === 'basic') {
 									users.forEach(function(u) {
 										send_users.push(u.name);
@@ -1272,7 +1273,7 @@ module.exports = {
 										'users': send_users
 									});
 								} else if(listing === 'id') {
-									send_users = new Array();
+									send_users = [];
 									users.forEach(function(u) {
 										send_users.push({name: u.name, id: u._id});
 									});
@@ -1531,8 +1532,8 @@ module.exports = {
 				'message': 'No users given'
 			});
 		}
-	} // correctUsers
-	,
+	}, // correctUsers
+
 	validatePassword(req,res){
 		User.findOne({$or: [{name: req.body.username},{'person.email': req.body.username}]})
 			.then((user) => {
@@ -1561,6 +1562,7 @@ module.exports = {
 
 // private functions
 
+/*
 function properCase(obj) {
 	var name = new String(obj);
 	var newName = new String();
@@ -1572,6 +1574,7 @@ function properCase(obj) {
 	});
 	return newName;
 }
+*/
 
 function encryptPass(obj) {
 	var salt = bcrypt.genSaltSync(10);

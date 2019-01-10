@@ -167,7 +167,7 @@ module.exports = {
 			.then((results) => {
 				const [discussions,follows] = results;
 				if(discussions || discussions.length > 0) {
-					var discs_send = new Array();
+					var discs_send = [];
 					discussions.forEach(function(disc) {
 						var disc_send = {};
 						const vars = ['title','text','type','pubtype','root','comment','replyto','block','group','course'];

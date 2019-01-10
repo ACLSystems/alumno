@@ -12,7 +12,7 @@ mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 // Esquema para datos de API external de facturacion
 const APIExternalSchema = new Schema ({
-	idAPIExternal: {
+	id: {
 		type: Number
 	},
 	name: {
@@ -26,10 +26,7 @@ const APIExternalSchema = new Schema ({
 	reference: {
 		type: String,
 		maxlength: 45
-	},
-	tax: [{
-		id: Number
-	}]
+	}
 },{ _id: false });
 
 module.exports = APIExternalSchema;

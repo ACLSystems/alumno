@@ -41,7 +41,7 @@ const InvoiceSchema = new Schema ({
 	status: {							// Estatus de la factura. Siempre será 'open'
 		type: String,
 		enum: ['draft','open','closed','cancelled'],
-		default: 'open'
+		default: 'draft'
 	},
 	invoice: {						// Se requiere factura? True: Factura, False: Ticket de Venta
 		type: Boolean,
@@ -80,8 +80,13 @@ const InvoiceSchema = new Schema ({
 		enum: ['cash','debit-card','credit-card','service-card','transfer','check','electronic-wallet','electronic-money','grocery-voucher','other'],
 		default: 'other'
 	},
-	id: {
+	idAPIExternal: {
 		type: Number
+	},
+	syncAPIExternal: {
+		type: 'String',
+		enum: ['needed', 'complete'],
+		default: 'needed'
 	},
 	mod: [ModSchema]
 });

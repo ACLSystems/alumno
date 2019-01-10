@@ -66,14 +66,14 @@ module.exports = {
 		Term.find({ org: key_user.org._id})
 			.then((terms) => {
 				var termObj = {};
-				var term_inserted = new Array();
-				var term_updated = new Array();
-				var failed = new Array();
+				var term_inserted = [];
+				var term_updated = [];
+				var failed = [];
 				var nameStatus = 'ok';
 				var typeStatus = 'ok';
 				var status = 'ok';
 				terms_req.forEach(function(term) {
-					termObj = terms.find(function(termObj) { return termObj.name = term.name;});
+					termObj = terms.find(function(termObj) { return termObj.name === term.name;});
 					if(!termObj) {
 						if(!term.name) {
 							nameStatus = 'Name missing';
@@ -135,7 +135,7 @@ module.exports = {
 		if(req.query.skip) { skip = parseInt( req.query.skip ); }
 		if(req.query.limit) { limit = parseInt( req.query.limit ); }
 		if(req.query.query) { query = JSON.parse(req.query.query); }
-		var results = new Array();
+		var results = [];
 		var result = {};
 		Org.findOne({ name: req.query.org })
 			.then((org) => {

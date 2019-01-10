@@ -38,24 +38,24 @@ module.exports = {
 											ouProps.alias = [temp];
 										}
 									}
-									var permUsers = new Array();
+									var permUsers = [];
 									var permUser = { name: key_user.name, canRead: true, canModify: true, canSec: true };
 									permUsers.push(permUser);
 									permUser = { name: 'admin', canRead: true, canModify: true, canSec: true };
 									permUsers.push(permUser);
-									var permRoles = new Array();
+									var permRoles = [];
 									var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
 									permRoles.push(permRole);
 									permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
 									permRoles.push(permRole);
-									var permOrgs = new Array();
+									var permOrgs = [];
 									const permOrg = { name: ouProps.org, canRead: true, canModify: true, canSec: true };
 									permOrgs.push(permOrg);
 									ouProps.perm = { users: permUser, roles: permRoles, orgs: permOrgs };
 									const date = new Date();
 									const mod = {by: key_user.name, when: date, what: 'OU creation'};
 									ouProps.org = org._id;
-									ouProps.mod = new Array();
+									ouProps.mod = [];
 									ouProps.mod.push(mod);
 									OrgUnit.create(ouProps)
 										.then(() => {
@@ -80,24 +80,24 @@ module.exports = {
 												if(temp.constructor !== Array) {
 													ouProps.alias = [temp];
 												}
-												var permUsers = new Array();
+												var permUsers = [];
 												var permUser = { name: key_user.name, canRead: true, canModify: true, canSec: true };
 												permUsers.push(permUser);
 												permUser = { name: 'admin', canRead: true, canModify: true, canSec: true };
 												permUsers.push(permUser);
-												var permRoles = new Array();
+												var permRoles = [];
 												var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
 												permRoles.push(permRole);
 												permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
 												permRoles.push(permRole);
-												var permOrgs = new Array();
+												var permOrgs = [];
 												const permOrg = { name: ouProps.org, canRead: true, canModify: true, canSec: true };
 												permOrgs.push(permOrg);
 												ouProps.perm = { users: permUser, roles: permRoles, orgs: permOrgs };
 												const date = new Date();
 												const mod = {by: key_user.name, when: date, what: 'OU creation'};
 												ouProps.org = org._id;
-												ouProps.mod = new Array();
+												ouProps.mod = [];
 												ouProps.mod.push(mod);
 												OrgUnit.create(ouProps)
 													.then(() => {
@@ -161,9 +161,9 @@ module.exports = {
 								var status = 'ok';
 								var parentStatus = 'ok';
 								var orgStatus = 'ok';
-								var failed = new Array();
-								var ouTOinsert = new Array();
-								var ouToUpdate = new Array();
+								var failed = [];
+								var ouTOinsert = [];
+								var ouToUpdate = [];
 								req.body.forEach(function(ou) {  // Bucle
 									objOUParent = orgUnits.find(function(objOUParent) { return objOUParent.name === ou.parent; });
 									ouParent = req.body.find(function(ouParent) {return ouParent.name === ou.parent; });
@@ -182,13 +182,13 @@ module.exports = {
 										ou.org = org._id;
 										objOrgUnit = orgUnits.find(function(objOrgUnit) { return objOrgUnit.name === ou.name; });
 										if(!objOrgUnit) { // quiere decir que no existe el OU y key quiere insertar uno nuevo
-											var permUsers = new Array();
+											var permUsers = [];
 											var permUser = { name: key_user.name, canRead: true, canModify: true, canSec: true };
 											permUsers.push(permUser);
-											var permOrgs = new Array();
+											var permOrgs = [];
 											var permOrg = { name: ou.org, canRead: true, canModify: true, canSec: true };
 											permOrgs.push(permOrg);
-											var permRoles = new Array();
+											var permRoles = [];
 											var permRole =  { name: 'isOrg', canRead: true, canModify: true, canSec: true};
 											permRoles.push(permRole);
 											ou.perm = { users: permUsers, roles: permRoles, orgs: permOrgs };
@@ -198,7 +198,7 @@ module.exports = {
 												when: date,
 												what: 'OU creation'
 											};
-											ou.mod = new Array();
+											ou.mod = [];
 											ou.mod.push(mod);
 											if(ou.alias){
 												const temp = ou.alias;
@@ -214,7 +214,7 @@ module.exports = {
 												when: date,
 												what: 'OU modification'
 											};
-											ou.mod = new Array();
+											ou.mod = [];
 											ou.mod.push(mod);
 											ou._id = objOrgUnit._id;
 											ouToUpdate.push(ou);
@@ -271,7 +271,7 @@ module.exports = {
 		const lng = req.query.lng;
 		const lat = req.query.lat;
 		var org = 'public';
-		var result = new Array();
+		var result = [];
 		if(req.query.org) { org = req.query.org; }
 		var max = 20000;
 		if(req.query.max) { max = parseInt(req.query.max);}
@@ -335,7 +335,7 @@ module.exports = {
 					.skip(skip)
 					.limit(limit)
 					.then((ous) => {
-						var send_ous = new Array();
+						var send_ous = [];
 						ous.forEach(function(ou) {
 							send_ous.push({
 								id: ou._id,
@@ -388,7 +388,7 @@ module.exports = {
 					.skip(skip)
 					.limit(limit)
 					.then((ous) => {
-						var send_ous = new Array();
+						var send_ous = [];
 						ous.forEach(function(ou) {
 							send_ous.push({
 								id: ou._id,

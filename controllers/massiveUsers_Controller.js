@@ -41,17 +41,17 @@ module.exports = {
 							.then((orgUnits) => {
 								var objOrg = '';
 								var objOrgUnit = '';
-								var failed = new Array();
+								var failed = [];
 								var status = 'ok';
-								var permRoles = new Array();
+								var permRoles = [];
 								var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
 								permRoles.push(permRole);
 								permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
 								permRoles.push(permRole);
-								var usersToInsert = new Array();
-								var usersToInsertNames = new Array();
-								var usersToUpdate = new Array();
-								var usersToUpdateNames = new Array();
+								var usersToInsert = [];
+								var usersToInsertNames = [];
+								var usersToUpdate = [];
+								var usersToUpdateNames = [];
 								//var start						= new Date().getTime();
 								//var end 						= new Date().getTime();
 								//var timelimit				= 10000;
@@ -86,12 +86,12 @@ module.exports = {
 										}
 										status = 'ok';
 									} else {
-										var permUsers = new Array();
+										var permUsers = [];
 										var permUser = { name: key_user.name, canRead: true, canModify: true, canSec: true };
 										permUsers.push(permUser);
 										permUser = { name: val.name, canRead: true, canModify: true, canSec: false };
 										permUsers.push(permUser);
-										var permOrgs = new Array();
+										var permOrgs = [];
 										var permOrg = { name: val.org, canRead: true, canModify: true, canSec: false };
 										permOrgs.push(permOrg);
 										val.perm = { users: permUsers, roles: permRoles, orgs: permOrgs };
@@ -101,7 +101,7 @@ module.exports = {
 											when: date,
 											what: 'User creation'
 										};
-										val.mod = new Array();
+										val.mod = [];
 										val.mod.push(mod);
 										val.org = objOrg._id;
 										val.orgUnit = objOrgUnit._id;
@@ -124,7 +124,7 @@ module.exports = {
 										val.admin = admin;
 
 										if(val.name !== val.person.email) {
-											val.name === val.person.email;
+											val.name = val.person.email;
 										}
 										if(val.person.name) { val.person.name = properCase(val.person.name); }
 										if(val.person.fatherName) { val.person.fatherName = properCase(val.person.fatherName); }
@@ -415,9 +415,8 @@ module.exports = {
 
 // Private Functions
 
-function properCase(obj) {
-	var name = new String(obj);
-	var newName = new String();
+function properCase(name) {
+	var newName = '';
 	var nameArray = name.split(' ');
 	var arrayLength = nameArray.length - 1;
 	nameArray.forEach(function(word,i) {

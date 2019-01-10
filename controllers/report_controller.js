@@ -4,7 +4,7 @@ const Roster 		= require('../src/roster'										);
 const File 			= require('../src/files'										);
 const OrgUnit 	= require('../src/orgUnits'									);
 const Group 		= require('../src/groups'										);
-const Course 		= require('../src/courses'									);
+//const Course 		= require('../src/courses'									);
 const Err 			= require('../controllers/err500_controller');
 const Session		= require('../src/sessions'									);
 const Query 		= require('../src/queries'									);
@@ -36,13 +36,13 @@ module.exports = {
 			.group({ _id: '$orgUnit', count:{$sum:1}})
 			//.project({_id:0, 'orgUnit.name':1})
 			.then((results) => {
-				var ous = new Array();
+				var ous = [];
 				var total = 0;
 				results.forEach(function(ou) {
 					ous.push(ou._id);
 					total += ou.count;
 				});
-				var send_results = new Array();
+				var send_results = [];
 				OrgUnit.find({ _id: {$in: ous}})
 					.where('type').equals('campus')
 					.then((ous) => {
@@ -152,7 +152,7 @@ module.exports = {
 						.lean()
 						.then((resOUs) => {
 							if(resOUs && resOUs.length > 0){
-								var ouIds = new Array();
+								var ouIds = [];
 								resOUs.forEach(ou => {ouIds.push(mongoose.Types.ObjectId(ou._id));});
 								Group.find({orgUnit: {$in: resOUs}})
 									.select('name code orgUnit course')
@@ -193,10 +193,11 @@ module.exports = {
 												.then((orgOus) => {
 													// Acomodamos el arbol
 													var cut = [];
+													var i=0;
 													if(orgOus && orgOus.length > 0) {
 														var firstLiners = orgOus.map(a => a.ouName);
 														if(firstLiners  && firstLiners .length > 0) {
-															var i=0;
+															i=0;
 															firstLiners .forEach(fl => {
 																var j=0;
 																orgOus.forEach(gps => {
@@ -400,7 +401,7 @@ module.exports = {
 						})
 						.then((resultGrps) => {
 
-							var allGroups = new Array();
+							var allGroups = [];
 							var campus = {};
 							if(resultGrps && resultGrps.length > 0) {
 								if(resultGrps.length === 1) {
@@ -462,7 +463,7 @@ module.exports = {
 				if(key_user.orgUnit.type === 'campus') {
 					ou = key_user.orgUnit._id;
 				}
-				var ouIds = new Array();
+				var ouIds = [];
 				if(Array.isArray(ou)) {
 					if(ou.length > 0) {
 						ou.forEach(o => {ouIds.push(mongoose.Types.ObjectId(o));});
@@ -811,7 +812,7 @@ module.exports = {
 						})
 						.then((items) => {
 							if(items.length > 0 ) {
-								var files = new Array();
+								var files = [];
 								items.forEach(function(item) {
 									if(item.file) {
 										files.push(item.file);
@@ -820,7 +821,7 @@ module.exports = {
 								File.find({_id:{$in:files}})
 									.then((filesFound) => {
 										if(filesFound.length > 0) {
-											var results = new Array();
+											var results = [];
 											var i = 0;
 											while(i < filesFound.length) {
 												var found = false;
@@ -905,8 +906,8 @@ module.exports = {
 						.sort({orgUnit: 1, group: 1})
 						.select('student finalGrade track pass passDate')
 						.then((rosters)  => {
-							var send_rosters 		= new Array();
-							var send_group			= new Array();
+							var send_rosters 		= [];
+							var send_group			= [];
 							var lastGroup				= '';
 							var lastCourse			= '';
 							var duration				= '';
@@ -990,7 +991,7 @@ module.exports = {
 									at = 0;
 									ts = 0;
 									studentsPassed = 0;
-									send_group 		= new Array();
+									send_group 		= [];
 									lastGroup 		= roster.group.code;
 									lastCourse 		= roster.group.course.title;
 									duration			= roster.group.course.duration;
@@ -1071,8 +1072,8 @@ module.exports = {
 				.sort({group: 1})
 				.select('student finalGrade track pass passDate')
 				.then((rosters)  => {
-					var send_rosters 		= new Array();
-					var send_group			= new Array();
+					var send_rosters 		= [];
+					var send_group			= [];
 					var lastGroup				= '';
 					var lastCourse			= '';
 					var duration				= '';
@@ -1151,7 +1152,7 @@ module.exports = {
 							at = 0;
 							ts = 0;
 							studentsPassed = 0;
-							send_group 		= new Array();
+							send_group 		= [];
 							lastGroup 	= roster.group.code;
 							lastCourse 	= roster.group.course.title;
 							duration		= roster.group.course.duration;
@@ -1388,7 +1389,7 @@ module.exports = {
 				if(key_user.orgUnit.type === 'campus') {
 					ou = key_user.orgUnit._id;
 				}
-				var ouIds = new Array();
+				var ouIds = [];
 				if(Array.isArray(ou)) {
 					if(ou.length > 0) {
 						ou.forEach(o => {ouIds.push(mongoose.Types.ObjectId(o));});

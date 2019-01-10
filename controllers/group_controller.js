@@ -116,7 +116,7 @@ module.exports = {
 						group.instructor = key_user._id;
 					}
 					// Agregar la rúbrica recolectada desde los bloques
-					group.rubric = new Array();
+					group.rubric = [];
 					if(course.blocks.length > 0) {
 						course.blocks.forEach(function(block) {
 							group.rubric.push({
@@ -128,8 +128,8 @@ module.exports = {
 						});
 					}
 					//	---------
-					group.roster = new Array();
-					group.students = new Array();
+					group.roster = [];
+					group.students = [];
 					orgUnit.findById(group.orgUnit).lean()
 						.then((ou) => {
 							if(ou) {
@@ -271,7 +271,7 @@ module.exports = {
 			.populate('students', 'name person')
 			.lean()
 			.then((groups) => {
-				var send_groups = new Array();
+				var send_groups = [];
 				groups.forEach(function(group) {
 					var send_group = {
 						id					: group._id,
@@ -289,7 +289,7 @@ module.exports = {
 						endDate			: group.endDate,
 						numStudents : group.numStudents
 					};
-					var send_students = new Array();
+					var send_students = [];
 					group.students.forEach(function(s) {
 						send_students.push({
 							fullName: s.person.fullName
@@ -338,7 +338,7 @@ module.exports = {
 			.select('code name instructor course beginDate endDate numStudents students isActive presentBlockBy')
 			.lean()
 			.then((groups) => {
-				var send_groups = new Array();
+				var send_groups = [];
 				groups.forEach(function(group) {
 					var send_group = {
 						courseTitle			: group.course.title,
@@ -358,7 +358,7 @@ module.exports = {
 						presentBlockBy	: group.presentBlockBy
 					};
 					/*
-					var send_students = new Array();
+					var send_students = [];
 					group.roster.forEach(function(s) {
 						send_students.push({
 							fullName: s.student.person.fullName
@@ -431,7 +431,7 @@ module.exports = {
 										while (!(foundB && foundOnB) && cursor < blocks.length) {
 											if(dep.block +'' === blocks[cursor]._id +'') {
 												if(!blocks[cursor].dependencies) {
-													blocks[cursor].dependencies = new Array();
+													blocks[cursor].dependencies = [];
 												}
 												blocks[cursor].dependencies.push({
 													dep						: dep._id,
@@ -443,7 +443,7 @@ module.exports = {
 											}
 											if(dep.onBlock +'' === blocks[cursor]._id +'') {
 												if(!blocks[cursor].dependencies) {
-													blocks[cursor].dependencies = new Array();
+													blocks[cursor].dependencies = [];
 												}
 												blocks[cursor].dependencies.push({
 													dep						: dep._id
@@ -498,7 +498,7 @@ module.exports = {
 												if(blocks[0].section === 0) {
 													sec++;
 												}
-												var sections = new Array();
+												var sections = [];
 												var j = 0;
 												while (j < sec) {
 													var section = {};
@@ -813,7 +813,7 @@ module.exports = {
 			.then((results) => {
 				if(results && results.length > 0) {
 					results.forEach(function(item) {
-						var mod = new Array();
+						var mod = [];
 						if(item.mod && item.mod.length > 0){
 							mod = item.mod;
 							mod.push({
@@ -929,7 +929,7 @@ module.exports = {
 							newTask					: s.newTask
 						};
 
-						var send_grades = new Array();
+						var send_grades = [];
 
 						if(s.grades && s.grades.length > 0) {
 							var lastBlockSeen = -1;
@@ -950,7 +950,7 @@ module.exports = {
 											var b = 0;
 											while (b<numBlocks && !found) {
 												if(blocks[b]._id + '' === g.block + '') {
-													send_grade.blockid	= blocks[b]._id,
+													send_grade.blockid	= blocks[b]._id;
 													send_grade.section 	= blocks[b].section;
 													send_grade.number		= blocks[b].number;
 													if(g.tasktries && g.tasktries.length > 0) {
@@ -1071,7 +1071,7 @@ module.exports = {
 			.lean()
 			.then((items) => {
 				if(items.length > 0) {
-					var send_groups = new Array();
+					var send_groups = [];
 					items.forEach(function(item) {
 						var send_group = {};
 						send_group = {
@@ -1143,11 +1143,11 @@ module.exports = {
 				if(item) {
 					var myStatus 	= item.status;
 					var course		= item.group.course._id;
-					var blocks 		= new Array();
+					var blocks 		= [];
 					if(item.group.course.blocks && item.group.course.blocks.length > 0) {
 						blocks = item.group.course.blocks;
 					}
-					var new_blocks	= new Array();
+					var new_blocks	= [];
 					var new_block		= {};
 					blocks.forEach(function(block) {
 						new_block = {
@@ -1680,7 +1680,7 @@ module.exports = {
 										.populate('task', 'items')
 										.then((block) => {
 											if(block) {
-												var send_tasks = new Array();
+												var send_tasks = [];
 												var t = 0;
 												var lent = myGrade.tasks.length;
 												while (t < lent) {
@@ -1873,9 +1873,9 @@ module.exports = {
 			})
 			.then((item) => {
 				if(item) {
-					var blocks		= new Array();
+					var blocks		= [];
 					const bs 			= item.group.course.blocks;
-					var rubric  	= new Array();
+					var rubric  	= [];
 					if(item.group.rubric) {
 						rubric 	= item.group.rubric;
 					}
@@ -1988,7 +1988,7 @@ module.exports = {
 								send_grade.certificateNumber = certificate.padStart(7, '0');
 							}
 							if(item.pass && item.certificateNumber === 0) {
-								var cert = new Certificate;
+								var cert = new Certificate();
 								cert.roster = item._id;
 								Certificate.findOne({roster:cert.roster})
 									.then((certFound) => {
@@ -2145,7 +2145,7 @@ module.exports = {
 			.lean()
 			.then((item) => {
 				if(item) {
-					var blocks	= new Array();
+					var blocks	= [];
 					const bs 		= item.group.course.blocks;
 					item.grades.forEach(function(grade) {
 						if((grade.wq > 0 || grade.wt > 0 ) && grade.track > 0) {
@@ -2235,7 +2235,7 @@ module.exports = {
 			.lean()
 			.then((item) => {
 				if(item) {
-					var blocks	= new Array();
+					var blocks	= [];
 					const bs 		= item.group.course.blocks;
 					item.grades.forEach(function(grade) {
 						if(grade.wq > 0 || grade.wt > 0) {
@@ -2249,14 +2249,14 @@ module.exports = {
 										blockNumber	: bs[i].number
 									};
 									if(grade.wq > 0 && grade.quests.length > 0) {
-										var attempts = new Array();
+										var attempts = [];
 										grade.quests.forEach(function(attempt) {
 											attempts.push(attempt.attempt);
 										});
 										block.blockAttempts = attempts;
 									}
 									if(grade.wt > 0 && grade.tasks.length > 0) {
-										var tasks = new Array();
+										var tasks = [];
 										grade.tasks.forEach(function(task) {
 											tasks.push({
 												taskLabel	: task.label,
@@ -2346,7 +2346,7 @@ module.exports = {
 				if(roster && roster.group && roster.group.course) {
 					var course = roster.group.course;
 					if(course.resources && course.resources.length > 0) {
-						var send_resources = new Array();
+						var send_resources = [];
 						course.resources.forEach(function(resource) {
 							send_resources.push({
 								title			: resource.title,
@@ -2604,7 +2604,7 @@ module.exports = {
 									item.sections[lastSection].viewed = now;
 									save = true;
 								}	 else if (!item.sections) {
-									item.sections = new Array();
+									item.sections = [];
 									var h = 0;
 									while (h < lastSection) {
 										item.sections.push({});
@@ -2615,7 +2615,7 @@ module.exports = {
 							}
 						}
 					} else if(lastid !== 'empty' && lastSection === 0){
-						item.sections = new Array();
+						item.sections = [];
 						item.sections[lastSection].viewed = now;
 						save = true;
 					}
@@ -2704,7 +2704,7 @@ module.exports = {
 										const questionnarie 		= block.questionnarie;
 										const questions 				= questionnarie.questions;
 										var send_questionnarie 	= {};
-										var send_questions = new Array();
+										var send_questions = [];
 										questions.forEach(function(q) {
 											var send_question = {};
 											// Crear una forma de generar el id de la pregunta y guardarla si esta no existe
@@ -2724,7 +2724,7 @@ module.exports = {
 											if(q.display)			{send_question.display 		= q.display;		}
 											if(q.group && q.group.length > 0) 	{send_question.group = q.group;}
 											if(q.options && q.options.length > 0) {
-												var options = new Array();
+												var options = [];
 												q.options.forEach(function(o) {
 													options.push({
 														name	: o.name,
@@ -2734,7 +2734,7 @@ module.exports = {
 												});
 												send_question.options = options;
 											}
-											var answers = new Array();
+											var answers = [];
 											var answer = {};
 											if(q.answers && q.answers.length > 0){
 												q.answers.forEach(function(a) {
@@ -2755,7 +2755,7 @@ module.exports = {
 										});
 										// si está configurado que se vayan en random, ponlas en random
 
-										var send_questions_shuffle = new Array();
+										var send_questions_shuffle = [];
 										if(questionnarie.shuffle && questionnarie.shuffle === true){ send_questions_shuffle = shuffle(send_questions); }
 										else
 										{ send_questions_shuffle = send_questions; }
@@ -2785,7 +2785,7 @@ module.exports = {
 									}
 									if(block.type === 'task' && block.task) {
 										var task = block.task;
-										var send_items = new Array();
+										var send_items = [];
 										task.items.forEach(function(item) {
 											var send_item={
 												text: item.text,
@@ -2924,7 +2924,7 @@ module.exports = {
 		Group.find(query)
 			.then((groups) => {
 				if(groups.length > 0) {
-					var usersInGroups = new Array();
+					var usersInGroups = [];
 					groups.forEach(function(group) {
 						usersInGroups = usersInGroups.concat(group.students);
 					});
@@ -3263,7 +3263,7 @@ module.exports = {
 				.populate('student', 'person')
 				.then((items) => {
 					if(items && items.length > 0) {
-						var send_results = new Array();
+						var send_results = [];
 						var i = 0;
 						while(i < items.length){
 							if(items[i] && items[i].grades && items[i].grades.length > 0) {
@@ -3273,7 +3273,7 @@ module.exports = {
 							}
 							if(items[i] && items[i].sections && items[i].sections.length > 0 ) {
 								const sections = items[i].sections;
-								var new_sections = new Array();
+								var new_sections = [];
 								/*
 								items[i].sections.map(function(x) {
 									if(!x.viewed){
@@ -3282,8 +3282,9 @@ module.exports = {
 								});
 								*/
 								var k = 0;
+								var sec = {};
 								while (k < sections.length) {
-									var sec = {};
+
 									sec._id = sections[k]._id;
 									//if(sections[k].beginDate) { sec.beginDate = sections[k].beginDate; }
 									if(track === 100 ) {sec.viewed = now;}
@@ -3473,7 +3474,7 @@ module.exports = {
 					Roster.find({group: groupid, student: {$in: group.students}})
 						.select('student')
 						.then((items) => {
-							var roster = new Array();
+							var roster = [];
 							items.forEach(function(item) {
 								roster.push(item._id);
 							});

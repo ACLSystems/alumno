@@ -1,7 +1,6 @@
 const Org = require('../src/orgs');
 const OrgUnit = require('../src/orgUnits');
 const User = require('../src/users');
-const winston = require('winston');
 const bcrypt = require('bcrypt-nodejs');
 const newpass = require('../config/newpass');
 
@@ -14,19 +13,19 @@ module.exports = {
 		if(!req.body) return res.sendStatus(400).res.send({id: 417, err: 'Please, give data to process'});
 		const orgProps = req.body;
 		if(orgProps.alias) { orgProps.alias = parseArray(orgProps.alias); }
-		orgProps.mod = new Array();
+		orgProps.mod = [];
 		orgProps.mod.push(generateMod(key_user.name,'Org Creation'));
-		var permUsers = new Array();
+		var permUsers = [];
 		var permUser = { name: key_user.name, canRead: true, canModify: true, canSec: true };
 		permUsers.push(permUser);
 		permUser = { name: 'admin', canRead: true, canModify: true, canSec: true };
 		permUsers.push(permUser);
-		var permRoles = new Array();
+		var permRoles = [];
 		var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
 		permRoles.push(permRole);
 		permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
 		permRoles.push(permRole);
-		var permOrgs = new Array();
+		var permOrgs = [];
 		const permOrg = { name: orgProps.name, canRead: true, canModify: true, canSec: false };
 		permOrgs.push(permOrg);
 		orgProps.perm = { users: permUser, roles: permRoles, orgs: permOrgs };
@@ -34,17 +33,17 @@ module.exports = {
 			.then(() => {
 				logger.info('Org -' + orgProps.name + '- created');
 				// Creación de orgUnit padre
-				var permUsers = new Array();
+				var permUsers = [];
 				var permUser = { name: key_user.name, canRead: true, canModify: true, canSec: true };
 				permUsers.push(permUser);
 				permUser = { name: 'admin', canRead: true, canModify: true, canSec: true };
 				permUsers.push(permUser);
-				var permRoles = new Array();
+				var permRoles = [];
 				var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
 				permRoles.push(permRole);
 				permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
 				permRoles.push(permRole);
-				var permOrgs = new Array();
+				var permOrgs = [];
 				const permOrg = { name: orgProps.name, canRead: true, canModify: true, canSec: true };
 				permOrgs.push(permOrg);
 				var ouProps = {
@@ -54,7 +53,7 @@ module.exports = {
 					type: 'org',
 					perm: { users: permUser, roles: permRoles, orgs: permOrgs },
 				};
-				ouProps.mod = new Array();
+				ouProps.mod = [];
 				ouProps.mod.push(generateMod(key_user.name,'OU creation'));
 				OrgUnit.create(ouProps)
 					.then(() => {
@@ -140,7 +139,7 @@ module.exports = {
 			.skip(skip)
 			.limit(limit)
 			.then((orgs) => {
-				var send_orgs = new Array();
+				var send_orgs = [];
 				orgs.forEach(function(org) {
 					send_orgs.push(org.name);
 				});

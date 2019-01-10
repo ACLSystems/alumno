@@ -1161,7 +1161,7 @@ module.exports = function(req, res, next) {
 			});
 		} else {
 			var status = 'ok';
-			var result = new Array();
+			var result = [];
 			req.body.forEach(function(ou,index) {
 				if(!ou.name) {
 					result.push({ 'status': index + 'Error 1101: Missing OU name'});

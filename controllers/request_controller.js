@@ -1,5 +1,6 @@
-
-const Request 			= require('../src/requests');
+const Request 			= require('../src/requests'									);
+const Invoice 			= require('../src/invoices'									);
+const FiscalContact = require('../src/fiscalContacts'						);
 const Err 					= require('../controllers/err500_controller');
 
 module.exports = {
@@ -9,7 +10,7 @@ module.exports = {
 		request.requester = key_user._id;
 		request.mod = {
 			by: key_user.name,
-			when: new Date,
+			when: new Date(),
 			what: 'Request Creation'
 		};
 		request.own = {
@@ -66,19 +67,21 @@ module.exports = {
 						path: 'course',
 						select: 'code title type price cost'
 					}]
-				}])
-			.select('label tags details subtotal discount tax total status paymentNotes paymentDates files fiscalFiles requester date reqNumber temp1 temp2 temp3')
+				},
+				{
+					path: 'invoice',
+					select: 'date dueDate status paymentMethod syncAPIExternal items termsConditions cdfiUse'
+				}
+			])
+			.select('requester date reqNumber label tags subtotal discount tax total status statusReason details paymentNotes files fiscalFiles temp1 temp2 temp3 dateFinished dateCancelled paymentSystem paymentMethod paymentType paymentStatus invoiceFlag invoice')
 			.lean()
 			.then((request)  => {
 				if(request) {
 					res.status(200).json({
-						'status': 200,
-						'message': 'Request -' + request.reqNumber + '- found',
 						'request': request
 					});
 				} else {
-					res.status(200).json({
-						'status': 200,
+					res.status(404).json({
 						'message': 'Request -' + request.number + '- not found'
 					});
 				}
@@ -86,7 +89,7 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'request_controller','get -- Finding request --');
 			});
-	}, //create
+	}, //get
 
 	my(req,res) {
 		const key_user 	= res.locals.user;
@@ -121,64 +124,125 @@ module.exports = {
 	finish(req,res) {
 		const key_user 	= res.locals.user;
 		var   query 		= {};
-		if(req.body.number) {
-			query = {reqNumber: req.body.number};
+		var 	body 			= JSON.parse(JSON.stringify(req.body));
+		function fiscalContactFind(request,fiscal){
+			if(!request.fiscalTag) {
+				return FiscalContact.findOne({tag: fiscal.fiscalTag}).select('_id');
+			} else {
+				return new Promise((resolve) => {
+					resolve(request.fiscalTag);
+				});
+			}
 		}
-		if(req.body.id) {
-			query = {_id: req.body.id};
+		if(body.number) {
+			query = {reqNumber: body.number};
+		}
+		if(body.id) {
+			query = {_id: body.id};
 		}
 		var		fiscal		= {};
-		if(req.body.fiscal) {
-			fiscal	= req.body.fiscal;
+		if(body.fiscal) {
+			fiscal	= body.fiscal;
 		}
 		var invoice 		= false;
-		if(req.body.invoice) {
+		if(body && body.fiscal && body.fiscal.invoice) {
 			invoice = true;
 		}
+		if(body.fiscal && body.fiscal.tag && !body.fiscal.fiscalTag) {
+			body.fiscal.fiscalTag = body.fiscal.tag;
+			delete body.fiscal.tag;
+		}
+
 		Request.findOne(query)
 			.then((request)  => {
 				if(request.status === 'done') {
 					res.status(406).json({
-						'status': 406,
 						'message': 'Request -' + request.reqNumber + '- is in status done. Cannot be changed'
 					});
 					return;
 				}
 				if(request.status === 'cancelled') {
 					res.status(406).json({
-						'status': 406,
 						'message': 'Request -' + request.reqNumber + '- is cancelled. Cannot be finished'
 					});
 					return;
 				}
 				if(request.status === 'payment') {
 					res.status(406).json({
-						'status': 406,
-						'message': 'Request -' + request.reqNumber + '- is already in status Payment. Cannot be finished'
+						'message': 'Request -' + request.reqNumber + '- is already in status Payment. Cannot be finished again'
+					});
+					return;
+				}
+				if(invoice){
+					if(!request.fiscalTag && !fiscal.fiscalTag) {
+						res.status(406).json({
+							'message': 'We need fiscal tag in order to create invoice. Please provice fiscal tag or invoice=false avoid invoice creation'
+						});
+						return;
+					}
+				}
+				if(!request.items && !req.body.items) {
+					res.status(406).json({
+						'message': 'We need items in order to create invoice. Please provice items array in body to proceed'
 					});
 					return;
 				}
 				if(request){
 					request.mod.push({
 						by: key_user.name,
-						when: new Date,
+						when: new Date(),
 						what: 'Request change status to Payment'
 					});
 					request.status = 'payment';
-					request.dateFinished = new Date;
+					request.dateFinished = new Date();
+					if(!request.paymentSystem && !fiscal.paymentSystem) {
+						request.paymentSystem = 'payU';
+					}
 					request.temp1 = [];
 					request.temp2 = [];
 					request.temp3 = [];
-					request.invoice = invoice;
-					request.save()
-						.then(() => {
-							res.status(200).json({
-								'status': 200,
-								'message': 'Request -' + request.reqNumber + '- updated'
+					request.invoiceFlag = invoice;
+					request.paymentMethod = 'other';
+					request.paymentType = 'PPD';
+					request.paymentStatus = 'pending';
+					request.paymentNotes.push({
+						note: 'Request finished and payment process begin',
+						date: new Date()
+					});
+					request.items = req.body.items;
+					fiscalContactFind(request,fiscal)
+						.then((fc) => {
+							request.fiscalTag = fc;
+							Invoice.create({
+								requester: request.requester,
+								fiscalTag: request.fiscalTag,
+								request: request._id,
+								invoice: invoice,
+								items: request.items,
+								paymentMethod: request.paymentMethod,
+								mod: {
+									by: key_user.name,
+									when: new Date(),
+									what: 'Invoice creation'
+								}
+							}).then((inv) => {
+								request.invoice = inv._id;
+								request.save()
+									.then(() => {
+										res.status(200).json({
+											'status': 200,
+											'message': 'Request -' + request.reqNumber + '- finished. Payment process can proceed'
+										});
+									})
+									.catch((err) => {
+										Err.sendError(res,err,'request_controller','finish -- Updating request --');
+									});
+							}).catch((err) => {
+								Err.sendError(res,err,'request_controller','finish -- Creating invoice --');
 							});
 						})
 						.catch((err) => {
-							Err.sendError(res,err,'request_controller','finish -- Updating request --');
+							Err.sendError(res,err,'request_controller','finish -- finding Fiscal Contact --');
 						});
 				}
 			})
@@ -222,7 +286,7 @@ module.exports = {
 				if(request){
 					request.mod.push({
 						by: key_user.name,
-						when: new Date,
+						when: new Date(),
 						what: 'Request modified'
 					});
 					if(req.body.details	) {request.details 	= req.body.details;	}
@@ -299,12 +363,12 @@ module.exports = {
 					}
 					request.mod.push({
 						by: key_user.name,
-						when: new Date,
+						when: new Date(),
 						what: 'Request status change to Cancelled'
 					});
 					request.statusReason = req.body.statusReason;
 					request.status = 'cancelled';
-					request.dateCancelled = new Date;
+					request.dateCancelled = new Date();
 					request.save()
 						.then(() => {
 							res.status(200).json({

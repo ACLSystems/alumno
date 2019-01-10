@@ -1,4 +1,3 @@
-const winston = require('winston');
 const Org = require('../src/orgs');
 //const User = require('../src/users');
 const Career = require('../src/careers');
@@ -51,9 +50,9 @@ module.exports = {
 		Career.find({ org: key_user.org._id})
 			.then((careers) => {
 				var careerObj = {};
-				var car_inserted = new Array();
-				var car_updated = new Array();
-				var failed = new Array();
+				var car_inserted = [];
+				var car_updated = [];
+				var failed = [];
 				var nameStatus = 'ok';
 				var longNameStatus = 'ok';
 				var areaStatus = 'ok';
@@ -126,7 +125,7 @@ module.exports = {
 		if(req.query.skip) { skip = parseInt( req.query.skip ); }
 		if(req.query.limit) { limit = parseInt( req.query.limit ); }
 		if(req.query.query) { query = JSON.parse(req.query.query); }
-		var results = new Array();
+		var results = [];
 		var result = {};
 		Org.findOne({ name: req.query.org })
 			.then((org) => {

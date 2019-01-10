@@ -116,7 +116,7 @@ module.exports = function(req, res, next) {
 									url.indexOf('admin') === -1 &&
 									url.indexOf('/api/v1/') !== -1)) {
 						res.locals.user = user;
-						var session = new Session;
+						var session = new Session();
 						var date = new Date();
 						session.user 	= user._id;
 						session.date 	= date;
