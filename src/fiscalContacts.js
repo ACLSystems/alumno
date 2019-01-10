@@ -1,7 +1,6 @@
 // Definir requerimientos
 const mongoose 					= require('mongoose');
 const request 					= require('request-promise-native');
-const logger 						= require('../shared/winston-logger');
 const ModSchema 				= require('./modified'		);
 const PermissionsSchema = require('./permissions'	);
 const Config 						= require('./config'			);

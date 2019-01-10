@@ -21,6 +21,10 @@ const RequestSchema = new Schema ({
 	tags: [{
 		type: String
 	}],
+	fiscalTag: {
+		type: Schema.Types.ObjectId,
+		ref: 'fiscalContacts'
+	},
 	reqNumber: {
 		type: Number,
 		unique: true
@@ -96,9 +100,15 @@ const RequestSchema = new Schema ({
 		type: String,
 		enum: ['paypal','payU','mercadoLibre']
 	},
+	paymentMethod: {
+		type: String,
+		enum: ['cash','debit-card','credit-card','service-card','transfer','check','electronic-wallet','electronic-money','grocery-voucher','other'],
+		default: 'other'
+	},
 	paymentType: {
 		type: String,
-		enum: ['cash','creditCard','store','bank','other']
+		enum: ['PUE','PPD'],
+		default: 'PPD'
 	},
 	paymentStatus: {				// Estatus del pago: 'Pendiente', 'Pago Parcial', 'Completado', 'Otorgado'
 		type: String,
