@@ -1,5 +1,6 @@
 
 const mongoose 					= require('mongoose'				);
+const request 					= require('request-promise-native');
 const ModSchema 				= require('./modified'			);
 const Config 						= require('./config'				);
 const FiscalContact 		= require('./fiscalContacts');
@@ -9,6 +10,27 @@ const Schema 						= mongoose.Schema;
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 // Definir esquema y subesquemas
+
+const ItemsSchema = new Schema ({
+	id: {
+		type: Number
+	},
+	price: {
+		type: Number
+	},
+	reference: {
+		type: String
+	},
+	description: {
+		type: String
+	},
+	quantity: {
+		type: Number
+	},
+	discount: {
+		type: Number
+	}
+}, {_id: false});
 
 const InvoiceSchema = new Schema ({
 	// Datos requeridos por el API
@@ -47,34 +69,7 @@ const InvoiceSchema = new Schema ({
 		type: Boolean,
 		default: false
 	},
-	items: [{							// Validar con el Excel
-		id: {
-			type: Number
-		},
-		price: {
-			type: Number
-		},
-		reference: {
-			type: String
-		},
-		description: {
-			type: String
-		},
-		tax: [{
-			id: { type: String},
-			name: { type: String},
-			percentage: { type: String},
-			description: { type: String},
-			status: { type: String, enum: ['active', 'inactive']},
-			type: { type: String, enum: ['IEPS', 'IVA']}
-		}],
-		quantity: {
-			type: Number
-		},
-		discount: {
-			type: Number
-		}
-	}],
+	items: [ItemsSchema],
 	paymentMethod: {
 		type: String,
 		enum: ['cash','debit-card','credit-card','service-card','transfer','check','electronic-wallet','electronic-money','grocery-voucher','other'],
@@ -242,12 +237,126 @@ InvoiceSchema.virtual('dueDate').get(function() {
 
 // Definir middleware
 
+InvoiceSchema.pre('save', function(next) {
+	Promise.all([
+		Config.findOne({}),
+		FiscalContact.findById(this.fiscalTag)
+	])
+		.then((results) => {
+			//.then((config) => {
+			var [config,fc] = results;
+			if(config && config.apiExternal && config.apiExternal.enabled && config.apiExternal.uri) {
+				if(config.apiExternal.username && config.apiExternal.token) {
+					var send = cleanSend(this,config,fc);
+					console.log(send);
+					/*
+					const auth = new Buffer.from(config.apiExternal.username + ':' + config.apiExternal.token);
+					if(this.idAPIExternal) {
+						request({
+							method	: 'PUT',
+							uri			:	config.apiExternal.uri + '/api/v1/invoices' + this.idAPIExternal,
+							headers	: {
+								authorization: 'Basic ' + auth.toString('base64')
+							},
+							body		: send,
+							json		: true
+						}).then(() => {
+							this.syncAPIExternal = 'complete';
+							next();
+						}).catch((err) => {
+							next(err);
+						});
+					} else { // Generar factura nueva
+						request({
+							method	: 'POST',
+							uri			:	config.apiExternal.uri + '/api/v1/invoices',
+							headers	: {
+								authorization: 'Basic ' + auth.toString('base64')
+							},
+							body		: send,
+							json		: true
+						}).then((response) => {
+							this.idAPIExternal = response.id;
+						}).catch((err) => {
+							next(err);
+						});
+					}
+					*/
+				}
+			}
+			next();
+		})
+		.catch((err) => {
+			next(err);
+		});
+});
+
 // Definir índices
 
 InvoiceSchema.index( { 'requester'		: 1 	} );
 
-InvoiceSchema.set('toObject', {getters: true});
+InvoiceSchema.set('toObject', {getters: true, virtuals: true});
+InvoiceSchema.set('toJSON', {getters: true, virtuals: true});
 
 // Compilar esquema
 const Invoices = mongoose.model('invoices', InvoiceSchema);
 module.exports = Invoices;
+
+
+// Private functions
+
+function cleanSend(temp,config,fc) {
+	var s = JSON.parse(JSON.stringify(temp));
+	s.pricelist 			= config.fiscal.pricelist;
+	s.seller					= config.fiscal.seller;
+	s.term						= config.fiscal.term;
+	if(s.invoice		) {delete s.invoice;		}
+	if(s.requester	)	{delete s.requester;	}
+	if(s.fiscalTag	) {delete s.fiscalTag;	}
+	if(s.request		)	{delete s.request;		}
+	if(s.mod				) {delete s.mod;				}
+	if(s.createDate	) {delete s.createDate;	}
+	if(s.id 				)	{delete s.id; 				}
+	if(s.syncAPIExternal) {delete s.syncAPIExternal;}
+	delete s.__v;
+	delete s._id;
+	if(config && config.server && config.server.tz) {
+		s.date = Time.displayLocalTime(this.createDate,config.server.tz);
+		s.dueDate = s.date;
+	}
+	if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.termsConditions) {
+		s.termsConditions =  config.fiscal.invoice.termsConditions;
+	}
+	if(fc && fc.idAPIExternal) {
+		s.client = {id: fc.idAPIExternal};
+	}
+	if(config && config.fiscal && config.fiscal.invoice) {
+		if(this.invoice) {
+			if(config.fiscal.invoice.numberTemplateInvoice) {
+				s.numberTemplate = config.fiscal.invoice.numberTemplateInvoice;
+			}
+		} else {
+			if(config.fiscal.invoice.numberTemplateSaleTicket) {
+				s.numberTemplate = config.fiscal.invoice.numberTemplateSaleTicket;
+			}
+		}
+	}
+	if(fc && fc.cfdiUse) {
+		s.cfdiUse = fc.cfdiUse;
+	} else if(config && config.invoice && config.invoice.cdfiUse){
+		s.cfdiUse = config.invoice.cfdiUse;
+	}
+	if(config &&
+		config.fiscal &&
+		config.fiscal.invoice &&
+		config.fiscal.invoice.stamp &&
+		config.fiscal.invoice.stamp.generate) {
+		s.stamp = config.fiscal.invoice.stamp;
+	} else {
+		s.stamp = { generate: false };
+	}
+	if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.paymentType) {
+		s.paymentType = config.fiscal.invoice.paymentType;
+	}
+	return s;
+}

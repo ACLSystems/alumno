@@ -13,6 +13,9 @@ const ConfigSchema = new Schema({
 		}
 	},
 	fiscal: {
+		defaultTag: {
+			type: String
+		},
 		pricelist: { //Colocar el default de la lista de precios
 			id: {
 				type: String
