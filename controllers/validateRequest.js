@@ -72,7 +72,6 @@ module.exports = function(req, res, next) {
 		var decoded = jwt.decode(token, require('../config/secret')());
 		if(decoded.exp <= Date.now()) {
 			res.status(401).json({
-				'status': 401,
 				'message': 'Error 204: Token expired'
 			});
 			return;
@@ -89,6 +88,18 @@ module.exports = function(req, res, next) {
 			.select('-password')
 			.then((user) => {
 				if (user) {
+					if(!user.org.name) {
+						res.status(404).json({
+							'message': 'Error: Org user not found. Please contact Admin'
+						});
+						return;
+					}
+					if(!user.orgUnit.name) {
+						res.status(404).json({
+							'message': 'Error: OrgUnit for user not found. Please contact Admin'
+						});
+						return;
+					}
 					var dbUserObj = {
 						name: user.name,
 						roles: user.roles,
@@ -127,18 +138,14 @@ module.exports = function(req, res, next) {
 							});
 						next();
 					} else {
-						res.status(403);
-						res.json({
-							'status': 403,
+						res.status(403).json({
 							'message': 'Error 205: User not authorized'
 						});
 					}
 					return;
 				} else {
 					// No user with this name exists, respond back with a 401
-					res.status(401);
-					res.json({
-						'status': 401,
+					res.status(401).json({
 						'message': 'Error 206: User not valid'
 					});
 					return;

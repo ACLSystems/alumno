@@ -78,6 +78,12 @@ const InvoiceSchema = new Schema ({
 	idAPIExternal: {
 		type: Number
 	},
+	numberTemplate: {
+		id		: {type: String},
+		prefix: {type: String},
+		number: {type: String},
+		text	: {type: String}
+	},
 	syncAPIExternal: {
 		type: 'String',
 		enum: ['needed', 'complete'],
@@ -88,6 +94,7 @@ const InvoiceSchema = new Schema ({
 
 // Definir virtuals
 
+/*
 InvoiceSchema.virtual('termsConditions').get(function() {
 	Config.findOne({})
 		.then((config) => {
@@ -101,6 +108,8 @@ InvoiceSchema.virtual('termsConditions').get(function() {
 			return undefined;
 		});
 });
+
+
 InvoiceSchema.virtual('client').get(function() {
 	FiscalContact.findById(this.fiscalTag)
 		.then((fc) => {
@@ -155,8 +164,8 @@ InvoiceSchema.virtual('seller').get(function() {
 InvoiceSchema.virtual('priceList').get(function() {
 	Config.findOne({})
 		.then((config) => {
-			if(config && config.fiscal && config.fiscal.pricelist) {
-				return config.fiscal.pricelist;
+			if(config && config.fiscal && config.fiscal.priceList) {
+				return config.fiscal.priceList;
 			} else {
 				return undefined;
 			}
@@ -237,22 +246,20 @@ InvoiceSchema.virtual('dueDate').get(function() {
 
 // Definir middleware
 
+*/
 InvoiceSchema.pre('save', function(next) {
 	Promise.all([
 		Config.findOne({}),
 		FiscalContact.findById(this.fiscalTag)
 	])
 		.then((results) => {
-			//.then((config) => {
 			var [config,fc] = results;
 			if(config && config.apiExternal && config.apiExternal.enabled && config.apiExternal.uri) {
 				if(config.apiExternal.username && config.apiExternal.token) {
-					var send = cleanSend(this,config,fc);
-					console.log(send);
-					/*
 					const auth = new Buffer.from(config.apiExternal.username + ':' + config.apiExternal.token);
-					if(this.idAPIExternal) {
-						request({
+					var send = cleanSend(this,config,fc);
+					if(this.idAPIExternal) { // Modificar factura
+						return request({
 							method	: 'PUT',
 							uri			:	config.apiExternal.uri + '/api/v1/invoices' + this.idAPIExternal,
 							headers	: {
@@ -263,11 +270,9 @@ InvoiceSchema.pre('save', function(next) {
 						}).then(() => {
 							this.syncAPIExternal = 'complete';
 							next();
-						}).catch((err) => {
-							next(err);
 						});
 					} else { // Generar factura nueva
-						request({
+						return request({
 							method	: 'POST',
 							uri			:	config.apiExternal.uri + '/api/v1/invoices',
 							headers	: {
@@ -277,11 +282,11 @@ InvoiceSchema.pre('save', function(next) {
 							json		: true
 						}).then((response) => {
 							this.idAPIExternal = response.id;
-						}).catch((err) => {
-							next(err);
+							this.numberTemplate = response.numberTemplate;
+							this.syncAPIExternal = 'complete';
+							next();
 						});
 					}
-					*/
 				}
 			}
 			next();
@@ -307,7 +312,7 @@ module.exports = Invoices;
 
 function cleanSend(temp,config,fc) {
 	var s = JSON.parse(JSON.stringify(temp));
-	s.pricelist 			= config.fiscal.pricelist;
+	s.priceList 			= config.fiscal.priceList;
 	s.seller					= config.fiscal.seller;
 	s.term						= config.fiscal.term;
 	if(s.invoice		) {delete s.invoice;		}
@@ -321,30 +326,47 @@ function cleanSend(temp,config,fc) {
 	delete s.__v;
 	delete s._id;
 	if(config && config.server && config.server.tz) {
-		s.date = Time.displayLocalTime(this.createDate,config.server.tz);
-		s.dueDate = s.date;
+		var newDate = new Date();
+		if(this.createDate){
+			s.date = Time.displayLocalTime(this.createDate,config.server.tz);
+			s.date = s.date.date;
+			s.dueDate = s.date;
+		} else {
+			s.date = Time.displayLocalTime(newDate,config.server.tz);
+			s.date = s.date.date;
+			s.dueDate = s.date;
+		}
 	}
 	if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.termsConditions) {
 		s.termsConditions =  config.fiscal.invoice.termsConditions;
 	}
 	if(fc && fc.idAPIExternal) {
-		s.client = {id: fc.idAPIExternal};
+		s.client = fc.idAPIExternal;
 	}
 	if(config && config.fiscal && config.fiscal.invoice) {
 		if(this.invoice) {
 			if(config.fiscal.invoice.numberTemplateInvoice) {
 				s.numberTemplate = config.fiscal.invoice.numberTemplateInvoice;
 			}
+			if(fc && fc.cfdiUse) {
+				s.cfdiUse = fc.cfdiUse;
+			} else if(config && config.invoice && config.invoice.cdfiUse){
+				s.cfdiUse = config.invoice.cfdiUse;
+			}
+			if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.paymentType) {
+				s.paymentType = config.fiscal.invoice.paymentType;
+			}
+			this.invoiceFlag = true;
 		} else {
 			if(config.fiscal.invoice.numberTemplateSaleTicket) {
 				s.numberTemplate = config.fiscal.invoice.numberTemplateSaleTicket;
 			}
+			this.paymentType = 'PUE';
+			s.paymentType = 'PUE';
+			this.paymentMethod = 'cash';
+			s.paymentMethod = 'cash';
+			this.invoiceFlag = false;
 		}
-	}
-	if(fc && fc.cfdiUse) {
-		s.cfdiUse = fc.cfdiUse;
-	} else if(config && config.invoice && config.invoice.cdfiUse){
-		s.cfdiUse = config.invoice.cfdiUse;
 	}
 	if(config &&
 		config.fiscal &&
@@ -355,8 +377,6 @@ function cleanSend(temp,config,fc) {
 	} else {
 		s.stamp = { generate: false };
 	}
-	if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.paymentType) {
-		s.paymentType = config.fiscal.invoice.paymentType;
-	}
+
 	return s;
 }

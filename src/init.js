@@ -304,7 +304,7 @@ module.exports = {
 				if(!config){
 					Config.create({
 						fiscal: {
-							pricelist: {
+							priceList: {
 								id: '',name: ''
 							},
 							seller: {

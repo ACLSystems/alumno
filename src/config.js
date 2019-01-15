@@ -16,7 +16,7 @@ const ConfigSchema = new Schema({
 		defaultTag: {
 			type: String
 		},
-		pricelist: { //Colocar el default de la lista de precios
+		priceList: { //Colocar el default de la lista de precios
 			id: {
 				type: String
 			},
@@ -64,10 +64,10 @@ const ConfigSchema = new Schema({
 				default: 'open'
 			},
 			numberTemplateInvoice: {
-				type: String
+				id: {type: String}
 			},
 			numberTemplateSaleTicket: {
-				type: String
+				id: {type: String}
 			},
 			paymentMethod: {
 				type: String,

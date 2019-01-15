@@ -162,7 +162,7 @@ FiscalContactSchema.pre('save', function(next) {
 										next(err);
 									});
 								} else {
-									return request({
+									request({
 										method	: 'POST',
 										uri			: config.apiExternal.uri + '/api/v1/contacts',
 										headers	: {
@@ -172,6 +172,7 @@ FiscalContactSchema.pre('save', function(next) {
 										json		: true
 									}).then((response) =>  {
 										this.lastResponse = response;
+										next();
 									}).catch((err) => {
 										next(err);
 									});
@@ -217,7 +218,7 @@ function cleanSend(temp, config) {
 	if(s.create				) {delete s.create;				}
 	if(s.corporate		) {delete s.corporate;		}
 	//if(s.lastResponse	) {delete s.lastResponse;	}
-	s.pricelist 			= config.fiscal.pricelist;
+	s.priceList 			= config.fiscal.priceList;
 	s.seller					= config.fiscal.seller;
 	s.term						= config.fiscal.term;
 	delete s.__v;
