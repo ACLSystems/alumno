@@ -29,7 +29,10 @@ const ItemsSchema = new Schema ({
 	},
 	discount: {
 		type: Number
-	}
+	},
+	tax: [{
+		id: { type: Number}
+	}]
 }, {_id: false});
 
 const InvoiceSchema = new Schema ({
@@ -41,13 +44,15 @@ const InvoiceSchema = new Schema ({
 	},
 	fiscalTag: {
 		type: Schema.Types.ObjectId,
-		ref: 'fiscalContacts',
-		required: true
+		ref: 'fiscalContacts'
 	},
 	request: {
 		type: Schema.Types.ObjectId,
 		ref: 'requests',
 		required: true
+	},
+	client: {
+		id: {type: String}
 	},
 	// Datos requeridos por Alegra ------------------------------
 	createDate: { 							// Fecha de Creación
@@ -69,11 +74,20 @@ const InvoiceSchema = new Schema ({
 		type: Boolean,
 		default: false
 	},
+	cfdiUse: {
+		type: String,
+		default: 'G03'
+	},
 	items: [ItemsSchema],
 	paymentMethod: {
 		type: String,
 		enum: ['cash','debit-card','credit-card','service-card','transfer','check','electronic-wallet','electronic-money','grocery-voucher','other'],
 		default: 'other'
+	},
+	paymentType: {
+		type: String,
+		enum: ['PUE','PPD'],
+		default: 'PPD'
 	},
 	idAPIExternal: {
 		type: Number
@@ -89,12 +103,15 @@ const InvoiceSchema = new Schema ({
 		enum: ['needed', 'complete'],
 		default: 'needed'
 	},
+	total: { type: Number },
+	totalPaid: {type: Number},
+	balance: {type: Number},
+	decimalPrecision: {type: String},
 	mod: [ModSchema]
 });
 
 // Definir virtuals
 
-/*
 InvoiceSchema.virtual('termsConditions').get(function() {
 	Config.findOne({})
 		.then((config) => {
@@ -110,44 +127,6 @@ InvoiceSchema.virtual('termsConditions').get(function() {
 });
 
 
-InvoiceSchema.virtual('client').get(function() {
-	FiscalContact.findById(this.fiscalTag)
-		.then((fc) => {
-			if(fc && fc.idAPIExternal) {
-				return fc.idAPIExternal;
-			} else {
-				return undefined;
-			}
-		})
-		.catch(() => {
-			return undefined;
-		});
-});
-InvoiceSchema.virtual('numberTemplate').get(function() {
-	Config.findById({})
-		.then((config) => {
-			if(config && config.fiscal && config.fiscal.invoice) {
-				if(this.invoice) {
-					if(config.fiscal.invoice.numberTemplateInvoice) {
-						return config.fiscal.invoice.numberTemplateInvoice;
-					} else {
-						return undefined;
-					}
-				} else {
-					if(config.fiscal.invoice.numberTemplateSaleTicket) {
-						return config.fiscal.invoice.numberTemplateSaleTicket;
-					} else {
-						return undefined;
-					}
-				}
-			} else {
-				return undefined;
-			}
-		})
-		.catch(() => {
-			return undefined;
-		});
-});
 InvoiceSchema.virtual('seller').get(function() {
 	Config.findOne({})
 		.then((config) => {
@@ -161,6 +140,8 @@ InvoiceSchema.virtual('seller').get(function() {
 			return undefined;
 		});
 });
+
+
 InvoiceSchema.virtual('priceList').get(function() {
 	Config.findOne({})
 		.then((config) => {
@@ -174,19 +155,7 @@ InvoiceSchema.virtual('priceList').get(function() {
 			return undefined;
 		});
 });
-InvoiceSchema.virtual('cfdiUse').get(function() {
-	FiscalContact.findById(this.fiscalTag)
-		.then((fc) => {
-			if(fc && fc.cfdiUse) {
-				return fc.cfdiUse;
-			} else {
-				return undefined;
-			}
-		})
-		.catch(() => {
-			return undefined;
-		});
-});
+
 InvoiceSchema.virtual('stamp').get(function() {
 	Config.findOne({})
 		.then((config) => {
@@ -204,19 +173,7 @@ InvoiceSchema.virtual('stamp').get(function() {
 			return undefined;
 		});
 });
-InvoiceSchema.virtual('paymentType').get(function() {
-	Config.findOne({})
-		.then((config) => {
-			if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.paymentType) {
-				return config.fiscal.invoice.paymentType;
-			} else {
-				return undefined;
-			}
-		})
-		.catch(() => {
-			return undefined;
-		});
-});
+
 InvoiceSchema.virtual('date').get(function() {
 	Config.findOne({})
 		.then((config) => {
@@ -230,6 +187,8 @@ InvoiceSchema.virtual('date').get(function() {
 			return undefined;
 		});
 });
+
+
 InvoiceSchema.virtual('dueDate').get(function() {
 	Config.findOne({})
 		.then((config) => {
@@ -246,54 +205,131 @@ InvoiceSchema.virtual('dueDate').get(function() {
 
 // Definir middleware
 
-*/
-InvoiceSchema.pre('save', function(next) {
-	Promise.all([
+InvoiceSchema.pre('save', async function(next) {
+
+	let [config,fc] = await Promise.all([
 		Config.findOne({}),
-		FiscalContact.findById(this.fiscalTag)
-	])
-		.then((results) => {
-			var [config,fc] = results;
-			if(config && config.apiExternal && config.apiExternal.enabled && config.apiExternal.uri) {
-				if(config.apiExternal.username && config.apiExternal.token) {
-					const auth = new Buffer.from(config.apiExternal.username + ':' + config.apiExternal.token);
-					var send = cleanSend(this,config,fc);
-					if(this.idAPIExternal) { // Modificar factura
-						return request({
-							method	: 'PUT',
-							uri			:	config.apiExternal.uri + '/api/v1/invoices' + this.idAPIExternal,
-							headers	: {
-								authorization: 'Basic ' + auth.toString('base64')
-							},
-							body		: send,
-							json		: true
-						}).then(() => {
-							this.syncAPIExternal = 'complete';
-							next();
-						});
-					} else { // Generar factura nueva
-						return request({
-							method	: 'POST',
-							uri			:	config.apiExternal.uri + '/api/v1/invoices',
-							headers	: {
-								authorization: 'Basic ' + auth.toString('base64')
-							},
-							body		: send,
-							json		: true
-						}).then((response) => {
-							this.idAPIExternal = response.id;
-							this.numberTemplate = response.numberTemplate;
-							this.syncAPIExternal = 'complete';
-							next();
-						});
-					}
+		FiscalContact.findById(this.fiscalTag).select('idAPIExternal cfdiUse')
+	]);
+	if(config &&
+		config.apiExternal &&
+		config.apiExternal.enabled &&
+		config.apiExternal.uri &&
+		config.apiExternal.username &&
+		config.apiExternal.token) {
+		this.fiscalTag 	= fc._id;
+		// Nos aseguramos que cada elemento del arreglo de items lleve TAX
+		if(config.fiscal &&
+			config.fiscal.invoice &&
+			config.fiscal.invoice.tax) { // Si hay configuración de tax...
+			this.items = this.items.map(item => {item.tax = config.fiscal.invoice.tax; return item;});
+		}
+		let send = JSON.parse(JSON.stringify(this));
+		// colocamos las propiedades definidas en la configuración
+		send.priceList 	= config.fiscal.priceList;
+		send.seller			= config.fiscal.seller;
+		send.term				= config.fiscal.term;
+		// borramos las que no necesitaremos si existen
+		if(send.requester	)	{delete send.requester;	}
+		if(send.fiscalTag	) {delete send.fiscalTag;	}
+		if(send.request		)	{delete send.request;		}
+		if(send.mod				) {delete send.mod;				}
+		if(send.id 				)	{delete send.id; 				}
+		if(send.syncAPIExternal) {delete send.syncAPIExternal;}
+		delete send.__v;
+		delete send._id;
+		// colocamos fechas en el formato solicitado confirme al tz configurado
+		if(config && config.server && config.server.tz) {
+			const newDate = new Date();
+			if(send.createDate){
+				send.date = Time.displayLocalTime(send.createDate,config.server.tz);
+				send.date = send.date.date;
+				send.dueDate = send.date;
+			} else {
+				send.date = Time.displayLocalTime(newDate,config.server.tz);
+				send.date = send.date.date;
+				send.dueDate = send.date;
+			}
+		}
+		// al final borramos la propiedad que no usaremos
+		if(send.createDate) {delete send.createDate;}
+		// agregamos propiedades necesarias
+		if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.termsConditions) {
+			send.termsConditions =  config.fiscal.invoice.termsConditions;
+		}
+		// agreamos al cliente (o publico en general) según sea el caso
+		if(fc && fc.idAPIExternal) {
+			send.client = {id: fc.idAPIExternal};
+		}
+		// configuramos la factura/ticket de venta
+		if(config && config.fiscal && config.fiscal.invoice) {
+			if(send.invoice) {
+				if(config.fiscal.invoice.numberTemplateInvoice) {
+					send.numberTemplate = config.fiscal.invoice.numberTemplateInvoice;
+					this.numberTemplate = config.fiscal.invoice.numberTemplateInvoice;
+				}
+				if(fc && fc.cfdiUse) {
+					send.cfdiUse	= fc.cfdiUse;
+					this.cfdiUse	= fc.cfdiUse;
+				} else if(config && config.invoice && config.invoice.cdfiUse){
+					send.cfdiUse	= config.invoice.cfdiUse;
+					this.cfdiUse	= config.invoice.cfdiUse;
+				}
+				if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.paymentType) {
+					send.paymentType = config.fiscal.invoice.paymentType;
+					this.paymentType = config.fiscal.invoice.paymentType;
+				}
+			} else {
+				if(config.fiscal.invoice.numberTemplateSaleTicket) {
+					send.numberTemplate = config.fiscal.invoice.numberTemplateSaleTicket;
+					this.numberTemplate = config.fiscal.invoice.numberTemplateSaleTicket;
+					send.paymentType 		= 'PUE';
+					send.paymentMethod 	= 'cash';
+					this.paymentType 		= 'PUE';
+					this.paymentMethod 	= 'cash';
+					delete send.cfdiUse;
+					delete this.cfdiUse;
 				}
 			}
+		}
+		if(send.invoice || send.invoice === 'false') {delete send.invoice;}
+		const auth = new Buffer.from(config.apiExternal.username + ':' + config.apiExternal.token);
+		let options = {};
+		if(this.idAPIExternal) {
+			options = {
+				method	: 'PUT',
+				uri			:	config.apiExternal.uri + '/api/v1/invoices' + this.idAPIExternal,
+				headers	: {
+					authorization: 'Basic ' + auth.toString('base64')
+				},
+				body		: send,
+				json		: true
+			};
+		} else {
+			options = {
+				method	: 'POST',
+				uri			:	config.apiExternal.uri + '/api/v1/invoices',
+				headers	: {
+					authorization: 'Basic ' + auth.toString('base64')
+				},
+				body		: send,
+				json		: true
+			};
+		}
+		let response = await request(options);
+		if(response){
+			this.syncAPIExternal	= 'complete';
+			this.idAPIExternal 		= response.id;
+			this.numberTemplate		= response.numberTemplate;
+			this.status						= response.status;
+			this.client						= response.client;
+			this.total						= response.total;
+			this.totalPaid				= response.totalPaid;
+			this.balance					= response.balance;
 			next();
-		})
-		.catch((err) => {
-			next(err);
-		});
+		}
+	}
+	next();
 });
 
 // Definir índices
@@ -309,74 +345,3 @@ module.exports = Invoices;
 
 
 // Private functions
-
-function cleanSend(temp,config,fc) {
-	var s = JSON.parse(JSON.stringify(temp));
-	s.priceList 			= config.fiscal.priceList;
-	s.seller					= config.fiscal.seller;
-	s.term						= config.fiscal.term;
-	if(s.invoice		) {delete s.invoice;		}
-	if(s.requester	)	{delete s.requester;	}
-	if(s.fiscalTag	) {delete s.fiscalTag;	}
-	if(s.request		)	{delete s.request;		}
-	if(s.mod				) {delete s.mod;				}
-	if(s.createDate	) {delete s.createDate;	}
-	if(s.id 				)	{delete s.id; 				}
-	if(s.syncAPIExternal) {delete s.syncAPIExternal;}
-	delete s.__v;
-	delete s._id;
-	if(config && config.server && config.server.tz) {
-		var newDate = new Date();
-		if(this.createDate){
-			s.date = Time.displayLocalTime(this.createDate,config.server.tz);
-			s.date = s.date.date;
-			s.dueDate = s.date;
-		} else {
-			s.date = Time.displayLocalTime(newDate,config.server.tz);
-			s.date = s.date.date;
-			s.dueDate = s.date;
-		}
-	}
-	if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.termsConditions) {
-		s.termsConditions =  config.fiscal.invoice.termsConditions;
-	}
-	if(fc && fc.idAPIExternal) {
-		s.client = fc.idAPIExternal;
-	}
-	if(config && config.fiscal && config.fiscal.invoice) {
-		if(this.invoice) {
-			if(config.fiscal.invoice.numberTemplateInvoice) {
-				s.numberTemplate = config.fiscal.invoice.numberTemplateInvoice;
-			}
-			if(fc && fc.cfdiUse) {
-				s.cfdiUse = fc.cfdiUse;
-			} else if(config && config.invoice && config.invoice.cdfiUse){
-				s.cfdiUse = config.invoice.cfdiUse;
-			}
-			if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.paymentType) {
-				s.paymentType = config.fiscal.invoice.paymentType;
-			}
-			this.invoiceFlag = true;
-		} else {
-			if(config.fiscal.invoice.numberTemplateSaleTicket) {
-				s.numberTemplate = config.fiscal.invoice.numberTemplateSaleTicket;
-			}
-			this.paymentType = 'PUE';
-			s.paymentType = 'PUE';
-			this.paymentMethod = 'cash';
-			s.paymentMethod = 'cash';
-			this.invoiceFlag = false;
-		}
-	}
-	if(config &&
-		config.fiscal &&
-		config.fiscal.invoice &&
-		config.fiscal.invoice.stamp &&
-		config.fiscal.invoice.stamp.generate) {
-		s.stamp = config.fiscal.invoice.stamp;
-	} else {
-		s.stamp = { generate: false };
-	}
-
-	return s;
-}

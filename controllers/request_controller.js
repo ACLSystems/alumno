@@ -55,7 +55,11 @@ module.exports = {
 			.populate([
 				{
 					path: 'requester',
-					select: 'name fiscal person'
+					select: 'name fiscal person fiscalcurrent',
+					populate: {
+						path: 'fiscal',
+						select: 'tag identification'
+					}
 				},
 				{
 					path: 'details.item',
@@ -122,27 +126,138 @@ module.exports = {
 	}, //my
 
 	finish(req,res) {
+		// funciones asíncronas para mongoose ---------------------
+
+		// Esta función busca la petición (Request) que queremos "terminar"
+		async function finishRequest(query) {
+			let queryFC = {};
+			if(body.fiscal && body.fiscal.fiscalTag) {
+				queryFC = {tag: body.fiscal.fiscalTag};
+			} else {
+				queryFC = {tag: 'XAXX010101000'};
+			}
+			await Promise.all([
+				Request.findOne(query),
+				FiscalContact.findOne(queryFC).select('_id')])
+				.then(async function(results) {
+					var [request,fc] = results;
+					if(request) {
+						if(request.status === 'done') {
+							res.status(406).json({
+								'message': 'Request -' + request.reqNumber + '- is in status done. Cannot be changed'
+							});
+							return;
+						}
+						if(request.status === 'cancelled') {
+							res.status(406).json({
+								'message': 'Request -' + request.reqNumber + '- is cancelled. Cannot be finished'
+							});
+							return;
+						}
+						if(request.status === 'payment') {
+							res.status(406).json({
+								'message': 'Request -' + request.reqNumber + '- is already in status Payment. Cannot be finished again'
+							});
+							return;
+						}
+						if(invoice){
+							if(!request.fiscalTag && !body.fiscal.fiscalTag) {
+								res.status(406).json({
+									'message': 'We need fiscal tag in order to create invoice. Please provice fiscal tag or invoice=false avoid invoice creation'
+								});
+								return;
+							}
+						}
+						if(!req.body.items) {
+							res.status(406).json({
+								'message': 'We need items in order to create invoice. Please provice items array in body to proceed'
+							});
+							return;
+						}
+						if(!Array.isArray(req.body.items)) {
+							res.status(406).json({
+								'message': 'Items must be send in array to create invoice. Please provice items array in body to proceed'
+							});
+							return;
+						}
+						if(req.body.items.length === 0) {
+							res.status(406).json({
+								'message': 'Items array is empty. Please provice items array in body to proceed'
+							});
+							return;
+						}
+						request.mod.push({
+							by: key_user.name,
+							when: new Date(),
+							what: 'Request change status to Payment'
+						});
+						request.dateFinished = new Date();
+						if(!request.paymentSystem && !body.fiscal.paymentSystem) {
+							request.paymentSystem = 'payU';
+						}
+						request.temp1 = [];
+						request.temp2 = [];
+						request.temp3 = [];
+						request.invoiceFlag = invoice;
+						request.paymentMethod = 'other';
+						request.paymentStatus = 'pending';
+						request.paymentNotes.push({
+							note: 'Request finished and payment process begin',
+							date: new Date()
+						});
+						request.fiscalTag = fc;
+						var inv = new Invoice({
+							requester			: request.requester,
+							fiscalTag			: request.fiscalTag,
+							request				: request._id,
+							invoice				: invoice,
+							items					: req.body.items,
+							paymentMethod	: request.paymentMethod,
+							createDate		: new Date(),
+							mod: {
+								by: key_user.name,
+								when: new Date(),
+								what: 'Invoice creation'
+							}
+						});
+						request.invoice = inv._id;
+						request.paymentNotes.push({
+							note: 'Invoice '+ inv.idAPIExternal +'created',
+							date: new Date()
+						});
+						request.status = 'payment';
+						await Promise.all([
+							inv.save(),
+							request.save()
+						]).then(() => {
+							res.status(200).json({
+								'message': 'Request -' + request.reqNumber + '- finished. Invoice '+ inv.numberTemplate.prefix + inv.numberTemplate.number +' created. Payment process can proceed'
+							});
+						}).catch((err) => {
+							processError(res,err,'request_controller','finish -- Updating request --');
+						});
+					} else {
+						res.status(404).json({
+							'message': 'Request -' + body.number + '- not found'
+						});
+					}
+				}).catch((err) => {
+					Err.sendError(res,err,'request_controller','finish -- Finding request --');
+				});
+		}
+
+		// -------------------------------
+
 		const key_user 	= res.locals.user;
 		var   query 		= {};
 		var 	body 			= JSON.parse(JSON.stringify(req.body));
-		function fiscalContactFind(request,fiscal){
-			if(!request.fiscalTag) {
-				return FiscalContact.findOne({tag: fiscal.fiscalTag}).select('_id');
-			} else {
-				return new Promise((resolve) => {
-					resolve(request.fiscalTag);
-				});
-			}
-		}
+
+		// Seteamos propiedades
 		if(body.number) {
 			query = {reqNumber: body.number};
 		}
 		if(body.id) {
 			query = {_id: body.id};
-		}
-		var		fiscal		= {};
-		if(body.fiscal) {
-			fiscal	= body.fiscal;
 		}
 		var invoice 		= false;
 		if(body && body.fiscal && body.fiscal.invoice) {
@@ -153,111 +268,9 @@ module.exports = {
 			delete body.fiscal.tag;
 		}
 
-		Request.findOne(query)
-			.then((request)  => {
-				if(request){
-					if(request.status === 'done') {
-						res.status(406).json({
-							'message': 'Request -' + request.reqNumber + '- is in status done. Cannot be changed'
-						});
-						return;
-					}
-					if(request.status === 'cancelled') {
-						res.status(406).json({
-							'message': 'Request -' + request.reqNumber + '- is cancelled. Cannot be finished'
-						});
-						return;
-					}
-					if(request.status === 'payment') {
-						res.status(406).json({
-							'message': 'Request -' + request.reqNumber + '- is already in status Payment. Cannot be finished again'
-						});
-						return;
-					}
-					if(invoice){
-						if(!request.fiscalTag && !fiscal.fiscalTag) {
-							res.status(406).json({
-								'message': 'We need fiscal tag in order to create invoice. Please provice fiscal tag or invoice=false avoid invoice creation'
-							});
-							return;
-						}
-					}
-					if(!request.items && !req.body.items) {
-						res.status(406).json({
-							'message': 'We need items in order to create invoice. Please provice items array in body to proceed'
-						});
-						return;
-					}
-					request.mod.push({
-						by: key_user.name,
-						when: new Date(),
-						what: 'Request change status to Payment'
-					});
-					request.status = 'payment';
-					request.dateFinished = new Date();
-					if(!request.paymentSystem && !fiscal.paymentSystem) {
-						request.paymentSystem = 'payU';
-					}
-					request.temp1 = [];
-					request.temp2 = [];
-					request.temp3 = [];
-					request.invoiceFlag = invoice;
-					request.paymentMethod = 'other';
-					request.paymentStatus = 'pending';
-					request.paymentNotes.push({
-						note: 'Request finished and payment process begin',
-						date: new Date()
-					});
-					request.items = req.body.items;
-					fiscalContactFind(request,fiscal)
-						.then((fc) => {
-							request.fiscalTag = fc;
-							var inv = new Invoice({
-								requester: request.requester,
-								fiscalTag: request.fiscalTag,
-								request: request._id,
-								invoice: invoice,
-								items: request.items,
-								paymentMethod: request.paymentMethod,
-								createDate: new Date(),
-								mod: {
-									by: key_user.name,
-									when: new Date(),
-									what: 'Invoice creation'
-								}
-							});
-							inv.save()
-								.then((inv) => {
-									request.invoice = inv._id;
-									request.paymentNotes.push({
-										note: 'Invoice '+ inv.idAPIExternal +'created',
-										date: new Date()
-									});
-									request.save()
-										.then(() => {
-											res.status(200).json({
-												'message': 'Request -' + request.reqNumber + '- finished. Invoice '+ inv.numberTemplate.prefix + inv.numberTemplate.number +' created. Payment process can proceed'
-											});
-										})
-										.catch((err) => {
-											Err.sendError(res,err,'request_controller','finish -- Updating request --');
-										});
-								}).catch((err) => {
-									processError(err,res,'modify -- Creating Invoice--');
-								});
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'request_controller','finish -- finding Fiscal Contact --');
-						});
-				} else {
-					res.status(404).json({
-						'message': 'Request -' + body.number + '- not found'
-					});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'request_controller','finish -- Finding request --');
-			});
+		// llamamos a la función para finalizar la petición
+		finishRequest(query);
+
 	}, //finish
 
 	modify(req,res) {
@@ -399,7 +412,7 @@ module.exports = {
 
 //
 
-function processError(err,res,controllerMessage) {
+function processError(res,err,controllerMessage) {
 	if(err.statusCode && err.error) {
 		const messageHeader = 'Hubo un error al intentar comunicarse con el sistema de facturación. Favor de contactar al administrador e indicar este mensaje: ';
 		var message = {};

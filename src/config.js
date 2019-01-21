@@ -87,14 +87,9 @@ const ConfigSchema = new Schema({
 				enum: ['PUE','PPD'],
 				default: 'PPD'
 			},
-			tax: {
-				id: { type: String},
-				name: { type: String},
-				percentage: { type: String},
-				description: { type: String},
-				status: { type: String, enum: ['active', 'inactive'], default: 'active'},
-				type: { type: String, enum: ['IEPS', 'IVA'], default: 'IVA'}
-			}
+			tax: [{
+				id: { type: Number}
+			}]
 		}
 	},
 	apiExternal: {

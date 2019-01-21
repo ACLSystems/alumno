@@ -2538,15 +2538,15 @@ module.exports = function(req, res, next) {
 		break;
 
 	case '/api/v1/supervisor/request/finish':
-		if(!req.query) {  // GET
+		if(!req.body) {  // GET
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error : Please, give data by body to process'
 			});
-		} else if (!req.query.number && !req.query.id) {
+		} else if (!req.body.number && !req.body.id) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error : Please, give request number or id by query to process'
+				'message': 'Error : Please, give request number or id by body to process'
 			});
 		} else {
 			next();
