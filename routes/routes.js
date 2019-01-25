@@ -264,6 +264,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/group/studenthistoric',	GroupController.studentHistoric);
 	app.post('/api/v1/supervisor/request/create',					RequestController.create);
 	app.get ('/api/v1/supervisor/request/get',						RequestController.get);
+	//app.get ('/api/v1/supervisor/request/:number',				RequestController.get);
 	app.get ('/api/v1/supervisor/request/my',							RequestController.my);
 	app.put ('/api/v1/supervisor/request/finish', 				RequestController.finish);
 	app.put ('/api/v1/supervisor/request/cancel', 				RequestController.cancel);

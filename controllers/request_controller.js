@@ -1,4 +1,6 @@
+const Config 				= require('../src/config'										);
 const Request 			= require('../src/requests'									);
+const HTTPRequest 	= require('request-promise-native'					);
 const Invoice 			= require('../src/invoices'									);
 const FiscalContact = require('../src/fiscalContacts'						);
 const Err 					= require('../controllers/err500_controller');
@@ -48,6 +50,9 @@ module.exports = {
 		if(req.query.number) {
 			query = {reqNumber: req.query.number};
 		}
+		if(req.params.number) {
+			query = {reqNumber: req.params.number};
+		}
 		if(req.query.id) {
 			query = {_id: req.query.id};
 		}
@@ -74,7 +79,7 @@ module.exports = {
 				},
 				{
 					path: 'invoice',
-					select: 'date dueDate status paymentMethod syncAPIExternal items termsConditions cdfiUse'
+					select: 'date dueDate invoice status client paymentMethod syncAPIExternal idAPIExternal total totalPaid balance decimalPrecision items termsConditions cdfiUse'
 				}
 			])
 			.select('requester date reqNumber label tags subtotal discount tax total status statusReason details paymentNotes files fiscalFiles temp1 temp2 temp3 dateFinished dateCancelled paymentSystem paymentMethod paymentType paymentStatus invoiceFlag invoice')
@@ -126,9 +131,9 @@ module.exports = {
 	}, //my
 
 	finish(req,res) {
-		// funciones asíncronas para mongoose ---------------------
-
 		// Esta función busca la petición (Request) que queremos "terminar"
+		// !!!! Reparar esta función porque tiene una mezcla de promesas y async
+		// Lo que debería ser es totalmente ASYNC y meter try-catch para manejo de errores
 		async function finishRequest(query) {
 			let queryFC = {};
 			if(body.fiscal && body.fiscal.fiscalTag) {
@@ -221,17 +226,15 @@ module.exports = {
 							}
 						});
 						request.invoice = inv._id;
-						request.paymentNotes.push({
-							note: 'Invoice '+ inv.idAPIExternal +'created',
-							date: new Date()
-						});
 						request.status = 'payment';
 						await Promise.all([
 							inv.save(),
 							request.save()
 						]).then(() => {
 							res.status(200).json({
-								'message': 'Request -' + request.reqNumber + '- finished. Invoice '+ inv.numberTemplate.prefix + inv.numberTemplate.number +' created. Payment process can proceed'
+								'message': 'Request -' + request.reqNumber +
+								'- finished. Invoice '+ inv.numberTemplate.prefix +
+								inv.numberTemplate.number +' created. Payment process can proceed'
 							});
 						}).catch((err) => {
 							processError(res,err,'request_controller','finish -- Updating request --');
@@ -272,6 +275,40 @@ module.exports = {
 		finishRequest(query);
 
 	}, //finish
+
+	async sendEmail(req,res) {
+		let config = await Config.findOne({});
+		if(config &&
+			config.apiExternal &&
+			config.apiExternal.enabled &&
+			config.apiExternal.uri &&
+			config.apiExternal.username &&
+			config.apiExternal.token) {
+			const auth = new Buffer.from(config.apiExternal.username + ':' + config.apiExternal.token);
+			let options = {
+				method	: 'POST',
+				uri			:	config.apiExternal.uri + '/api/v1/invoices/' + req.query.invNumber + '/email',
+				headers	: {
+					authorization: 'Basic ' + auth.toString('base64')
+				},
+				body		: { emails: req.body.emails},
+				json		: true
+			};
+			let response = await HTTPRequest(options);
+			if(response && response.code && response.code === '200') {
+				res.status(200).json({
+					'message': 'Correo enviado exitosamente',
+					'recipients': req.body.emails
+				});
+			} else {
+				res.status(503).json(response);
+			}
+		} else {
+			res.status(200).json({
+				message: 'No puede completarse su solicitd ya que el sistema no está configurado. Contacte al administrador con este mensaje: "No existe configuración de accesos para API de facturación"'
+			});
+		}
+	}, // sendEmail
 
 	modify(req,res) {
 		const key_user 	= res.locals.user;

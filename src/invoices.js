@@ -1,6 +1,6 @@
 
 const mongoose 					= require('mongoose'				);
-const request 					= require('request-promise-native');
+const HTTPRequest 			= require('request-promise-native');
 const ModSchema 				= require('./modified'			);
 const Config 						= require('./config'				);
 const FiscalContact 		= require('./fiscalContacts');
@@ -52,7 +52,24 @@ const InvoiceSchema = new Schema ({
 		required: true
 	},
 	client: {
-		id: {type: String}
+		id: {type: String},
+		name: {type: String},
+		identification: {type: String},
+		phonePrimary: {type: String},
+		phoneSecondary: {type: String},
+		mobile: {type: String},
+		email: {type: String},
+		address: {
+			street: {type: String},
+			exteriorNumber: {type: String},
+			interiorNumber: {type: String},
+			colony: {type: String},
+			locality: {type: String},
+			municipality: {type: String},
+			zipCode: {type: String},
+			state: {type: String},
+			country: {type: String}
+		}
 	},
 	// Datos requeridos por Alegra ------------------------------
 	createDate: { 							// Fecha de Creación
@@ -316,17 +333,23 @@ InvoiceSchema.pre('save', async function(next) {
 				json		: true
 			};
 		}
-		let response = await request(options);
+		let response = await HTTPRequest(options);
 		if(response){
-			this.syncAPIExternal	= 'complete';
-			this.idAPIExternal 		= response.id;
-			this.numberTemplate		= response.numberTemplate;
-			this.status						= response.status;
-			this.client						= response.client;
-			this.total						= response.total;
-			this.totalPaid				= response.totalPaid;
-			this.balance					= response.balance;
-			next();
+			if(response.id){ // Transacción exitosa
+				this.syncAPIExternal	= 'complete';
+				this.idAPIExternal 		= response.id;
+				this.numberTemplate		= response.numberTemplate;
+				this.status						= response.status;
+				this.client						= response.client;
+				this.total						= response.total;
+				this.totalPaid				= response.totalPaid;
+				this.balance					= response.balance;
+				next();
+			} else { // Transacción no exitosa. Se va al manejo de errores
+				next(response);
+			}
+		} else {
+			next({code: '500', message: 'Sistema de facturación no respondió'});
 		}
 	}
 	next();
