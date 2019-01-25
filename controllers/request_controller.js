@@ -287,7 +287,7 @@ module.exports = {
 			const auth = new Buffer.from(config.apiExternal.username + ':' + config.apiExternal.token);
 			let options = {
 				method	: 'POST',
-				uri			:	config.apiExternal.uri + '/api/v1/invoices/' + req.query.invNumber + '/email',
+				uri			:	config.apiExternal.uri + '/api/v1/invoices/' + req.body.invNumber + '/email',
 				headers	: {
 					authorization: 'Basic ' + auth.toString('base64')
 				},

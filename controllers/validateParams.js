@@ -2590,6 +2590,27 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/supervisor/request/sendemail':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give data by body to process'
+			});
+		} else if (!req.body.invNumber) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give invoice number by query to process'
+			});
+		} else if (!req.body.emails) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give email array by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 		// NO HAY RUTAS --------------------------------------------------------------
 
 	default:

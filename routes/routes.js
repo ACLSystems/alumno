@@ -269,6 +269,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/supervisor/request/finish', 				RequestController.finish);
 	app.put ('/api/v1/supervisor/request/cancel', 				RequestController.cancel);
 	app.put ('/api/v1/supervisor/request/modify', 				RequestController.modify);
+	app.post('/api/v1/supervisor/request/sendemail', 			RequestController.sendEmail);
 	app.get ('/api/v1/supervisor/fiscal/list',						UserController.listFiscals);
 
 
