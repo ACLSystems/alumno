@@ -277,35 +277,48 @@ module.exports = {
 	}, //finish
 
 	async sendEmail(req,res) {
-		let config = await Config.findOne({});
-		if(config &&
-			config.apiExternal &&
-			config.apiExternal.enabled &&
-			config.apiExternal.uri &&
-			config.apiExternal.username &&
-			config.apiExternal.token) {
-			const auth = new Buffer.from(config.apiExternal.username + ':' + config.apiExternal.token);
-			let options = {
-				method	: 'POST',
-				uri			:	config.apiExternal.uri + '/api/v1/invoices/' + req.body.invNumber + '/email',
-				headers	: {
-					authorization: 'Basic ' + auth.toString('base64')
-				},
-				body		: { emails: req.body.emails},
-				json		: true
-			};
-			let response = await HTTPRequest(options);
-			if(response && response.code && response.code === '200') {
-				res.status(200).json({
-					'message': 'Correo enviado exitosamente',
-					'recipients': req.body.emails
-				});
+		try {
+			let config = await Config.findOne({});
+			if(config &&
+				config.apiExternal &&
+				config.apiExternal.enabled &&
+				config.apiExternal.uri &&
+				config.apiExternal.username &&
+				config.apiExternal.token) {
+				try {
+					const auth = new Buffer.from(config.apiExternal.username + ':' + config.apiExternal.token);
+					let options = {
+						method	: 'POST',
+						uri			:	config.apiExternal.uri + '/api/v1/invoices/' + req.body.invNumber + '/email',
+						headers	: {
+							authorization: 'Basic ' + auth.toString('base64')
+						},
+						body		: { emails: req.body.emails},
+						json		: true
+					};
+					let response = await HTTPRequest(options);
+					if(response && response.code && response.code === '200') {
+						res.status(200).json({
+							'message': 'Correo enviado exitosamente',
+							'recipients': req.body.emails
+						});
+					} else {
+						res.status(503).json(response);
+					}
+				} catch (err){
+					res.status(err.statusCode).json({
+						'code': err.error.code,
+						'message': err.error.message
+					});
+				}
 			} else {
-				res.status(503).json(response);
+				res.status(400).json({
+					message: 'No puede completarse su solicitud ya que el sistema no está configurado. Contacte al administrador con este mensaje: "No existe configuración de accesos para API de facturación"'
+				});
 			}
-		} else {
-			res.status(200).json({
-				message: 'No puede completarse su solicitd ya que el sistema no está configurado. Contacte al administrador con este mensaje: "No existe configuración de accesos para API de facturación"'
+		} catch (err) {
+			res.status(400).json({
+				message: 'No puede completarse su solicitud ya que el sistema no logró obtener la configuración. Contacte al administrador con este mensaje: "No se puede obtener configuración o hay un error al tratar de obtener la configuración"'
 			});
 		}
 	}, // sendEmail

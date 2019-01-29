@@ -1422,6 +1422,11 @@ module.exports = {
 								'message'			: myroles
 							});
 						}
+					} else {
+						res.status(200).json({
+							'status'			: 200,
+							'message'			: myroles
+						});
 					}
 				}
 			})
