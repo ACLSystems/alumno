@@ -255,6 +255,7 @@ module.exports = {
 						author			: course.author,
 						apiExternal : course.apiExternal,
 						duration		: course.duration + '' + course.durationUnits,
+						defaultDaysDuration: course.defaultDaysDuration,
 						numBlocks		: course.numBlocks
 					});
 				});
@@ -316,7 +317,8 @@ module.exports = {
 								cost: 				course.cost,
 								author: 			course.author,
 								apiExternal: 	course.apiExternal,
-								duration		: course.duration + '' + course.durationUnits
+								duration		: course.duration + '' + course.durationUnits,
+								defaultDaysDuration: course.defaultDaysDuration
 							});
 						});
 						res.status(200).json({

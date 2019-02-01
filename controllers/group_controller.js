@@ -19,27 +19,26 @@ const logger = require('../shared/winston-logger');
 */
 
 const url = process.env.LIBRETA_URI;
+const supportEmail = process.env.supportEmail;
+const portal = process.env.portal;
 
 module.exports = {
 	create(req,res) {
 		const key_user 	= res.locals.user;
 		if(!mongoose.Types.ObjectId.isValid(req.body.course)) {
-			res.status(200).json({
-				'status': 406,
+			res.status(406).json({
 				'message': 'Error: course must be an ObjectID'
 			});
 			return;
 		}
 		if(!mongoose.Types.ObjectId.isValid(req.body.instructor)) {
-			res.status(200).json({
-				'status': 406,
+			res.status(406).json({
 				'message': 'Error: instructor must be an ObjectID'
 			});
 			return;
 		}
 		if(!mongoose.Types.ObjectId.isValid(req.body.orgUnit)) {
-			res.status(200).json({
-				'status': 406,
+			res.status(406).json({
 				'message': 'Error: orgUnit must be an ObjectID'
 			});
 			return;
@@ -63,14 +62,12 @@ module.exports = {
 			.then((results) => {
 				var [course,instructor] = results;
 				if(!instructor) {
-					res.status(200).json({
-						'status': 401,
+					res.status(401).json({
 						'message': 'Instructor is not found. Please provide a valid user id'
 					});
 					return;
 				} else if(!instructor.roles.isInstructor) {
-					res.status(200).json({
-						'status': 401,
+					res.status(401).json({
 						'message': 'User has no role of Instructor. Please provide a valid user id with valid role'
 					});
 					return;
@@ -83,8 +80,7 @@ module.exports = {
 							group.orgUnit = key_user.orgUnit._id;
 						} else {
 							if(!mongoose.Types.ObjectId.isValid(req.body.orgUnit)) {
-								res.status(200).json({
-									'status': 401,
+								res.status(401).json({
 									'message': 'Error: orgUnit is not a valid ObjectID'
 								});
 							}
@@ -136,7 +132,6 @@ module.exports = {
 								Group.create(group)
 									.then((grp) => {
 										res.status(200).json({
-											'status': 200,
 											'message': 'Group created',
 											'group': {
 												id: grp.id,
@@ -144,11 +139,15 @@ module.exports = {
 												name: grp.name
 											}
 										});
+										if(course.type === 'tutor') {
+											mailjet.sendMail(supportEmail, 'Administrador', 'Alerta: Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code,339994,portal,'Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code + ' ' + group.course.title);
+										} else {
+											mailjet.sendMail(supportEmail, 'Administrador', 'Aviso: Se ha generado un grupo. + ' + group.code,339994,portal,'Se ha generado un grupo. + ' + group.code + ' ' + group.course.title);
+										}
 									})
 									.catch((err) => {
 										if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
-											res.status(200).json({
-												'status': 406,
+											res.status(406).json({
 												'message': 'Error -: group -' + group.code + '- already exists'
 											});
 										} else {
@@ -156,8 +155,7 @@ module.exports = {
 										}
 									});
 							} else {
-								res.status(200).json({
-									'status': 401,
+								res.status(401).json({
 									'message': 'Error -: orgUnit -' + group.orgUnit + '- does not exists'
 								});
 							}
@@ -166,8 +164,7 @@ module.exports = {
 							Err.sendError(res,err,'group_controller','create -- Finding orgUnit --');
 						});
 				} else {
-					res.status(200).json({
-						'status': 200,
+					res.status(404).json({
 						'message': 'Error -: Course -'+ group.course + '- not found'
 					});
 				}

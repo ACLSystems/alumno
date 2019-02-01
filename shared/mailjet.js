@@ -76,6 +76,13 @@ exports.sendMail = function(toEmail,toName,subject,templateID,param1,param2,para
 			'Nombre': toName,					// Nombre
 		};
 	}
+	if(templateID === 679640) { // Plantilla para notificar creación de grupo
+		mail_message.Variables = {
+			'Nombre': toName,					// Nombre
+			'portal': param1,					// portal
+			'mensaje': param2					// mensaje
+		};
+	}
 	return new Promise(function(resolve,reject) {
 		request.request({'Messages': [mail_message]})
 			.then((result) => {

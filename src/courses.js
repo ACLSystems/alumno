@@ -129,6 +129,11 @@ const CoursesSchema = new Schema ({
 		enum: ['s', 'm', 'h', 'd', 'w', 'mo', 'y'],
 		default: 'h'
 	},
+	defaultDaysDuration: {
+		type: Number,
+		min: [0, 'Course duration cannot be less than 0'],
+		default: 60
+	},
 	order: {
 		type: Number,
 		default: 0
