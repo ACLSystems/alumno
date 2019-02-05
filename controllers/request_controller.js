@@ -200,9 +200,6 @@ module.exports = {
 						if(!request.paymentSystem && !body.fiscal.paymentSystem) {
 							request.paymentSystem = 'payU';
 						}
-						request.temp1 = [];
-						request.temp2 = [];
-						request.temp3 = [];
 						request.invoiceFlag = invoice;
 						request.paymentMethod = 'other';
 						request.paymentStatus = 'pending';
