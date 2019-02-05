@@ -231,7 +231,8 @@ module.exports = {
 							res.status(200).json({
 								'message': 'Request -' + request.reqNumber +
 								'- finished. Invoice '+ inv.numberTemplate.prefix +
-								inv.numberTemplate.number +' created. Payment process can proceed'
+								inv.numberTemplate.number +' created. Payment process can proceed',
+								'invoiceNumber': '' + inv.numberTemplate.prefix + inv.numberTemplate.number
 							});
 						}).catch((err) => {
 							processError(res,err,'request_controller','finish -- Updating request --');
