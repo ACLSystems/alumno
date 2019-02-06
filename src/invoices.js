@@ -220,6 +220,12 @@ InvoiceSchema.virtual('dueDate').get(function() {
 		});
 });
 
+InvoiceSchema.virtual('invoiceNumber').get(function() {
+	if(this.numberTemplate && this.numberTemplate.prefix && this.numberTemplate.number) {
+		return this.numberTemplate.prefix + this.numberTemplate.number;
+	}
+});
+
 // Definir middleware
 
 InvoiceSchema.pre('save', async function(next) {

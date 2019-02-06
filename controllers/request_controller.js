@@ -86,9 +86,16 @@ module.exports = {
 			.lean()
 			.then((request)  => {
 				if(request) {
-					res.status(200).json({
-						'request': request
-					});
+					if(request.invoice && request.invoice.numberTemplate && request.invoice.numberTemplate.prefix && request.invoice.numberTemplate.number) {
+						res.status(200).json({
+							'request': request,
+							'invoiceNumber': '' + request.invoice.numberTemplate.prefix + request.invoice.numberTemplate.number
+						});
+					} else {
+						res.status(200).json({
+							'request': request
+						});
+					}
 				} else {
 					res.status(404).json({
 						'message': 'Request -' + req.query.number + '- not found'
