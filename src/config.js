@@ -110,6 +110,21 @@ const ConfigSchema = new Schema({
 	org: {
 		type: Schema.Types.ObjectId,
 		ref: 'orgs'
+	},
+	support: {
+		uri: {
+			type: String
+		},
+		apiKey: {
+			type: String
+		},
+		cc_emails: {
+			type: Array
+		},
+		enabled: {
+			type: Boolean,
+			default: false
+		}
 	}
 });
 

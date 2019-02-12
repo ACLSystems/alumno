@@ -5,6 +5,8 @@ const Invoice 			= require('../src/invoices'									);
 const FiscalContact = require('../src/fiscalContacts'						);
 const Err 					= require('../controllers/err500_controller');
 
+const portal = process.env.portal;
+
 module.exports = {
 	create(req,res) {
 		const key_user 		= res.locals.user;
@@ -79,7 +81,7 @@ module.exports = {
 				},
 				{
 					path: 'invoice',
-					select: 'date dueDate invoice status client paymentMethod syncAPIExternal idAPIExternal total totalPaid balance decimalPrecision items termsConditions cdfiUse'
+					select: 'date dueDate invoice status client paymentMethod numberTemplate syncAPIExternal idAPIExternal total totalPaid balance decimalPrecision items termsConditions cdfiUse'
 				}
 			])
 			.select('requester date reqNumber label tags subtotal discount tax total status statusReason details paymentNotes files fiscalFiles temp1 temp2 temp3 dateFinished dateCancelled paymentSystem paymentMethod paymentType paymentStatus invoiceFlag invoice')
@@ -322,7 +324,7 @@ module.exports = {
 				});
 			}
 		} catch (err) {
-			res.status(400).json({
+			res.status(500).json({
 				message: 'No puede completarse su solicitud ya que el sistema no logró obtener la configuración. Contacte al administrador con este mensaje: "No se puede obtener configuración o hay un error al tratar de obtener la configuración"'
 			});
 		}
@@ -462,6 +464,84 @@ module.exports = {
 				Err.sendError(res,err,'request_controller','cancel -- Finding request --');
 			});
 	}, //cancel
+
+	async setPayment(req,res) {
+		try {
+			let config = await Config.findOne({});
+			if(config &&
+				config.support &&
+				config.support.enabled &&
+				config.support.uri &&
+				config.support.apiKey) {
+				try {
+					const auth = new Buffer.from(config.support.apiKey + ':X');
+					let options = {
+						method	: 'POST',
+						uri			:	config.support.uri + '/api/v2/tickets/',
+						headers	: {
+							'Authorization': 'Basic ' + auth.toString('base64'),
+							'Content-Type': 'application/json'
+						},
+						body		: {
+							description	: 'Se ha realizado la notificación desde el portal ' +
+														portal +
+														' sobre un pago con respecto a la solicitud ' +
+														req.body.number +
+														' y factura/ticket generado con número ' +
+														req.body.invoiceNumber + '. ' +
+														'<br>Favor de proceder con la liberación de constancias '+
+														'de los grupos correspondientes a la solicitud mencionada. '+
+														'Gracias. <br><br>' +
+														'<br>Req: ' + req.body.number +
+														'<br>F/T: ' + req.body.invoiceNumber +
+														'<br>idAPIExternal: ' + req.body.idAPIExternal,
+							email				: req.body.email,
+							subject			: 'Pago generado. Req: ' + req.body.number + ' Fac/Tick: ' + req.body.invoiceNumber,
+							priority		: 3,
+							status			: 2,
+							source			: 2,
+							type				: 'Solicitud',
+							cc_emails		: config.support.cc_emails
+						},
+						json		: true
+					};
+					let response = await HTTPRequest(options);
+					if(response && response.id && response.id > 0) {
+						let request = await Request.findOneAndUpdate({reqNumber: req.body.number},{$push: {files:req.body.file}});
+						try {
+							if(request){
+								res.status(200).json({
+									'message': 'Se ha registrado el pago y se notificó a la mesa de servicio con el ticket número: ' + response.id
+								});
+							} else {
+								res.status(400).json({
+									message: 'No se encuentra la solicitud ' + req.body.number
+								});
+							}
+						} catch (err) {
+							res.status(500).json({
+								message: 'No pudo actualizarse la solicitud ' + req.body.number
+							});
+						}
+					} else {
+						res.status(500).json(response);
+					}
+				} catch (err){
+					res.status(500).json({
+						'message': err
+					});
+				}
+			} else {
+				res.status(400).json({
+					message: 'No puede completarse su solicitud ya que el sistema no está configurado. Contacte al administrador con este mensaje: "No existe configuración de accesos para API de facturación"'
+				});
+			}
+		} catch (err) {
+			res.status(500).json({
+				message: 'No puede completarse su solicitud ya que el sistema no logró obtener la configuración. Contacte al administrador con este mensaje: "No se puede obtener configuración o hay un error al tratar de obtener la configuración"'
+			});
+		}
+	} //setPayment
 
 };
 
