@@ -240,122 +240,126 @@ InvoiceSchema.pre('save', async function(next) {
 		config.apiExternal.uri &&
 		config.apiExternal.username &&
 		config.apiExternal.token) {
-		this.fiscalTag 	= fc._id;
-		// Nos aseguramos que cada elemento del arreglo de items lleve TAX
-		if(config.fiscal &&
-			config.fiscal.invoice &&
-			config.fiscal.invoice.tax) { // Si hay configuración de tax...
-			this.items = this.items.map(item => {item.tax = config.fiscal.invoice.tax; return item;});
-		}
-		let send = JSON.parse(JSON.stringify(this));
-		// colocamos las propiedades definidas en la configuración
-		send.priceList 	= config.fiscal.priceList;
-		send.seller			= config.fiscal.seller;
-		send.term				= config.fiscal.term;
-		// borramos las que no necesitaremos si existen
-		if(send.requester	)	{delete send.requester;	}
-		if(send.fiscalTag	) {delete send.fiscalTag;	}
-		if(send.request		)	{delete send.request;		}
-		if(send.mod				) {delete send.mod;				}
-		if(send.id 				)	{delete send.id; 				}
-		if(send.syncAPIExternal) {delete send.syncAPIExternal;}
-		delete send.__v;
-		delete send._id;
-		// colocamos fechas en el formato solicitado confirme al tz configurado
-		if(config && config.server && config.server.tz) {
-			const newDate = new Date();
-			if(send.createDate){
-				send.date = Time.displayLocalTime(send.createDate,config.server.tz);
-				send.date = send.date.date;
-				send.dueDate = send.date;
+		if(fc && fc._id && fc.idAPIExternal) {
+			this.fiscalTag 	= fc._id;
+			// Nos aseguramos que cada elemento del arreglo de items lleve TAX
+			if(config.fiscal &&
+				config.fiscal.invoice &&
+				config.fiscal.invoice.tax) { // Si hay configuración de tax...
+				this.items = this.items.map(item => {item.tax = config.fiscal.invoice.tax; return item;});
+			}
+			let send = JSON.parse(JSON.stringify(this));
+			// colocamos las propiedades definidas en la configuración
+			send.priceList 	= config.fiscal.priceList;
+			send.seller			= config.fiscal.seller;
+			send.term				= config.fiscal.term;
+			// borramos las que no necesitaremos si existen
+			if(send.requester	)	{delete send.requester;	}
+			if(send.fiscalTag	) {delete send.fiscalTag;	}
+			if(send.request		)	{delete send.request;		}
+			if(send.mod				) {delete send.mod;				}
+			if(send.id 				)	{delete send.id; 				}
+			if(send.syncAPIExternal) {delete send.syncAPIExternal;}
+			delete send.__v;
+			delete send._id;
+			// colocamos fechas en el formato solicitado confirme al tz configurado
+			if(config && config.server && config.server.tz) {
+				const newDate = new Date();
+				if(send.createDate){
+					send.date = Time.displayLocalTime(send.createDate,config.server.tz);
+					send.date = send.date.date;
+					send.dueDate = send.date;
+				} else {
+					send.date = Time.displayLocalTime(newDate,config.server.tz);
+					send.date = send.date.date;
+					send.dueDate = send.date;
+				}
+			}
+			// al final borramos la propiedad que no usaremos
+			if(send.createDate) {delete send.createDate;}
+			// agregamos propiedades necesarias
+			if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.termsConditions) {
+				send.termsConditions =  config.fiscal.invoice.termsConditions;
+			}
+			// agreamos al cliente (o publico en general) según sea el caso
+			if(fc && fc.idAPIExternal) {
+				send.client = {id: fc.idAPIExternal};
+			}
+			// configuramos la factura/ticket de venta
+			if(config && config.fiscal && config.fiscal.invoice) {
+				if(send.invoice) {
+					if(config.fiscal.invoice.numberTemplateInvoice) {
+						send.numberTemplate = config.fiscal.invoice.numberTemplateInvoice;
+						this.numberTemplate = config.fiscal.invoice.numberTemplateInvoice;
+					}
+					if(fc && fc.cfdiUse) {
+						send.cfdiUse	= fc.cfdiUse;
+						this.cfdiUse	= fc.cfdiUse;
+					} else if(config && config.invoice && config.invoice.cdfiUse){
+						send.cfdiUse	= config.invoice.cfdiUse;
+						this.cfdiUse	= config.invoice.cfdiUse;
+					}
+					if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.paymentType) {
+						send.paymentType = config.fiscal.invoice.paymentType;
+						this.paymentType = config.fiscal.invoice.paymentType;
+					}
+				} else {
+					if(config.fiscal.invoice.numberTemplateSaleTicket) {
+						send.numberTemplate = config.fiscal.invoice.numberTemplateSaleTicket;
+						this.numberTemplate = config.fiscal.invoice.numberTemplateSaleTicket;
+						send.paymentType 		= 'PUE';
+						send.paymentMethod 	= 'cash';
+						this.paymentType 		= 'PUE';
+						this.paymentMethod 	= 'cash';
+						delete send.cfdiUse;
+						delete this.cfdiUse;
+					}
+				}
+			}
+			if(send.invoice || send.invoice === 'false') {delete send.invoice;}
+			const auth = new Buffer.from(config.apiExternal.username + ':' + config.apiExternal.token);
+			let options = {};
+			if(this.idAPIExternal) {
+				options = {
+					method	: 'PUT',
+					uri			:	config.apiExternal.uri + '/api/v1/invoices' + this.idAPIExternal,
+					headers	: {
+						authorization: 'Basic ' + auth.toString('base64')
+					},
+					body		: send,
+					json		: true
+				};
 			} else {
-				send.date = Time.displayLocalTime(newDate,config.server.tz);
-				send.date = send.date.date;
-				send.dueDate = send.date;
+				options = {
+					method	: 'POST',
+					uri			:	config.apiExternal.uri + '/api/v1/invoices',
+					headers	: {
+						authorization: 'Basic ' + auth.toString('base64')
+					},
+					body		: send,
+					json		: true
+				};
 			}
-		}
-		// al final borramos la propiedad que no usaremos
-		if(send.createDate) {delete send.createDate;}
-		// agregamos propiedades necesarias
-		if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.termsConditions) {
-			send.termsConditions =  config.fiscal.invoice.termsConditions;
-		}
-		// agreamos al cliente (o publico en general) según sea el caso
-		if(fc && fc.idAPIExternal) {
-			send.client = {id: fc.idAPIExternal};
-		}
-		// configuramos la factura/ticket de venta
-		if(config && config.fiscal && config.fiscal.invoice) {
-			if(send.invoice) {
-				if(config.fiscal.invoice.numberTemplateInvoice) {
-					send.numberTemplate = config.fiscal.invoice.numberTemplateInvoice;
-					this.numberTemplate = config.fiscal.invoice.numberTemplateInvoice;
-				}
-				if(fc && fc.cfdiUse) {
-					send.cfdiUse	= fc.cfdiUse;
-					this.cfdiUse	= fc.cfdiUse;
-				} else if(config && config.invoice && config.invoice.cdfiUse){
-					send.cfdiUse	= config.invoice.cfdiUse;
-					this.cfdiUse	= config.invoice.cfdiUse;
-				}
-				if(config && config.fiscal && config.fiscal.invoice && config.fiscal.invoice.paymentType) {
-					send.paymentType = config.fiscal.invoice.paymentType;
-					this.paymentType = config.fiscal.invoice.paymentType;
+			let response = await HTTPRequest(options);
+			if(response){
+				if(response.id){ // Transacción exitosa
+					this.syncAPIExternal	= 'complete';
+					this.idAPIExternal 		= response.id;
+					this.numberTemplate		= response.numberTemplate;
+					this.status						= response.status;
+					this.client						= response.client;
+					this.total						= response.total;
+					this.totalPaid				= response.totalPaid;
+					this.balance					= response.balance;
+					next();
+				} else { // Transacción no exitosa. Se va al manejo de errores
+					next(response);
 				}
 			} else {
-				if(config.fiscal.invoice.numberTemplateSaleTicket) {
-					send.numberTemplate = config.fiscal.invoice.numberTemplateSaleTicket;
-					this.numberTemplate = config.fiscal.invoice.numberTemplateSaleTicket;
-					send.paymentType 		= 'PUE';
-					send.paymentMethod 	= 'cash';
-					this.paymentType 		= 'PUE';
-					this.paymentMethod 	= 'cash';
-					delete send.cfdiUse;
-					delete this.cfdiUse;
-				}
-			}
-		}
-		if(send.invoice || send.invoice === 'false') {delete send.invoice;}
-		const auth = new Buffer.from(config.apiExternal.username + ':' + config.apiExternal.token);
-		let options = {};
-		if(this.idAPIExternal) {
-			options = {
-				method	: 'PUT',
-				uri			:	config.apiExternal.uri + '/api/v1/invoices' + this.idAPIExternal,
-				headers	: {
-					authorization: 'Basic ' + auth.toString('base64')
-				},
-				body		: send,
-				json		: true
-			};
-		} else {
-			options = {
-				method	: 'POST',
-				uri			:	config.apiExternal.uri + '/api/v1/invoices',
-				headers	: {
-					authorization: 'Basic ' + auth.toString('base64')
-				},
-				body		: send,
-				json		: true
-			};
-		}
-		let response = await HTTPRequest(options);
-		if(response){
-			if(response.id){ // Transacción exitosa
-				this.syncAPIExternal	= 'complete';
-				this.idAPIExternal 		= response.id;
-				this.numberTemplate		= response.numberTemplate;
-				this.status						= response.status;
-				this.client						= response.client;
-				this.total						= response.total;
-				this.totalPaid				= response.totalPaid;
-				this.balance					= response.balance;
-				next();
-			} else { // Transacción no exitosa. Se va al manejo de errores
-				next(response);
+				next({code: '500', message: 'Sistema de facturación no respondió'});
 			}
 		} else {
-			next({code: '500', message: 'Sistema de facturación no respondió'});
+			next({code: '400', message: 'No existen suficientes datos para facturar con el tag proporcionado'});
 		}
 	}
 	next();

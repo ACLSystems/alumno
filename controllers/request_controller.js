@@ -233,18 +233,19 @@ module.exports = {
 						});
 						request.invoice = inv._id;
 						request.status = 'payment';
-						await Promise.all([
-							inv.save(),
-							request.save()
-						]).then(() => {
-							res.status(200).json({
-								'message': 'Request -' + request.reqNumber +
-								'- finished. Invoice '+ inv.numberTemplate.prefix +
-								inv.numberTemplate.number +' created. Payment process can proceed',
-								'invoiceNumber': '' + inv.numberTemplate.prefix + inv.numberTemplate.number
+						await	inv.save().then((inv) => {
+							request.save().then((request)  => {
+								res.status(200).json({
+									'message': 'Request -' + request.reqNumber +
+									'- finished. Invoice '+ inv.numberTemplate.prefix +
+									inv.numberTemplate.number +' created. Payment process can proceed',
+									'invoiceNumber': '' + inv.numberTemplate.prefix + inv.numberTemplate.number
+								});
+							}).catch((err) => {
+								processError(res,err,'request_controller','finish -- Updating Request --');
 							});
 						}).catch((err) => {
-							processError(res,err,'request_controller','finish -- Updating request --');
+							processError(res,err,'request_controller','finish -- Saving Invoice --');
 						});
 					} else {
 						res.status(404).json({
