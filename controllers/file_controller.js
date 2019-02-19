@@ -31,6 +31,9 @@ module.exports = {
 			});
 			return;
 		}
+		// El directorio se formará en dropbox con la siguiente estructura:
+		// /file_dir/dir1/dir2 bajo la carpeta destinada en Dropbox
+		// ordir es el directorio local
 		var dir1 					= 'base1';
 		var dir2 					= 'base2';
 		var ordir 			= process.env.ORDIR;
@@ -77,8 +80,6 @@ module.exports = {
 					.filesUpload({path: file.path + '/' + file.filename, contents: localFile})
 					.then(() => {
 						res.status(200).json({
-							'status'	: 200,
-							//'localFile' : localFile,
 							'message'	: 'File -' + req.file.originalname + '- was successfully uploaded',
 							'file'		: file.filename,
 							'filepath': file.path,

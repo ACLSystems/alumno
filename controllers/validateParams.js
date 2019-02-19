@@ -2599,12 +2599,48 @@ module.exports = function(req, res, next) {
 		} else if (!req.body.invNumber) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error : Please, give invoice number by query to process'
+				'message': 'Error : Please, give invoice number by body to process'
 			});
 		} else if (!req.body.emails) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error : Please, give email array by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/supervisor/request/setpayment':
+		if(!req.body) {  // POST
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give data by body to process'
+			});
+		} else if (!req.body.number) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give request number (number) by body to process'
+			});
+		} else if (!req.body.invoiceNumber) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give invoice number (invoiceNumber) by body to process'
+			});
+		} else if (!req.body.idAPIExternal) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give invoice idAPIExternal by body to process'
+			});
+		} else if (!req.body.file) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give fileid by body to process'
+			});
+		} else if (!req.body.email) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give email by body to process'
 			});
 		} else {
 			next();
