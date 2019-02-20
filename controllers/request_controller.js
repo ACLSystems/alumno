@@ -479,69 +479,63 @@ module.exports = {
 				config.support.apiKey) {
 				try {
 					const auth = new Buffer.from(config.support.apiKey + ':X');
-					var headers = {
-						'Authorization': 'Basic ' + auth.toString('base64'),
-						'Content-Type': 'application/json'
+					const headers = {
+						'Authorization': 'Basic ' + auth.toString('base64')
 					};
-					var body = {
-						description	: 'Se ha realizado la notificación desde el portal ' +
-													portal +
-													' sobre un pago con respecto a la solicitud ' +
-													req.body.number +
-													' y factura/ticket generado con número ' +
-													req.body.invoiceNumber + '. ' +
-													'<br>Favor de proceder con la liberación de constancias '+
-													'de los grupos correspondientes a la solicitud mencionada. '+
-													'Gracias. <br><br>' +
-													'<br>Req: ' + req.body.number +
-													'<br>F/T: ' + req.body.invoiceNumber +
-													'<br>idAPIExternal: ' + req.body.idAPIExternal,
-						email				: req.body.email,
-						subject			: 'Pago generado. Req: ' + req.body.number + ' Fac/Tick: ' + req.body.invoiceNumber,
-						priority		: 3,
-						status			: 2,
-						source			: 2,
-						type				: 'Solicitud',
-						cc_emails		: config.support.cc_emails
-					};
+					var formData = {};
 					if(req.body.cc_emails && Array.isArray(req.body.cc_emails)) {
-						body.cc_emails = req.body.cc_emails;
+						formData.cc_emails = req.body.cc_emails;
 					}
 					if(req.body.file) {
 						try {
 							file = await File.find({_id: req.body.file});
 							if(file) {
-								// Necesitamos algunas utilerias para realizar una operacion
-								// a nivel sistema operativo
-								const fs = require('fs');
-								const { promisify } = require('util');
-								const copyFile = promisify(fs.copyFile);
 								const ordir = process.env.ORDIR + '/';
 								const sourceFile = ordir + file.filename;
-								const destFile = ordir + file.name;
-								try{
-									await copyFile(sourceFile,destFile);
-									headers = {
-										'Authorization': 'Basic ' + auth.toString('base64'),
-										'Content-Type': 'multipart/form-data'
-									};
-									body.attachments = [sourceFile];
-								} catch (err) {
-									// No pudimos copiar el archivo... no podemos mandar nada
-								}
+								const fs = require('fs');
+								formData = {
+									description	: 'Se ha realizado la notificación desde el portal ' +
+																portal +
+																' sobre un pago con respecto a la solicitud ' +
+																req.body.number +
+																' y factura/ticket generado con número ' +
+																req.body.invoiceNumber + '. ' +
+																'<br>Favor de proceder con la liberación de constancias '+
+																'de los grupos correspondientes a la solicitud mencionada. '+
+																'Gracias. <br><br>' +
+																'<br>Req: ' + req.body.number +
+																'<br>F/T: ' + req.body.invoiceNumber +
+																'<br>idAPIExternal: ' + req.body.idAPIExternal,
+									email				: req.body.email,
+									subject			: 'Pago generado. Req: ' + req.body.number + ' Fac/Tick: ' + req.body.invoiceNumber,
+									priority		: 3,
+									status			: 2,
+									source			: 2,
+									type				: 'Solicitud',
+									tags 				: ['Solicitud','Pago'],
+									cc_emails		: config.support.cc_emails,
+									'attachments[]': {
+										value: fs.createReadStream(sourceFile),
+										options: {
+											filename: file.name,
+											contentType: file.mimetype
+										}
+									}
+								};
+
 							}
 						} catch (err) {
 							res.status(500).json({
 								'message': err
 							});
+							return;
 						}
 					}
 					let options = {
-						method	: 'POST',
-						uri			:	config.support.uri + '/api/v2/tickets/',
-						headers	: headers,
-						body		: body,
-						json		: true
+						method		: 'POST',
+						uri				:	config.support.uri + '/api/v2/tickets/',
+						headers		: headers,
+						formData	: formData
 					};
 					let response = await HTTPRequest(options);
 					if(response && response.id && response.id > 0) {
