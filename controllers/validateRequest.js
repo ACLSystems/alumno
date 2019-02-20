@@ -117,6 +117,7 @@ module.exports = function(req, res, next) {
 									(url.indexOf('author') !== -1 && dbUserObj.roles.isAuthor) ||
 									(url.indexOf('instructor') !== -1 && dbUserObj.roles.isInstructor) ||
 									(url.indexOf('supervisor') !== -1 && dbUserObj.roles.isSupervisor) ||
+									(url.indexOf('requester') !== -1 && dbUserObj.roles.isRequester) ||
 									(url.indexOf('admin') === -1 &&
 									url.indexOf('business') === -1 &&
 									url.indexOf('orgadm') === -1 &&
@@ -124,6 +125,7 @@ module.exports = function(req, res, next) {
 									url.indexOf('author') === -1 &&
 									url.indexOf('instructor') === -1 &&
 									url.indexOf('supervisor') === -1 &&
+									url.indexOf('requester') === -1 &&
 									url.indexOf('admin') === -1 &&
 									url.indexOf('/api/v1/') !== -1)) {
 						res.locals.user = user;

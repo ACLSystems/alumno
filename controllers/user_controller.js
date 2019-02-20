@@ -1,4 +1,3 @@
-
 const generate 						= require('nanoid/generate'										);
 const bcrypt 							= require('bcrypt-nodejs'											);
 const urlencode 					= require('urlencode'													);
@@ -573,14 +572,16 @@ module.exports = {
 										isOrgContent: user.roles.isOrgContent,
 										isAuthor: user.roles.isAuthor,
 										isInstructor: user.roles.isInstructor,
-										isSupervisor: user.roles.isSupervisor
+										isSupervisor: user.roles.isSupervisor,
+										isRequester: user.roles.isRequester
 									};
 								}	else {
 									send_user.roles = {
 										isOrgContent: user.roles.isOrgContent,
 										isAuthor: user.roles.isAuthor,
 										isInstructor: user.roles.isInstructor,
-										isSupervisor: user.roles.isSupervisor
+										isSupervisor: user.roles.isSupervisor,
+										isRequester: user.roles.isRequester
 									};
 								}
 								res.status(200).json({
@@ -642,6 +643,7 @@ module.exports = {
 								if(userProps.roles.isAuthor !== undefined ) { user.roles.isAuthor = userProps.roles.isAuthor; }
 								if(userProps.roles.isInstructor !== undefined ) { user.roles.isInstructor = userProps.roles.isInstructor; }
 								if(userProps.roles.isSupervisor  !== undefined ) { user.roles.isSupervisor = userProps.roles.isSupervisor; }
+								if(userProps.roles.isRequester  !== undefined ) { user.roles.isRequester = userProps.roles.isRequester; }
 								user.save().catch((err) => {
 									Err.sendError(res,err,'user_controller','setRoles -- Saving User--');
 								});
@@ -1359,6 +1361,7 @@ module.exports = {
 			isAuthor			: key_user.roles.isAuthor,
 			isSupervisor	: key_user.roles.isSupervisor,
 			isInstructor	: key_user.roles.isInstructor,
+			isRequester		: key_user.roles.isRequester,
 			isUser				: false
 		};
 		Roster.findOne({student: key_user._id})

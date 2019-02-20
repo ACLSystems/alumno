@@ -30,7 +30,7 @@ module.exports = {
 			if(key_user.roles.isOrg && !key_user.roles.isAdmin) {
 				searchO = { name: key_user.org.name };
 			}
-			if(key_user.roles.isAdmin || key_user.roles.isOrg || key_user.roles.isSupervisor) {
+			if(key_user.roles.isAdmin || key_user.roles.isOrg || key_user.roles.isRequester) {
 				Org.find(searchO, {name: true})
 					.then((orgs) => {
 						if(key_user.roles.isOrg && !key_user.roles.isAdmin) {
@@ -113,6 +113,7 @@ module.exports = {
 											if(roles.isAuthor		 ) 	{val.roles.isAuthor = true;			}
 											if(roles.isInstructor) 	{val.roles.isInstructor = true; }
 											if(roles.isSupervisor) 	{val.roles.isSupervisor = true; }
+											if(roles.isRequester ) 	{val.roles.isRequester 	= true; }
 										}
 										var admin = {
 											isActive: true,
@@ -434,7 +435,8 @@ function addRoles() {
 		isOrgContent: false,
 		isAuthor: false,
 		isInstructor: false,
-		isSupervisor: false
+		isSupervisor: false,
+		isRequester: false
 	};
 }
 

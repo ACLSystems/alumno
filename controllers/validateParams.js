@@ -1122,7 +1122,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/user/muir':
+	case '/api/v1/requester/user/muir':
 		if(!req.body) {
 			res.status(406).json({
 				'status': 406,
@@ -1892,7 +1892,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/group/create':
+	case '/api/v1/requester/group/create':
 		if(!req.body) {  // POST
 			res.status(406).json({
 				'status': 406,
@@ -1981,6 +1981,22 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/requester/group/get':
+		if(!req.query) { // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group id by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/instructor/group/modify':
 		if(!req.body) { // PUT
 			res.status(406).json({
@@ -2013,6 +2029,22 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/requester/group/modify':
+		if(!req.body) { // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else if (!req.body.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group id by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/instructor/group/list':
 		next();
 		break;
@@ -2021,7 +2053,7 @@ module.exports = function(req, res, next) {
 		next();
 		break;
 
-	case '/api/v1/instructor/group/mylist':
+	case '/api/v1/requester/group/mylist':
 		next();
 		break;
 
@@ -2041,7 +2073,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/group/createroster':
+	case '/api/v1/requester/group/createroster':
 		if(!req.body) {  // PUT
 			res.status(406).json({
 				'status': 406,
@@ -2132,6 +2164,38 @@ module.exports = function(req, res, next) {
 		break;
 
 	case '/api/v1/instructor/group/listroster':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.code) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group code by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/supervisor/group/listroster':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.code) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give group code by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/requester/group/listroster':
 		if(!req.query) {  // GET
 			res.status(406).json({
 				'status': 406,
@@ -2465,6 +2529,22 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/requester/user/getdetails':
+		if(!req.query) {  // GET
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by query to process'
+			});
+		} else if (!req.query.username) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give username by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/supervisor/user/settracking':
 		if(!req.query) {  // GET
 			res.status(406).json({
@@ -2506,7 +2586,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/request/create':
+	case '/api/v1/requester/request/create':
 		if(!req.body) {  // POST
 			res.status(406).json({
 				'status': 406,
@@ -2517,7 +2597,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/request/get':
+	case '/api/v1/requester/request/get':
 		if(!req.query) {  // GET
 			res.status(406).json({
 				'status': 406,
@@ -2533,11 +2613,11 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/request/my':
+	case '/api/v1/requester/request/my':
 		next();
 		break;
 
-	case '/api/v1/supervisor/request/finish':
+	case '/api/v1/requester/request/finish':
 		if(!req.body) {  // GET
 			res.status(406).json({
 				'status': 406,
@@ -2553,7 +2633,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/request/cancel':
+	case '/api/v1/requester/request/cancel':
 		if(!req.body) {  // GET
 			res.status(406).json({
 				'status': 406,
@@ -2574,7 +2654,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/request/modify':
+	case '/api/v1/requester/request/modify':
 		if(!req.body) {  // GET
 			res.status(406).json({
 				'status': 406,
@@ -2590,7 +2670,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/request/sendemail':
+	case '/api/v1/requester/request/sendemail':
 		if(!req.body) {  // POST
 			res.status(406).json({
 				'status': 406,
@@ -2611,7 +2691,7 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
-	case '/api/v1/supervisor/request/setpayment':
+	case '/api/v1/requester/request/setpayment':
 		if(!req.body) {  // POST
 			res.status(406).json({
 				'status': 406,

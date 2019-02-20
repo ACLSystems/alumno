@@ -26,6 +26,7 @@ module.exports = {
 		request.perm = {
 			users: [{ name: key_user.name, canRead: true, canModify: true, canSec: true }],
 			roles: [{ name: 'isSupervisor', canRead: true, canModify: false, canSec: false},
+				{ name: 'isRequester', canRead: true, canModify: false, canSec: false},
 				{ name: 'isOrg', canRead: true, canModify: false, canSec: false},
 				{ name: 'isBusiness', canRead: true, canModify: false, canSec: true}],
 			orgs: [{ name: key_user.org.name, canRead: true, canModify: false, canSec: false}],

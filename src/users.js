@@ -35,74 +35,6 @@ const CorporateSchema = new Schema ({
 
 module.exports = CorporateSchema;
 
-/*
-const FiscalSchema = new Schema ({
-	identification: { // RFC del usuario
-		type: String,
-		alias: 'RFC',
-		match: /^([A-ZÑ&]{3,4}) ?(?:- ?)?(\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])) ?(?:- ?)?([A-Z\d]{2})([A\d])$/ //CALA72100734A
-	},
-	name: {
-		type: String
-	},
-	idAPIExternal: { // Id que se utiliza en el sistema externo de facturación
-		type: Number
-	},
-	//phonePrimary: Se toma del campo mainPhone de Person
-	//phoneSecondary: Se toma del campo secondaryPhone de Person
-	//mobile: Se toma del campo cellPhone de Person
-	observations: {
-		type: String
-	},
-	//email: Se toma del campo email de Person
-	priceList: { //Colocar el default de la lista de precios
-		type: String
-	},
-	seller: { //Colocar el vendedor por default
-		type: String
-	},
-	term: { //Colocar el término de pago por default
-		type:String
-	},
-
-	address: {
-		street: { type: String},
-		extNum: { type: String},
-		intNum: { type: String},
-		colony: { type: String},
-		locality: { type: String},
-		municipality: {type: String},
-		town: {
-			type: String,
-			alias: 'city'
-		},
-		cp: {
-			type: String,
-			alias: 'zipCode'
-		},
-		state: { type: String},
-		country: {
-			type: String,
-			default: 'México'
-		},
-	},
-	type: {
-		type: String,
-		enum:['client', 'provider'],
-		default: 'client'
-	},
-	cfdiUse: {
-		type: String
-	}
-},{ _id: false });
-
-// Definir virtuals
-
-// Definir middleware
-
-module.exports = FiscalSchema;
-*/
-
 // Esquema para el usuario que es un estudiante
 const StudentSchema = new Schema ({
 	id: { // se puede usar como matricula o id del estudiante
@@ -227,6 +159,11 @@ const RolesSchema = new Schema ({
 		default: false
 	},
 	isSupervisor: {
+		type: Boolean,
+		required: true,
+		default: false
+	},
+	isRequester: {
 		type: Boolean,
 		required: true,
 		default: false

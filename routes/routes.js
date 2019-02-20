@@ -73,7 +73,8 @@ module.exports = (app) => {
 	app.all	('/api/orgunit/*', 										[require('../controllers/validateParams')]);
 	app.all	('/api/course/*', 										[require('../controllers/validateParams')]);
 	app.all ('/api/v1/supervisor/user/*',					[require('../controllers/validateParams')]);
-	app.all ('/api/v1/supervisor/request/*', 			[require('../controllers/validateParams')]);
+	app.all ('/api/v1/requester/user/*',					[require('../controllers/validateParams')]);
+	app.all ('/api/v1/requester/request/*', 			[require('../controllers/validateParams')]);
 
 	// RUTAS ---------------------------------------------------------------------------------
 
@@ -251,28 +252,33 @@ module.exports = (app) => {
 	app.put ('/api/v1/supervisor/user/changeuser', 				UserController.changeUser);
 	app.post('/api/v1/supervisor/user/masssearch',				ReportController.userMassSearch);
 	app.post('/api/v1/supervisor/user/massiveregister', 	MassUsersController.massiveRegister);
-	app.post('/api/v1/supervisor/user/muir',							MassUsersController.muir);
-	app.post('/api/v1/supervisor/group/create', 					GroupController.create);
-	app.get ('/api/v1/supervisor/group/get',							GroupController.get);
-	app.put ('/api/v1/supervisor/group/modify',						GroupController.modify);
+	app.get ('/api/v1/supervisor/group/getfilelist', 			ReportController.filesBygroup);
 	app.get ('/api/v1/supervisor/group/list', 						GroupController.list);
-	app.put ('/api/v1/supervisor/group/createroster',			GroupController.createRoster);
+	app.get ('/api/v1/supervisor/group/get',							GroupController.get);
 	app.get ('/api/v1/supervisor/group/listroster', 			GroupController.listRoster);
 	app.get ('/api/v1/supervisor/group/notify', 					GroupController.notify);
-	app.get ('/api/v1/supervisor/group/getfilelist', 			ReportController.filesBygroup);
 	app.get ('/api/v1/supervisor/group/studentgrades',		GroupController.studentGrades);
 	app.get ('/api/v1/supervisor/group/studenthistoric',	GroupController.studentHistoric);
-	app.post('/api/v1/supervisor/request/create',					RequestController.create);
-	app.get ('/api/v1/supervisor/request/get',						RequestController.get);
-	//app.get ('/api/v1/supervisor/request/:number',				RequestController.get);
-	app.get ('/api/v1/supervisor/request/my',							RequestController.my);
-	app.put ('/api/v1/supervisor/request/finish', 				RequestController.finish);
-	app.put ('/api/v1/supervisor/request/cancel', 				RequestController.cancel);
-	app.put ('/api/v1/supervisor/request/modify', 				RequestController.modify);
-	app.post('/api/v1/supervisor/request/sendemail', 			RequestController.sendEmail);
-	app.post('/api/v1/supervisor/request/setpayment', 		RequestController.setPayment);
-	app.get ('/api/v1/supervisor/fiscal/list',						UserController.listFiscals);
 
+	// Rutas para solicitudes
+	app.get ('/api/v1/requester/report/groupsquery', 			ReportController.groupsQuery); //También supervisor OK
+	app.post('/api/v1/requester/group/create', 						GroupController.create);
+	app.get ('/api/v1/requester/group/get',								GroupController.get); //También supervisor OK
+	app.put ('/api/v1/requester/group/modify',						GroupController.modify);
+	app.get ('/api/v1/requester/group/list', 							GroupController.list); //También supervisor OK
+	app.get ('/api/v1/requester/group/listroster', 				GroupController.listRoster); //También supervisor OK
+	app.get ('/api/v1/requester/user/getdetails',					UserController.getDetailsSuper); //También supervisor OK
+	app.put ('/api/v1/requester/group/createroster',			GroupController.createRoster);
+	app.post('/api/v1/requester/user/muir',								MassUsersController.muir);
+	app.post('/api/v1/requester/request/create',					RequestController.create);
+	app.get ('/api/v1/requester/request/get',							RequestController.get);
+	app.get ('/api/v1/requester/request/my',							RequestController.my);
+	app.put ('/api/v1/requester/request/finish', 					RequestController.finish);
+	app.put ('/api/v1/requester/request/cancel', 					RequestController.cancel);
+	app.put ('/api/v1/requester/request/modify', 					RequestController.modify);
+	app.post('/api/v1/requester/request/sendemail', 			RequestController.sendEmail);
+	app.post('/api/v1/requester/request/setpayment', 			RequestController.setPayment);
+	app.get ('/api/v1/requester/fiscal/list',							UserController.listFiscals);
 
 	// Rutas para archivos
 
