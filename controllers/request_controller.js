@@ -488,10 +488,9 @@ module.exports = {
 					}
 					if(req.body.file) {
 						try {
-							file = await File.find({_id: req.body.file});
+							file = await File.findOne({_id: req.body.file});
 							if(file) {
-								const ordir = process.env.ORDIR + '/';
-								const sourceFile = ordir + file.filename;
+								const sourceFile = process.env.ORDIR + '/' + file.filename;
 								const fs = require('fs');
 								formData = {
 									description	: 'Se ha realizado la notificación desde el portal ' +
@@ -512,8 +511,7 @@ module.exports = {
 									status			: 2,
 									source			: 2,
 									type				: 'Solicitud',
-									tags 				: ['Solicitud','Pago'],
-									cc_emails		: config.support.cc_emails,
+									'tags[]' 		: ['Alumno','Solicitud','Pago'],
 									'attachments[]': {
 										value: fs.createReadStream(sourceFile),
 										options: {
@@ -522,42 +520,48 @@ module.exports = {
 										}
 									}
 								};
-
-							}
-						} catch (err) {
-							res.status(500).json({
-								'message': err
-							});
-							return;
-						}
-					}
-					let options = {
-						method		: 'POST',
-						uri				:	config.support.uri + '/api/v2/tickets/',
-						headers		: headers,
-						formData	: formData
-					};
-					let response = await HTTPRequest(options);
-					if(response && response.id && response.id > 0) {
-						let paymentMethod = req.body.paymentMethod || 'transfer';
-						let request = await Request.findOneAndUpdate({reqNumber: req.body.number},{$set: {paymentMethod: paymentMethod}},{$push: {files:req.body.file}});
-						try {
-							if(request){
-								res.status(200).json({
-									'message': 'Se ha registrado el pago y se notificó a la mesa de servicio con el ticket número: ' + response.id
-								});
+								let options = {
+									method		: 'POST',
+									uri				:	config.support.uri + '/api/v2/tickets/',
+									headers		: headers,
+									formData	: formData
+								};
+								let response = await HTTPRequest(options);
+								if(typeof response === 'string') {
+									response = JSON.parse(response);
+								}
+								if(response && response.status && response.status === 2) {
+									let paymentMethod = req.body.paymentMethod || 'transfer';
+									let request = await Request.findOneAndUpdate({reqNumber: req.body.number},{$set: {paymentMethod: paymentMethod}},{$push: {files:req.body.file}});
+									try {
+										if(request){
+											res.status(200).json({
+												'message': 'Se ha registrado el pago y se notificó a la mesa de servicio con el ticket número: ' + response.id
+											});
+										} else {
+											res.status(400).json({
+												message: 'No se encuentra la solicitud ' + req.body.number
+											});
+										}
+									} catch (err) {
+										res.status(500).json({
+											message: 'No pudo actualizarse la solicitud ' + req.body.number
+										});
+									}
+								} else {
+									res.status(500).json(response);
+									return;
+								}
 							} else {
 								res.status(400).json({
-									message: 'No se encuentra la solicitud ' + req.body.number
+									'message': 'Archivo no encontrado'
 								});
+								return;
 							}
 						} catch (err) {
-							res.status(500).json({
-								message: 'No pudo actualizarse la solicitud ' + req.body.number
-							});
+							res.status(500).json(err);
+							return;
 						}
-					} else {
-						res.status(500).json(response);
 					}
 				} catch (err){
 					res.status(500).json({
