@@ -12,11 +12,6 @@ const mailjet 		= require('../shared/mailjet'								);
 const Notification = require('../src/notifications'						);
 const Attempt 		= require('../src/attempts'									);
 const TA 					= require('time-ago'												);
-//const winston 		= require('winston'													);
-
-/*
-const logger = require('../shared/winston-logger');
-*/
 
 const url = process.env.LIBRETA_URI;
 const supportEmail = process.env.supportEmail;
@@ -1171,7 +1166,12 @@ module.exports = {
 							}
 							if(item.sections && item.sections.length > 0 && item.sections[block.section] && !item.sections[block.section].viewed) {
 								if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].beginDate) {
-									new_block.beginDate = item.sections[block.section].beginDate;
+									const begDate = new Date(new_block.beginDate);
+									const now = new Date();
+									const diff = begDate.getTime() - now.getTime();
+									if(diff > 0) {
+										new_block.beginDate = item.sections[block.section].beginDate;
+									}
 								}
 								if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].endDate) {
 									new_block.endDate = item.sections[block.section].endDate;
@@ -2534,8 +2534,11 @@ module.exports = {
 					}
 					const sectionDisp = section;
 					// validar que exista fecha de inicio para la sección. Si existe mandar mensaje de cuándo empezará
-					if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].beginDate && item.sections[section].beginDate > now) {
-						if(!item.sections[section].viewed) {
+					if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].beginDate) {
+						const begDate = new Date(item.sections[section].beginDate);
+						const now = new Date();
+						const diff = begDate.getTime() - now.getTime();
+						if(!item.sections[section].viewed && diff > 0) {
 							ok = false;
 							cause = 'Section '+ sectionDisp +' will begin at ' + item.sections[section].beginDate;
 							causeSP = 'La sección '+ sectionDisp +' comenzará el ' + item.sections[section].beginDate;
