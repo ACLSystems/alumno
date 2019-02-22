@@ -22,6 +22,11 @@ RUN npm install
 # Copiamos la aplicacion
 COPY . /usr/src/app
 
+# Cambiamos la hora
+RUN echo "America/Mexico_City" > /etc/timezone
+RUN rm /etc/localtime
+RUN dpkg-reconfigure -f noninteractive tzdata
+
 # Se indica el puerto que usará la aplicación en este caso 3050
 EXPOSE 3050
 
