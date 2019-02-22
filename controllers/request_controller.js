@@ -84,9 +84,13 @@ module.exports = {
 				{
 					path: 'invoice',
 					select: 'date dueDate invoice status client paymentMethod numberTemplate syncAPIExternal idAPIExternal total totalPaid balance decimalPrecision items termsConditions cdfiUse'
+				},
+				{
+					path: 'files',
+					select: 'name createDate'
 				}
 			])
-			.select('requester date reqNumber label tags subtotal discount tax total status statusReason details paymentNotes files fiscalFiles temp1 temp2 temp3 dateFinished dateCancelled paymentSystem paymentMethod paymentType paymentStatus invoiceFlag invoice')
+			.select('requester date reqNumber label tags subtotal discount tax total status statusReason details paymentNotes files filesNotes fiscalFiles temp1 temp2 temp3 dateFinished dateCancelled paymentSystem paymentMethod paymentType paymentStatus invoiceFlag invoice')
 			.lean()
 			.then((request)  => {
 				if(request) {
@@ -469,6 +473,10 @@ module.exports = {
 	}, //cancel
 
 	async setPayment(req,res) {
+		const key_user 	= res.locals.user;
+		if(!req.body.notes) {
+			req.body.notes = '--Solicitante no ha enviado notas--';
+		}
 		try {
 			let config = await Config.findOne({});
 			let file = false;
@@ -492,6 +500,7 @@ module.exports = {
 							if(file) {
 								const sourceFile = process.env.ORDIR + '/' + file.filename;
 								const fs = require('fs');
+
 								formData = {
 									description	: 'Se ha realizado la notificación desde el portal ' +
 																portal +
@@ -504,7 +513,8 @@ module.exports = {
 																'Gracias. <br><br>' +
 																'<br>Req: ' + req.body.number +
 																'<br>F/T: ' + req.body.invoiceNumber +
-																'<br>idAPIExternal: ' + req.body.idAPIExternal,
+																'<br>idAPIExternal: ' + req.body.idAPIExternal +
+																'<br><br>Notas del solicitante:<br><br>' + req.body.notes,
 									email				: req.body.email,
 									subject			: 'Pago generado. Req: ' + req.body.number + ' Fac/Tick: ' + req.body.invoiceNumber,
 									priority		: 3,
@@ -531,12 +541,23 @@ module.exports = {
 									response = JSON.parse(response);
 								}
 								if(response && response.status && response.status === 2) {
-									let paymentMethod = req.body.paymentMethod || 'transfer';
-									let request = await Request.findOneAndUpdate({reqNumber: req.body.number},{$set: {paymentMethod: paymentMethod}},{$push: {files:req.body.file}});
+									let request = await Request.findOne({reqNumber: req.body.number});
 									try {
 										if(request){
-											res.status(200).json({
-												'message': 'Se ha registrado el pago y se notificó a la mesa de servicio con el ticket número: ' + response.id
+											request.paymentMethod = req.body.paymentMethod || 'transfer';
+											request.paymentSystem = 'direct';
+											request.paymentNotes.push({
+												note: 'Payment made by ' + key_user.name,
+												date: new Date()
+											});
+											request.filesNotes.push(req.body.notes);
+											request.files.push(file._id);
+											request.save().then(() => {
+												res.status(200).json({
+													'message': 'Se ha registrado el pago y se notificó a la mesa de servicio con el ticket número: ' + response.id
+												});
+											}).catch((err) => {
+												Err.sendError(res,err,'group_controller','setPayment -- Saving request --',false,false,'Request number: ' + request.number);
 											});
 										} else {
 											res.status(400).json({

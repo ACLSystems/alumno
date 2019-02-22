@@ -99,7 +99,7 @@ const RequestSchema = new Schema ({
 	},
 	paymentSystem: {
 		type: String,
-		enum: ['paypal','payU','mercadoLibre']
+		enum: ['direct','paypal','payU','mercadoLibre']
 	},
 	paymentMethod: {
 		type: String,
@@ -125,7 +125,11 @@ const RequestSchema = new Schema ({
 	//																						el pago. Se debe documentar en el campo 'paymentStatusReason'
 	//																						indicando quién autoriza esta liberación
 	paymentNotes: [],
-	files:[],
+	filesNotes: [],
+	files:[{
+		type: Schema.Types.ObjectId,
+		ref: 'files'
+	}],
 	fiscalFiles:[],
 	invoiceFlag: {
 		type: Boolean

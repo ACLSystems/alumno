@@ -27,6 +27,10 @@ const FileSchema = new Schema ({
 		type: Number,
 		required: true,
 		default: 0
+	},
+	createDate: {
+		type: Date,
+		default: Date.now
 	}
 });
 
