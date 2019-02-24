@@ -1,7 +1,6 @@
 const version = require('./shared/version');
-const app = require('./app');
-
-const logger = require('./shared/winston-logger');
+const app 		= require('./app');
+const logger	= require('./shared/winston-logger');
 
 app.set('port', process.env.PORT || 3050);
 

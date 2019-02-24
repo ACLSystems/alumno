@@ -1,11 +1,12 @@
 /* eslint no-unused-vars: "error" */
-const express = require('express');
-const bodyParser = require('body-parser');
+const express 						= require('express');
+const bodyParser 					= require('body-parser');
 const bodyParserJsonError = require('./shared/validatejson');
-const helmet = require('helmet');
-const db = require('./src/db'); // eslint-disable-line no-unused-vars
-const routes = require('./routes/routes');
-const app = express();
+const helmet 							= require('helmet');
+const db 									= require('./src/db'); // eslint-disable-line no-unused-vars
+const cache 							= require('./src/cache'); // eslint-disable-line no-unused-vars
+const routes 							= require('./routes/routes');
+const app 								= express();
 
 app.use(helmet());
 app.use(bodyParser.json({limit: '50mb'}));

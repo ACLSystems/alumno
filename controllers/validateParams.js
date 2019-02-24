@@ -907,6 +907,22 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/course/count':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give data by query to process'
+			});
+		} else if (!req.query.org) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1780: Please, give org by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/nextblock':
 		if(!req.query) {
 			res.status(406).json({

@@ -1,4 +1,3 @@
-//const winston				= require('winston'								);
 const Course				= require('../src/courses'				);
 const Category			= require('../src/categories'			);
 const Block					= require('../src/blocks'					);
@@ -8,8 +7,9 @@ const permissions 	= require('../shared/permissions'	);
 const Org						= require('../src/orgs'						);
 const Resource 			= require('../src/resources'			);
 const Dependency 		= require('../src/dependencies'		);
+const logger 				= require('../shared/winston-logger');
 
-const logger = require('../shared/winston-logger');
+//const redisClient = redis.createClient(keys.redisUrl);
 
 module.exports = {
 	create(req,res) {
@@ -48,7 +48,9 @@ module.exports = {
 										isVisible: true,
 										org: key_user.org._id
 									});
-									category.save()
+									category.save(() => {
+
+									})
 										.catch((err) => {
 											sendError(res,err,'listCategories -- Course category creation --');
 										});
@@ -218,6 +220,34 @@ module.exports = {
 			});
 	}, // fin del getCategories
 
+	countCourses(req,res) {
+		Org.findOne({name: req.query.org})
+			.select('name')
+			.cache({key: req.query.org})
+			.lean()
+			.then((org) => {
+				if(org) {
+					Course.countDocuments({org:org._id})
+						.cache({key: org._id})
+						.then((count)  => {
+							res.status(200).json({
+								'coursesCount': count
+							});
+						})
+						.catch((err) => {
+							sendError(res,err,'countCourses -- Counting courses --');
+						});
+				} else {
+					res.status(404).json({
+						'message': `Organización ${req.query.org} no encontrada`
+					});
+				}
+			})
+			.catch((err) => {
+				sendError(res,err,'countCourses -- Finding Org --');
+			});
+	}, //countCourses
+
 	listCourses(req,res) {
 		var query = {};
 		const key_user 	= res.locals.user;
@@ -237,6 +267,7 @@ module.exports = {
 		}
 		Course.find(query)
 			.sort(sort)
+			.lean()
 			.then((courses) => {
 				var send_courses = [];
 				courses.forEach(function(course) {
@@ -276,6 +307,9 @@ module.exports = {
 	listCoursesStudents(req,res) {
 		var query = {};
 		Org.findOne({ name: req.query.org })
+			.select('name')
+			.cache({key: req.query.org})
+			.lean()
 			.then((org) => {
 				var sort = { name: 1 };
 				//var skip = 0;
@@ -299,6 +333,8 @@ module.exports = {
 				query.status = 'published';
 				query.isVisible = true;
 				Course.find(query)
+					.cache({key: query})
+					.lean()
 					.sort(sort)
 					//.skip(skip)
 					//.limit(limit)

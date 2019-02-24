@@ -29,6 +29,10 @@
 /test/*
 /config/secret.js
 /config/newpass.js
+/config/keys.js
+/config/prod.js
+/config/dev.js
+/config/test.js
 *.log
 *.sql
 *.sqlite

@@ -24,6 +24,8 @@ var dir 										= process.env.ORDIR;
 const fileSize 							= 1048576;
 const files 								= 1;
 
+require('../shared/cache');
+
 if(!dir) {
 	dir = '/usr/src/data/files';
 }
@@ -98,6 +100,7 @@ module.exports = (app) => {
 	app.get ('/api/term/listtypes', 				TermController.listTypes);
 	app.get ('/api/course/getblocklist',		CourseController.getBlocklistStudents);
 	app.get ('/api/course/list', 						CourseController.listCoursesStudents);
+	app.get ('/api/course/count', 					CourseController.countCourses);
 	app.get ('/api/cert/get', 							CertController.getCertificate);
 
 	// Rutas que pueden acceder solo usuarios autenticados
