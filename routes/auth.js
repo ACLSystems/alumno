@@ -39,13 +39,13 @@ var auth = {
 									if(session) {
 										session.token = objToken.token;
 										if(session.details && Array.isArray(session.details)){
-											session.details.push({
+											session.details.unshift({
 												date: new Date(),
 												url: '/login'
 											});
 										} else {
 											session.details = [];
-											session.details.push({
+											session.details.unshift({
 												date: new Date(),
 												url: '/login'
 											});
@@ -57,7 +57,7 @@ var auth = {
 											onlyDate: getToday(),
 											details: []
 										});
-										session.details.push({
+										session.details.unshift({
 											date: new Date(),
 											url: '/login'
 										});

@@ -223,12 +223,12 @@ module.exports = {
 	countCourses(req,res) {
 		Org.findOne({name: req.query.org})
 			.select('name')
-			.cache({key: req.query.org})
+			.cache({key: 'org:' + req.query.org})
 			.lean()
 			.then((org) => {
 				if(org) {
 					Course.countDocuments({org:org._id})
-						.cache({key: org._id})
+						.cache({key: 'course:count:' + org._id})
 						.then((count)  => {
 							res.status(200).json({
 								'coursesCount': count
@@ -308,7 +308,7 @@ module.exports = {
 		var query = {};
 		Org.findOne({ name: req.query.org })
 			.select('name')
-			.cache({key: req.query.org})
+			.cache({key: 'org:name:' + req.query.org})
 			.lean()
 			.then((org) => {
 				var sort = { name: 1 };
@@ -333,7 +333,8 @@ module.exports = {
 				query.status = 'published';
 				query.isVisible = true;
 				Course.find(query)
-					.cache({key: query})
+					.select('title code image type description categories keywords isVisible price cost author apiExternal defaultDaysDuration')
+					.cache({key: 'course:list:' + JSON.stringify(query)})
 					.lean()
 					.sort(sort)
 					//.skip(skip)

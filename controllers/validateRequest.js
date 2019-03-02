@@ -137,7 +137,7 @@ module.exports = function(req, res, next) {
 							.then(session => {
 								if(session) {
 									if(session.details && Array.isArray(session.details)){
-										session.details.push({
+										session.details.unshift({
 											date: new Date(),
 											url: url
 										});
@@ -153,7 +153,7 @@ module.exports = function(req, res, next) {
 										onlyDate: getToday(),
 										details: []
 									});
-									session.details.push({
+									session.details.unshift({
 										date: new Date,
 										url: url
 									});
