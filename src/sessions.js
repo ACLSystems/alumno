@@ -1,10 +1,32 @@
 // Definir requerimientos
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const {numVersion} = require('../shared/version');
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 // Definir esquema y subesquemas
+
+const DetailsSchema = new Schema({
+	date: {
+		type: Date,
+		required: true,
+		default: Date.now
+	},
+	url: {
+		type: String
+	},
+	group: {
+		type: Schema.Types.ObjectId,
+		ref: 'groups'
+	},
+	course: {
+		type: Schema.Types.ObjectId,
+		ref: 'courses'
+	}
+},{ _id: false });
+
+module.exports = DetailsSchema;
 
 const SessionSchema = new Schema ({
 	user: {
@@ -14,11 +36,12 @@ const SessionSchema = new Schema ({
 	token: {
 		type: String
 	},
-	date: {
-		type: Date,
-		required: true
+	details: [DetailsSchema],
+	version: {
+		type: String,
+		default: numVersion
 	},
-	url: {
+	onlyDate: {
 		type: String
 	}
 });

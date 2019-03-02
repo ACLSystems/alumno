@@ -18,6 +18,7 @@ const NotificationController = require('../controllers/notification_controller'	
 const FollowController 			= require('../controllers/follow_controller'				);
 const logController 				= require('../controllers/log_controller'						);
 const RequestController 		= require('../controllers/request_controller'				);
+const SessionController			= require('../controllers/session_controller'				);
 const multer 								= require('multer'																	);
 const ConfigController 			= require('../controllers/config_controller'				);
 var dir 										= process.env.ORDIR;
@@ -213,6 +214,8 @@ module.exports = (app) => {
 	app.put ('/api/v1/admin/user/setgrade', 			GroupController.setGrade);
 	app.get ('/api/v1/admin/user/valpwd', 				UserController.validatePassword);
 	app.put ('/api/v1/admin/group/setrubric',			GroupController.setRubric);
+	app.get ('/api/v1/admin/sessions',						SessionController.users);
+	app.get ('/api/v1/admin/sessiondetails',			SessionController.userSessionDetails);
 	app.delete ('/api/v1/admin/log/truncate', 		logController.truncate);
 	app.delete ('/api/v1/admin/:name/delete', 		UserController.delete);
 

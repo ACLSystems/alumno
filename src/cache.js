@@ -2,12 +2,22 @@ const redis = require('redis');
 const keys = require('../config/keys');
 const {promisify} = require('util');
 const logger = require('../shared/winston-logger');
+const timeToLive = process.env.TTL_SESSIONS || 900;
 
 const options = {
 	url: keys.redisUrl
 };
 const redisClient = redis.createClient(options);
-redisClient.hget = promisify(redisClient.hget);
+redisClient.hget 			= promisify(redisClient.hget);
+redisClient.hgetall 	= promisify(redisClient.hgetall);
+redisClient.hmset 		= promisify(redisClient.hmset);
+redisClient.set 			= promisify(redisClient.set);
+redisClient.get 			= promisify(redisClient.get);
+redisClient.lpush			= promisify(redisClient.lpush);
+redisClient.lrange		= promisify(redisClient.lrange);
+redisClient.flushall	= promisify(redisClient.flushall);
+redisClient.expire		= promisify(redisClient.expire);
+redisClient.keys			= promisify(redisClient.keys);
 
 var message = '';
 
@@ -37,4 +47,5 @@ process.on('SIGINT', function() {
 	});
 });
 
+redisClient.ttlSessions = timeToLive;
 module.exports = redisClient;

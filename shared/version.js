@@ -1,5 +1,8 @@
+const version = '1.9.2';
+
 module.exports = {
 	app: 'alumno',
-	version: '1.9.0'
+	version: version,
+	numVersion: version.replace(/\./g, '')
 	// se utiliza semver
 };

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const timeToLive = process.env.TTL || 600;
+const timeToLive = process.env.TTL;
 const redisClient = require('../src/cache');
 const exec = mongoose.Query.prototype.exec;
 

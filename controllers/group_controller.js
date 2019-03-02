@@ -14,8 +14,8 @@ const Attempt 		= require('../src/attempts'									);
 const TA 					= require('time-ago'												);
 
 const url = process.env.LIBRETA_URI;
-const supportEmail = process.env.supportEmail;
-const portal = process.env.portal;
+const supportEmail = process.env.SUPPORT_EMAIL;
+const portal = process.env.PORTAL;
 
 module.exports = {
 	create(req,res) {

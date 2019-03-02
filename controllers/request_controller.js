@@ -6,7 +6,7 @@ const FiscalContact = require('../src/fiscalContacts'						);
 const File 					= require('../src/files'										);
 const Err 					= require('../controllers/err500_controller');
 
-const portal = process.env.portal;
+const portal = process.env.PORTAL;
 
 module.exports = {
 	create(req,res) {
