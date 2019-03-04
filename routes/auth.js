@@ -21,7 +21,6 @@ var auth = {
 			});
 			return;
 		}
-
 		Users.findOne({$or: [{name: username},{'person.email': username}] })
 			.then((user) => {
 				if(!user) {
@@ -33,55 +32,31 @@ var auth = {
 				} else {
 					user.validatePassword(password, function(err, isOk) {
 						if(isOk) {
-							Session.findOne({user:user._id,onlyDate: getToday()})
-								.then((session) => {
-									var objToken = genToken(user);
-									if(session) {
-										session.token = objToken.token;
-										if(session.details && Array.isArray(session.details)){
-											session.details.unshift({
-												date: new Date(),
-												url: '/login'
-											});
-										} else {
-											session.details = [];
-											session.details.unshift({
-												date: new Date(),
-												url: '/login'
-											});
-										}
-									} else {
-										session = new Session({
-											user: user._id,
-											token: objToken.token,
-											onlyDate: getToday(),
-											details: []
-										});
-										session.details.unshift({
-											date: new Date(),
-											url: '/login'
-										});
-									}
-									session.save().then(() => {
-										cache.hmset('session:id:'+user._id,{
-											token: objToken.token,
-											url: '/login'
-										});
-										cache.set('session:name:'+ user.name, 'session:id:'+user._id);
-										cache.expire('session:id:'+user._id,cache.ttlSessions);
-										cache.expire('session:name:'+ user.name,cache.ttlSessions);
-										res.status(200).json({
-											'status': 200,
-											'token': objToken.token,
-											'expires': objToken.expires
-										});
-									})
-										.catch((err) => {
-											sendError(res,err,'auth -- Saving session --');
-										});
+							const objToken = genToken(user);
+							var session = new Session({
+								user: user._id,
+								token: objToken.token,
+								onlyDate: getToday(),
+								date: new Date(),
+								url: '/login'
+							});
+							session.save()
+								.then(() => {
+									cache.hmset('session:id:'+user._id,{
+										token: objToken.token,
+										url: '/login'
+									});
+									cache.set('session:name:'+ user.name, 'session:id:'+user._id);
+									cache.expire('session:id:'+user._id,cache.ttlSessions);
+									cache.expire('session:name:'+ user.name,cache.ttlSessions);
+									res.status(200).json({
+										'status': 200,
+										'token': objToken.token,
+										'expires': objToken.expires
+									});
 								})
 								.catch((err) => {
-									sendError(res,err,'auth -- Finding session --');
+									sendError(res,err,'auth -- Saving session --');
 								});
 
 						} else {

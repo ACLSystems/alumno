@@ -21,6 +21,7 @@ const RequestController 		= require('../controllers/request_controller'				);
 const SessionController			= require('../controllers/session_controller'				);
 const multer 								= require('multer'																	);
 const ConfigController 			= require('../controllers/config_controller'				);
+const CacheController 			= require('../controllers/cache_controller'					);
 var dir 										= process.env.ORDIR;
 const fileSize 							= 1048576;
 const files 								= 1;
@@ -218,6 +219,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/admin/sessiondetails',			SessionController.userSessionDetails);
 	app.delete ('/api/v1/admin/log/truncate', 		logController.truncate);
 	app.delete ('/api/v1/admin/:name/delete', 		UserController.delete);
+	app.get ('/api/v1/admin/cache/flushall', 			CacheController.flushall);
 
 	// Rutas para roles de 'isOrg'
 

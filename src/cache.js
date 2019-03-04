@@ -2,7 +2,8 @@ const redis = require('redis');
 const keys = require('../config/keys');
 const {promisify} = require('util');
 const logger = require('../shared/winston-logger');
-const timeToLive = process.env.TTL_SESSIONS || 900;
+const timeToLiveSessions = process.env.TTL_SESSIONS || 900;
+const timeToLive = process.env.TTL || 900;
 
 const options = {
 	url: keys.redisUrl
@@ -47,5 +48,6 @@ process.on('SIGINT', function() {
 	});
 });
 
-redisClient.ttlSessions = timeToLive;
+redisClient.ttlSessions = timeToLiveSessions;
+redisClient.ttl = timeToLive;
 module.exports = redisClient;

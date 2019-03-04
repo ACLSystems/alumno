@@ -1,6 +1,6 @@
 const mailjet 	= require('../shared/mailjet'	);
 const ErrorReg	= require('../src/errors'			);
-const version 	= require('../shared/version'	);
+const version 	= require('../version/version'	);
 
 //const devEmail		= 'arturocastro@aclsystems.mx';
 const devEmail		= process.env.DEV_EMAIL;

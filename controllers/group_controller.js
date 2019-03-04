@@ -12,6 +12,7 @@ const mailjet 		= require('../shared/mailjet'								);
 const Notification = require('../src/notifications'						);
 const Attempt 		= require('../src/attempts'									);
 const TA 					= require('time-ago'												);
+const cache 			= require('../src/cache'										);
 
 const url = process.env.LIBRETA_URI;
 const supportEmail = process.env.SUPPORT_EMAIL;
@@ -1040,77 +1041,89 @@ module.exports = {
 			});
 	}, //listRoster
 
-	myGroups(req,res) {
-		const key_user 	= res.locals.user;
-		Roster.find({student: key_user._id})
-			.populate({
-				path: 'group',
-				model: 'groups',
-				select: 'code _id name beginDate endDate presentBlockBy lapse',
-				populate: [
-					{
-						path: 'course',
-						model: 'courses',
-						select: 'title _id code blocks numBlocks duration durationUnits'
-					},
-					{
-						path: 'instructor',
-						model: 'users',
-						select: 'person.name person.fatherName'
-					}
-				]
-			})
-			.lean()
-			.then((items) => {
-				if(items.length > 0) {
-					var send_groups = [];
-					items.forEach(function(item) {
-						var send_group = {};
-						send_group = {
-							code						: item.group.code,
-							groupid					: item.group._id,
-							name						: item.group.name,
-							course					: item.group.course.title,
-							courseid				: item.group.course._id,
-							courseCode			: item.group.course.code,
-							courseBlocks		: item.group.course.numBlocks,
-							instructor			: item.group.instructor.person.name + ' ' + item.group.instructor.person.fatherName,
-							presentBlockBy	: item.group.presentBlockBy,
-							myStatus				: item.status,
-							track						: item.track,
-							firstBlock			: item.group.course.blocks[0]
-						};
-						if(item.group.course.duration) {
-							send_group.duration = item.group.course.duration + item.group.course.durationUnits;
-						}
-						if(item.group.course.beginDate) {
-							send_group.beginDate = item.group.course.beginDate;
-						}
-						if(item.group.course.endDate) {
-							send_group.endDate = item.group.course.endDate;
-						}
-						if(item.group.presentBlockBy === 'lapse' && item.group.lapse) {
-							send_group.lapse = item.group.course.lapse;
-						}
-						send_groups.push(send_group);
-					});
-					res.status(200).json({
-						'status': 200,
-						'message': {
-							'student'		: key_user.person.fullName,
-							'numgroups'	: items.length,
-							'groups'		: send_groups
-						}
-					});
-				} else {
-					res.status(200).json({
-						'message': 'No groups found'
-					});
+	async myGroups(req,res) {
+		function sendGroups(items) {
+			var send_groups = [];
+			items.forEach(function(item) {
+				var send_group = {};
+				send_group = {
+					code						: item.group.code,
+					groupid					: item.group._id,
+					name						: item.group.name,
+					course					: item.group.course.title,
+					courseid				: item.group.course._id,
+					courseCode			: item.group.course.code,
+					courseBlocks		: item.group.course.numBlocks,
+					instructor			: item.group.instructor.person.name + ' ' + item.group.instructor.person.fatherName,
+					presentBlockBy	: item.group.presentBlockBy,
+					myStatus				: item.status,
+					track						: item.track,
+					firstBlock			: item.group.course.blocks[0]
+				};
+				if(item.group.course.duration) {
+					send_group.duration = item.group.course.duration + item.group.course.durationUnits;
 				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'group_controller','mygroups -- Finding groups through Roster --');
+				if(item.group.course.beginDate) {
+					send_group.beginDate = item.group.course.beginDate;
+				}
+				if(item.group.course.endDate) {
+					send_group.endDate = item.group.course.endDate;
+				}
+				if(item.group.presentBlockBy === 'lapse' && item.group.lapse) {
+					send_group.lapse = item.group.course.lapse;
+				}
+				send_groups.push(send_group);
 			});
+			res.status(200).json({
+				'status': 200,
+				'message': {
+					'student'		: key_user.person.fullName,
+					'numgroups'	: items.length,
+					'groups'		: send_groups
+				}
+			});
+		}
+
+		const key_user 	= res.locals.user;
+		let myGroups = await cache.hget('mygroups:' + key_user._id, 'groups');
+		if(!myGroups) {
+			Roster.find({student: key_user._id})
+				.populate({
+					path: 'group',
+					model: 'groups',
+					select: 'code name beginDate endDate presentBlockBy lapse',
+					populate: [
+						{
+							path: 'course',
+							model: 'courses',
+							select: 'title _id code blocks numBlocks duration durationUnits'
+						},
+						{
+							path: 'instructor',
+							model: 'users',
+							select: 'person.name person.fatherName'
+						}
+					]
+				})
+				.select('status track group')
+				.lean()
+				.then((items) => {
+					if(items.length > 0) {
+						cache.hset('mygroups:' + key_user._id, 'groups', JSON.stringify(items));
+						cache.expire('mygroups:' + key_user._id,cache.ttl);
+						sendGroups(items);
+					} else {
+						res.status(200).json({
+							'message': 'No groups found'
+						});
+					}
+				})
+				.catch((err) => {
+					Err.sendError(res,err,'group_controller','mygroups -- Finding groups through Roster --');
+				});
+		} else {
+			sendGroups(JSON.parse(myGroups));
+		}
 	}, // mygroups
 
 	myGroup(req,res) {

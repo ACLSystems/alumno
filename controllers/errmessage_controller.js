@@ -1,4 +1,3 @@
-//const version = require('../shared/version');
 const Errors 	= require('../src/errors');
 const Err 	 	= require('../controllers/err500_controller');
 const TA 			= require('time-ago');

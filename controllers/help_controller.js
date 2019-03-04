@@ -1,4 +1,4 @@
-const version = require('../shared/version');
+const version = require('../version/version');
 
 module.exports = {
 	help(req, res) {

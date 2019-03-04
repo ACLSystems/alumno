@@ -11,10 +11,17 @@ module.exports = {
 	async users(req,res) {
 		const usersSessions = await cache.keys(sessionString + '*');
 		const users = usersSessions.map(user => user.slice(sessionString.length));
-		res.status(200).json({
-			numUsers: users.length,
-			users: users
-		});
+		if(users.length > 0){
+			res.status(200).json({
+				numUsers: users.length,
+				users: users
+			});
+		} else {
+			res.status(200).json({
+				numUsers: users.length,
+				message: 'No existen sesiones en el sistema. Probablemente el sistema reinició o se borró el caché premeditadamente. Por favor, intente nuevamente.'
+			});
+		}
 	}, //users
 
 	async userSessionDetails(req,res){
@@ -25,28 +32,28 @@ module.exports = {
 			.lean()
 			.then((username) => {
 				if(username){
-					Session.findOne({user:username._id, onlyDate: onlyDate})
-						.select('onlyDate details -_id')
+					Session.find({user:username._id, onlyDate: onlyDate})
+						.sort({ date: -1 })
+						.select('onlyDate date url group course -_id')
 						.lean()
-						.then((session) => {
-							if(session){
-								if(session.details && Array.isArray(session.details)) {
-									session.details.map(detail => {
-										detail.date = detail.date.toString();
-										detail.dateAgo = TA.ago(detail.date);
-									});
-								}
+						.then((sessions) => {
+							if(sessions && Array.isArray(sessions)){
+								sessions = sessions.map(sess => {
+									sess.dateAgo = TA.ago(sess.date);
+									sess.date = sess.date.toString();
+									return sess;
+								});
 								if(usersSession) {
 									res.status(200).json({
 										username: username.name,
 										active: true,
-										userDetails: session
+										userDetails: sessions
 									});
 								} else {
 									res.status(200).json({
 										username: username.name,
 										active: false,
-										userDetails: session
+										userDetails: sessions
 									});
 								}
 							} else {

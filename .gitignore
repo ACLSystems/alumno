@@ -27,6 +27,7 @@
 /data/*
 /bkp/*
 /test/*
+/sandbox/*
 /config/secret.js
 /config/newpass.js
 /config/keys.js
@@ -62,4 +63,8 @@ doc/Oferta*
 /src/*NO_USAR*
 /*/*_notUse*
 alumno.start.*
+cache.start.*
+cache.stop.*
+cache.rm.*
 *_alumno*.sh
+Dockerfile-e

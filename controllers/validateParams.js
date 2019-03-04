@@ -110,6 +110,10 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/admin/cache/flushall':
+		next();
+		break;
+
 	case '/api/v1/admin/sessions':
 		next();
 		break;
