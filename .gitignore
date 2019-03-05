@@ -34,6 +34,7 @@
 /config/prod.js
 /config/dev.js
 /config/test.js
+/tests/*
 *.log
 *.sql
 *.sqlite
