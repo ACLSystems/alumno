@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node index.js",
     "test": "NODE_ENV=development nodemon index.js",
-		"jest": "jest"
+    "jest": "jest"
+  },
+  "jest": {
+    "testRegex": "tests/.*\\.(js|jsx)$"
   },
   "repository": {
     "type": "git",
@@ -54,6 +57,7 @@
     "babel-cli": "6.26.0",
     "babel-preset-env": "^1.7.0",
     "eslint": "^5.15.0",
+    "faker": "^4.1.0",
     "jest": "^24.1.0",
     "nodemon": "^1.18.10",
     "puppeteer": "^1.12.2"
