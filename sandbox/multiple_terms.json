@@ -1,0 +1,122 @@
+[
+	{
+	"name": "Semestre I",
+	"type": "semester",
+	"org": "conalep"
+	},
+	{
+	"name": "Semestre II",
+	"type": "semester",
+	"org": "conalep"
+	},
+	{
+	"name": "Semestre III",
+	"type": "semester",
+	"org": "conalep"
+	},
+	{
+	"name": "Semestre IV",
+	"type": "semester",
+	"org": "conalep"
+	},
+	{
+	"name": "Semestre V",
+	"type": "semester",
+	"org": "conalep"
+	},
+	{
+	"name": "Semestre VI",
+	"type": "semester",
+	"org": "conalep"
+	},
+	{
+	"name": "Semestre VII",
+	"type": "semester",
+	"org": "conalep"
+	},
+	{
+	"name": "Semestre VIII",
+	"type": "semester",
+	"org": "conalep"
+	},
+	{
+	"name": "Semestre IX",
+	"type": "semester",
+	"org": "conalep"
+	},
+	{
+	"name": "Semestre X",
+	"type": "semester",
+	"org": "conalep"
+	},
+	{
+	"name": "Semestre XI",
+	"type": "semester",
+	"org": "conalep"
+	},
+	{
+	"name": "Semestre XII",
+	"type": "semester",
+	"org": "conalep"
+	},
+	{
+	"name": "Trimestre I",
+	"type": "trimester",
+	"org": "conalep"
+	},
+	{
+	"name": "Trimestre II",
+	"type": "trimester",
+	"org": "conalep"
+	},
+	{
+	"name": "Trimestre III",
+	"type": "trimester",
+	"org": "conalep"
+	},
+	{
+	"name": "Trimestre IV",
+	"type": "trimester",
+	"org": "conalep"
+	},
+	{
+	"name": "Trimestre V",
+	"type": "trimester",
+	"org": "conalep"
+	},
+	{
+	"name": "Trimestre VI",
+	"type": "trimester",
+	"org": "conalep"
+	},
+	{
+	"name": "Trimestre VII",
+	"type": "trimester",
+	"org": "conalep"
+	},
+	{
+	"name": "Trimestre VIII",
+	"type": "trimester",
+	"org": "conalep"
+	},
+	{
+	"name": "Trimestre IX",
+	"type": "trimester",
+	"org": "conalep"
+	},
+	{
+	"name": "Trimestre X",
+	"type": "trimester",
+	"org": "conalep"
+	},
+	{
+	"name": "Trimestre XI",
+	"type": "trimester",
+	"org": "conalep"
+	},
+	{
+	"name": "Trimestre XII",
+	"type": "trimester",
+	"org": "conalep"
+	}
+]

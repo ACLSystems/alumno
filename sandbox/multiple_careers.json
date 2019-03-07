@@ -1,0 +1,242 @@
+[
+	{
+		"name": "artesgraficas",
+		"longName": "Artes Gráficas",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "medioambiente",
+		"longName": "Conservación del Medio Ambiente",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "construccion",
+		"longName": "Construcción",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "calidad",
+		"longName": "Control de Calidad",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "curtiduria",
+		"longName": "Curtiduría",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "escenotecnia",
+		"longName": "Escenotecnia",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "automotriz",
+		"longName": "Industria Automotriz",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "vestido",
+		"longName": "Industria del Vestido",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "maquinas",
+		"longName": "Máquinas Herramienta",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "metalmecanica",
+		"longName": "Metalmecánica",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "metalurgia",
+		"longName": "Metalurgia",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "minero",
+		"longName": "Minero Metalurgista",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "plasticos",
+		"longName": "Plásticos",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "alimentos",
+		"longName": "Procesamiento Industrial de Alimentos",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "calzado",
+		"longName": "Producción de Calzado",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "acuicolas",
+		"longName": "Producción y Transformación de Productos Acuícolas",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "productividad",
+		"longName": "Productividad Industrial",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "quimica",
+		"longName": "Química Industrial",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "seguridadhigiene",
+		"longName": "Seguridad e Higiene y Protección Civil",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "textil",
+		"longName": "Textil",
+		"area": "Producción y Transformación"
+	},
+	{
+		"name": "autotronica",
+		"longName": "Autotrónica",
+		"area": "Mantenimiento e Instalación"
+	},
+	{
+		"name": "electromecanica",
+		"longName": "Elecromecánica Industrial",
+		"area": "Mantenimiento e Instalación"
+	},
+	{
+		"name": "fuentesalternas",
+		"longName": "Fuentes Alternas de Energía",
+		"area": "Mantenimiento e Instalación"
+	},
+	{
+		"name": "laministeria",
+		"longName": "Laministería y Recubrimiento de las Aeronaves",
+		"area": "Mantenimiento e Instalación"
+	},
+	{
+		"name": "mantenimientoautomotriz",
+		"longName": "Mantenimiento Automotriz",
+		"area": "Mantenimiento e Instalación"
+	},
+	{
+		"name": "montoresplaneadores",
+		"longName": "Mantenimiento de Motores y Planeadores",
+		"area": "Mantenimiento e Instalación"
+	},
+	{
+		"name": "sistemasautomaticos",
+		"longName": "Mantenimiento de Sistemas Automáticos",
+		"area": "Mantenimiento e Instalación"
+	},
+	{
+		"name": "diesel",
+		"longName": "Motores a Diesel",
+		"area": "Mantenimiento e Instalación"
+	},
+	{
+		"name": "refrigeracion",
+		"longName": "Refrigeración y Climatización",
+		"area": "Mantenimiento e Instalación"
+	},
+	{
+		"name": "autotransporte",
+		"longName": "Autotransporte",
+		"area": "Tecnología y Transporte"
+	},
+	{
+		"name": "exresiongrafica",
+		"longName": "Expresión Gráfica Digital",
+		"area": "Tecnología y Transporte"
+	},
+	{
+		"name": "informatica",
+		"longName": "Informática",
+		"area": "Tecnología y Transporte"
+	},
+	{
+		"name": "soporte",
+		"longName": "Soporte y Mantenimiento de Equipo de Cómputo",
+		"area": "Tecnología y Transporte"
+	},
+	{
+		"name": "telecomunicaciones",
+		"longName": "Telecomunicaciones",
+		"area": "Tecnología y Transporte"
+	},
+	{
+		"name": "electricidadindustrial",
+		"longName": "Electricidad Indutrial",
+		"area": "Electricidad y Electrónica"
+	},
+	{
+		"name": "sistemaselectronicos",
+		"longName": "Mantenimiento de Sistemas Electrónicos",
+		"area": "Electricidad y Electrónica"
+	},
+	{
+		"name": "mecatronica",
+		"longName": "Mecatrónica",
+		"area": "Electricidad y Electrónica"
+	},
+	{
+		"name": "aviacion",
+		"longName": "Sistemas Electrónicos de Aviación",
+		"area": "Electricidad y Electrónica"
+	},
+	{
+		"name": "protesistadental",
+		"longName": "Asistente y Protesista Dental",
+		"area": "Salud"
+	},
+	{
+		"name": "enfermeria",
+		"longName": "Enfermería General",
+		"area": "Salud"
+	},
+	{
+		"name": "optometria",
+		"longName": "Optometría",
+		"area": "Salud"
+	},
+	{
+		"name": "saludcomunitaria",
+		"longName": "Salud Comunitaria",
+		"area": "Salud"
+	},
+	{
+		"name": "terapiarespiratoria",
+		"longName": "Terapia Respiratoria",
+		"area": "Salud"
+	},
+	{
+		"name": "administracion",
+		"longName": "Administración",
+		"area": "Contaduría y Administración"
+	},
+	{
+		"name": "asistente",
+		"longName": "Asistente Directivo",
+		"area": "Contaduría y Administración"
+	},
+	{
+		"name": "contabilidad",
+		"longName": "Contabilidad",
+		"area": "Contaduría y Administración"
+	},
+	{
+		"name": "alimentosbebidas",
+		"longName": "Alimentos y Bebidas",
+		"area": "Turismo"
+	},
+	{
+		"name": "hospitalidad",
+		"longName": "Hospitalidad Turística",
+		"area": "Turismo"
+	}
+]

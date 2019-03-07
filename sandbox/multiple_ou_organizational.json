@@ -1,0 +1,5 @@
+[
+	{ "name": "dir_general", "longName": "Dirección General", "alias": "Dir. Gral.", "type": "department", "parent": "bimbo" },
+	{	"name": "sistemas", "longName": "Dirección de Sistemas", "alias": "Sistemas", "type": "department", "parent": "bimbo" },
+	{ "name": "finanzas", "longName": "Dirección de Finanzas", "alias": "Finanzas", "type": "department", "parent": "bimbo" }
+]
