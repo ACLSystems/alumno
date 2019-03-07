@@ -1050,6 +1050,9 @@ module.exports = {
 					code						: item.group.code,
 					groupid					: item.group._id,
 					name						: item.group.name,
+					beginDate				: item.group.beginDate,
+					endDate					: item.group.endDate,
+					status					: item.group.status,
 					course					: item.group.course.title,
 					courseid				: item.group.course._id,
 					courseCode			: item.group.course.code,
@@ -1091,7 +1094,7 @@ module.exports = {
 				.populate({
 					path: 'group',
 					model: 'groups',
-					select: 'code name beginDate endDate presentBlockBy lapse',
+					select: 'code name beginDate endDate presentBlockBy lapse status',
 					populate: [
 						{
 							path: 'course',
@@ -1233,7 +1236,7 @@ module.exports = {
 					Roster.find({student:user._id})
 						.populate({
 							path: 'group',
-							select: 'course code name beginDate endDate',
+							select: 'course code name beginDate endDate status',
 							populate: {
 								path: 'course',
 								select: 'code title'
@@ -1243,21 +1246,25 @@ module.exports = {
 						.then((items) => {
 							if(items.length > 0 ) {
 								var send_items = [];
-								const options = { year: 'numeric', month: 'long', day: 'numeric', timezone: 'America/Mexico_City'};
 								items.forEach(function(item) {
-									var beginDate = 'No date';
-									var endDate 	= 'No date';
+									var beginDate;
+									var endDate;
 									if(item.group.beginDate) {beginDate = new Date(item.group.beginDate);}
 									if(item.group.endDate) {endDate = new Date(item.group.endDate);}
 									send_items.push({
 										status			: item.status,
-										groupid			: item.group._id,
-										group				: item.group.name,
-										groupCode		: item.group.code,
-										course			: item.group.course.title,
-										courseCode 	:	item.group.course.code,
-										beginDate		: beginDate.toLocaleDateString('es-MX', options),
-										endDate			: endDate.toLocaleDateString('es-MX', options)
+										group				: {
+											id				: item.group._id,
+											name			: item.group.name,
+											code			: item.group.code,
+											status 		: item.group.status,
+											beginDate	: beginDate.toDateString(),
+											endDate		: endDate.toDateString()
+										},
+										course			:	{
+											title			: item.group.course.title,
+											code 			:	item.group.course.code,
+										}
 									});
 								});
 								res.status(200).json({

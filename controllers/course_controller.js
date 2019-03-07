@@ -8,6 +8,7 @@ const Org						= require('../src/orgs'						);
 const Resource 			= require('../src/resources'			);
 const Dependency 		= require('../src/dependencies'		);
 const logger 				= require('../shared/winston-logger');
+const cache					= require('../src/cache'					);
 
 //const redisClient = redis.createClient(keys.redisUrl);
 
@@ -1732,6 +1733,12 @@ module.exports = {
 
 	makeAvailable(req,res) { // pone disponible el curso y los bloques del curso
 		//const key_user 	= res.locals.user;
+
+		async function delKeys() {
+			const key = await cache.keys('course:list:*');
+			await cache.del(key);
+		}
+
 		const coursecode = req.body.code;
 		Course.findOne({code: coursecode})
 			.then((course) => {
@@ -1758,6 +1765,7 @@ module.exports = {
 										'stauts': 200,
 										'message': 'Course -' + course.code + '- available'
 									});
+									delKeys();
 								} else {
 									res.status(500).json({
 										'status': 500,
