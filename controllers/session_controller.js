@@ -24,6 +24,39 @@ module.exports = {
 		}
 	}, //users
 
+	async usersCube(req,res) {
+		let groupPattern,coursePattern,orgUnitPattern,userPattern;
+		if(req.query.group) {
+			groupPattern = 'group:' + req.query.group;
+		} else {
+			groupPattern = 'group:*';
+		}
+		if(req.query.course) {
+			coursePattern = 'course:' + req.query.course;
+		} else {
+			coursePattern = 'course:*';
+		}
+		if(req.query.ou) {
+			orgUnitPattern = 'orgunit:' + req.query.ou;
+		} else {
+			orgUnitPattern = 'orgunit:*';
+		}
+		if(req.query.user) {
+			userPattern = 'user:' + req.query.ou;
+		} else {
+			userPattern = 'user:*';
+		}
+		const keyPattern = groupPattern + '-' +
+		coursePattern + '-' +
+		orgUnitPattern + '-' +
+		userPattern;
+		const usersSessions = await cache.keys(keyPattern);
+		console.log(usersSessions);
+		res.status(200).json({
+			'message': usersSessions
+		});
+	}, //usersByGroup
+
 	async userSessionDetails(req,res){
 		const onlyDate = getToday();
 		const usersSession = await cache.get(sessionString + req.query.username);

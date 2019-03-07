@@ -136,9 +136,9 @@ module.exports = {
 											}
 										});
 										if(course.type === 'tutor') {
-											mailjet.sendMail(supportEmail, 'Administrador', 'Alerta: Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code,339994,portal,'Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code + ' ' + group.course.title);
+											mailjet.sendMail(supportEmail, 'Administrador', 'Alerta: Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code,679640,portal,'Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code + ' ' + group.course.title);
 										} else {
-											mailjet.sendMail(supportEmail, 'Administrador', 'Aviso: Se ha generado un grupo. + ' + group.code,339994,portal,'Se ha generado un grupo. + ' + group.code + ' ' + group.course.title);
+											mailjet.sendMail(supportEmail, 'Administrador', 'Aviso: Se ha generado un grupo. + ' + group.code,679640,portal,'Se ha generado un grupo. + ' + group.code + ' ' + group.course.title);
 										}
 									})
 									.catch((err) => {
@@ -1130,6 +1130,16 @@ module.exports = {
 	}, // mygroups
 
 	myGroup(req,res) {
+
+		async function setCache(group,course,orgUnit,user) {
+			const key = 'group:' + group + '-' +
+			'course:' + course + '-' +
+			'orgunit:' + orgUnit + '-' +
+			'user:' + user;
+			await cache.set(key,user+'');
+			await cache.expire(key, cache.ttl);
+		}
+
 		const key_user 	= res.locals.user;
 		const groupid		= req.query.groupid;
 		Roster.findOne({student: key_user._id, group: groupid})
@@ -1215,6 +1225,7 @@ module.exports = {
 							blocks		: new_blocks
 						}
 					});
+					setCache(item.group._id,course,item.orgUnit,key_user._id);
 				}	else {
 					res.status(200).json({
 						'message': 'Group with id -' + groupid + '- not found'

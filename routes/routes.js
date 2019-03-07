@@ -267,6 +267,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/group/notify', 					GroupController.notify);
 	app.get ('/api/v1/supervisor/group/studentgrades',		GroupController.studentGrades);
 	app.get ('/api/v1/supervisor/group/studenthistoric',	GroupController.studentHistoric);
+	app.get ('/api/v1/supervisor/group/usersCube', 				SessionController.usersCube);
 
 	// Rutas para solicitudes
 	app.get ('/api/v1/requester/report/groupsquery', 			ReportController.groupsQuery); //También supervisor OK

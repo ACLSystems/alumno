@@ -2365,6 +2365,10 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/supervisor/group/usersCube':
+		next();
+		break;
+
 	case '/api/v1/supervisor/group/studentgrades':
 		if(!req.query) {  // GET
 			res.status(406).json({
