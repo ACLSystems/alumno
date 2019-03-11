@@ -1,6 +1,8 @@
 const jwt = require('jwt-simple');
 const Users = require('../src/users');
 const Session = require('../src/sessions');
+const Time 		= require('../shared/time');
+const cache 	= require('../src/cache');
 
 const logger = require('../shared/winston-logger');
 
@@ -19,7 +21,6 @@ var auth = {
 			});
 			return;
 		}
-
 		Users.findOne({$or: [{name: username},{'person.email': username}] })
 			.then((user) => {
 				if(!user) {
@@ -31,22 +32,33 @@ var auth = {
 				} else {
 					user.validatePassword(password, function(err, isOk) {
 						if(isOk) {
-							var session = new Session;
-							var objToken = genToken(user);
-							var date = new Date();
-							session.user = objToken.user._id;
-							session.token = objToken.token;
-							session.date = date;
-							session.save().then(() => {
-								res.status(200).json({
-									'status': 200,
-									'token': objToken.token,
-									'expires': objToken.expires
-								});
-							})
+							const objToken = genToken(user);
+							var session = new Session({
+								user: user._id,
+								token: objToken.token,
+								onlyDate: getToday(),
+								date: new Date(),
+								url: '/login'
+							});
+							session.save()
+								.then(() => {
+									cache.hmset('session:id:'+user._id,{
+										token: objToken.token,
+										url: '/login'
+									});
+									cache.set('session:name:'+ user.name, 'session:id:'+user._id);
+									cache.expire('session:id:'+user._id,cache.ttlSessions);
+									cache.expire('session:name:'+ user.name,cache.ttlSessions);
+									res.status(200).json({
+										'status': 200,
+										'token': objToken.token,
+										'expires': objToken.expires
+									});
+								})
 								.catch((err) => {
 									sendError(res,err,'auth -- Saving session --');
 								});
+
 						} else {
 							res.status(400).json({
 								'status': 400,
@@ -94,6 +106,14 @@ function sendError(res, err, section) {
 		'Error': err.message
 	});
 	return;
+}
+
+function getToday() {
+	const now = new Date();
+	let {date} = Time.displayLocalTime(now);
+	//date = new Date(date);
+	//date = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+	return date;
 }
 
 module.exports = auth;

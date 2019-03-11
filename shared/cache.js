@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const timeToLive = process.env.TTL || 600;
+const timeToLive = process.env.TTL;
 const redisClient = require('../src/cache');
 const exec = mongoose.Query.prototype.exec;
 
@@ -48,7 +48,7 @@ mongoose.Query.prototype.exec = async function() {
 		}
 		const doc = JSON.parse(cacheValue);
 		return Array.isArray(doc) // validar si lo que regresamos es un arreglo
-			? doc.map(d => new this.model(d)) // y generar un arreglo con esto
+			? doc.map(d => {return new this.model(d);}) // y generar un arreglo con esto
 			: new this.model(doc); // si no, solo manda el documento
 	}
 	// Si no, lanzamos el query a mongoDB y regresamos el resultado a redis

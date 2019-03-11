@@ -1,4 +1,4 @@
-const version = require('./shared/version');
+const version = require('./version/version');
 const app 		= require('./app');
 const logger	= require('./shared/winston-logger');
 

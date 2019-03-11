@@ -1,5 +1,5 @@
 module.exports = {
-	displayLocalTime(date,tz) {
+	displayLocalTime(date,tz = 'America/Mexico_City') {
 		//const tz = 'America/Mexico_City';
 		const optY = {
 			timeZone : tz,
@@ -25,5 +25,12 @@ module.exports = {
 			date1.toLocaleDateString('en-US', optD),
 			tz: date1.toLocaleDateString('en-US', optTZ)
 		};
+	},
+	getToday() {
+		const now = new Date();
+		let {date} = Time.displayLocalTime(now);
+		//date = new Date(date);
+		//date = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+		return date;
 	}
 };

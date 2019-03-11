@@ -18,8 +18,10 @@ const NotificationController = require('../controllers/notification_controller'	
 const FollowController 			= require('../controllers/follow_controller'				);
 const logController 				= require('../controllers/log_controller'						);
 const RequestController 		= require('../controllers/request_controller'				);
+const SessionController			= require('../controllers/session_controller'				);
 const multer 								= require('multer'																	);
 const ConfigController 			= require('../controllers/config_controller'				);
+const CacheController 			= require('../controllers/cache_controller'					);
 var dir 										= process.env.ORDIR;
 const fileSize 							= 1048576;
 const files 								= 1;
@@ -213,8 +215,11 @@ module.exports = (app) => {
 	app.put ('/api/v1/admin/user/setgrade', 			GroupController.setGrade);
 	app.get ('/api/v1/admin/user/valpwd', 				UserController.validatePassword);
 	app.put ('/api/v1/admin/group/setrubric',			GroupController.setRubric);
+	app.get ('/api/v1/admin/sessions',						SessionController.users);
+	app.get ('/api/v1/admin/sessiondetails',			SessionController.userSessionDetails);
 	app.delete ('/api/v1/admin/log/truncate', 		logController.truncate);
 	app.delete ('/api/v1/admin/:name/delete', 		UserController.delete);
+	app.get ('/api/v1/admin/cache/flushall', 			CacheController.flushall);
 
 	// Rutas para roles de 'isOrg'
 
@@ -262,6 +267,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/group/notify', 					GroupController.notify);
 	app.get ('/api/v1/supervisor/group/studentgrades',		GroupController.studentGrades);
 	app.get ('/api/v1/supervisor/group/studenthistoric',	GroupController.studentHistoric);
+	app.get ('/api/v1/supervisor/group/usersCube', 				SessionController.usersCube);
 
 	// Rutas para solicitudes
 	app.get ('/api/v1/requester/report/groupsquery', 			ReportController.groupsQuery); //También supervisor OK

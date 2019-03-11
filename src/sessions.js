@@ -1,6 +1,7 @@
 // Definir requerimientos
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const {numVersion} = require('../version/version');
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -14,12 +15,28 @@ const SessionSchema = new Schema ({
 	token: {
 		type: String
 	},
+	version: {
+		type: String,
+		default: numVersion
+	},
+	onlyDate: {
+		type: String
+	},
 	date: {
 		type: Date,
-		required: true
+		required: true,
+		default: Date.now
 	},
 	url: {
 		type: String
+	},
+	group: {
+		type: Schema.Types.ObjectId,
+		ref: 'groups'
+	},
+	course: {
+		type: Schema.Types.ObjectId,
+		ref: 'courses'
 	}
 });
 
@@ -29,8 +46,9 @@ const SessionSchema = new Schema ({
 
 // Definir índices
 
-SessionSchema.index( { user:  1 } );
-SessionSchema.index( { date: -1 } );
+SessionSchema.index( { user			:  1 } );
+SessionSchema.index( { onlyDate	:  1 } );
+SessionSchema.index( { date			: -1 } );
 
 // Compilar esquema
 

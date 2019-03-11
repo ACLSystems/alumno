@@ -2,6 +2,8 @@ const jwt 		= require('jwt-simple'											);
 const Users 	= require('../src/users'										);
 const Session = require('../src/sessions'									);
 const Err 		= require('../controllers/err500_controller');
+const Time 		= require('../shared/time');
+const cache 	= require('../src/cache');
 
 //const logger = require('../shared/winston-logger');
 
@@ -129,12 +131,22 @@ module.exports = function(req, res, next) {
 									url.indexOf('admin') === -1 &&
 									url.indexOf('/api/v1/') !== -1)) {
 						res.locals.user = user;
-						var session = new Session();
-						var date = new Date();
-						session.user 	= user._id;
-						session.date 	= date;
-						session.url 	= url;
+						res.locals.url = url;
+						let session = new Session({
+							user: user._id,
+							onlyDate: getToday(),
+							date: new Date,
+							url: url
+						});
 						session.save()
+							.then(() => {
+								cache.hmset('session:id:'+user._id,{
+									url: url
+								});
+								cache.set('session:name:'+ user.name, 'session:id:'+user._id);
+								cache.expire('session:id:'+user._id,cache.ttlSessions);
+								cache.expire('session:name:'+ user.name,cache.ttlSessions);
+							})
 							.catch((err) => {
 								Err.sendError(res,err,'auth -- Saving session -- User: ' + user.name + ' URL: ' + url);
 							});
@@ -202,3 +214,10 @@ function sendError(res, err, section) {
 	return;
 }
 */
+function getToday() {
+	const now = new Date();
+	let {date} = Time.displayLocalTime(now);
+	//date = new Date(date);
+	//date = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+	return date;
+}

@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "NODE_ENV=development nodemon index.js"
+    "test": "NODE_ENV=development nodemon index.js",
+    "jest": "jest"
+  },
+  "jest": {
+    "testRegex": "tests/.*\\.(js|jsx)$"
   },
   "repository": {
     "type": "git",
@@ -13,7 +17,8 @@
   },
   "keywords": [
     "alumno",
-    "plataforma"
+    "plataforma",
+    "arturo"
   ],
   "author": "Arturo Castro / Hector Ramirez",
   "license": "ISC",
@@ -34,12 +39,11 @@
     "jwt-simple": "^0.5.5",
     "moment": "^2.24.0",
     "mongodb-uri": "^0.9.7",
-    "mongoose": "^5.4.13",
+    "mongoose": "^5.4.17",
     "mongoose-sequence": "^5.0.1",
     "multer": "^1.4.1",
     "nanoid": "^2.0.1",
     "node-mailjet": "^3.3.1",
-    "nodemon": "^1.18.10",
     "randomatic": "^3.1.1",
     "redis": "^2.8.0",
     "request": "^2.88.0",
@@ -47,11 +51,15 @@
     "time-ago": "^0.2.1",
     "urlencode": "^1.1.0",
     "winston": "^3.2.1",
-    "winston-daily-rotate-file": "^3.7.0"
+    "winston-daily-rotate-file": "^3.8.0"
   },
   "devDependencies": {
     "babel-cli": "6.26.0",
     "babel-preset-env": "^1.7.0",
-    "eslint": "^5.14.0"
+    "eslint": "^5.15.0",
+    "faker": "^4.1.0",
+    "jest": "^24.1.0",
+    "nodemon": "^1.18.10",
+    "puppeteer": "^1.12.2"
   }
 }

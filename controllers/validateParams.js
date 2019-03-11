@@ -110,6 +110,30 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/admin/cache/flushall':
+		next();
+		break;
+
+	case '/api/v1/admin/sessions':
+		next();
+		break;
+
+	case '/api/v1/admin/sessiondetails':
+		if(!req.query){
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give data by query to process'
+			});
+		} else if(!req.query.username) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please give username by query'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/admin/user/register':
 		if(!req.body){
 			res.status(406).json({
@@ -2069,6 +2093,10 @@ module.exports = function(req, res, next) {
 		next();
 		break;
 
+	case '/api/v1/instructor/group/mylist':
+		next();
+		break;
+
 	case '/api/v1/requester/group/mylist':
 		next();
 		break;
@@ -2335,6 +2363,10 @@ module.exports = function(req, res, next) {
 		} else {
 			next();
 		}
+		break;
+
+	case '/api/v1/supervisor/group/usersCube':
+		next();
 		break;
 
 	case '/api/v1/supervisor/group/studentgrades':

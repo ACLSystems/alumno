@@ -12,10 +12,11 @@ const mailjet 		= require('../shared/mailjet'								);
 const Notification = require('../src/notifications'						);
 const Attempt 		= require('../src/attempts'									);
 const TA 					= require('time-ago'												);
+const cache 			= require('../src/cache'										);
 
 const url = process.env.LIBRETA_URI;
-const supportEmail = process.env.supportEmail;
-const portal = process.env.portal;
+const supportEmail = process.env.SUPPORT_EMAIL;
+const portal = process.env.PORTAL;
 
 module.exports = {
 	create(req,res) {
@@ -135,9 +136,9 @@ module.exports = {
 											}
 										});
 										if(course.type === 'tutor') {
-											mailjet.sendMail(supportEmail, 'Administrador', 'Alerta: Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code,339994,portal,'Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code + ' ' + group.course.title);
+											mailjet.sendMail(supportEmail, 'Administrador', 'Alerta: Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code,679640,portal,'Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code + ' ' + group.course.title);
 										} else {
-											mailjet.sendMail(supportEmail, 'Administrador', 'Aviso: Se ha generado un grupo. + ' + group.code,339994,portal,'Se ha generado un grupo. + ' + group.code + ' ' + group.course.title);
+											mailjet.sendMail(supportEmail, 'Administrador', 'Aviso: Se ha generado un grupo. + ' + group.code,679640,portal,'Se ha generado un grupo. + ' + group.code + ' ' + group.course.title);
 										}
 									})
 									.catch((err) => {
@@ -1040,80 +1041,105 @@ module.exports = {
 			});
 	}, //listRoster
 
-	myGroups(req,res) {
-		const key_user 	= res.locals.user;
-		Roster.find({student: key_user._id})
-			.populate({
-				path: 'group',
-				model: 'groups',
-				select: 'code _id name beginDate endDate presentBlockBy lapse',
-				populate: [
-					{
-						path: 'course',
-						model: 'courses',
-						select: 'title _id code blocks numBlocks duration durationUnits'
-					},
-					{
-						path: 'instructor',
-						model: 'users',
-						select: 'person.name person.fatherName'
-					}
-				]
-			})
-			.lean()
-			.then((items) => {
-				if(items.length > 0) {
-					var send_groups = [];
-					items.forEach(function(item) {
-						var send_group = {};
-						send_group = {
-							code						: item.group.code,
-							groupid					: item.group._id,
-							name						: item.group.name,
-							course					: item.group.course.title,
-							courseid				: item.group.course._id,
-							courseCode			: item.group.course.code,
-							courseBlocks		: item.group.course.numBlocks,
-							instructor			: item.group.instructor.person.name + ' ' + item.group.instructor.person.fatherName,
-							presentBlockBy	: item.group.presentBlockBy,
-							myStatus				: item.status,
-							track						: item.track,
-							firstBlock			: item.group.course.blocks[0]
-						};
-						if(item.group.course.duration) {
-							send_group.duration = item.group.course.duration + item.group.course.durationUnits;
-						}
-						if(item.group.course.beginDate) {
-							send_group.beginDate = item.group.course.beginDate;
-						}
-						if(item.group.course.endDate) {
-							send_group.endDate = item.group.course.endDate;
-						}
-						if(item.group.presentBlockBy === 'lapse' && item.group.lapse) {
-							send_group.lapse = item.group.course.lapse;
-						}
-						send_groups.push(send_group);
-					});
-					res.status(200).json({
-						'status': 200,
-						'message': {
-							'student'		: key_user.person.fullName,
-							'numgroups'	: items.length,
-							'groups'		: send_groups
-						}
-					});
-				} else {
-					res.status(200).json({
-						'message': 'No groups found'
-					});
+	async myGroups(req,res) {
+		function sendGroups(items) {
+			var send_groups = [];
+			items.forEach(function(item) {
+				var send_group = {};
+				send_group = {
+					code						: item.group.code,
+					groupid					: item.group._id,
+					name						: item.group.name,
+					beginDate				: item.group.beginDate,
+					endDate					: item.group.endDate,
+					status					: item.group.status,
+					course					: item.group.course.title,
+					courseid				: item.group.course._id,
+					courseCode			: item.group.course.code,
+					courseBlocks		: item.group.course.numBlocks,
+					instructor			: item.group.instructor.person.name + ' ' + item.group.instructor.person.fatherName,
+					presentBlockBy	: item.group.presentBlockBy,
+					myStatus				: item.status,
+					track						: item.track,
+					firstBlock			: item.group.course.blocks[0]
+				};
+				if(item.group.course.duration) {
+					send_group.duration = item.group.course.duration + item.group.course.durationUnits;
 				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'group_controller','mygroups -- Finding groups through Roster --');
+				if(item.group.course.beginDate) {
+					send_group.beginDate = item.group.course.beginDate;
+				}
+				if(item.group.course.endDate) {
+					send_group.endDate = item.group.course.endDate;
+				}
+				if(item.group.presentBlockBy === 'lapse' && item.group.lapse) {
+					send_group.lapse = item.group.course.lapse;
+				}
+				send_groups.push(send_group);
 			});
+			res.status(200).json({
+				'status': 200,
+				'message': {
+					'student'		: key_user.person.fullName,
+					'numgroups'	: items.length,
+					'groups'		: send_groups
+				}
+			});
+		}
+
+		const key_user 	= res.locals.user;
+		let myGroups = await cache.hget('mygroups:' + key_user._id, 'groups');
+		if(!myGroups) {
+			Roster.find({student: key_user._id})
+				.populate({
+					path: 'group',
+					model: 'groups',
+					select: 'code name beginDate endDate presentBlockBy lapse status',
+					populate: [
+						{
+							path: 'course',
+							model: 'courses',
+							select: 'title _id code blocks numBlocks duration durationUnits'
+						},
+						{
+							path: 'instructor',
+							model: 'users',
+							select: 'person.name person.fatherName'
+						}
+					]
+				})
+				.select('status track group')
+				.lean()
+				.then((items) => {
+					if(items.length > 0) {
+						cache.hset('mygroups:' + key_user._id, 'groups', JSON.stringify(items));
+						cache.expire('mygroups:' + key_user._id,cache.ttl);
+						sendGroups(items);
+					} else {
+						res.status(200).json({
+							'message': 'No groups found'
+						});
+					}
+				})
+				.catch((err) => {
+					Err.sendError(res,err,'group_controller','mygroups -- Finding groups through Roster --');
+				});
+		} else {
+			sendGroups(JSON.parse(myGroups));
+		}
 	}, // mygroups
 
 	myGroup(req,res) {
+
+		async function setCache(group,course,orgUnit,user) {
+			const key = 'group:' + group + '-' +
+			'course:' + course + '-' +
+			'orgunit:' + orgUnit + '-' +
+			'user:' + user;
+			await cache.set(key,user+'');
+			await cache.expire(key, cache.ttl);
+		}
+
 		const key_user 	= res.locals.user;
 		const groupid		= req.query.groupid;
 		Roster.findOne({student: key_user._id, group: groupid})
@@ -1199,6 +1225,7 @@ module.exports = {
 							blocks		: new_blocks
 						}
 					});
+					setCache(item.group._id,course,item.orgUnit,key_user._id);
 				}	else {
 					res.status(200).json({
 						'message': 'Group with id -' + groupid + '- not found'
@@ -1220,7 +1247,7 @@ module.exports = {
 					Roster.find({student:user._id})
 						.populate({
 							path: 'group',
-							select: 'course code name beginDate endDate',
+							select: 'course code name beginDate endDate status',
 							populate: {
 								path: 'course',
 								select: 'code title'
@@ -1230,21 +1257,25 @@ module.exports = {
 						.then((items) => {
 							if(items.length > 0 ) {
 								var send_items = [];
-								const options = { year: 'numeric', month: 'long', day: 'numeric', timezone: 'America/Mexico_City'};
 								items.forEach(function(item) {
-									var beginDate = 'No date';
-									var endDate 	= 'No date';
+									var beginDate;
+									var endDate;
 									if(item.group.beginDate) {beginDate = new Date(item.group.beginDate);}
 									if(item.group.endDate) {endDate = new Date(item.group.endDate);}
 									send_items.push({
 										status			: item.status,
-										groupid			: item.group._id,
-										group				: item.group.name,
-										groupCode		: item.group.code,
-										course			: item.group.course.title,
-										courseCode 	:	item.group.course.code,
-										beginDate		: beginDate.toLocaleDateString('es-MX', options),
-										endDate			: endDate.toLocaleDateString('es-MX', options)
+										group				: {
+											id				: item.group._id,
+											name			: item.group.name,
+											code			: item.group.code,
+											status 		: item.group.status,
+											beginDate	: beginDate.toDateString(),
+											endDate		: endDate.toDateString()
+										},
+										course			:	{
+											title			: item.group.course.title,
+											code 			:	item.group.course.code,
+										}
 									});
 								});
 								res.status(200).json({

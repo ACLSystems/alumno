@@ -1,7 +1,7 @@
 const mongoose 	= require( 'mongoose' );
 const uriFormat = require( 'mongodb-uri' );
 const init 			= require('./init');
-const version		= require('../shared/version');
+const version		= require('../version/version');
 mongoose.Promise = global.Promise;
 
 const logger = require('../shared/winston-logger');

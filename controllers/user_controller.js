@@ -346,6 +346,8 @@ module.exports = {
 					select: 'name parent longName type'
 				}
 			})
+			.cache({key: 'user:details:' + username})
+			.lean()
 			.then((user) => {
 				if (!user) {
 					res.status(404).json({
@@ -1366,6 +1368,7 @@ module.exports = {
 		};
 		Roster.findOne({student: key_user._id})
 			.select('_id')
+			.cache({key: 'user:rosterExists:'+ key_user._id})
 			.lean()
 			.then((item) => {
 				if(item) {
