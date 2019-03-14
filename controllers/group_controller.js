@@ -1888,7 +1888,8 @@ module.exports = {
 								.then(() => {
 									res.status(200).json({
 										'status'	: 200,
-										'message'	: 'Grade saved'
+										'message'	: 'Grade saved',
+										'taskid'	: item.grades[myGrade].tasks[myTask]._id
 									});
 								})
 								.catch((err) => {
