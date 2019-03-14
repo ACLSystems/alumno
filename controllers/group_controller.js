@@ -1709,6 +1709,7 @@ module.exports = {
 										.then((block) => {
 											if(block) {
 												var send_tasks = [];
+												/*
 												var t = 0;
 												var lent = myGrade.tasks.length;
 												while (t < lent) {
@@ -1730,6 +1731,41 @@ module.exports = {
 													send_tasks.push(send_task);
 													t++;
 												}
+												*/
+												////////
+												myGrade.tasks.forEach(task => {
+													var itemTask = block.task.items.find(item => item._id === task.id);
+													if(!itemTask) {
+														itemTask = block.task.items.find(item => item.label === task.label);
+													}
+													if(itemTask) {
+														var send_task = {
+															taskId	: task._id,
+															taskText: itemTask.text,
+															content	: task.content,
+															type 		: task.type,
+															label		: task.label,
+															grade		: task.grade,
+															graded	: task.graded,
+															date		: task.date
+														};
+														send_tasks.push(send_task);
+													}
+												});
+												///////
+												// Ordenamos el arreglo
+												send_tasks.sort(function(a,b) {
+													var labelA = a.label.toUpperCase();
+													var labelB = b.label.toUpperCase();
+													if(labelA < labelB) {
+														return -1;
+													}
+													if(labelA > labelB) {
+														return 1;
+													}
+													return 0;
+												});
+
 												res.status(200).json({
 													'status'		: 200,
 													'message'		: {
@@ -1745,6 +1781,9 @@ module.exports = {
 														'group'							: item.group.name,
 														'groupCode'					: item.group.code,
 														'blockId'						: block._id,
+														'blockContent'			: block.content,
+														'blockSection'			: block.section,
+														'blockNumber'				: block.number,
 														'rosterid'					: item._id,
 														'taskGrade'					: myGrade.gradeT,
 														'tasks'							: send_tasks
@@ -2822,7 +2861,7 @@ module.exports = {
 												text: item.text,
 												type: item.type
 											};
-											if(item._id)					{send_items.id					= item._id;				}
+											if(item._id)					{send_item.id					= item._id;				}
 											else
 											{
 												Err.sendError(res,'task without id','group_controller','nextBlock -- Finding task -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid + ' Questionnarie: ' + task._id);
@@ -3567,7 +3606,40 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'group_controller','addCertToRoster -- Finding Certs --');
 			});
-	}
+	}, //addCertToRoster
+
+	repairTasksInRoster(req,res) {
+		Roster.find({group:req.query.group})
+			.then((rosters) => {
+				var counter = 0;
+				if(rosters && Array.isArray(rosters) && rosters.length > 0) {
+					rosters.forEach(roster => {
+						if(roster.grades && Array.isArray(roster.grades) && roster.grades.length > 0) {
+							roster.grades.forEach(grade => {
+								if(grade.tasks && Array.isArray(grade.tasks) && grade.tasks.length > 0) {
+									grade.tasks.forEach(task => {
+										task.repair = 'Repaired';
+									});
+									roster.save().catch((err) => {
+										Err.sendError(res,err,'group_controller','repairTasksInRoster -- Saving Roster --');
+									});
+									counter++;
+								}
+							});
+						}
+					});
+					res.status(200).json({
+						message: `Rosters repaired for group ${req.query.group}. ${counter} tasks repaired`
+					});
+				} else {
+					res.status(404).json({
+						message: `Rosters in group ${req.query.group} not found`
+					});
+				}
+			}).catch((err) => {
+				Err.sendError(res,err,'group_controller','repairTasksInRoster -- Finding Rosters --');
+			});
+	} //repairTasksInRoster
 };
 
 

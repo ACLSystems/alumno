@@ -30,6 +30,9 @@ RUN mkdir -p /usr/src/app && cp -a /tmp/node_modules /usr/src/app && cp /tmp/pac
 RUN mkdir -p /usr/src/data && chown -R acluser:acl /usr/src/data && chmod 750 -R /usr/src/data
 RUN mkdir -p /usr/src/logs && chown -R acluser:acl /usr/src/logs && chmod 750 -R /usr/src/logs
 
+# Modificamos el directorio node a acluser
+RUN mv /home/node /home/acluser && chown -R acluser:acl /home/acluser && chmod 750 -R /home/acluser
+
 # Indicamos el directorio de trabajo, que es el que acabamos de crear
 WORKDIR /usr/src/app
 

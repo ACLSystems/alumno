@@ -2,6 +2,8 @@
 const mongoose			= require('mongoose');
 const ModSchema			= require('./modified');
 const Certificate		= require('./certificates');
+const Block 				= require('./blocks');
+const Task 					= require('./tasks');
 const Schema 				= mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
@@ -78,6 +80,15 @@ const TasksSchema = new Schema ({
 	justDelivery: {
 		type: Boolean,
 		default: false
+	},
+	id: {
+		type: String
+	},
+	text: {
+		type: String
+	},
+	repair: {
+		type: String
 	}
 });
 
@@ -182,6 +193,37 @@ const GradesSchema = new Schema ({
 	repair: {
 		type: Number
 	}
+});
+
+GradesSchema.pre('save', async function(next) {
+	if(this.tasks && Array.isArray(this.tasks) && this.tasks.length >0) {
+		const task	= await Block.findOne({_id: this.block}).select('task -_id').lean();
+		const oriTasks	= await Task.findOne({_id: task.task}).select('items -_id').lean();
+		this.tasks.forEach(task => {
+			const oriTask = oriTasks.items.find(t => t.label === task.label);
+			if(oriTask){
+				task.text = oriTask.text;
+				task.id		= oriTask._id;
+			} else {
+				const oriTask2 = oriTasks.items.find(t => t._id === task.id);
+				if(oriTask2) {
+					task.text = oriTask.text;
+				}
+			}
+		});
+		this.tasks.sort(function(a,b) {
+			var labelA = a.label.toUpperCase();
+			var labelB = b.label.toUpperCase();
+			if(labelA < labelB) {
+				return -1;
+			}
+			if(labelA > labelB) {
+				return 1;
+			}
+			return 0;
+		});
+	}
+	next();
 });
 
 GradesSchema.pre('save', function(next) {
