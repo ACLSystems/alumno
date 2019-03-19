@@ -25,35 +25,88 @@ module.exports = {
 	}, //users
 
 	async usersCube(req,res) {
-		let groupPattern,coursePattern,orgUnitPattern,userPattern;
+		//const key_user = res.locals.user;
+		let groupPattern,coursePattern,orgUnitPattern,parentPattern,userPattern;
 		if(req.query.group) {
-			groupPattern = 'group:' + req.query.group;
+			groupPattern = '*group*' + req.query.group;
 		} else {
-			groupPattern = 'group:*';
+			groupPattern = '*group';
 		}
 		if(req.query.course) {
-			coursePattern = 'course:' + req.query.course;
+			coursePattern = '*course*' + req.query.course;
 		} else {
-			coursePattern = 'course:*';
+			coursePattern = '*course';
 		}
 		if(req.query.ou) {
-			orgUnitPattern = 'orgunit:' + req.query.ou;
+			orgUnitPattern = '*orgunit*' + req.query.ou;
 		} else {
-			orgUnitPattern = 'orgunit:*';
+			orgUnitPattern = '*orgunit';
+		}
+		if(req.query.parent) {
+			parentPattern = '*parent*' + req.query.parent;
+		} else {
+			parentPattern = '*parent';
 		}
 		if(req.query.user) {
-			userPattern = 'user:' + req.query.ou;
+			userPattern = '*user*' + req.query.user;
 		} else {
-			userPattern = 'user:*';
+			userPattern = '*user';
 		}
-		const keyPattern = groupPattern + '-' +
-		coursePattern + '-' +
-		orgUnitPattern + '-' +
+		userPattern = userPattern + '*';
+		let keyPattern = groupPattern +
+		coursePattern +
+		orgUnitPattern +
+		parentPattern +
 		userPattern;
-		const usersSessions = await cache.keys(keyPattern);
-		console.log(usersSessions);
+		if(req.query.ou === 'all') {
+			keyPattern = '*group*course*orgunit*parent*user*';
+		}
+		//console.log(keyPattern);
+		var usersSessions = await cache.keys(keyPattern);
+		if(Array.isArray(usersSessions)) {
+			usersSessions = usersSessions.map(us => {
+				return JSON.parse(us);
+			});
+		} else {
+			usersSessions = JSON.parse(usersSessions);
+		}
+
+		Array.prototype.groupBy = function(prop) {
+			return this.reduce(function(groups, item) {
+				const val = item[prop];
+				groups[val] = groups[val] || [];
+				delete item[prop];
+				groups[val].push(item);
+				return groups;
+			}, {});
+		};
+		//console.log(usersSessions);
+		let presentedUsers;
+		let grpUsersSessions,grps;
+		if(req.query.group) {
+			grpUsersSessions = usersSessions.groupBy('group');
+			grps = Object.keys(grpUsersSessions);
+			console.log(grps);
+			presentedUsers = grpUsersSessions;
+		}
+		let ouUsersSessions,ous;
+		if(req.query.ou){
+			ouUsersSessions = usersSessions.groupBy('orgunit');
+			ous = Object.keys(ouUsersSessions);
+			console.log(ous);
+			presentedUsers = ouUsersSessions;
+		}
+		let parentUsersSessions,parents;
+		if(req.query.parent){
+			parentUsersSessions = usersSessions.groupBy('parent');
+			parents = Object.keys(parentUsersSessions);
+			console.log(parents);
+			presentedUsers = parentUsersSessions;
+		}
+
 		res.status(200).json({
-			'message': usersSessions
+			//'usersSessions': usersSessions,
+			'usersSessions': presentedUsers
 		});
 	}, //usersByGroup
 

@@ -2,6 +2,7 @@ const redis = require('redis');
 const keys = require('../config/keys');
 const {promisify} = require('util');
 const logger = require('../shared/winston-logger');
+const version = require('../version/version');
 const timeToLiveSessions = process.env.TTL_SESSIONS || 900;
 const timeToLive = process.env.TTL || 900;
 
@@ -30,6 +31,7 @@ redisClient.on('connect', function() {
 
 redisClient.on('ready', function() {
 	message = 'Cache client ready';
+	redisClient.set(version.app,version.version);
 	logger.info(message);
 	console.log(message); // eslint-disable-line
 });

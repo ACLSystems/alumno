@@ -1132,11 +1132,14 @@ module.exports = {
 	myGroup(req,res) {
 
 		async function setCache(group,course,orgUnit,user) {
-			const key = 'group:' + group + '-' +
-			'course:' + course + '-' +
-			'orgunit:' + orgUnit + '-' +
-			'user:' + user;
-			await cache.set(key,user+'');
+			const key = {
+				group: group,
+				course: course,
+				orgunit: orgUnit,
+				parent: parent,
+				user: user
+			};
+			await cache.set(JSON.stringify(key),user+'');
 			await cache.expire(key, cache.ttl);
 		}
 
@@ -1225,7 +1228,7 @@ module.exports = {
 							blocks		: new_blocks
 						}
 					});
-					setCache(item.group._id,course,item.orgUnit,key_user._id);
+					setCache(item.group._id,course,item.orgUnit,key_user.orgUnit.parent,key_user._id);
 				}	else {
 					res.status(200).json({
 						'message': 'Group with id -' + groupid + '- not found'
