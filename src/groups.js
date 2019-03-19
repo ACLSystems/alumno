@@ -26,6 +26,13 @@ const DatesSchema = new Schema ({
 	},
 	endDate: {
 		type: Date
+	},
+	label: {
+		type: String
+	},
+	type: {
+		type: String,
+		enum: ['general','exam','activity']
 	}
 });
 

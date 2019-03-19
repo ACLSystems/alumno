@@ -1131,7 +1131,7 @@ module.exports = {
 
 	myGroup(req,res) {
 
-		async function setCache(group,course,orgUnit,user) {
+		async function setCache(group,course,orgUnit,parent,user) {
 			const key = {
 				group: group,
 				course: course,
@@ -1139,8 +1139,9 @@ module.exports = {
 				parent: parent,
 				user: user
 			};
-			await cache.set(JSON.stringify(key),user+'');
-			await cache.expire(key, cache.ttl);
+			const key_str = JSON.stringify(key);
+			await cache.set(key_str,user+'');
+			await cache.expire(key_str, cache.ttl);
 		}
 
 		const key_user 	= res.locals.user;
@@ -1148,7 +1149,7 @@ module.exports = {
 		Roster.findOne({student: key_user._id, group: groupid})
 			.populate({
 				path: 'group',
-				select: 'course',
+				select: 'course dates',
 				populate: {
 					path: 'course',
 					select: 'blocks numBlocks',
@@ -1221,6 +1222,7 @@ module.exports = {
 							studentid	: key_user._id,
 							roster		: item._id,
 							myStatus	: myStatus,
+							groupDates: item.group.dates,
 							track			: parseInt(item.track) + '%',
 							blockNum	: item.group.course.numBlocks,
 							courseid	: course,
