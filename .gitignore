@@ -68,4 +68,9 @@ cache.start.*
 cache.stop.*
 cache.rm.*
 *_alumno*.sh
-Dockerfile-e
+.dockerignore
+Dockerfile
+docker-compose.yml
+process.yml
+wait-for-it.sh
+wait.sh
