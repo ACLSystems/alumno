@@ -14,7 +14,7 @@ exports.sendError = function(res,errorObj,controller,section,send,send_mail,mess
 	const stringError = errorObj.toString();
 	var error = new ErrorReg({
 		error 			: stringError,
-		errorObj		: errorObj,
+		errorObj		: JSON.stringify(errorObj),
 		errorType		: errorObj.name,
 		controller	:	controller,
 		section			: section,
@@ -32,9 +32,8 @@ exports.sendError = function(res,errorObj,controller,section,send,send_mail,mess
 					'status'	: 500,
 					'message'	: 'Error',
 					'Error'		: stringError,
-					'errorObj': errObj,
-					'id'			: errObj._id,
-					'app'			: version.app
+					'app'			: version.app,
+					'errorObj': errObj
 				});
 			}
 		})

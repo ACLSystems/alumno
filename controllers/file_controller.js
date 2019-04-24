@@ -76,6 +76,8 @@ module.exports = {
 			.then((file) => {
 				const localFile = fs.readFileSync(ordir + '/' + file.filename);
 				require('isomorphic-fetch');
+				//const fetch = require('isomorphic-fetch');
+				//new dropbox({ accessToken: accessToken, fetch: fetch })
 				new dropbox({ accessToken: accessToken})
 					.filesUpload({path: file.path + '/' + file.filename, contents: localFile})
 					.then(() => {

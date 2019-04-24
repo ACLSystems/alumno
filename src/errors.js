@@ -9,7 +9,9 @@ const ErrorsSchema = new Schema ({
 		type: Schema.Types.Mixed,
 		required: true
 	},
-	errorObj: {},
+	errorObj: {
+		type: String
+	},
 	errorType: {
 		type: String
 	},
