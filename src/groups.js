@@ -183,6 +183,7 @@ GroupsSchema.index( { orgUnit			: 1 					} );
 GroupsSchema.index( { instructor	: 1 					} );
 GroupsSchema.index( { isActive		: 1 					} );
 GroupsSchema.index( { status			: 1 					} );
+GroupsSchema.index( { endDate			: 1});
 
 // Compilar esquema
 
