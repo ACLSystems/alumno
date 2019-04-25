@@ -1,4 +1,4 @@
-const version = '1.9.14';
+const version = '1.9.15';
 
 module.exports = {
 	app: 'alumno',

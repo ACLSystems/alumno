@@ -156,6 +156,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/instructor/group/notify', 					GroupController.notify);
 	app.get ('/api/v1/instructor/group/repairroster', 		GroupController.repairRoster);
 	app.get ('/api/v1/instructor/group/sor',							GroupController.searchOrphanRoster);
+	app.put ('/api/v1/instructor/group/savedates', 				GroupController.saveDates);
 
 	// Rutas para roles de 'isAuthor'
 
@@ -268,7 +269,8 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/group/notify', 					GroupController.notify);
 	app.get ('/api/v1/supervisor/group/studentgrades',		GroupController.studentGrades);
 	app.get ('/api/v1/supervisor/group/studenthistoric',	GroupController.studentHistoric);
-	app.get ('/api/v1/supervisor/group/usersCube', 				SessionController.usersCube);
+	app.get ('/api/v1/supervisor/group/userscube', 				SessionController.usersCube);
+	app.put ('/api/v1/supervisor/group/savedates', 				GroupController.saveDates);
 
 	// Rutas para solicitudes
 	app.get ('/api/v1/requester/report/groupsquery', 			ReportController.groupsQuery); //También supervisor OK

@@ -1222,7 +1222,7 @@ module.exports = {
 							studentid	: key_user._id,
 							roster		: item._id,
 							myStatus	: myStatus,
-							groupDates: item.group.dates,
+							dates			: item.group.dates,
 							track			: parseInt(item.track) + '%',
 							blockNum	: item.group.course.numBlocks,
 							courseid	: course,
@@ -2368,6 +2368,24 @@ module.exports = {
 				Err.sendError(res,err,'group_controller','studentHistoric -- Finding Roster --');
 			});
 	}, // studentHistoric
+
+	saveDates(req,res) {
+		Group.findById(req.body.groupid)
+			.then(group => {
+				group.dates = req.body.dates;
+				group.save()
+					.then(() => {
+						res.status(200).json({
+							'message': `New dates in group - ${group.name} - ${group.code} - was saved`
+						});
+					})
+					.catch((err) => {
+						Err.sendError(res,err,'group_controller','saveDates -- Saving group --');
+					});
+			}).catch((err) => {
+				Err.sendError(res,err,'group_controller','saveDates -- Finding Group --');
+			});
+	}, //saveDate
 
 	tookCertificate(req,res) {
 		const key_user 	= res.locals.user;

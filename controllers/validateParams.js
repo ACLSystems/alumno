@@ -2175,6 +2175,48 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/instructor/group/savedates':
+		if(!req.body) {  // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give data by body to process'
+			});
+		} else if (!req.body.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give groupid by body to process'
+			});
+		} else if (!req.body.dates) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give dates by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/supervisor/group/savedates':
+		if(!req.body) {  // PUT
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give data by body to process'
+			});
+		} else if (!req.body.groupid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error : Please, give groupid by body to process'
+			});
+		} else if (!req.body.dates) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give dates by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/instructor/group/sor':
 		if(!req.query) {  // GET
 			res.status(406).json({
