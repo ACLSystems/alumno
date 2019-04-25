@@ -1053,6 +1053,7 @@ module.exports = {
 					beginDate				: item.group.beginDate,
 					endDate					: item.group.endDate,
 					status					: item.group.status,
+					type						: item.group.type,
 					course					: item.group.course.title,
 					courseid				: item.group.course._id,
 					courseCode			: item.group.course.code,
@@ -1222,6 +1223,7 @@ module.exports = {
 							studentid	: key_user._id,
 							roster		: item._id,
 							myStatus	: myStatus,
+							groupType : item.group.type,
 							dates			: item.group.dates,
 							track			: parseInt(item.track) + '%',
 							blockNum	: item.group.course.numBlocks,
@@ -1926,7 +1928,21 @@ module.exports = {
 			});
 	}, //gradeTask
 
-
+	releaseCert(req,res){
+		async function release(items) {
+			try {
+				let result = await Roster.updateMany({_id:{$in:items}}, {certificateTutor: true});
+				res.status(200).json({
+					'message'	: `Found ${result.n} rosters and ${result.nModified} rosters was modified`
+				});
+				return;
+			} catch (err) {
+				Err.sendError(res,err,'group_controller',`releaseCert -- Updating rosters -- user:
+					${res.locals.user.name} id: ${res.locals.user._id}`);
+			}
+		}
+		release(req.body.rosters);
+	}, //releaseCert
 
 	myGrades(req,res){
 		const groupid		= req.query.groupid;
@@ -2032,11 +2048,13 @@ module.exports = {
 							var send_grade = {
 								name							: key_user.person.fullName,
 								rosterid					: item._id,
+								groupid						: item._id,
 								status						: item.status,
 								course						: item.group.course.title,
 								courseDuration		: item.group.course.duration,
 								courseDurUnits		: units(item.group.course.durationUnits),
 								certificateActive : item.group.certificateActive,
+								certificateTutor	: item.certificateTutor,
 								beginDate					: item.group.beginDate,
 								endDate						: item.group.endDate,
 								beginDateSpa			: dateInSpanish(item.group.beginDate),

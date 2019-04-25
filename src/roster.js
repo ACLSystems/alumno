@@ -359,6 +359,10 @@ const RosterSchema = new Schema ({
 	passDate: {
 		type: Date
 	},
+	certificateTutor: {
+		type: Boolean,
+		default: false
+	},
 	flag: {
 		type: Number
 	},
