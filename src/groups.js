@@ -69,7 +69,7 @@ module.exports = RubricSchema;
 const GroupsSchema = new Schema ({
 	status: {
 		type: String,
-		enum: ['draft','active','closed'],
+		enum: ['draft','coming','active','closed'],
 		default: 'draft'
 	},
 	code: {
