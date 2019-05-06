@@ -26,6 +26,29 @@ module.exports = {
 
 	async usersCube(req,res) {
 		//const key_user = res.locals.user;
+		if(req.query.groupByGroup) {
+			req.query.groupByGroup = JSON.parse(req.query.groupByGroup);
+		}
+		if(req.query.groupByCourse) {
+			req.query.groupByCourse = JSON.parse(req.query.groupByCourse);
+		}
+		if(req.query.groupByOU) {
+			req.query.groupByOU = JSON.parse(req.query.groupByOU);
+		}
+		if(req.query.groupByParent) {
+			req.query.groupByParent = JSON.parse(req.query.groupByParent);
+		}
+		if(req.query.groupByParent) {
+			req.query.groupByOU = false;
+			req.query.groupByCourse = false;
+			req.query.groupByGroup = false;
+		} else if(req.query.groupByOU) {
+			req.query.groupByCourse = false;
+			req.query.groupByGroup = false;
+		} else if(req.query.groupByCourse) {
+			req.query.groupByGroup = false;
+		}
+
 		let groupPattern,coursePattern,orgUnitPattern,parentPattern,userPattern;
 		if(req.query.group) {
 			groupPattern = '*group*' + req.query.group;
@@ -37,8 +60,8 @@ module.exports = {
 		} else {
 			coursePattern = '*course';
 		}
-		if(req.query.ou) {
-			orgUnitPattern = '*orgunit*' + req.query.ou;
+		if(req.query.orgunit) {
+			orgUnitPattern = '*orgunit*' + req.query.orgunit;
 		} else {
 			orgUnitPattern = '*orgunit';
 		}
@@ -58,56 +81,60 @@ module.exports = {
 		orgUnitPattern +
 		parentPattern +
 		userPattern;
-		if(req.query.ou === 'all') {
+		if(req.query.orgunit === 'all') {
 			keyPattern = '*group*course*orgunit*parent*user*';
 		}
 		//console.log(keyPattern);
 		var usersSessions = await cache.keys(keyPattern);
-		if(Array.isArray(usersSessions)) {
-			usersSessions = usersSessions.map(us => {
-				return JSON.parse(us);
+		await cache.mget(usersSessions,function(err,values) {
+			if(Array.isArray(values)) {
+				values = values.map(us => {
+					return JSON.parse(us);
+				});
+			} else {
+				values = JSON.parse(values);
+			}
+
+			Array.prototype.groupBy = function(prop) {
+				return this.reduce(function(groups, item) {
+					const val = item[prop];
+					groups[val] = groups[val] || [];
+					delete item[prop];
+					groups[val].push(item);
+					return groups;
+				}, {});
+			};
+			//console.log(usersSessions);
+			let presentedUsers;
+			let groupBy;
+			if(req.query.groupByParent) {
+				groupBy = 'parent';
+			} else if(req.query.groupByOU) {
+				groupBy = 'orgunit';
+			} else if(req.query.groupByCourse) {
+				groupBy = 'course';
+			} else if(req.query.groupByGroup) {
+				groupBy = 'group';
+			}
+
+			let listedUsers = JSON.parse(JSON.stringify(values));
+			presentedUsers = values.groupBy(groupBy);
+
+			let keys = Object.keys(presentedUsers);
+			let grpUsers = {};
+			keys.forEach(key => {
+				grpUsers[key] = presentedUsers[key].length;
 			});
-		} else {
-			usersSessions = JSON.parse(usersSessions);
-		}
 
-		Array.prototype.groupBy = function(prop) {
-			return this.reduce(function(groups, item) {
-				const val = item[prop];
-				groups[val] = groups[val] || [];
-				delete item[prop];
-				groups[val].push(item);
-				return groups;
-			}, {});
-		};
-		//console.log(usersSessions);
-		let presentedUsers;
-		let grpUsersSessions,grps;
-		if(req.query.group) {
-			grpUsersSessions = usersSessions.groupBy('group');
-			grps = Object.keys(grpUsersSessions);
-			console.log(grps);
-			presentedUsers = grpUsersSessions;
-		}
-		let ouUsersSessions,ous;
-		if(req.query.ou){
-			ouUsersSessions = usersSessions.groupBy('orgunit');
-			ous = Object.keys(ouUsersSessions);
-			console.log(ous);
-			presentedUsers = ouUsersSessions;
-		}
-		let parentUsersSessions,parents;
-		if(req.query.parent){
-			parentUsersSessions = usersSessions.groupBy('parent');
-			parents = Object.keys(parentUsersSessions);
-			console.log(parents);
-			presentedUsers = parentUsersSessions;
-		}
-
-		res.status(200).json({
-			//'usersSessions': usersSessions,
-			'usersSessions': presentedUsers
+			res.status(200).json({
+				'usersSessions': presentedUsers,
+				'listedUsers': listedUsers,
+				'totalUsers': listedUsers.length,
+				'groupedUsers': grpUsers,
+				'groupBy': groupBy
+			});
 		});
+
 	}, //usersByGroup
 
 	async userSessionDetails(req,res){

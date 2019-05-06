@@ -1132,7 +1132,7 @@ module.exports = {
 
 	myGroup(req,res) {
 
-		async function setCache(group,course,orgUnit,parent,user) {
+		async function setCache(group,course,orgUnit,parent,user,vGroup,vCourse,vOrgUnit,vUser) {
 			const key = {
 				group: group,
 				course: course,
@@ -1140,8 +1140,16 @@ module.exports = {
 				parent: parent,
 				user: user
 			};
+			const value = {
+				group: vGroup,
+				course: vCourse,
+				orgunit: vOrgUnit,
+				parent: parent,
+				user: vUser
+			};
 			const key_str = JSON.stringify(key);
-			await cache.set(key_str,user+'');
+			const value_str = JSON.stringify(value);
+			await cache.set(key_str,value_str);
 			await cache.expire(key_str, cache.ttl);
 		}
 
@@ -1150,10 +1158,10 @@ module.exports = {
 		Roster.findOne({student: key_user._id, group: groupid})
 			.populate({
 				path: 'group',
-				select: 'course dates',
+				select: 'name course dates',
 				populate: {
 					path: 'course',
-					select: 'blocks numBlocks',
+					select: 'title blocks numBlocks',
 					populate: {
 						path: 'blocks',
 						match: { isVisible: true, status: 'published' },
@@ -1232,7 +1240,8 @@ module.exports = {
 							blocks		: new_blocks
 						}
 					});
-					setCache(item.group._id,course,item.orgUnit,key_user.orgUnit.parent,key_user._id);
+					setCache(item.group._id,course,item.orgUnit,key_user.orgUnit.parent,key_user._id,item.group.name,item.group.course.title,key_user.orgUnit.name,key_user.name);
+
 				}	else {
 					res.status(200).json({
 						'message': 'Group with id -' + groupid + '- not found'
