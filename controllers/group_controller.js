@@ -913,6 +913,7 @@ module.exports = {
 							userFatherName	: s.student.person.fatherName,
 							userMotherName	: s.student.person.motherName,
 							useremail				: s.student.name,
+							rosterid 				: s._id,
 							status					: s.status,
 							name						: s.student.person.fullName,
 							finalGrade			: s.finalGrade,
