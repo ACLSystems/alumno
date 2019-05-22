@@ -363,7 +363,9 @@ module.exports = {
 							org			: user.org.name,
 							orgid		: user.org._id,
 							orgUnit	: user.orgUnit.name,
-							ouid		: user.orgUnit._id
+							ouid		: user.orgUnit._id,
+							workShift					: user.workShift,
+							attachedToWShift	: user.attachedToWShift
 						};
 						if(user.person) {
 							send_user.person = {
@@ -466,6 +468,7 @@ module.exports = {
 		User.findOne({ name: username })
 			.populate('org','name')
 			.populate('orgUnit', 'name longName')
+			.populate('workShift')
 			.then((user) => {
 				if (!user) {
 					res.status(200).json({
@@ -480,7 +483,9 @@ module.exports = {
 						orgUnit			: user.orgUnit.name,
 						orgUnitLong	: user.orgUnit.longName,
 						char1				: user.char1,
-						char2				: user.char2
+						char2				: user.char2,
+						workShift		: user.workShift,
+						attachedToWShift: user.attachedToWShift
 					};
 					if(user.admin && user.admin.initialPassword) {
 						send_user.initialPassword = user.admin.initialPassword;

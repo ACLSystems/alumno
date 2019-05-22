@@ -23,6 +23,7 @@ const multer 								= require('multer'																	);
 const ConfigController 			= require('../controllers/config_controller'				);
 const CacheController 			= require('../controllers/cache_controller'					);
 const JobController 				= require('../controllers/job_controller'						);
+const WorkShiftController		= require('../controllers/workShifts_controller'		);
 var dir 										= process.env.ORDIR;
 const fileSize 							= 1048576;
 const files 								= 1;
@@ -69,7 +70,8 @@ module.exports = (app) => {
 	app.all	('/api/v1/*', 												[require('../controllers/validateRequest')]);
 	app.all	('/api/user/*', 											[require('../controllers/validateParams')]);
 	app.get ('/api/errorcodes',										[require('../controllers/validateParams')]);
-	app.all	('/api/v1/user/*', 										[require('../controllers/validateParams')]);
+	app.all	('/api/v1/user/*', 										[require('../controllers/shifts_controllers'),
+		require('../controllers/validateParams')]);
 	app.all	('/api/v1/course/*', 									[require('../controllers/validateParams')]);
 	app.all	('/api/v1/author/course/*', 					[require('../controllers/validateParams')]);
 	//app.all	('/api/v1/author/file/*', 						[require('../controllers/validateParams')]);
@@ -244,6 +246,8 @@ module.exports = (app) => {
 	app.post('/api/v1/orgadm/term/massivecreate', 			TermController.massiveCreation);
 	app.get ('/api/v1/orgadm/report/totalusers', 				ReportController.totalUsers);
 	app.get ('/api/v1/orgadm/report/usersbyou', 				ReportController.usersByOrgUnit);
+	app.post('/api/v1/orgadm/shift/create',							WorkShiftController.create);
+	app.get ('/api/v1/orgadm/shift/list', 							WorkShiftController.list);
 
 	// Rutas para roles de 'isSupervisor'
 

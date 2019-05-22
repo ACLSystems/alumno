@@ -82,10 +82,20 @@ module.exports = function(req, res, next) {
 
 		// Authorize the user to see if s/he can access our resources
 		Users.findOne({ name: decoded.user })
-			.populate('org','name')
+			.populate({
+				path: 'org',
+				select: 'name',
+				options: { lean: true }
+			})
 			.populate({
 				path: 'orgUnit',
 				select: 'name parent type longName',
+				options: { lean: true }
+			})
+			.populate({
+				path: 'workShift',
+				select: 'name org orgUnit allTime shifts',
+				options: { lean: true }
 			})
 			.select('-password')
 			.then((user) => {

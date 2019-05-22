@@ -277,6 +277,14 @@ const UserSchema = new Schema ({
 		type: Number
 	},
 	preferences: PrefsSchema,
+	workShift: {
+		type: Schema.Types.ObjectId,
+		ref: 'workshifts'
+	},
+	attachedToWShift: {
+		type: Boolean,
+		default: false
+	}
 });
 // Definir virtuals
 

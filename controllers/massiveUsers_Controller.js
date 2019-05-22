@@ -388,7 +388,10 @@ module.exports = {
 	get(req,res) {
 		var query = JSON.parse(req.query.find);
 		User.find(query)
-			.select('_id')
+			.populate('org','name')
+			.populate('orgUnit','name parent')
+			.populate('workShift')
+			.select('_id -password')
 			.then((users) => {
 				if(users && users.length > 0) {
 					var send_users = [];
