@@ -860,15 +860,25 @@ module.exports = {
 			query = { _id: roster.id };
 		}
 		Group.findOne(query)
-			.populate('instructor', 'name person')
-			.populate('orgUnit', 'name longName')
+			.populate({
+				path: 'instructor',
+				select: 'name person',
+				options: { lean: true }
+			})
+			.populate({
+				path: 'orgUnit',
+				select: 'name longName',
+				options: { lean: true }
+			})
 			.populate({
 				path: 'course',
 				select: 'blocks title',
 				populate: {
 					path: 'blocks',
-					select: 'section number title'
-				}
+					select: 'section number title',
+					options: { lean: true }
+				},
+				options: { lean: true }
 			})
 			//.populate('students','name status person student')
 			.populate({
@@ -877,8 +887,10 @@ module.exports = {
 				select: 'student status finalGrade track pass passDate newTask grades',
 				populate: {
 					path: 'student',
-					select: 'name status person student'
-				}
+					select: 'name status person student',
+					options: { lean: true }
+				},
+				options: { lean: true }
 			})
 			.select('code name beginDate endDate orgUnit roster')
 			.lean()
@@ -889,6 +901,7 @@ module.exports = {
 						groupcode		: group.code,
 						groupname		: group.name,
 						groupStatus : group.status,
+						groupType		: group.type,
 						coursetitle	: group.course.title,
 						courseid		: group.course._id,
 						instructor	: `${group.instructor.person.name} ${group.instructor.person.fatherName}`,
