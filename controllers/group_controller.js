@@ -1960,15 +1960,18 @@ module.exports = {
 		Roster.findOne({student: key_user.id, group: groupid})
 			.populate({
 				path: 'group',
-				select: 'course certificateActive beginDate endDate',
+				select: 'course certificateActive beginDate endDate type',
 				populate: {
 					path: 'course',
 					select: 'title blocks duration durationUnits',
 					populate: {
 						path: 'blocks',
-						select: 'title section number w wq wt type'
-					}
-				}
+						select: 'title section number w wq wt type',
+						options: { lean: true }
+					},
+					options: { lean: true }
+				},
+				options: { lean: true }
 			})
 			.then((item) => {
 				if(item) {
@@ -2060,6 +2063,7 @@ module.exports = {
 								rosterid					: item._id,
 								groupid						: item._id,
 								status						: item.status,
+								groupType					: item.group.type,
 								course						: item.group.course.title,
 								courseDuration		: item.group.course.duration,
 								courseDurUnits		: units(item.group.course.durationUnits),
