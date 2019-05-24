@@ -884,7 +884,7 @@ module.exports = {
 			.populate({
 				path: 'roster',
 				model: 'rosters',
-				select: 'student status finalGrade track pass passDate newTask grades',
+				select: 'student status finalGrade track pass passDate newTask grades certificateTutor',
 				populate: {
 					path: 'student',
 					select: 'name status person student',
@@ -930,6 +930,7 @@ module.exports = {
 							status					: s.status,
 							name						: s.student.person.fullName,
 							finalGrade			: s.finalGrade,
+							certificateTutor: s.certificateTutor,
 							track						: s.track,
 							pass						: s.pass,
 							passDate				: s.passDate,
