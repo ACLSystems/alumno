@@ -87,6 +87,7 @@ module.exports = {
 							'filepath': file.path,
 							'fileId'	: file._id
 						});
+						return;
 					})
 					.catch((err) => {
 						Err.sendError(res,err,'file_controller','upload dropbox -- uploading File -- User: ' + key_user.name + ' filepath: ' + file.path + ' filename: '+ file.filename +' req.file: ' + pretty + ' TKN: ' + accessToken);
