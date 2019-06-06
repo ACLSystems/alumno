@@ -28,6 +28,7 @@ var upload = multer({
 	}
 });
 
+app.disable('x-powered-by');
 // Encabezados CORS
 app.use(function(req, res, next) {
 	res.header('Access-Control-Allow-Origin', '*'); // restrict it to the required domain

@@ -35,6 +35,7 @@
 /config/dev.js
 /config/test.js
 /tests/*
+/local_scripts/*
 *.log
 *.sql
 *.sqlite

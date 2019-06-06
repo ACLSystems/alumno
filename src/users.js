@@ -260,6 +260,12 @@ const UserSchema = new Schema ({
 	char2: {
 		type: String
 	},
+	flag1: {
+		type: String
+	},
+	flag2: {
+		type: String
+	},
 	person: PersonSchema,
 	roles: RolesSchema,
 	mod: [ModSchema],
@@ -292,6 +298,10 @@ const UserSchema = new Schema ({
 
 //Encriptar password antes de guardarlo en la base
 UserSchema.pre('save', function(next) {
+	// Este último pedazo hay que validarlo antes de liberarlo.
+	// if(!this.isModified('password')) {
+	// 	next();
+	// }
 	//if(this.password && this.admin.passwordSaved !== 'saved') {
 	var re = /^\$2a\$10\$.*/;
 	var found = re.test(this.password);
@@ -323,6 +333,8 @@ UserSchema.methods.validatePassword = function(password, cb) {
 UserSchema.index( { org									: 1	}	);
 UserSchema.index( { char1								: 1	}	);
 UserSchema.index( { char2								: 1	}	);
+UserSchema.index( { flag1								: 1	}	);
+UserSchema.index( { flag2								: 1	}	);
 UserSchema.index( { report							: 1	}	);
 UserSchema.index( { orgUnit							: 1	}	);
 UserSchema.index( { 'person.name'				: 1	}	);
