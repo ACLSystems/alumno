@@ -61,7 +61,8 @@ const RubricSchema = new Schema ({
 		min: [0,'Minimum value is 0'],
 		max: [100,'Maximum value is 100'],
 		default: 0
-	}
+	},
+	text: String
 });
 
 module.exports = RubricSchema;

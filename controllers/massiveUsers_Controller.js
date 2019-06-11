@@ -368,7 +368,17 @@ module.exports = {
 										});
 									})
 									.catch((err) => {
-										Err.sendError(res,err,'user_controller','muir -- Sending Mail --');
+										let mailErr = err.toString();
+										if(mailErr === '401: Unauthorized'){
+											res.status(201).json({
+												'status': 201,
+												'message': 'User -' + userProps.name + '- created and NO email sent',
+												'userid': user._id,
+												'uri': link
+											});
+										} else {
+											Err.sendError(res,err,'user_controller','muir -- Sending Mail --');
+										}
 									});
 							})
 							.catch((err) => {

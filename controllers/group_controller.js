@@ -1971,10 +1971,10 @@ module.exports = {
 	myGrades(req,res){
 		const groupid		= req.query.groupid;
 		const key_user 	= res.locals.user;
-		Roster.findOne({student: key_user.id, group: groupid})
+		Roster.findOne({student: key_user._id, group: groupid})
 			.populate({
 				path: 'group',
-				select: 'course certificateActive beginDate endDate type',
+				select: 'course certificateActive beginDate endDate type rubric',
 				populate: {
 					path: 'course',
 					select: 'title blocks duration durationUnits',
@@ -2003,22 +2003,20 @@ module.exports = {
 						var j=0;
 						var found = false;
 						while(!found && j < grades.length) {
-							if(rubric.length > 0){
-								if(rubric[i].block + '' === grades[j].block + '') {
-									grades[j].w 			= rubric[i].w;
-									grades[j].wq 			= rubric[i].wq;
-									grades[j].wt 			= rubric[i].wt;
-									grades[j].repair	= 1;
-									found = true;
-								}
-							} else {
-								if(bs[i]._id + '' === grades[j].block + '') {
-									grades[j].w 			= bs[i].w;
-									grades[j].wq 			= bs[i].wq;
-									grades[j].wt 			= bs[i].wt;
-									grades[j].repair	= 1;
-									found = true;
-								}
+							if(rubric.length > 0 &&
+								rubric[i] &&
+								rubric[i].block + '' === grades[j].block + '') {
+								grades[j].w 			= rubric[i].w;
+								grades[j].wq 			= rubric[i].wq;
+								grades[j].wt 			= rubric[i].wt;
+								grades[j].repair	= 1;
+								found = true;
+							} else if(bs[i]._id + '' === grades[j].block + '') {
+								grades[j].w 			= bs[i].w;
+								grades[j].wq 			= bs[i].wq;
+								grades[j].wt 			= bs[i].wt;
+								grades[j].repair	= 1;
+								found = true;
 							}
 							j++;
 						}
@@ -2068,6 +2066,12 @@ module.exports = {
 										}
 									}
 									block.grade = grade.finalGrade;
+									if(item.group && item.group.rubric && item.group.rubric.length > 0){
+										let rubricItem = item.group.rubric.find(rItem => rItem.block + ''  === block.blockId + '');
+										if(rubricItem.text) {
+											block.blockRubricText = rubricItem.text;
+										}
+									}
 									blocks.push(block);
 								}
 							});
@@ -2075,7 +2079,7 @@ module.exports = {
 							var send_grade = {
 								name							: key_user.person.fullName,
 								rosterid					: item._id,
-								groupid						: item._id,
+								groupid						: item.group._id,
 								status						: item.status,
 								groupType					: item.group.type,
 								course						: item.group.course.title,
@@ -3310,6 +3314,35 @@ module.exports = {
 				Err.sendError(res,err,'group_controller','setGrade -- Finding Rosters -- groupid: ' + req.query.groupid + ' blockid: ' + req.query.blockid );
 			});
 	}, //setGrade
+
+	resetRubric(req,res) {
+		Group.findById(req.query.id)
+			.populate({
+				path: 'course',
+				select: 'blocks',
+				populate: {
+					path: 'blocks',
+					select: 'w,wq,wt'
+				}
+			})
+			.then(group => {
+				var blocks = group.course.blocks;
+				var rubric = [];
+				if(blocks.length > 0) {
+					blocks.forEach(block => {
+						rubric.push({
+							wq: block.wq,
+							wt: block.wt,
+							w: block.w,
+							block: block._id
+						});
+					});
+					res.status(200).json(rubric);
+				}
+			}).catch((err) => {
+				Err.sendError(res,err,'group_controller','resetRubric -- Finding group -- groupid: ' + req.query.id );
+			});
+	}, //resetRubric
 
 	touchGrade(req,res) {
 		const userid		= req.query.userid;
