@@ -669,16 +669,19 @@ module.exports = {
 							pass				:	1,
 							passDate		:	1,
 							certificateNumber : '' + '$certificateNumber',
+							id					: '$myUser._id',
 							name				:	'$myUser.person.name',
 							fatherName	:	'$myUser.person.fatherName',
 							motherName	: '$myUser.person.motherName',
 							email				: '$myUser.person.email'
+							// fiscal 			: { $arrayElemAt: ['$myUser.fiscal', 0]}
 						})
 						.unwind('name')
 						.unwind('fatherName')
 						.unwind('motherName')
 						.unwind('email')
 						.unwind('grades')
+						.unwind('id')
 						.match({$or: [{'grades.wq': {$gt:0}},{'grades.wt': {$gt:0}}]})
 						.lookup({
 							from				: 'blocks',
@@ -696,7 +699,8 @@ module.exports = {
 							fatherName	:	1,
 							motherName	:	1,
 							email				:	1,
-							//rfc 				: 1,
+							id					: 1,
+							// fiscal			: 1,
 							blockTitle	:	'$myBlocks.title',
 							blockGrade	:	'$grades.finalGrade',
 							blockPond		:	'$grades.w'
@@ -708,6 +712,8 @@ module.exports = {
 								fatherName	: '$fatherName',
 								motherName	: '$motherName',
 								email				: '$email',
+								id					: '$id',
+								// fiscal			: '$fiscal',
 								track				: '$track',
 								finalGrade	: '$finalGrade',
 								pass				: '$pass',
@@ -723,16 +729,55 @@ module.exports = {
 							}
 						})
 						.project({
+							id					: '$_id.id',
 							name				: '$_id.name',
 							fatherName	: '$_id.fatherName',
 							motherName	: '$_id.motherName',
 							email				: '$_id.email',
+							// fiscal			: '$_id.fiscal',
 							track				: '$_id.track',
 							finalGrade	: '$_id.finalGrade',
 							pass				: '$_id.pass',
 							passDate		: '$_id.passDate',
 							certificateNumber	: '$_id.certificateNumber'.padStart(7,'0'),
 							grades			: true,
+							_id 				: false
+						})
+						.lookup({
+							from				: 'fiscalcontacts',
+							localField	: 'email',
+							foreignField: 'email',
+							as					: 'myFiscal'
+						})
+						.project({
+							id					: 1,
+							name				: 1,
+							fatherName	: 1,
+							motherName	: 1,
+							email				: 1,
+							RFC					: {$arrayElemAt: ['$myFiscal',0]},
+							track				: 1,
+							finalGrade	: 1,
+							pass				: 1,
+							passDate		: 1,
+							certificateNumber	: 1,
+							grades			: 1,
+							_id 				: false
+						})
+						.unwind('RFC')
+						.project({
+							id					: 1,
+							name				: 1,
+							fatherName	: 1,
+							motherName	: 1,
+							email				: 1,
+							RFC					:'$RFC.identification',
+							track				: 1,
+							finalGrade	: 1,
+							pass				: 1,
+							passDate		: 1,
+							certificateNumber	: 1,
+							grades			: 1,
 							_id 				: false
 						})
 						.then((items) => {

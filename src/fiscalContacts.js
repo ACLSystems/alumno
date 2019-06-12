@@ -200,6 +200,7 @@ FiscalContactSchema.index( { 'tag'						: 1 } );
 FiscalContactSchema.index( { 'identification'	: 1 } );
 FiscalContactSchema.index( { 'name'						: 1 } );
 FiscalContactSchema.index( { 'idAPIExternal'	: 1 } );
+FiscalContactSchema.index( { 'email'					: 1 } );
 FiscalContactSchema.index( { 'corporate'			: 1 }, {sparse: true});
 FiscalContactSchema.index( { 'orgUnit'				: 1 }, {sparse: true});
 
