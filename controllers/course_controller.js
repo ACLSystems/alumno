@@ -1427,14 +1427,14 @@ module.exports = {
 						var mod = {
 							by: key_user.name,
 							when: date,
-							what: 'Course modification'
+							what: 'Block modification'
 						};
 						block.mod.push(mod);
 						var req_block = req.body.block;
 						if(req_block.content) 			{block.content 			= req_block.content;				}
 						if(req_block.order) 				{block.order 				= req_block.order;					}
-						if(req_block.number) 				{block.number 			= req_block.number;					}
-						if(req_block.section) 			{block.section			= req_block.section;				}
+						if(req_block.number || req_block.number === 0) {block.number = req_block.number;}
+						if(req_block.section || req_block.section === 0) {block.section = req_block.section;}
 						if(req_block.title) 				{block.title				= req_block.title;					}
 						if(req_block.code) 					{block.code					= req_block.code;						}
 						if(req_block.isVisible) 		{block.isVisible		= req_block.isVisible;			}
@@ -1651,18 +1651,23 @@ module.exports = {
 		const number			=	req.body.number;
 		Block.findById(blockid)
 			.then((block) => {
-				block.section = section;
-				block.number 	= number;
-				block.save()
-					.then(() => {
-						res.status(200).json({
-							'status': 200,
-							'message': 'block saved'
+				if(block){
+					block.section = section;
+					block.number 	= number;
+					block.save()
+						.then(() => {
+							res.status(200).json({
+								'message': 'block saved'
+							});
+						})
+						.catch((err) => {
+							sendError(res,err,'setBlockOrder -- Saving block --');
 						});
-					})
-					.catch((err) => {
-						sendError(res,err,'setBlockOrder -- Saving block --');
+				} else {
+					res.status(404).json({
+						'message': 'block not found'
 					});
+				}
 			})
 			.catch((err) => {
 				sendError(res,err,'setBlockOrder -- Searching block --');
@@ -1870,7 +1875,9 @@ function prettyCourse(course) {
 		price: 				course.price,
 		status: 			course.status,
 		isVisible: 		course.isVisible,
-		apiExternal: 	course.apiExternal
+		apiExternal: 	course.apiExternal,
+		currentSection: course.currentSection,
+		nextNumber: 	course.nextNumber
 	};
 }
 
