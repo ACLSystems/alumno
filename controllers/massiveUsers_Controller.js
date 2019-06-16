@@ -424,6 +424,34 @@ module.exports = {
 			.catch((err) => {
 				sendError(res,err,'orgs');
 			});
+	}, // get
+
+	minimalGet(req,res) {
+		var query = JSON.parse(req.query.find);
+		User.find(query)
+			.select('_id')
+			.then((users) => {
+				if(users && users.length > 0) {
+					var send_users = [];
+					users.forEach(user => {
+						send_users.push(user._id);
+					});
+					res.status(200).json({
+						'status'	: 200,
+						'usersNum': users.length,
+						'usersArray': send_users,
+						'users'		: users
+					});
+				} else {
+					res.status(200).json({
+						'status'	: 200,
+						'message'	: 'No users found'
+					});
+				}
+			})
+			.catch((err) => {
+				sendError(res,err,'orgs');
+			});
 	}
 };
 

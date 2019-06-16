@@ -198,6 +198,7 @@ module.exports = (app) => {
 	app.post('/api/v1/admin/config/create',				ConfigController.create);
 	app.get ('/api/v1/admin/user/list', 					UserController.list);
 	app.get ('/api/v1/admin/user/get', 						MassUsersController.get);
+	app.get ('/api/v1/admin/user/minget', 				MassUsersController.minimalGet);
 	app.get ('/api/v1/admin/user/count', 					UserController.count);
 	app.get ('/api/v1/admin/org/list', 						OrgController.list);
 	app.get ('/api/v1/admin/orgunit/list', 				OrgUnitController.list);

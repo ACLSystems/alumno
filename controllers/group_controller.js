@@ -1074,11 +1074,15 @@ module.exports = {
 					courseCode			: item.group.course.code,
 					courseBlocks		: item.group.course.numBlocks,
 					instructor			: item.group.instructor.person.name + ' ' + item.group.instructor.person.fatherName,
+					instructorEmail	: item.group.instructor.person.email,
 					presentBlockBy	: item.group.presentBlockBy,
 					myStatus				: item.status,
 					track						: item.track,
 					firstBlock			: item.group.course.blocks[0]
 				};
+				if(send_group.instructor === 'Sin Instructor') {
+					send_group.instructorEmail = 'Sin Instructor';
+				}
 				if(item.group.course.duration) {
 					send_group.duration = item.group.course.duration + item.group.course.durationUnits;
 				}
@@ -1120,7 +1124,7 @@ module.exports = {
 						{
 							path: 'instructor',
 							model: 'users',
-							select: 'person.name person.fatherName'
+							select: 'person.name person.fatherName person.email'
 						}
 					]
 				})

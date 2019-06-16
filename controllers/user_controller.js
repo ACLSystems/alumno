@@ -303,7 +303,7 @@ module.exports = {
 	getDetailsPublic(req,res) {
 		const username = req.query.name;
 		User.findOne({ name: username })
-			.select('name person orgUnit')
+			.select('name person orgUnit admin.isVerified')
 			.populate('orgUnit', 'name')
 			.then((user) => {
 				if (!user) {
@@ -313,7 +313,8 @@ module.exports = {
 					});
 				} else {
 					res.status(200).json({
-						'status': 200,
+						//'status': 200,
+						'validated' : user.admin.isVerified,
 						'user': {
 							email			: user.name,
 							person		: user.person

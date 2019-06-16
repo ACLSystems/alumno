@@ -280,6 +280,7 @@ module.exports = {
 						type				: course.type,
 						description	: course.description,
 						categories	: course.categories,
+						keys				: course.keys,
 						isVisible		: course.isVisible,
 						version			: course.version,
 						status			: course.status,
@@ -1836,7 +1837,7 @@ function sendError(res, err, section) {
 
 function parseArray(myarr) {
 	const myarr_temp = myarr;
-	if(myarr_temp.constructor !== Array) {
+	if(!Array.isArray(myarr_temp)) {
 		myarr = [myarr_temp];
 	}
 	return myarr;
