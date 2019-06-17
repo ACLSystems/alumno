@@ -233,6 +233,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/admin/job/activate', 				JobController.activate);
 	app.post('/api/v1/admin/proyect/create', 			ProjectController.create);
 	app.get ('/api/v1/admin/proyect/list', 				ProjectController.list);
+	app.put ('/api/v1/admin/group/change', 				GroupController.changeCourse);
 
 	// Rutas para roles de 'isOrg'
 

@@ -230,7 +230,7 @@ module.exports = {
 					if(req_group.beginDate				) {group.beginDate					= req_group.beginDate;				}
 					if(req_group.endDate					) {group.endDate						= req_group.endDate;					}
 					if(req_group.rubric						) {group.rubric			 				= req_group.rubric;						}
-					if(req_group.certificateActive) {group.certificateActive	= req_group.certificateActive;}
+					if(req_group.certificateActive === false) {group.certificateActive	= false;}
 					if(req_group.isActive					) {group.isActive						= req_group.isActive;					}
 					if(req_group.minTrack					) {group.minTrack						= req_group.minTrack;					}
 					if(req_group.minGrade					) {group.minGrade						= req_group.minGrade;					}
@@ -3756,7 +3756,100 @@ module.exports = {
 			}).catch((err) => {
 				Err.sendError(res,err,'group_controller','repairTasksInRoster -- Finding Rosters --');
 			});
-	} //repairTasksInRoster
+	}, //repairTasksInRoster
+
+	changeCourse(req,res) {
+		if(!req.query.group) {
+			res.status(404).json({
+				'message': 'Debes agregar el id del grupo'
+			});
+			return;
+		}
+		if(!req.query.newCourse) {
+			res.status(404).json({
+				'message': 'Debes agregar el id del curso'
+			});
+			return;
+		}
+		Promise.all(
+			[
+				Group.findById(req.query.group),
+				//Course.findById(oldCourse),
+				Course.findById(req.query.newCourse).populate('blocks').lean(),
+				Roster.find({group:req.query.group})
+			]
+		).then(results => {
+			var [group,newCourse,items] = results;
+			const blocks = newCourse.blocks;
+			group.rubric = [];
+			if(blocks.length > 0) {
+				blocks.forEach(function(block) {
+					group.rubric.push({
+						block	: block._id,
+						w			: block.w,
+						wq		: block.wq,
+						wt		: block.wt
+					});
+				});
+			}
+			if(Array.isArray(items) && items.length > 0) {
+				items.forEach(item => {
+					item.tempGrades = Array.from(item.Grades);
+					var grade = [];
+					var sec = 0;
+					blocks.forEach(function(block) {
+						var gradePushed = {
+							block					: block._id,
+							track					: 0,
+							maxGradeQ 		: 0,
+							gradeT				: 0,
+							w							: block.w,
+							wq						: block.wq,
+							wt						: block.wt
+						};
+						var gradeIndex = -1;
+						if(group.rubric && group.rubric.length > 0) { gradeIndex = group.rubric.findIndex(rubric => rubric.block + '' === gradePushed.block + ''); }
+						if(gradeIndex > -1 ) {
+							gradePushed.w 	= group.rubric[gradeIndex].w;
+							gradePushed.wt 	= group.rubric[gradeIndex].wt;
+							gradePushed.wq 	= group.rubric[gradeIndex].wq;
+						}
+						grade.push(gradePushed);
+						if(block.section !== sec) {
+							sec++;
+						}
+					});
+					if(blocks[0].section === 0) {
+						sec++;
+					}
+					var sections = [];
+					var j = 0;
+					while (j < sec) {
+						var section = {};
+						if (group.presentBlockBy && group.presentBlockBy === 'dates' && group.dates && group.dates.length > 0) {
+							section.beginDate = group.dates[j].beginDate;
+							section.endDate		= group.dates[j].endDate;
+						}
+						sections.push(section);
+						j++;
+					}
+					const tempGrades = item.tempGrades;
+					var i=0;
+					item.grades.forEach(grade => {
+						grade.track = tempGrades[i].track;
+						i++;
+					});
+					item.tempGrades = [];
+					item.save().catch(err => {
+						console.log(err); //eslint-disable-line
+					});
+				});
+			}
+			group.course = newCourse._id;
+		}).catch((err) => {
+			Err.sendError(res,err,'group_controller','changeCourse -- Finding courses --');
+		});
+	}
 };
 
 
