@@ -1,28 +1,27 @@
-const WorkShift = require('../src/workShift');
+const Project = require('../src/projects');
 const Err = require('../controllers/err500_controller');
 
 module.exports = {
 
 	create(req,res){
 		const key_user = res.locals.user;
-		var workShift = new WorkShift({
+		var project = new Project({
 			name: req.body.name,
 			org: req.body.org,
 			orgUnit: req.body.orgUnit,
-			allTime: req.body.allTime,
-			shifts: req.body.shifts
+			owner: req.body.owner
 		});
-		if(!workShift.org) {
-			workShift.org = key_user.org._id;
+		if(!project.org) {
+			project.org = key_user.org._id;
 		}
-		workShift.save()
+		project.save()
 			.then(() => {
 				res.status(200).json({
-					'message': 'Turno creado'
+					'message': 'Proyecto creado'
 				});
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'workShifts_controller','create -- Saving Shift --');
+				Err.sendError(res,err,'project_controller','create -- Saving Project --');
 			});
 	}, // create
 
@@ -33,23 +32,23 @@ module.exports = {
 		if(!req.query.org && !key_user.roles.isAdmin){
 			req.query.org = key_user.org._id;
 		}
-		if(req.query.shifts) {
-			req.query.shifts = JSON.parse(req.query.shifts);
-			if(typeof req.query.shifts.day === 'string') {
-				req.query.shifts.day = parseInt(req.query.shifts.day);
+		if(req.query.projects) {
+			req.query.projects = JSON.parse(req.query.projects);
+			if(typeof req.query.projects.day === 'string') {
+				req.query.projects.day = parseInt(req.query.projects.day);
 			}
 		}
 		if(all) {
 			if(!key_user.roles.isAdmin){
 				delete req.query.orgUnit;
 				delete req.query.name;
-				delete req.query.shifts;
+				delete req.query.projects;
 				delete req.query.all;
 			} else {
 				req.query = {};
 			}
 		}
-		WorkShift.find(req.query)
+		Project.find(req.query)
 			.populate([{
 				path: 'org',
 				select: 'name'
@@ -59,27 +58,27 @@ module.exports = {
 				select: 'name type'
 			}
 			])
-			.then(ws => {
-				if(ws && ws.length > 1) {
+			.then(pro => {
+				if(pro && pro.length > 1) {
 					res.status(200).json({
-						'message': `Se encontraron ${ws.length} turnos`,
-						'turnos': ws,
+						'message': `Se encontraron ${pro.length} proyectos`,
+						'proyectos': pro,
 						'query': req.query
 					});
-				} else if(ws && ws.length === 1) {
+				} else if(pro && pro.length === 1) {
 					res.status(200).json({
-						'message': 'Un solo turno localizado',
-						'turno': ws,
+						'message': 'Un solo proyecto localizado',
+						'proyecto': pro,
 						'query': req.query
 					});
 				} else {
 					res.status(200).json({
-						'message': 'No se encontraron turnos',
+						'message': 'No se encontraron proyectos',
 						'query': req.query
 					});
 				}
 			}).catch((err) => {
-				Err.sendError(res,err,'workShifts_controller','create -- Saving Shift --');
+				Err.sendError(res,err,'projects_controller','create -- Saving project --');
 			});
 	} // list
 };

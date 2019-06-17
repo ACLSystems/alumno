@@ -24,6 +24,7 @@ const ConfigController 			= require('../controllers/config_controller'				);
 const CacheController 			= require('../controllers/cache_controller'					);
 const JobController 				= require('../controllers/job_controller'						);
 const WorkShiftController		= require('../controllers/workShifts_controller'		);
+const ProjectController 		= require('../controllers/projects_controller'			);
 // var dir 										= process.env.ORDIR;
 // const fileSize 							= 1048576;
 // const files 								= 1;
@@ -230,6 +231,8 @@ module.exports = (app) => {
 	app.post('/api/v1/admin/job/create', 					JobController.create);
 	app.get ('/api/v1/admin/job/get', 						JobController.get);
 	app.put ('/api/v1/admin/job/activate', 				JobController.activate);
+	app.post('/api/v1/admin/proyect/create', 			ProjectController.create);
+	app.get ('/api/v1/admin/proyect/list', 				ProjectController.list);
 
 	// Rutas para roles de 'isOrg'
 
