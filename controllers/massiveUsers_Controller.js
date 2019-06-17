@@ -6,6 +6,8 @@ const mailjet 						= require('../shared/mailjet');
 const generate						= require('nanoid/generate');
 const Err 								= require('../controllers/err500_controller');
 const Fiscal 							= require('../src/fiscalContacts');
+const Project 						= require('../src/projects');
+const WorkShift						= require('../src/workShift');
 const logger 							= require('../shared/winston-logger');
 const url 								= process.env.LIBRETA_URI;
 const urlencode 					= require('urlencode');
@@ -299,11 +301,14 @@ module.exports = {
 				.select('name'),
 			OrgUnit.findOne({$or: [{ name: userProps.orgUnit}, {longName: userProps.orgUnit}]})
 				.select('name org'),
-			User.findOne({name:userProps.name})
-				.select('name person')
+			User.findOne({name:userProps.name}),
+			Project.findOne({name: userProps.project})
+				.select('name'),
+			WorkShift.findOne({name: userProps.workShift})
+				.select('name')
 		])
 			.then((results) =>{
-				var [org,ou,user] = results;
+				var [org,ou,user,project,workShift] = results;
 				if(!org) {
 					res.status(200).json({
 						'message': 'Error: Org not found or not valid. Please check'
@@ -316,6 +321,18 @@ module.exports = {
 					});
 					return;
 				}
+				if(!project) {
+					res.status(200).json({
+						'message': 'Error: Project not found or not valid. Please check'
+					});
+					return;
+				}
+				if(!workShift) {
+					res.status(200).json({
+						'message': 'Error: workShift not found or not valid. Please check'
+					});
+					return;
+				}
 				if(ou.org + '' !== org._id + '') {
 					res.status(200).json({
 						'message': 'Error: OrgUnit not valid. OrgUnit provided does not belong to org. Please check',
@@ -325,107 +342,138 @@ module.exports = {
 					return;
 				}
 				if(user) {
-					res.status(200).json({
-						'message': 'User already registered',
-						'user': {
-							'id': user.id,
-							'name': user.name,
-							'person': user.person
-						},
-						'userid': user.id
-					});
-					return;
-				}
-				var admin = {
-					isActive: true,
-					isVerified: false,
-					recoverString: '',
-					passwordSaved: '',
-					adminCreate: true,
-					initialPassword: userProps.password
-				};
-				userProps.admin = admin;
-				var permUsers = [];
-				var permUser = { name: userProps.name, canRead: true, canModify: true, canSec: false };
-				permUsers.push(permUser);
-				if (userProps.name !== key_user.name) {
-					permUser = { name: key_user.name, canRead: true, canModify: true, canSec: false };
-					permUsers.push(permUser);
-				}
-				var permRoles = [];
-				var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
-				permRoles.push(permRole);
-				permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
-				permRoles.push(permRole);
-				var permOrgs = [];
-				const permOrg = { name: userProps.org, canRead: true, canModify: true, canSec: false };
-				permOrgs.push(permOrg);
-				userProps.perm = { users: permUsers, roles: permRoles, orgs: permOrgs };
-				userProps.org = org._id;
-				userProps.orgUnit = ou._id;
-				const mod = {
-					by: key_user.name,
-					when: new Date(),
-					what: 'User creation'
-				};
-				userProps.mod = [];
-				userProps.mod.push(mod);
-				if(userProps.student && userProps.student.type === 'internal') {
-					delete userProps.student.external;
-					delete userProps.student.origin;
-				}
-				User.create(userProps)
-					.then((user) => {
-						user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
-						user.save()
-							.then((user) => {
-								if(SEPH) {
-									var fiscal = new Fiscal({
-										identification: user.admin.initialPassword,
-										name: user.person.name + ' ' + user.person.fatherName + ' ' +user.person.motherName,
-										observations: 'Usuario creado para SEPH',
-										email: user.person.email,
-										type: 'client',
-										cfdiUse: 'G03',
-										orgUnit: user.orgUnit,
-										mod: [{
-											what: 'Fiscal creation - new user',
-											when: new Date(),
-											by: 'System'
-										}]
-									});
-									fiscal.save().then().catch(() => {});
-								}
-								var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
-								mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',template_user_admin,link)
-									.then(() => {
-										res.status(201).json({
-											'status': 201,
-											'message': 'User -' + userProps.name + '- created',
-											'userid': user._id,
-											'uri': link
-										});
-									})
-									.catch((err) => {
-										let mailErr = err.toString();
-										if(mailErr === '401: Unauthorized'){
-											res.status(201).json({
-												'message': 'User -' + userProps.name + '- created and NO email sent',
-												'userid': user._id,
-												'uri': link
-											});
-										} else {
-											Err.sendError(res,err,'user_controller','muir -- Sending Mail --');
-										}
-									});
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'user_controller','muir -- Saving User validation String --');
+					if(userProps.char1) {user.char1 = userProps.char1;}
+					if(userProps.char2) {user.char2 = userProps.char2;}
+					if(userProps.workShift) {user.workShift = workShift._id;}
+					if(userProps.project) {
+						if(user.project && Array.isArray(user.project) && user.project.length > 0){
+							var found = user.project.find(function(pro) {
+								return pro + '' === pro._id + '';
 							});
-					})
-					.catch((err) => {
-						Err.sendError(res,err,'user_controller','muir -- User Creation --');
+							if(!found){
+								user.project.push(project._id);
+							}
+						} else {
+							user.project = [project._id];
+						}
+					}
+					user.save().then((user) => {
+						res.status(200).json({
+							'message': 'User already registered',
+							'user': {
+								'id': user._id,
+								'name': user.name,
+								'person': user.person
+							},
+							'userid': user._id
+						});
+						return;
+					}).catch(() => {
+						res.status(200).json({
+							'message': 'User already registered',
+							'user': {
+								'id': user._id,
+								'name': user.name,
+								'person': user.person
+							},
+							'userid': user._id
+						});
+						return;
 					});
+				} else {
+					var admin = {
+						isActive: true,
+						isVerified: false,
+						recoverString: '',
+						passwordSaved: '',
+						adminCreate: true,
+						initialPassword: userProps.password
+					};
+					userProps.admin = admin;
+					var permUsers = [];
+					var permUser = { name: userProps.name, canRead: true, canModify: true, canSec: false };
+					permUsers.push(permUser);
+					if (userProps.name !== key_user.name) {
+						permUser = { name: key_user.name, canRead: true, canModify: true, canSec: false };
+						permUsers.push(permUser);
+					}
+					var permRoles = [];
+					var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
+					permRoles.push(permRole);
+					permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
+					permRoles.push(permRole);
+					var permOrgs = [];
+					const permOrg = { name: userProps.org, canRead: true, canModify: true, canSec: false };
+					permOrgs.push(permOrg);
+					userProps.perm = { users: permUsers, roles: permRoles, orgs: permOrgs };
+					userProps.org = org._id;
+					userProps.orgUnit = ou._id;
+					userProps.project = [project._id];
+					userProps.workShift = workShift._id;
+					const mod = {
+						by: key_user.name,
+						when: new Date(),
+						what: 'User creation'
+					};
+					userProps.mod = [];
+					userProps.mod.push(mod);
+					if(userProps.student && userProps.student.type === 'internal') {
+						delete userProps.student.external;
+						delete userProps.student.origin;
+					}
+					User.create(userProps)
+						.then((user) => {
+							user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
+							user.save()
+								.then((user) => {
+									if(SEPH) {
+										var fiscal = new Fiscal({
+											identification: user.admin.initialPassword,
+											name: user.person.name + ' ' + user.person.fatherName + ' ' +user.person.motherName,
+											observations: 'Usuario creado para SEPH',
+											email: user.person.email,
+											type: 'client',
+											cfdiUse: 'G03',
+											orgUnit: user.orgUnit,
+											mod: [{
+												what: 'Fiscal creation - new user',
+												when: new Date(),
+												by: 'System'
+											}]
+										});
+										fiscal.save().then().catch(() => {});
+									}
+									var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
+									//mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',template_user_admin,link)
+									//.then(() => {
+									res.status(201).json({
+										'status': 201,
+										'message': 'User -' + userProps.name + '- created',
+										'userid': user._id,
+										'uri': link
+									});
+									// })
+									// .catch((err) => {
+									// 	let mailErr = err.toString();
+									// 	if(mailErr === '401: Unauthorized'){
+									// 		res.status(201).json({
+									// 			'message': 'User -' + userProps.name + '- created and NO email sent',
+									// 			'userid': user._id,
+									// 			'uri': link
+									// 		});
+									// 	} else {
+									// 		Err.sendError(res,err,'user_controller','muir -- Sending Mail --');
+									// 	}
+									// });
+								})
+								.catch((err) => {
+									Err.sendError(res,err,'user_controller','muir -- Saving User validation String --');
+								});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'user_controller','muir -- User Creation --');
+						});
+				}
 			})
 			.catch((err) => {
 				sendError(res,err,'massiveUser_controller','muir -- Finding Courses --');
