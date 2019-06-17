@@ -429,7 +429,7 @@ module.exports = {
 	minimalGet(req,res) {
 		var query = JSON.parse(req.query.find);
 		User.find(query)
-			.select('_id')
+			.select('_id name')
 			.then((users) => {
 				if(users && users.length > 0) {
 					var send_users = [];

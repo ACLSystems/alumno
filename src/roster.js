@@ -393,6 +393,10 @@ const RosterSchema = new Schema ({
 	createDate: {
 		type: Date,
 		default: Date.now
+	},
+	project: {
+		type: Schema.Types.ObjectId,
+		ref: 'projects'
 	}
 });
 
@@ -459,6 +463,7 @@ RosterSchema.index( {track							: 1	}	);
 RosterSchema.index( {group							: 1	}	);
 RosterSchema.index( {report							: 1	}	);
 RosterSchema.index( {orgUnit						: 1	} );
+RosterSchema.index( {project						: 1	} );
 RosterSchema.index( {certificateNumber	: 1	}, { sparse: true } );
 RosterSchema.index( {student						: 1, status: 	1 } );
 

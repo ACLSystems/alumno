@@ -39,6 +39,12 @@ module.exports = {
 			});
 			return;
 		}
+		if(req.body.project && !mongoose.Types.ObjectId.isValid(req.body.project)) {
+			res.status(406).json({
+				'message': 'Error: orgUnit must be an ObjectID'
+			});
+			return;
+		}
 		var group = req.body;
 		if(!group.instructor) {
 			group.instructor = key_user._id;

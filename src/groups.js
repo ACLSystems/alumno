@@ -155,6 +155,10 @@ const GroupsSchema = new Schema ({
 		type: Boolean,
 		default: true
 	},
+	project: {
+		type: Schema.Types.ObjectId,
+		ref: 'projects'
+	},
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema,
@@ -186,6 +190,7 @@ GroupsSchema.index( { isActive		: 1 					} );
 GroupsSchema.index( { status			: 1 					} );
 GroupsSchema.index( { beginDate		: 1						} );
 GroupsSchema.index( { endDate			: 1						} );
+GroupsSchema.index( { project			: 1						} );
 
 // Compilar esquema
 
