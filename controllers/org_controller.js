@@ -141,10 +141,12 @@ module.exports = {
 			.then((orgs) => {
 				var send_orgs = [];
 				orgs.forEach(function(org) {
-					send_orgs.push(org.name);
+					send_orgs.push({
+						id: org._id,
+						name: org.name
+					});
 				});
 				res.status(200).json({
-					'status': 200,
 					'message': send_orgs
 				});
 			})

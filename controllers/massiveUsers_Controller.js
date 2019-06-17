@@ -5,11 +5,11 @@ const bcrypt 							= require('bcrypt-nodejs');
 const mailjet 						= require('../shared/mailjet');
 const generate						= require('nanoid/generate');
 const Err 								= require('../controllers/err500_controller');
+const Fiscal 							= require('../src/fiscalContacts');
 const logger 							= require('../shared/winston-logger');
 const url 								= process.env.LIBRETA_URI;
 const urlencode 					= require('urlencode');
-const template_user_admin = 339990; // plantilla para el usuario que es registrado por el administrador
-
+var template_user_admin = 339990; // plantilla para el usuario que es registrado por el administrador
 
 module.exports = {
 	//massiveRegister(req,res,next) {
@@ -268,11 +268,32 @@ module.exports = {
 	muir(req,res) {
 		const key_user 	= res.locals.user;
 		var userProps 	= req.body;
+		// Ignorar '?'
+		const char 			= '?';
+		const email 		= userProps.person.email;
+		if(email.includes(char)) {
+			const index 		= email.indexOf(email);
+			userProps.person.email = (email.slice(index+1));
+		}
+		// Validar que el correo venga mínimamente bien construido
+		const challenge = /\S+@\S+\.\S+/;
+		const validate  = userProps.person.email.match(challenge);
+		if(!validate) {
+			res.status(406).json({
+				'message': 'Error: email no formateado correctamente'
+			});
+			return;
+		}
 		userProps.person.email = userProps.person.email.toLowerCase();
 		if(userProps.name !== userProps.person.email) { // que el nombre de usuario sera igual a su correo
 			userProps.name = userProps.person.email;
 		}
-
+		// checamos si el usuario viene de la SEPH
+		var SEPH = false;
+		if(userProps.orgUnit === 'SEPH') {
+			SEPH = true;
+			template_user_admin = 877911;
+		}
 		Promise.all([
 			Org.findOne({name: userProps.org })
 				.select('name'),
@@ -310,7 +331,8 @@ module.exports = {
 							'id': user.id,
 							'name': user.name,
 							'person': user.person
-						}
+						},
+						'userid': user.id
 					});
 					return;
 				}
@@ -357,6 +379,23 @@ module.exports = {
 						user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
 						user.save()
 							.then((user) => {
+								if(SEPH) {
+									var fiscal = new Fiscal({
+										identification: user.admin.initialPassword,
+										name: user.person.name + ' ' + user.person.fatherName + ' ' +user.person.motherName,
+										observations: 'Usuario creado para SEPH',
+										email: user.person.email,
+										type: 'client',
+										cfdiUse: 'G03',
+										orgUnit: user.orgUnit,
+										mod: [{
+											what: 'Fiscal creation - new user',
+											when: new Date(),
+											by: 'System'
+										}]
+									});
+									fiscal.save().then().catch(() => {});
+								}
 								var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
 								mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',template_user_admin,link)
 									.then(() => {
@@ -371,7 +410,6 @@ module.exports = {
 										let mailErr = err.toString();
 										if(mailErr === '401: Unauthorized'){
 											res.status(201).json({
-												'status': 201,
 												'message': 'User -' + userProps.name + '- created and NO email sent',
 												'userid': user._id,
 												'uri': link
@@ -393,7 +431,6 @@ module.exports = {
 				sendError(res,err,'massiveUser_controller','muir -- Finding Courses --');
 			});
 	}, // mur (Massive User Individual Register)
-
 
 	get(req,res) {
 		var query = JSON.parse(req.query.find);

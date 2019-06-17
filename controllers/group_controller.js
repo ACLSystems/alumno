@@ -17,6 +17,7 @@ const cache 			= require('../src/cache'										);
 const url = process.env.LIBRETA_URI;
 const supportEmail = process.env.SUPPORT_EMAIL;
 const portal = process.env.PORTAL;
+var template_user = 339994;
 
 module.exports = {
 	create(req,res) {
@@ -454,7 +455,7 @@ module.exports = {
 									});
 								}
 								User.find({_id: { $in: roster.roster}})
-									.select('person')
+									.select('person char2')
 									.then((students) => {
 										var my_roster 		= [];
 										var new_students	= [];
@@ -533,7 +534,7 @@ module.exports = {
 										*/
 												//
 												var new_roster = new Roster({
-													student		: student,
+													student		: student._id,
 													status		: status,
 													grades		: grade,
 													group			: group._id,
@@ -557,7 +558,10 @@ module.exports = {
 												my_roster.push(new_roster._id);
 												new_roster.save()
 													.then(() => {
-														mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado al curso ' + group.course.title,339994,link,group.course.title);
+														if(student.char2 === 'SEPH') {
+															template_user = 877918;
+														}
+														mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado al curso ' + group.course.title,template_user,link,group.course.title);
 														var not = new Notification({
 															destination: {
 																kind: 'users',
