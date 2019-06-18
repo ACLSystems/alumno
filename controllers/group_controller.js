@@ -76,96 +76,102 @@ module.exports = {
 					return;
 				}
 				if(course) {
-					const date = new Date();
-					group.org = key_user.org._id;
-					if(key_user.roles.isAdmin || key_user.roles.isBusiness) {
-						if(!group.orgUnit) {
-							group.orgUnit = key_user.orgUnit._id;
-						} else {
-							if(!mongoose.Types.ObjectId.isValid(req.body.orgUnit)) {
-								res.status(401).json({
-									'message': 'Error: orgUnit is not a valid ObjectID'
-								});
+					if(course.status === 'published'){
+						const date = new Date();
+						group.org = key_user.org._id;
+						if(key_user.roles.isAdmin || key_user.roles.isBusiness) {
+							if(!group.orgUnit) {
+								group.orgUnit = key_user.orgUnit._id;
+							} else {
+								if(!mongoose.Types.ObjectId.isValid(req.body.orgUnit)) {
+									res.status(401).json({
+										'message': 'Error: orgUnit is not a valid ObjectID'
+									});
+								}
 							}
+						} else {
+							group.orgUnit = key_user.orgUnit._id;
 						}
-					} else {
-						group.orgUnit = key_user.orgUnit._id;
-					}
-					if(!group.type) {
-						group.type = course.type;
-					}
-					group.own = {
-						user: key_user.name,
-						org: key_user.org.name,
-						orgUnit: key_user.orgUnit.name
-					};
-					group.mod = {
-						by: key_user.name,
-						when: date,
-						what: 'Group Creation'
-					};
-					group.perm = {
-						users: [{ name: key_user.name, canRead: true, canModify: true, canSec: true }],
-						roles: [{ name: 'isInstructor', canRead: true, canModify: false, canSec: false},
-							{ name: 'isOrgContent', canRead: true, canModify: false, canSec: true}],
-						orgs: [{ name: key_user.org.name, canRead: true, canModify: false, canSec: false}],
-						orgUnits: [{ name: key_user.orgUnit.name, canRead: true, canModify: true, canSec: false}]
-					};
-					if(!group.instructor && course.type === 'tutor') {
-						group.instructor = key_user._id;
-					}
-					// Agregar la rúbrica recolectada desde los bloques
-					group.rubric = [];
-					if(course.blocks.length > 0) {
-						course.blocks.forEach(function(block) {
-							group.rubric.push({
-								block	: block._id,
-								w			: block.w,
-								wq		: block.wq,
-								wt		: block.wt
+						if(!group.type) {
+							group.type = course.type;
+						}
+						group.own = {
+							user: key_user.name,
+							org: key_user.org.name,
+							orgUnit: key_user.orgUnit.name
+						};
+						group.mod = {
+							by: key_user.name,
+							when: date,
+							what: 'Group Creation'
+						};
+						group.perm = {
+							users: [{ name: key_user.name, canRead: true, canModify: true, canSec: true }],
+							roles: [{ name: 'isInstructor', canRead: true, canModify: false, canSec: false},
+								{ name: 'isOrgContent', canRead: true, canModify: false, canSec: true}],
+							orgs: [{ name: key_user.org.name, canRead: true, canModify: false, canSec: false}],
+							orgUnits: [{ name: key_user.orgUnit.name, canRead: true, canModify: true, canSec: false}]
+						};
+						if(!group.instructor && course.type === 'tutor') {
+							group.instructor = key_user._id;
+						}
+						// Agregar la rúbrica recolectada desde los bloques
+						group.rubric = [];
+						if(course.blocks.length > 0) {
+							course.blocks.forEach(function(block) {
+								group.rubric.push({
+									block	: block._id,
+									w			: block.w,
+									wq		: block.wq,
+									wt		: block.wt
+								});
 							});
-						});
-					}
-					//	---------
-					group.roster = [];
-					group.students = [];
-					orgUnit.findById(group.orgUnit).lean()
-						.then((ou) => {
-							if(ou) {
-								Group.create(group)
-									.then((grp) => {
-										res.status(200).json({
-											'message': 'Group created',
-											'group': {
-												id: grp.id,
-												code: grp.code,
-												name: grp.name
+						}
+						//	---------
+						group.roster = [];
+						group.students = [];
+						orgUnit.findById(group.orgUnit).lean()
+							.then((ou) => {
+								if(ou) {
+									Group.create(group)
+										.then((grp) => {
+											res.status(200).json({
+												'message': 'Group created',
+												'group': {
+													id: grp.id,
+													code: grp.code,
+													name: grp.name
+												}
+											});
+											if(course.type === 'tutor') {
+												mailjet.sendMail(supportEmail, 'Administrador', 'Alerta: Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code,679640,portal,'Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code + ' ' + group.course.title);
+											} else {
+												mailjet.sendMail(supportEmail, 'Administrador', 'Aviso: Se ha generado un grupo. + ' + group.code,679640,portal,'Se ha generado un grupo. + ' + group.code + ' ' + course.title);
+											}
+										})
+										.catch((err) => {
+											if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
+												res.status(406).json({
+													'message': 'Error -: group -' + group.code + '- already exists'
+												});
+											} else {
+												Err.sendError(res,err,'group_controller','create -- creating Group --');
 											}
 										});
-										if(course.type === 'tutor') {
-											mailjet.sendMail(supportEmail, 'Administrador', 'Alerta: Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code,679640,portal,'Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code + ' ' + group.course.title);
-										} else {
-											mailjet.sendMail(supportEmail, 'Administrador', 'Aviso: Se ha generado un grupo. + ' + group.code,679640,portal,'Se ha generado un grupo. + ' + group.code + ' ' + course.title);
-										}
-									})
-									.catch((err) => {
-										if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
-											res.status(406).json({
-												'message': 'Error -: group -' + group.code + '- already exists'
-											});
-										} else {
-											Err.sendError(res,err,'group_controller','create -- creating Group --');
-										}
+								} else {
+									res.status(401).json({
+										'message': 'Error -: orgUnit -' + group.orgUnit + '- does not exists'
 									});
-							} else {
-								res.status(401).json({
-									'message': 'Error -: orgUnit -' + group.orgUnit + '- does not exists'
-								});
-							}
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'group_controller','create -- Finding orgUnit --');
+								}
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'group_controller','create -- Finding orgUnit --');
+							});
+					} else {
+						res.status(404).json({
+							'message': 'Error -: Course -'+ group.course + '- must be in published status to create group'
 						});
+					}
 				} else {
 					res.status(404).json({
 						'message': 'Error -: Course -'+ group.course + '- not found'
