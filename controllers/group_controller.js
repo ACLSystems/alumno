@@ -3766,9 +3766,15 @@ module.exports = {
 			});
 			return;
 		}
-		if(!req.query.newcourse) {
+		if(!req.query.grouptemplate) {
 			res.status(404).json({
-				'message': 'Debes agregar el id del curso'
+				'message': 'Debes agregar el id del grupo plantilla'
+			});
+			return;
+		}
+		if(!req.query.rostertemplate) {
+			res.status(404).json({
+				'message': 'Debes agregar el id del roster plantilla'
 			});
 			return;
 		}
