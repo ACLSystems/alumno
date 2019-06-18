@@ -1,6 +1,6 @@
 {
   "name": "alumno",
-  "version": "1.12.10",
+  "version": "1.12.11",
   "description": "Proyecto alumno",
   "main": "index.js",
   "scripts": {
