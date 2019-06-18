@@ -2551,10 +2551,11 @@ module.exports = {
 					path: 'course',
 					match: { isVisible: true, status: 'published'},
 					select: 'blocks numBlocks code'
-				},{
-					path: 'dates',
-					select: 'beginDate endDate'
 				}
+				// ,{
+				// 	path: 'dates',
+				// 	select: 'beginDate endDate'
+				// }
 				]
 			}, // esta parte de abajo está sospechosa, porque de todos modos tengo que ir por el dato del bloque
 			{
