@@ -3774,73 +3774,83 @@ module.exports = {
 		}
 		Promise.all(
 			[
+				Group.findById(req.query.grouptemplate).lean(),
+				Roster.findById(req.query.rostertemplate).lean(),
 				Group.findById(req.query.group),
-				//Course.findById(oldCourse),
-				Course.findById(req.query.newcourse).populate('blocks').lean(),
 				Roster.find({group:req.query.group})
 			]
 		).then(results => {
-			var [group,newCourse,items] = results;
-			const blocks = newCourse.blocks;
-			group.rubric = [];
-			if(blocks.length > 0) {
-				blocks.forEach(function(block) {
-					group.rubric.push({
-						block	: block._id,
-						w			: block.w,
-						wq		: block.wq,
-						wt		: block.wt
-					});
-				});
-			}
-			if(Array.isArray(items) && items.length > 0) {
-				items.forEach(item => {
-					var tempGrades = Array.from(item.grades);
-					var grade = [];
-					if(Array.isArray(grade) && grade.length > 0){
-						blocks.forEach(function(block) {
-							var gradePushed = {
-								block					: block._id,
-								track					: 0,
-								maxGradeQ 		: 0,
-								gradeT				: 0,
-								w							: block.w,
-								wq						: block.wq,
-								wt						: block.wt
-							};
-							var gradeIndex = -1;
-							if(group.rubric && group.rubric.length > 0) { gradeIndex = group.rubric.findIndex(rubric => rubric.block + '' === gradePushed.block + ''); }
-							if(gradeIndex > -1 ) {
-								gradePushed.w 	= group.rubric[gradeIndex].w;
-								gradePushed.wt 	= group.rubric[gradeIndex].wt;
-								gradePushed.wq 	= group.rubric[gradeIndex].wq;
+			var [groupTemplate,rosterTemplate,group,items] = results;
+			if(groupTemplate){
+				if(rosterTemplate && rosterTemplate.grades && Array.isArray(rosterTemplate.grades) && rosterTemplate.grades.length > 0){
+					if(items && Array.isArray(items) && items.length > 0) {
+						// trabajamos con cada roster
+						items.forEach(item => {
+							var tempGrades = Array.from(item.grades); // copiamos grades actual
+							var tempSections = Array.from(item.sections); // copiamos las secciones vistas
+							item.grades = Array.from(rosterTemplate.grades);
+							item.sections = Array.from(rosterTemplate.sections);
+							if(tempGrades.length > item.grades.length) {
+								var i=0;
+								item.grades.forEach(grade => {
+									grade.track = tempGrades[i].track;
+									i++;
+								});
+							} else {
+								var j=0;
+								tempGrades.forEach(grade => {
+									grade.track = tempGrades[j].track;
+									j++;
+								});
 							}
-							grade.push(gradePushed);
+							if(tempSections.length > item.sections.length) {
+								var k=0;
+								item.sections.forEach(section => {
+									section.viewed = tempSections[k].viewed;
+									i++;
+								});
+							} else {
+								var l=0;
+								tempSections.forEach(section => {
+									section.viewed = tempGrades[l].viewed;
+									j++;
+								});
+							}
+							item.mod.push({
+								by: 'System',
+								what: 'change course',
+								date: new Date()
+							});
+							item.save().then().catch((err) => {
+								Err.sendError(res,err,'group_controller','changeCourse -- Saving rosters --');
+							});
+						});
+						group.course = groupTemplate.course;
+						group.rubric = Array.from(groupTemplate.rubric);
+						group.mod.push({
+							by: 'System',
+							what: 'change course',
+							date: new Date()
+						});
+						group.save(() => {
+							res.status(200).json({
+								'message': 'Grupo cambiado'
+							});
+						}).then().catch((err) => {
+							Err.sendError(res,err,'group_controller','changeCourse -- Saving group --');
 						});
 					}
-					///
-					item.grades = Array.from(grade);
-					var i=0;
-					item.grades.forEach(grade => {
-						grade.track = tempGrades[i].track;
-						i++;
+				} else {
+					res.status(404).json({
+						'message': 'No hay roster plantilla'
 					});
-					item.save().catch(err => {
-						console.log(err); //eslint-disable-line
-					});
+					return;
+				}
+			} else {
+				res.status(404).json({
+					'message': 'No hay grupo plantilla'
 				});
 			}
-			group.course = newCourse._id;
-			group.mod.push({
-				what: 'Group course changed to ' + newCourse.title + '('+ newCourse.code +')',
-				when: new Date(),
-				who: res.locals.user.name
-			});
-			group.save(() => {
-				res.status(200).json({
-					'message': 'Grupo cambia curso a ' + newCourse.title + '('+ newCourse.code +')'
-				});
-			});
 		}).catch((err) => {
 			Err.sendError(res,err,'group_controller','changeCourse -- Finding courses --');
 		});
