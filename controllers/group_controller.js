@@ -3765,7 +3765,7 @@ module.exports = {
 			});
 			return;
 		}
-		if(!req.query.newCourse) {
+		if(!req.query.newcourse) {
 			res.status(404).json({
 				'message': 'Debes agregar el id del curso'
 			});
@@ -3775,7 +3775,7 @@ module.exports = {
 			[
 				Group.findById(req.query.group),
 				//Course.findById(oldCourse),
-				Course.findById(req.query.newCourse).populate('blocks').lean(),
+				Course.findById(req.query.newcourse).populate('blocks').lean(),
 				Roster.find({group:req.query.group})
 			]
 		).then(results => {
@@ -3794,58 +3794,52 @@ module.exports = {
 			}
 			if(Array.isArray(items) && items.length > 0) {
 				items.forEach(item => {
-					item.tempGrades = Array.from(item.Grades);
+					var tempGrades = Array.from(item.grades);
 					var grade = [];
-					var sec = 0;
-					blocks.forEach(function(block) {
-						var gradePushed = {
-							block					: block._id,
-							track					: 0,
-							maxGradeQ 		: 0,
-							gradeT				: 0,
-							w							: block.w,
-							wq						: block.wq,
-							wt						: block.wt
-						};
-						var gradeIndex = -1;
-						if(group.rubric && group.rubric.length > 0) { gradeIndex = group.rubric.findIndex(rubric => rubric.block + '' === gradePushed.block + ''); }
-						if(gradeIndex > -1 ) {
-							gradePushed.w 	= group.rubric[gradeIndex].w;
-							gradePushed.wt 	= group.rubric[gradeIndex].wt;
-							gradePushed.wq 	= group.rubric[gradeIndex].wq;
-						}
-						grade.push(gradePushed);
-						if(block.section !== sec) {
-							sec++;
-						}
-					});
-					if(blocks[0].section === 0) {
-						sec++;
+					if(Array.isArray(grade) && grade.length > 0){
+						blocks.forEach(function(block) {
+							var gradePushed = {
+								block					: block._id,
+								track					: 0,
+								maxGradeQ 		: 0,
+								gradeT				: 0,
+								w							: block.w,
+								wq						: block.wq,
+								wt						: block.wt
+							};
+							var gradeIndex = -1;
+							if(group.rubric && group.rubric.length > 0) { gradeIndex = group.rubric.findIndex(rubric => rubric.block + '' === gradePushed.block + ''); }
+							if(gradeIndex > -1 ) {
+								gradePushed.w 	= group.rubric[gradeIndex].w;
+								gradePushed.wt 	= group.rubric[gradeIndex].wt;
+								gradePushed.wq 	= group.rubric[gradeIndex].wq;
+							}
+							grade.push(gradePushed);
+						});
 					}
-					var sections = [];
-					var j = 0;
-					while (j < sec) {
-						var section = {};
-						if (group.presentBlockBy && group.presentBlockBy === 'dates' && group.dates && group.dates.length > 0) {
-							section.beginDate = group.dates[j].beginDate;
-							section.endDate		= group.dates[j].endDate;
-						}
-						sections.push(section);
-						j++;
-					}
-					const tempGrades = item.tempGrades;
+					///
+					item.grades = Array.from(grade);
 					var i=0;
 					item.grades.forEach(grade => {
 						grade.track = tempGrades[i].track;
 						i++;
 					});
-					item.tempGrades = [];
 					item.save().catch(err => {
 						console.log(err); //eslint-disable-line
 					});
 				});
 			}
 			group.course = newCourse._id;
+			group.mod.push({
+				what: 'Group course changed to ' + newCourse.title + '('+ newCourse.code +')',
+				when: new Date(),
+				who: res.locals.user.name
+			});
+			group.save(() => {
+				res.status(200).json({
+					'message': 'Grupo cambia curso a ' + newCourse.title + '('+ newCourse.code +')'
+				});
+			});
 		}).catch((err) => {
 			Err.sendError(res,err,'group_controller','changeCourse -- Finding courses --');
 		});

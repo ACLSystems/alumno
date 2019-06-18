@@ -315,7 +315,6 @@ const RosterSchema = new Schema ({
 		default: 'pending'
 	},
 	grades: [GradesSchema],
-	tempGrades: [GradesSchema],
 	group: {
 		type: Schema.Types.ObjectId,
 		ref: 'groups'
