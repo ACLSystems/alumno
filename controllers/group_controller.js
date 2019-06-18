@@ -3787,78 +3787,84 @@ module.exports = {
 			]
 		).then(results => {
 			var [groupTemplate,rosterTemplate,group,items] = results;
-			if(groupTemplate){
-				if(rosterTemplate && rosterTemplate.grades && Array.isArray(rosterTemplate.grades) && rosterTemplate.grades.length > 0){
-					if(items && Array.isArray(items) && items.length > 0) {
-						// trabajamos con cada roster
-						items.forEach(item => {
-							var tempGrades = Array.from(item.grades); // copiamos grades actual
-							var tempSections = Array.from(item.sections); // copiamos las secciones vistas
-							item.grades = Array.from(rosterTemplate.grades);
-							item.sections = Array.from(rosterTemplate.sections);
-							if(tempGrades.length > item.grades.length) {
-								var i=0;
-								item.grades.forEach(grade => {
-									grade.track = tempGrades[i].track;
-									i++;
+			if(group){
+				if(groupTemplate){
+					if(rosterTemplate && rosterTemplate.grades && Array.isArray(rosterTemplate.grades) && rosterTemplate.grades.length > 0){
+						if(items && Array.isArray(items) && items.length > 0) {
+							// trabajamos con cada roster
+							items.forEach(item => {
+								var tempGrades = Array.from(item.grades); // copiamos grades actual
+								var tempSections = Array.from(item.sections); // copiamos las secciones vistas
+								item.grades = Array.from(rosterTemplate.grades);
+								item.sections = Array.from(rosterTemplate.sections);
+								if(tempGrades.length > item.grades.length) {
+									var i=0;
+									item.grades.forEach(grade => {
+										grade.track = tempGrades[i].track;
+										i++;
+									});
+								} else {
+									var j=0;
+									tempGrades.forEach(grade => {
+										grade.track = tempGrades[j].track;
+										j++;
+									});
+								}
+								if(tempSections.length > item.sections.length) {
+									var k=0;
+									item.sections.forEach(section => {
+										if(tempSections[k] && tempSections[k].viewed){
+											section.viewed = tempSections[k].viewed;
+										}
+										i++;
+									});
+								} else {
+									var l=0;
+									tempSections.forEach(section => {
+										if(tempGrades[l] && tempGrades[l].viewed){
+											section.viewed = tempGrades[l].viewed;
+										}
+										j++;
+									});
+								}
+								item.mod.push({
+									by: 'System',
+									what: 'change course',
+									date: new Date()
 								});
-							} else {
-								var j=0;
-								tempGrades.forEach(grade => {
-									grade.track = tempGrades[j].track;
-									j++;
+								item.save().then().catch((err) => {
+									Err.sendError(res,err,'group_controller','changeCourse -- Saving rosters --');
 								});
-							}
-							if(tempSections.length > item.sections.length) {
-								var k=0;
-								item.sections.forEach(section => {
-									if(tempSections[k] && tempSections[k].viewed){
-										section.viewed = tempSections[k].viewed;
-									}
-									i++;
-								});
-							} else {
-								var l=0;
-								tempSections.forEach(section => {
-									if(tempGrades[l] && tempGrades[l].viewed){
-										section.viewed = tempGrades[l].viewed;
-									}
-									j++;
-								});
-							}
-							item.mod.push({
+							});
+							group.course = groupTemplate.course;
+							group.rubric = Array.from(groupTemplate.rubric);
+							group.mod.push({
 								by: 'System',
 								what: 'change course',
 								date: new Date()
 							});
-							item.save().then().catch((err) => {
-								Err.sendError(res,err,'group_controller','changeCourse -- Saving rosters --');
+							group.save(() => {
+								res.status(200).json({
+									'message': 'Grupo cambiado'
+								});
+							}).then().catch((err) => {
+								Err.sendError(res,err,'group_controller','changeCourse -- Saving group --');
 							});
+						}
+					} else {
+						res.status(404).json({
+							'message': 'No hay roster plantilla'
 						});
-						group.course = groupTemplate.course;
-						group.rubric = Array.from(groupTemplate.rubric);
-						group.mod.push({
-							by: 'System',
-							what: 'change course',
-							date: new Date()
-						});
-						group.save(() => {
-							res.status(200).json({
-								'message': 'Grupo cambiado'
-							});
-						}).then().catch((err) => {
-							Err.sendError(res,err,'group_controller','changeCourse -- Saving group --');
-						});
+						return;
 					}
 				} else {
 					res.status(404).json({
-						'message': 'No hay roster plantilla'
+						'message': 'No hay grupo plantilla'
 					});
-					return;
 				}
 			} else {
 				res.status(404).json({
-					'message': 'No hay grupo plantilla'
+					'message': 'No hay grupo'
 				});
 			}
 		}).catch((err) => {
