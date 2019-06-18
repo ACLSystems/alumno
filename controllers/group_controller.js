@@ -3843,11 +3843,11 @@ module.exports = {
 								what: 'change course',
 								date: new Date()
 							});
-							group.save(() => {
+							group.save().then(() => {
 								res.status(200).json({
 									'message': 'Grupo cambiado'
 								});
-							}).then().catch((err) => {
+							}).catch((err) => {
 								Err.sendError(res,err,'group_controller','changeCourse -- Saving group --');
 							});
 						}
