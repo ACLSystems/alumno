@@ -22,6 +22,11 @@ var auth = {
 			return;
 		}
 		Users.findOne({$or: [{name: username},{'person.email': username}] })
+			.populate({
+				path: 'orgUnit',
+				select: 'name parent type longName',
+				options: { lean: true }
+			})
 			.then((user) => {
 				if(!user) {
 					res.status(404).json({
@@ -46,9 +51,9 @@ var auth = {
 										token: objToken.token,
 										url: '/login'
 									});
-									cache.set('session:name:'+ user.name, 'session:id:'+user._id);
+									cache.set('session:name:'+ user.name + ':' + user.orgUnit.name, 'session:id:'+user._id);
 									cache.expire('session:id:'+user._id,cache.ttlSessions);
-									cache.expire('session:name:'+ user.name,cache.ttlSessions);
+									cache.expire('session:name:'+ user.name + ':' + user.orgUnit.name,cache.ttlSessions);
 									res.status(200).json({
 										'status': 200,
 										'token': objToken.token,

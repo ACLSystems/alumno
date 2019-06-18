@@ -153,9 +153,9 @@ module.exports = function(req, res, next) {
 								cache.hmset('session:id:'+user._id,{
 									url: url
 								});
-								cache.set('session:name:'+ user.name, 'session:id:'+user._id);
+								cache.set('session:name:'+ user.name + ':' + user.orgUnit.name, 'session:id:'+user._id);
 								cache.expire('session:id:'+user._id,cache.ttlSessions);
-								cache.expire('session:name:'+ user.name,cache.ttlSessions);
+								cache.expire('session:name:'+ user.name + ':' + user.orgUnit.name,cache.ttlSessions);
 							})
 							.catch((err) => {
 								Err.sendError(res,err,'auth -- Saving session -- User: ' + user.name + ' URL: ' + url);

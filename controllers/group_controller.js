@@ -3812,13 +3812,17 @@ module.exports = {
 							if(tempSections.length > item.sections.length) {
 								var k=0;
 								item.sections.forEach(section => {
-									section.viewed = tempSections[k].viewed;
+									if(tempSections[k] && tempSections[k].viewed){
+										section.viewed = tempSections[k].viewed;
+									}
 									i++;
 								});
 							} else {
 								var l=0;
 								tempSections.forEach(section => {
-									section.viewed = tempGrades[l].viewed;
+									if(tempGrades[l] && tempGrades[l].viewed){
+										section.viewed = tempGrades[l].viewed;
+									}
 									j++;
 								});
 							}

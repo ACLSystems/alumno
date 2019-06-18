@@ -11,9 +11,18 @@ module.exports = {
 	async users(req,res) {
 		const usersSessions = await cache.keys(sessionString + '*');
 		const users = usersSessions.map(user => user.slice(sessionString.length));
+		const ous = users.map(user => user.split(':')[1]);
+		var ousNum = {};
+		if(Array.isArray(ous) && ous.length > 0) {
+			for(var i=0; i< ous.length; i++) {
+				var num = ous[i];
+				ousNum[num] = ousNum[num] ? ousNum[num] + 1 : 1;
+			}
+		}
 		if(users.length > 0){
 			res.status(200).json({
 				numUsers: users.length,
+				ous: ousNum,
 				users: users
 			});
 		} else {
