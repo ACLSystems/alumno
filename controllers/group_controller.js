@@ -3823,14 +3823,20 @@ module.exports = {
 	addBlockDates(req,res) {
 		Group.findOne({code: req.body.code})
 			.then(group => {
-				group.blockDates = Array.from(req.body.blockDates);
-				group.save().then(() => {
-					res.status(200).json({
-						'message': 'Grupo guardado'
+				if(group){
+					group.blockDates = Array.from(req.body.blockDates);
+					group.save().then(() => {
+						res.status(200).json({
+							'message': 'Grupo guardado`'
+						});
+					}).catch((err) => {
+						Err.sendError(res,err,'group_controller','addBlockDates -- Saving Group --');
 					});
-				}).catch((err) => {
-					Err.sendError(res,err,'group_controller','addBlockDates -- Saving Group --');
-				});
+				} else {
+					res.status(404).json({
+						'message': `Grupo ${req.body.code} no encontrado`
+					});
+				}
 			}).catch((err) => {
 				Err.sendError(res,err,'group_controller','addBlockDates -- Finding Group --');
 			});
