@@ -415,6 +415,7 @@ module.exports = {
 
 	get(req,res) {
 		OrgUnit.findOne({name: req.query.ou})
+			.select('name type parent longName')
 			.then(ou =>  {
 				res.status(200).json({
 					'message': ou

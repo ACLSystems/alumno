@@ -127,6 +127,13 @@ const GroupsSchema = new Schema ({
 		type: Number,
 		min: [0,'Minimum value is 0']
 	}],
+	blockDates: [{
+		block: {
+			type: Schema.Types.ObjectId,
+			ref: 'blocks'
+		},
+		date: Date
+	}],
 	org: {
 		type: Schema.Types.ObjectId,
 		ref: 'orgs'

@@ -2458,6 +2458,47 @@ module.exports = {
 			});
 	}, //saveDate
 
+	changeInstructor(req,res) {
+		Promise.all([
+			User.findOne({name: req.query.instructor}).lean(),
+			Group.findOne({code: req.query.code})
+				.populate('instructor', 'name person')
+				.populate('course', 'title')
+		]).then(results => {
+			var [instructor, group] = results;
+			if(instructor) {
+				if(group) {
+					var formerInstructor = JSON.parse(JSON.stringify(group.instructor));
+					group.instructor = instructor._id;
+					group.mod.push({
+						by: 'System',
+						when: new Date(),
+						what: 'Change group Instructor'
+					});
+					group.save(group => {
+						res.status(200).json({
+							'message': `Group ${group.code} has new instructor: ${instructor.name}. Former instructor: ${formerInstructor.name}`
+						});
+						mailjet.sendMail(instructor.person.email, instructor.person.name, 'Se ha creado un grupo y participas como tutor: ' + group.code,880116,'https://conalepvirtual.superatemexico.com/#/tutorial',group.course.title);
+						mailjet.sendMail(formerInstructor.person.email, formerInstructor.person.name, 'Se te ha dado de baja como tutor: ' + group.code,880116,'https://conalepvirtual.superatemexico.com/#/tutorial',group.course.title);
+					}).catch((err) => {
+						Err.sendError(res,err,'group_controller','changeInstructor -- Saving Group --');
+					});
+				} else {
+					res.status(404).json({
+						'message': `No group ${req.query.code} found`
+					});
+				}
+			} else {
+				res.status(404).json({
+					'message': `No group ${req.query.instructor} found`
+				});
+			}
+		}).catch((err) => {
+			Err.sendError(res,err,'group_controller','changeInstructor -- Finding all --');
+		});
+	}, //changeInstructor
+
 	tookCertificate(req,res) {
 		const key_user 	= res.locals.user;
 		const groupid		= req.query.groupid;
@@ -2598,6 +2639,16 @@ module.exports = {
 					var		causeSP		= '';
 					var 	save 			= false;
 					//var 	new_date	= new Date();
+					var blockDates;
+					if(item.group.blockDates && Array.isArray(item.group.blockDates) && item.group.blockDates.length > 0) {
+						blockDates = item.group.blockDates;
+						let foundBlock = blockDates.find(blockDate => blockDate.block + '' === blockid + '');
+						if(foundBlock && now > foundBlock.date) {
+							ok 		= false;
+							cause = 'This lesson must be presented at ' + foundBlock.date;
+							causeSP = causeSP + ' Esta lección debe presentarse según el calendario ' + foundBlock;
+						}
+					} else
 					if(item.group.presentBlockBy && item.group.presentBlockBy === 'dates'){
 						if(item.group.beginDate && item.group.beginDate > now ) {
 							ok 		= false;
