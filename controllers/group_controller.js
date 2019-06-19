@@ -2594,7 +2594,10 @@ module.exports = {
 		Roster.findOne({student: key_user._id, group: groupid})
 			.populate([{
 				path: 'group',
-				select: 'course name code admin presentBlockBy beginDate endDate dates lapse lapseBlocks',
+				select: 'course name code admin presentBlockBy beginDate endDate dates lapse lapseBlocks blockDates',
+				options: {
+					lean:true
+				},
 				populate: [{
 					path: 'course',
 					match: { isVisible: true, status: 'published'},
@@ -2643,10 +2646,10 @@ module.exports = {
 					if(item.group.blockDates && Array.isArray(item.group.blockDates) && item.group.blockDates.length > 0) {
 						blockDates = item.group.blockDates;
 						let foundBlock = blockDates.find(blockDate => blockDate.block + '' === blockid + '');
-						if(foundBlock && now > foundBlock.date) {
+						if(foundBlock && now < foundBlock.date) {
 							ok 		= false;
 							cause = 'This lesson must be presented at ' + foundBlock.date;
-							causeSP = causeSP + ' Esta lección debe presentarse según el calendario ' + foundBlock;
+							causeSP = causeSP + ' Esta lección debe presentarse según el calendario ' + foundBlock.date.toString();
 						}
 					} else
 					if(item.group.presentBlockBy && item.group.presentBlockBy === 'dates'){
@@ -3816,6 +3819,22 @@ module.exports = {
 				Err.sendError(res,err,'group_controller','repairTasksInRoster -- Finding Rosters --');
 			});
 	}, //repairTasksInRoster
+
+	addBlockDates(req,res) {
+		Group.findOne({code: req.body.code})
+			.then(group => {
+				group.blockDates = Array.from(req.body.blockDates);
+				group.save().then(() => {
+					res.status(200).json({
+						'message': 'Grupo guardado'
+					});
+				}).catch((err) => {
+					Err.sendError(res,err,'group_controller','addBlockDates -- Saving Group --');
+				});
+			}).catch((err) => {
+				Err.sendError(res,err,'group_controller','addBlockDates -- Finding Group --');
+			});
+	},
 
 	changeCourse(req,res) {
 		if(!req.query.group) {
