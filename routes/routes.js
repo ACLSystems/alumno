@@ -203,6 +203,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/admin/user/count', 					UserController.count);
 	app.get ('/api/v1/admin/org/list', 						OrgController.list);
 	app.get ('/api/v1/admin/orgunit/list', 				OrgUnitController.list);
+	app.get ('/api/v1/admin/orgunit/get', 				OrgUnitController.get);
 	app.get ('/api/v1/admin/org/getdetailsadmin', OrgController.getDetailsAdmin);
 	app.get ('/api/v1/admin/user/getroles', 			UserController.getRoles);
 	app.put ('/api/v1/admin/user/setroles', 			UserController.setRoles);

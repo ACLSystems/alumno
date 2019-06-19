@@ -413,4 +413,15 @@ module.exports = {
 			});
 	}, // publiclist
 
+	get(req,res) {
+		OrgUnit.findOne({name: req.query.ou})
+			.then(ou =>  {
+				res.status(200).json({
+					'message': ou
+				});
+			}).catch((err) => {
+				Err.sendError(res,err,'orgUnit_controller','get -- Finding orgUnit --');
+			});
+	}, // get
+
 };

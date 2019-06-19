@@ -39,7 +39,7 @@ exports.sendMail = function(toEmail,toName,subject,templateID,param1,param2,para
 			'confirmation_link':param1 // link
 		};
 	}
-	if(templateID === 339994 || templateID === 877918) {	// Plantilla para notificar registro de alumno en grupo
+	if(templateID === 339994 || templateID === 877918 || templateID === 880116) {	// Plantilla para notificar registro de alumno en grupo
 		mail_message.Variables = {
 			'Nombre': toName,
 			'confirmation_link':param1, // link

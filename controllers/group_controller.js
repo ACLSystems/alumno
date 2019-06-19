@@ -144,6 +144,7 @@ module.exports = {
 												}
 											});
 											if(course.type === 'tutor') {
+												mailjet.sendMail(instructor.person.email, instructor.person.name, 'Se ha creado un grupo y participas como tutor: ' + group.code,880116,'https://conalepvirtual.superatemexico.com/#/tutorial',group.course.title);
 												mailjet.sendMail(supportEmail, 'Administrador', 'Alerta: Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code,679640,portal,'Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code + ' ' + group.course.title);
 											} else {
 												mailjet.sendMail(supportEmail, 'Administrador', 'Aviso: Se ha generado un grupo. + ' + group.code,679640,portal,'Se ha generado un grupo. + ' + group.code + ' ' + course.title);
