@@ -875,7 +875,6 @@ module.exports = {
 					user.save()
 						.then((user) => {
 							res.status(200).json({
-								'status': 200,
 								'message': user.name
 							});
 							var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;

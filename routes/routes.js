@@ -275,6 +275,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/user/settracking', 			GroupController.setTracking);
 	app.get ('/api/v1/supervisor/user/gethistory', 				ReportController.studentHistory);
 	app.get ('/api/v1/supervisor/user/getgroups', 				GroupController.getGroups);
+	app.get ('/api/v1/supervisor/user/getgroupsbyrfc', 		GroupController.getGroupsByRFC);
 	app.put ('/api/v1/supervisor/user/passwordreset', 		UserController.adminPasswordReset);
 	app.put ('/api/v1/supervisor/user/changeuser', 				UserController.changeUser);
 	app.post('/api/v1/supervisor/user/masssearch',				ReportController.userMassSearch);

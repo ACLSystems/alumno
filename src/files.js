@@ -28,6 +28,10 @@ const FileSchema = new Schema ({
 		required: true,
 		default: 0
 	},
+	user: {
+		type: Schema.Types.ObjectId,
+		ref: 'users'
+	},
 	createDate: {
 		type: Date,
 		default: Date.now

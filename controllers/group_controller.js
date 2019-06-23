@@ -7,6 +7,7 @@ const Roster 			= require('../src/roster'										);
 const Certificate = require('../src/certificates'							);
 const Block 			= require('../src/blocks'										);
 const Dependency 	= require('../src/dependencies'							);
+const Fiscal 			= require('../src/fiscalContacts'						);
 const Err 				= require('../controllers/err500_controller');
 const mailjet 		= require('../shared/mailjet'								);
 const Notification = require('../src/notifications'						);
@@ -1296,15 +1297,21 @@ module.exports = {
 			.select('name person')
 			.then((user) => {
 				if(user) {
+					let populate = {
+						path: 'group',
+						select: 'course code name beginDate endDate status',
+						populate: {
+							path: 'course',
+							select: 'code title'
+						}
+					};
+					if (req.query.active) {
+						populate.match = {
+							status: 'active'
+						};
+					}
 					Roster.find({student:user._id})
-						.populate({
-							path: 'group',
-							select: 'course code name beginDate endDate status',
-							populate: {
-								path: 'course',
-								select: 'code title'
-							}
-						})
+						.populate(populate)
 						.lean()
 						.then((items) => {
 							if(items.length > 0 ) {
@@ -1356,6 +1363,89 @@ module.exports = {
 				Err.sendError(res,err,'group_controller','getGroups -- Finding User --');
 			});
 	}, //getGroups
+
+	getGroupsByRFC(req,res) {
+		//const key_user	= res.locals.user;
+		var rfc = req.query.rfc.toUpperCase();
+		Fiscal.findOne({identification:rfc})
+			.select('email')
+			.lean()
+			.then((fiscal) => {
+				if(fiscal && fiscal.email) {
+					User.findOne({name: fiscal.email})
+						.lean()
+						.then(user => {
+							if(user) {
+								let populate = {
+									path: 'group',
+									select: 'course code name beginDate endDate status',
+									populate: {
+										path: 'course',
+										select: 'code title'
+									}
+								};
+								if (req.query.active) {
+									populate.match = {
+										status: 'active'
+									};
+								}
+								Roster.find({student:user._id})
+									.populate(populate)
+									.lean()
+									.then((items) => {
+										if(items.length > 0 ) {
+											var send_items = [];
+											items.forEach(function(item) {
+												var beginDate;
+												var endDate;
+												if(item.group.beginDate) {beginDate = new Date(item.group.beginDate);}
+												if(item.group.endDate) {endDate = new Date(item.group.endDate);}
+												send_items.push({
+													status			: item.status,
+													group				: {
+														id				: item.group._id,
+														name			: item.group.name,
+														code			: item.group.code,
+														status 		: item.group.status,
+														beginDate	: beginDate.toDateString(),
+														endDate		: endDate.toDateString()
+													},
+													course			:	{
+														title			: item.group.course.title,
+														code 			:	item.group.course.code,
+													}
+												});
+											});
+											res.status(200).json({
+												'message': {
+													'name'	: user.person.fullName,
+													'id'		: user._id,
+													'groups': send_items
+												}
+											});
+										} else {
+											res.status(200).json({
+												'message': 'User ' + user.person.fullName + ' -'+ user._id +'- '+' has no groups'
+											});
+										}
+									})
+									.catch((err) => {
+										Err.sendError(res,err,'group_controller','getGroupsByRFC -- Finding Roster Group Course --');
+									});
+							}
+						}).catch((err) => {
+							Err.sendError(res,err,'group_controller','getGroupsByRFC -- Finding User --');
+						});
+				} else {
+					res.status(200).json({
+						'message': 'User not found'
+					});
+				}
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','getGroupsByRFC -- Finding Fiscal --');
+			});
+	}, //getGroupsByRFC
 
 	createAttempt(req,res) {
 		const key_user	= res.locals.user;

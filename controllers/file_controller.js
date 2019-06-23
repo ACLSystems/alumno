@@ -177,6 +177,7 @@ module.exports = {
 														file	: {
 															url					: parseDropboxUrl(dbxlink.url),
 															name				: file.filename,
+															mimetype		: file.mimetype,
 															originalName:	file.name,
 															size				: file.size
 														}
@@ -198,6 +199,7 @@ module.exports = {
 											file 		: {
 												url	: dbxlink,
 												name				: file.filename,
+												mimetype		: file.mimetype,
 												originalName:	file.name,
 												size				: file.size
 											}
