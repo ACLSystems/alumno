@@ -132,6 +132,7 @@ module.exports = {
 			])
 			.skip(skip)
 			.limit(limit)
+			.sort('-date')
 			.lean()
 			.then((notifications) => {
 				if(notifications && notifications.length > 0) {

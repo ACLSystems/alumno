@@ -64,11 +64,6 @@ node_modules/*
 doc/Oferta*
 /src/*NO_USAR*
 /*/*_notUse*
-alumno.start.*
-cache.start.*
-cache.stop.*
-cache.rm.*
-*_alumno*.sh
 .dockerignore
 Dockerfile
 docker-compose.yml

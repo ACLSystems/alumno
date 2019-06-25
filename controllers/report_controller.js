@@ -188,6 +188,7 @@ module.exports = {
 												.project({
 													ouName		: '$_id',
 													ous				: '$ous',
+													ouType		: type,
 													_id				: false
 												})
 												.then((orgOus) => {

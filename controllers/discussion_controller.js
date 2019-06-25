@@ -155,6 +155,19 @@ module.exports = {
 	get(req,res) {
 		const key_user 	= res.locals.user;
 		const query			= JSON.parse(req.query.query);
+		if(!query.course || query.course === '' || query.course === 'undefined') {
+			delete query.course;
+		}
+		if(!query.group || query.group === '' || query.group === 'undefined') {
+			delete query.group;
+		}
+		if(!query.pubType || query.pubType === '' || query.pubType === 'undefined') {
+			delete query.pubType;
+		}
+		if(!query.type || query.type === '' || query.type === 'undefined') {
+			delete query.type;
+		}
+		console.log(query);
 		var select 			= (req.query.select	) ? req.query.select 					: ''	;
 		var order 			= (req.query.order	)	? parseInt(req.query.order) : -1	;
 		var skip 				= (req.query.skip		) ? parseInt(req.query.skip) 	: 0		;

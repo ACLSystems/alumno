@@ -51,14 +51,10 @@ Thumbs.db
 # mejor correr: node install
 # para que instale todo lo que node necesita
 node_modules/*
+local_scripts/*
 
 # otros archivos     #
 ######################
 doc/Oferta*
 /src/*NO_USAR*
 /*/*_notUse*
-alumno.start.*
-cache.start.*
-cache.stop.*
-cache.rm.*
-*_alumno*.sh
