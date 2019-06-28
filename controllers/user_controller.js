@@ -1572,11 +1572,47 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'user_controller','validatePassword -- Finding user--' + req.body.username);
 			});
-	}
+	}, // validatePassword
+
+	actAs(req,res) {
+		User.findOne({name: req.query.username})
+			.then(user => {
+				if(user) {
+					const objToken = genToken(user);
+					res.status(200).json({
+						'token': objToken.token,
+						'expires': objToken.expires
+					});
+				} else {
+					res.status(404).json({
+						'message': 'No user found'
+					});
+				}
+			}).catch((err) => {
+				Err.sendError(res,err,'user_controller','actAs -- Finding user--' + req.query.username);
+			});
+	} // actAs
 
 };
 
 // private functions
+
+function genToken(user) {
+	var expires = new Date();
+	const jwt = require('jwt-simple');
+	const addHours = 4; // otorguemos solo unas horas
+	expires.setHours( expires.getHours + addHours);
+	var token = jwt.encode({
+		user: user.name,
+		exp: expires
+	}, require('../config/secret')());
+
+	return {
+		token: token,
+		expires: expires,
+		user: user
+	};
+}
 
 /*
 function properCase(obj) {

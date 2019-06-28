@@ -167,7 +167,7 @@ module.exports = {
 		if(!query.type || query.type === '' || query.type === 'undefined') {
 			delete query.type;
 		}
-		console.log(query);
+		//console.log(query);
 		var select 			= (req.query.select	) ? req.query.select 					: ''	;
 		var order 			= (req.query.order	)	? parseInt(req.query.order) : -1	;
 		var skip 				= (req.query.skip		) ? parseInt(req.query.skip) 	: 0		;

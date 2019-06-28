@@ -144,6 +144,9 @@ module.exports = {
 			query = {$or:[{parent: key_user.orgUnit.name},{name: key_user.orgUnit.name}]};
 			type 		= 'state';
 		}
+		if(req.query.project) {
+			query.project = req.query.project;
+		}
 		Query.deleteMany({user:key_user._id})
 			.then(() => {
 				if(type === 'org' || type === 'state') {
@@ -344,8 +347,13 @@ module.exports = {
 						});
 
 				} else {
+					let query = {orgUnit:mongoose.Types.ObjectId(key_user.orgUnit._id)};
+					if(req.query.project) {
+						query.project = mongoose.Types.ObjectId(req.query.project);
+					}
 					Group.aggregate()
-						.match({orgUnit:mongoose.Types.ObjectId(key_user.orgUnit._id)})
+						.match(query)
+						.sort({code: 1})
 						.project({
 							_id			: 1,
 							code		: 1,
@@ -447,6 +455,7 @@ module.exports = {
 	percentil(req,res) {
 		const key_user  = res.locals.user;
 		var 	ou				= req.query.ou || key_user.orgUnit._id;
+		var 	project		= req.query.project || false;
 		var query1 = {}; // Users on track
 		var query2 = {}; // Users Passed
 		var query3 = {}; // Total users
@@ -476,6 +485,11 @@ module.exports = {
 					query1 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},track:{$gt:0}};
 					query2 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false},pass:true};
 					query3 = {orgUnit: mongoose.Types.ObjectId(ou),report: {$ne:false}};
+				}
+				if(project) {
+					query1.project = mongoose.Types.ObjectId(project);
+					query2.project = mongoose.Types.ObjectId(project);
+					query3.project = mongoose.Types.ObjectId(project);
 				}
 
 				Promise.all([
@@ -549,7 +563,7 @@ module.exports = {
 						}
 
 						Group.find({_id: {$in: group_ids}})
-							.select('name orgUnit')
+							.select('name code orgUnit')
 							.populate('orgUnit', 'name longName parent')
 							.then((groups) => {
 								if(groups.length > 0 ) {
@@ -561,6 +575,7 @@ module.exports = {
 												found = true;
 												results[i].groupId 		= group._id;
 												results[i].group  		= group.name;
+												results[i].code  			= group.code;
 												results[i].ouName 		= group.orgUnit.name;
 												results[i].ouLongName = group.orgUnit.longName;
 												results[i].ouId 			= group.orgUnit._id;
@@ -597,6 +612,7 @@ module.exports = {
 														totalUsers		: b.totalUsers,
 														groupId				: b.groupId,
 														groupName			: b.group,
+														groupCode 		: b.code
 														//ouName				: b.ouName,
 														//ouLongName		: b.ouLongName,
 														//ouParent			: b.ouParent
@@ -2136,12 +2152,106 @@ module.exports = {
 				Err.sendError(res,err,'report_controller','listRoster -- roster aggregate --');
 			});
 
-	} // listRoster
+	}, // listRoster
+	async unReport(req,res) { //API para sacar al grupo y a sus participantes de los reportes
+		try {
+			const group = await Group.findOne({code:req.query.code})
+				.select('_id students')
+				.lean();
+			try {
+				if(group){
+					if(Array.isArray(group.students) && group.students.length > 0){
+						for(var i=0; i < group.students.length; i++) {
+							await updateRoster(group.students[i]);
+						}
+						res.status(200).json({
+							'message': 'Rosters actualizados',
+							'group': group
+						});
+					} else {
+						res.status(404).json({
+							'message': `El grupo ${req.query.code} no tiene rosters`,
+							'group': group
+						});
+					}
+				} else {
+					res.status(404).json({
+						'message': 'No existe grupo',
+						'group': group
+					});
+				}
+			} catch (err) {
+				Err.sendError(res,err,'report_controller','unReport -- updating Rosters --');
+			}
+		} catch (err){
+			Err.sendError(res,err,'report_controller','unReport -- finding group --');
+		}
+	}, // unReport
+
+	async repEval(req,res) {
+		const ou 			= req.query.ou || undefined;
+		const project = req.query.project || undefined;
+		if(!ou) {
+			res.status(404).json({
+				'message': 'Please give ou id'
+			});
+			return;
+		} else {
+			const query = {
+				orgUnit: mongoose.Types.ObjectId(ou),
+				report: {$ne: false}
+			};
+			if(project) {
+				query.project = mongoose.Types.ObjectId(project);
+			}
+			try {
+				const results = await Roster.aggregate()
+					.match(query)
+					.unwind('grades')
+					.match({
+						'grades.wq': {$gt:0},
+						'grades.maxGradeQ': {$gt:0}
+					})
+					.lookup({
+						from				: 'blocks',
+						localField	: 'grades.block',
+						foreignField: '_id',
+						as					: 'myBlocks'
+					})
+					//.limit(2)
+					.project({
+						'myBlocks.title': 1
+					}).unwind('myBlocks')
+					.group({
+						_id: '$myBlocks.title',
+						total: {$sum:1}
+					})
+					;
+				if(results) {
+					res.status(200).json({
+						'message': results,
+						'query': query
+					});
+				} else {
+					res.status(404).json({
+						'message': 'No hay resultados'
+					});
+				}
+			} catch (err) {
+				Err.sendError(res,err,'report_controller','repEval');
+			}
+		}
+	} // repEval
 };
 
 
 
 // PRIVATE Functions
+
+async function updateRoster(student) {
+	await Roster.updateMany({student:student,report:true},{$set:{report:false}});
+	return;
+}
 
 function units(unit,cnt) {
 	if(unit === 'h') {

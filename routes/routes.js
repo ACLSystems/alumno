@@ -237,6 +237,9 @@ module.exports = (app) => {
 	app.put ('/api/v1/admin/group/change', 				GroupController.changeCourse);
 	app.put ('/api/v1/admin/group/addblockdates', GroupController.addBlockDates);
 	app.put ('/api/v1/admin/group/changetutor',   GroupController.changeInstructor);
+	app.put ('/api/v1/admin/group/moveroster', 		GroupController.moveRoster);
+	app.put ('/api/v1/admin/user/actas', 					UserController.actAs);
+	app.put ('/api/v1/admin/group/unreport', 			ReportController.unReport);
 
 	// Rutas para roles de 'isOrg'
 
@@ -289,6 +292,9 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/group/studenthistoric',	GroupController.studentHistoric);
 	app.get ('/api/v1/supervisor/group/userscube', 				SessionController.usersCube);
 	app.put ('/api/v1/supervisor/group/savedates', 				GroupController.saveDates);
+	app.get ('/api/v1/supervisor/projects', 							ProjectController.my);
+	app.put ('/api/v1/supervisor/projects/current', 			ProjectController.current);
+	app.get ('/ap1/v1/supervisor/report/eval', 						ReportController.repEval);
 
 	// Rutas para solicitudes
 	app.get ('/api/v1/requester/report/groupsquery', 			ReportController.groupsQuery); //También supervisor OK

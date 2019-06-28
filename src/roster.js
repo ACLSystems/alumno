@@ -296,7 +296,7 @@ const SectionSchema = new Schema ({
 	endDate: {
 		type: Date
 	}
-});
+},{ _id: false });
 
 // Definir virtuals
 

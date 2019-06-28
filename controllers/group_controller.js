@@ -1891,6 +1891,9 @@ module.exports = {
 															graded	: task.graded,
 															date		: task.date
 														};
+														if(!task._id) {
+															send_task.taskId = task.id;
+														}
 														send_tasks.push(send_task);
 													}
 												});
@@ -1909,7 +1912,6 @@ module.exports = {
 												});
 
 												res.status(200).json({
-													'status'		: 200,
 													'message'		: {
 														'studentFullName'		: item.student.person.fullName,
 														'studentEmail'			: item.student.person.email,
@@ -1979,7 +1981,7 @@ module.exports = {
 	gradeTask(req,res) {
 		const rosterid	= req.body.rosterid;
 		const blockid		= req.body.blockid;
-		const taskid		= req.body.taskid;
+		var taskid			= req.body.taskid;
 		const grade			= req.body.grade;
 		const key_user 	= res.locals.user;
 		Roster.findById(rosterid)
@@ -2015,7 +2017,9 @@ module.exports = {
 						k			= 0;
 						var myTask = 0;
 						while ((k < len) && !found) {
-							if(item.grades[myGrade].tasks[k]._id + '' === taskid) {
+							if(item.grades[myGrade].tasks[k]._id + '' === taskid ||
+									item.grades[myGrade].tasks[k].id + '' === taskid
+							) {
 								myTask = k;
 								found = true;
 							} else {
@@ -2026,12 +2030,16 @@ module.exports = {
 							item.grades[myGrade].tasks[myTask].grade = grade;
 							item.grades[myGrade].tasks[myTask].graded = true;
 							item.newTask = false;
+							taskid = item.grades[myGrade].tasks[myTask]._id;
+							if(!taskid) {
+								taskid = item.grades[myGrade].tasks[myTask].id;
+							}
 							item.save()
 								.then(() => {
 									res.status(200).json({
 										'status'	: 200,
 										'message'	: 'Grade saved',
-										'taskid'	: item.grades[myGrade].tasks[myTask]._id
+										'taskid'	: taskid
 									});
 								})
 								.catch((err) => {
@@ -2085,7 +2093,7 @@ module.exports = {
 		Roster.findOne({student: key_user._id, group: groupid})
 			.populate({
 				path: 'group',
-				select: 'course certificateActive beginDate endDate type rubric',
+				select: 'course certificateActive beginDate endDate type rubric dates',
 				populate: {
 					path: 'course',
 					select: 'title blocks duration durationUnits',
@@ -2210,6 +2218,19 @@ module.exports = {
 								passDate					: item.passDate,
 								blocks						: blocks
 							};
+							if(item.group &&
+								item.group.dates &&
+								Array.isArray(item.group.dates) &&
+								item.group.dates.length > 0
+							) {
+								let findCertificateDate = item.group.dates.find(date => date.type === 'certificate');
+								// esta parte era por si la fecha mínima era la de liberación de constancia
+								//if(findCertificateDate && send_grade.passDate < findCertificateDate.beginDate) {
+								// Y esta es la fecha de liberación de constancia
+								if(findCertificateDate) {
+									send_grade.passDate = findCertificateDate.beginDate;
+								}
+							}
 							if(item.passDate) {
 								send_grade.passDateSpa = dateInSpanish(item.passDate);
 							}
@@ -4043,7 +4064,41 @@ module.exports = {
 		}).catch((err) => {
 			Err.sendError(res,err,'group_controller','changeCourse -- Finding courses --');
 		});
-	}
+	}, //changeCourse
+
+	moveRoster(req,res) {
+		Promise.all([
+			User.findOne({name:req.query.usera}).select('_id'),
+			User.findOne({name:req.query.userb}).select('_id person'),
+			Group.findOne({code: req.query.group})
+				.populate('course', 'title')
+		]).then(results => {
+			const [usera, userb, group] = results;
+			const link = url;
+			Roster.findOne({student: usera._id, group: group._id})
+				.then(item => {
+					item.student = userb._id;
+					const studentIndex = group.students.findIndex(item => item +'' === usera._id + '');
+					group.students = Object.assign([], group.students, {[studentIndex]: userb._id});
+					Promise.all([
+						item.save(),
+						group.save(),
+						mailjet.sendMail(userb.person.email, userb.person.name, 'Has sido enrolado al curso ' + group.course.title,template_user,link,group.course.title)
+					]).then(() => {
+						res.status(200).json({
+							'message': 'Grupo y Roster modificados'
+						});
+					})
+						.catch((err) => {
+							Err.sendError(res,err,'group_controller','moveRoster -- Saving group & roster --');
+						});
+				}).catch((err) => {
+					Err.sendError(res,err,'group_controller','moveRoster -- Finding roster --');
+				});
+		}).catch((err) => {
+			Err.sendError(res,err,'group_controller','moveRoster -- Finding users --');
+		});
+	} // moveRoster
 };
 
 

@@ -294,7 +294,10 @@ const UserSchema = new Schema ({
 	project: [{
 		type: Schema.Types.ObjectId,
 		ref: 'projects'
-	}]
+	}],
+	currentProject: {
+		type: String
+	}
 });
 // Definir virtuals
 

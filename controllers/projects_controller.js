@@ -80,5 +80,48 @@ module.exports = {
 			}).catch((err) => {
 				Err.sendError(res,err,'projects_controller','create -- Saving project --');
 			});
-	} // list
+	}, // list
+
+	my(req, res) {
+		const key_user 	= res.locals.user;
+		Project.find({$or: [{owner: key_user._id},{orgUnit: key_user.orgUnit._id}]})
+			.populate('org', 'name')
+			.populate('orgUnit', 'name parent type')
+			.populate('owner', 'name person currentProject')
+			.then(projects => {
+				if(projects && Array.isArray(projects) && projects.length > 0) {
+					res.status(200).json(projects);
+				} else {
+					res.status(404).json({
+						'message': 'No tengo proyectos'
+					});
+				}
+			}).catch((err) => {
+				Err.sendError(res,err,'projects_controller','my -- finding projects --');
+			});
+	}, // my
+
+	current(req,res) {
+		const User = require('../src/users');
+		const key_user 	= res.locals.user;
+		User.findById(key_user._id)
+			.then(user => {
+				if(user) {
+					user.currentProject = req.body.project;
+					user.save().then(() => {
+						res.status(201).json({
+							'message': 'Proyecto actual guardado'
+						});
+					}).catch((err) => {
+						Err.sendError(res,err,'projects_controller','current -- Saving User --');
+					});
+				} else {
+					res.status(404).json({
+						'message': 'No hay usuario!!!'
+					});
+				}
+			}).catch((err) => {
+				Err.sendError(res,err,'projects_controller','current -- finding projects --');
+			});
+	}
 };
