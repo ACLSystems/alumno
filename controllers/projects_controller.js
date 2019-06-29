@@ -92,7 +92,7 @@ module.exports = {
 				if(projects && Array.isArray(projects) && projects.length > 0) {
 					res.status(200).json(projects);
 				} else {
-					res.status(404).json({
+					res.status(200).json({
 						'message': 'No tengo proyectos'
 					});
 				}

@@ -151,7 +151,7 @@ module.exports = {
 			.then(() => {
 				if(type === 'org' || type === 'state') {
 					OrgUnit.find(query)
-						.select('name parent type longName')
+						.select('name parent type longName displayEvals')
 						.lean()
 						.then((resOUs) => {
 							if(resOUs && resOUs.length > 0){
@@ -327,7 +327,7 @@ module.exports = {
 														orgOus = orgOus[0];
 													}
 													res.status(200).json({
-														'status'		: 200,
+														'displayEvals': key_user.orgUnit.displayEvals,
 														'groupNumber' : grps.length,
 														'tree'			: orgOus
 													});
@@ -437,7 +437,7 @@ module.exports = {
 								});
 							resultGrps.query = query._id;
 							res.status(200).json({
-								'status'		: 200,
+								'displayEvals': key_user.orgUnit.displayEvals,
 								'groupNumber' : resultGrps.length,
 								'tree'			: resultGrps
 							});
@@ -662,173 +662,176 @@ module.exports = {
 
 	gradesByGroup(req,res) {
 		//const key_user  = res.locals.user;
-		var 	groupid				= '';
-		if(req.query.groupid) {
-			groupid = req.query.groupid;
-		}
-		Group.findById(groupid)
-			.populate('course', 'title duration durationUnits')
-			.then((group) => {
-				if(group) {
-					Roster.aggregate()
-						.match({group: mongoose.Types.ObjectId(groupid),report: {$ne:false}})
-						.project('student grades finalGrade track pass passDate -_id certificateNumber')
-						.lookup({
-							from				: 'users',
-							localField	: 'student',
-							foreignField: '_id',
-							as					: 'myUser'
-						})
-						.project({
-							grades			:	1,
-							finalGrade	:	1,
-							track				:	1,
-							pass				:	1,
-							passDate		:	1,
-							certificateNumber : '' + '$certificateNumber',
-							id					: '$myUser._id',
-							name				:	'$myUser.person.name',
-							fatherName	:	'$myUser.person.fatherName',
-							motherName	: '$myUser.person.motherName',
-							email				: '$myUser.person.email'
-							// fiscal 			: { $arrayElemAt: ['$myUser.fiscal', 0]}
-						})
-						.unwind('name')
-						.unwind('fatherName')
-						.unwind('motherName')
-						.unwind('email')
-						.unwind('grades')
-						.unwind('id')
-						.match({$or: [{'grades.wq': {$gt:0}},{'grades.wt': {$gt:0}}]})
-						.lookup({
-							from				: 'blocks',
-							localField	: 'grades.block',
-							foreignField: '_id',
-							as					: 'myBlocks'
-						})
-						.project({
-							finalGrade	:	1,
-							track				:	1,
-							pass				:	1,
-							passDate		:	1,
-							certificateNumber: 1,
-							name				:	1,
-							fatherName	:	1,
-							motherName	:	1,
-							email				:	1,
-							id					: 1,
-							// fiscal			: 1,
-							blockTitle	:	'$myBlocks.title',
-							blockGrade	:	'$grades.finalGrade',
-							blockPond		:	'$grades.w'
-						})
-						.unwind('blockTitle')
-						.group({
-							_id: {
-								name				: '$name',
-								fatherName	: '$fatherName',
-								motherName	: '$motherName',
-								email				: '$email',
-								id					: '$id',
-								// fiscal			: '$fiscal',
-								track				: '$track',
-								finalGrade	: '$finalGrade',
-								pass				: '$pass',
-								passDate		: '$passDate',
-								certificateNumber: '$certificateNumber'
-							},
-							grades: {
-								$push: {
-									blockTitle	: '$blockTitle',
-									blockGrade	: '$blockGrade',
-									blockPond		: '$blockPond'
-								}
-							}
-						})
-						.project({
-							id					: '$_id.id',
-							name				: '$_id.name',
-							fatherName	: '$_id.fatherName',
-							motherName	: '$_id.motherName',
-							email				: '$_id.email',
-							// fiscal			: '$_id.fiscal',
-							track				: '$_id.track',
-							finalGrade	: '$_id.finalGrade',
-							pass				: '$_id.pass',
-							passDate		: '$_id.passDate',
-							certificateNumber	: '$_id.certificateNumber'.padStart(7,'0'),
-							grades			: true,
-							_id 				: false
-						})
-						.lookup({
-							from				: 'fiscalcontacts',
-							localField	: 'email',
-							foreignField: 'email',
-							as					: 'myFiscal'
-						})
-						.project({
-							id					: 1,
-							name				: 1,
-							fatherName	: 1,
-							motherName	: 1,
-							email				: 1,
-							RFC					: {$arrayElemAt: ['$myFiscal',0]},
-							track				: 1,
-							finalGrade	: 1,
-							pass				: 1,
-							passDate		: 1,
-							certificateNumber	: 1,
-							grades			: 1,
-							_id 				: false
-						})
-						.unwind('RFC')
-						.project({
-							id					: 1,
-							name				: 1,
-							fatherName	: 1,
-							motherName	: 1,
-							email				: 1,
-							RFC					:'$RFC.identification',
-							track				: 1,
-							finalGrade	: 1,
-							pass				: 1,
-							passDate		: 1,
-							certificateNumber	: 1,
-							grades			: 1,
-							_id 				: false
-						})
-						.then((items) => {
-							if(items && items.length > 0 ){
-								items.forEach(i => {
-									if(i.passDate) {i.passDateSpa = dateInSpanish(i.passDate);}
-								});
-							}
-							res.status(200).json({
-								'status'				: 200,
-								'group'					: group.name,
-								'course'				: group.course.title,
-								'courseDuration': group.course.duration,
-								'courseDurUnits': units(group.course.durationUnits),
-								'beginDate'			: group.beginDate,
-								'endDate'				: group.endDate,
-								'beginDateSpa'	: dateInSpanish(group.beginDate),
-								'endDateSpa'		: dateInSpanish(group.endDate),
-								'roster'				: items
-							});
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'report_controller','gradesByGroup -- Finding roster items --');
-						});
-				} else {
-					res.status(200).json({
-						'status': 200,
-						'message': 'Group not found'
-					});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'report_controller','gradesByGroup -- Finding group --');
+		var 	groupid				= req.query.groupid || null;
+		if(!groupid) {
+			res.status(400).json({
+				'message': 'Groupid es requerido'
 			});
+		} else {
+			Group.findById(groupid)
+				.populate('course', 'title duration durationUnits')
+				.then((group) => {
+					if(group) {
+						Roster.aggregate()
+							.match({group: mongoose.Types.ObjectId(groupid),report: {$ne:false}})
+							.project('student grades finalGrade track pass passDate -_id certificateNumber')
+							.lookup({
+								from				: 'users',
+								localField	: 'student',
+								foreignField: '_id',
+								as					: 'myUser'
+							})
+							.project({
+								grades			:	1,
+								finalGrade	:	1,
+								track				:	1,
+								pass				:	1,
+								passDate		:	1,
+								certificateNumber : '' + '$certificateNumber',
+								id					: '$myUser._id',
+								name				:	'$myUser.person.name',
+								fatherName	:	'$myUser.person.fatherName',
+								motherName	: '$myUser.person.motherName',
+								email				: '$myUser.person.email'
+								// fiscal 			: { $arrayElemAt: ['$myUser.fiscal', 0]}
+							})
+							.unwind('name')
+							.unwind('fatherName')
+							.unwind('motherName')
+							.unwind('email')
+							.unwind('grades')
+							.unwind('id')
+							.match({$or: [{'grades.wq': {$gt:0}},{'grades.wt': {$gt:0}}]})
+							.lookup({
+								from				: 'blocks',
+								localField	: 'grades.block',
+								foreignField: '_id',
+								as					: 'myBlocks'
+							})
+							.project({
+								finalGrade	:	1,
+								track				:	1,
+								pass				:	1,
+								passDate		:	1,
+								certificateNumber: 1,
+								name				:	1,
+								fatherName	:	1,
+								motherName	:	1,
+								email				:	1,
+								id					: 1,
+								// fiscal			: 1,
+								blockTitle	:	'$myBlocks.title',
+								blockGrade	:	'$grades.finalGrade',
+								blockPond		:	'$grades.w'
+							})
+							.unwind('blockTitle')
+							.group({
+								_id: {
+									name				: '$name',
+									fatherName	: '$fatherName',
+									motherName	: '$motherName',
+									email				: '$email',
+									id					: '$id',
+									// fiscal			: '$fiscal',
+									track				: '$track',
+									finalGrade	: '$finalGrade',
+									pass				: '$pass',
+									passDate		: '$passDate',
+									certificateNumber: '$certificateNumber'
+								},
+								grades: {
+									$push: {
+										blockTitle	: '$blockTitle',
+										blockGrade	: '$blockGrade',
+										blockPond		: '$blockPond'
+									}
+								}
+							})
+							.project({
+								id					: '$_id.id',
+								name				: '$_id.name',
+								fatherName	: '$_id.fatherName',
+								motherName	: '$_id.motherName',
+								email				: '$_id.email',
+								// fiscal			: '$_id.fiscal',
+								track				: '$_id.track',
+								finalGrade	: '$_id.finalGrade',
+								pass				: '$_id.pass',
+								passDate		: '$_id.passDate',
+								certificateNumber	: '$_id.certificateNumber'.padStart(7,'0'),
+								grades			: true,
+								_id 				: false
+							})
+							// .lookup({
+							// 	from				: 'fiscalcontacts',
+							// 	localField	: 'email',
+							// 	foreignField: 'email',
+							// 	as					: 'myFiscal'
+							// })
+							// .project({
+							// 	id					: 1,
+							// 	name				: 1,
+							// 	fatherName	: 1,
+							// 	motherName	: 1,
+							// 	email				: 1,
+							// 	RFC					: {$arrayElemAt: ['$myFiscal',0]},
+							// 	track				: 1,
+							// 	finalGrade	: 1,
+							// 	pass				: 1,
+							// 	passDate		: 1,
+							// 	certificateNumber	: 1,
+							// 	grades			: 1,
+							// 	_id 				: false
+							// })
+							// .unwind('RFC')
+							// .project({
+							// 	id					: 1,
+							// 	name				: 1,
+							// 	fatherName	: 1,
+							// 	motherName	: 1,
+							// 	email				: 1,
+							// 	RFC					:'$RFC.identification',
+							// 	track				: 1,
+							// 	finalGrade	: 1,
+							// 	pass				: 1,
+							// 	passDate		: 1,
+							// 	certificateNumber	: 1,
+							// 	grades			: 1,
+							// 	_id 				: false
+							// })
+							.then((items) => {
+								if(items && items.length > 0 ){
+									items.forEach(i => {
+										if(i.passDate) {i.passDateSpa = dateInSpanish(i.passDate);}
+									});
+								}
+								res.status(200).json({
+									'status'				: 200,
+									'group'					: group.name,
+									'groupCode'			: group.code,
+									'course'				: group.course.title,
+									'courseDuration': group.course.duration,
+									'courseDurUnits': units(group.course.durationUnits),
+									'beginDate'			: group.beginDate,
+									'endDate'				: group.endDate,
+									'beginDateSpa'	: dateInSpanish(group.beginDate),
+									'endDateSpa'		: dateInSpanish(group.endDate),
+									'roster'				: items
+								});
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'report_controller','gradesByGroup -- Finding roster items --');
+							});
+					} else {
+						res.status(404).json({
+							'message': 'Group no localizado'
+						});
+					}
+				})
+				.catch((err) => {
+					Err.sendError(res,err,'report_controller','gradesByGroup -- Finding group --');
+				});
+		}
 	}, // gradesByGroup
 
 	filesBygroup(req,res) {
