@@ -89,7 +89,7 @@ module.exports = function(req, res, next) {
 			})
 			.populate({
 				path: 'orgUnit',
-				select: 'name parent type longName displayEvals',
+				select: 'name parent type level longName displayEvals',
 				options: { lean: true }
 			})
 			.populate({

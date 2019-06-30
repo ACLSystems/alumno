@@ -136,22 +136,26 @@ module.exports = {
 	orgTree(req,res) {
 		const key_user  = res.locals.user;
 		var query 	= {};
-		var type 	= 'campus';
-		if(key_user.orgUnit.type === 'org' || key_user.orgUnit.type === 'country') {
+		//var type 	= 'campus';
+		var level = 3;
+		if(key_user.orgUnit.level === 1) {
 			query = {org: key_user.org._id};
-			type 		= 'org';
-		} else if(key_user.orgUnit.type === 'state') {
+			//type 		= 'org';
+			level		= 1;
+		} else if(key_user.orgUnit.level === 2) {
 			query = {$or:[{parent: key_user.orgUnit.name},{name: key_user.orgUnit.name}]};
-			type 		= 'state';
+			//type 		= 'state';
+			level		= 2;
 		}
 		if(req.query.project) {
 			query.project = req.query.project;
 		}
 		Query.deleteMany({user:key_user._id})
 			.then(() => {
-				if(type === 'org' || type === 'state') {
+				if(level < 3) { // Si es un nivel 1 o 2
+				//if(type === 'org' || type === 'state') {
 					OrgUnit.find(query)
-						.select('name parent type longName displayEvals')
+						.select('name parent type level longName displayEvals')
 						.lean()
 						.then((resOUs) => {
 							if(resOUs && resOUs.length > 0){
@@ -159,7 +163,7 @@ module.exports = {
 								resOUs.forEach(ou => {ouIds.push(mongoose.Types.ObjectId(ou._id));});
 								Group.find({orgUnit: {$in: resOUs}})
 									.select('name code orgUnit course')
-									.populate('orgUnit', 'name parent longName type')
+									.populate('orgUnit', 'name parent longName type level')
 									.populate('course', 'title')
 									.lean()
 									.then((grps) => {
@@ -172,7 +176,7 @@ module.exports = {
 											var fullList = [...new Set(parents.concat(uniqueOUs))];
 											OrgUnit.aggregate()
 												.match({name: {$in:fullList}})
-												.project('name type parent longName')
+												.project('name type parent longName level')
 												.group({
 													_id: '$parent',
 													ous: {
@@ -181,6 +185,7 @@ module.exports = {
 															ouName			: '$name',
 															ouLongName	: '$longName',
 															ouType			: '$type',
+															ouLevel			: '$level',
 															ouParent		: '$parent',
 															groups			: [],
 															query				: [],
@@ -191,7 +196,8 @@ module.exports = {
 												.project({
 													ouName		: '$_id',
 													ous				: '$ous',
-													ouType		: type,
+													//ouType		: type,
+													ouLevel		: level,
 													_id				: false
 												})
 												.then((orgOus) => {
@@ -209,7 +215,9 @@ module.exports = {
 																		var k=0;
 																		gps.ous.forEach(ou => {
 																			if(fl === ou.ouName) {
-																				if(ou.ouType === 'org') {
+																				if(ou.oulevel === 1) {
+																				//if(ou.ouType === 'org') {
+																					orgOus[i].ouLevel 		= ou.ouLevel;
 																					orgOus[i].ouType 			= ou.ouType;
 																					orgOus[i].ouId	 			= ou.ouId;
 																					orgOus[i].ouLongName 	= ou.ouLongName;
@@ -317,8 +325,13 @@ module.exports = {
 														n1.query = [query1._id];
 													});
 													// Por último, si estamos con un 'state' hay que quitar la raiz del 'org'
-													if(key_user.orgUnit.type === 'state') {
-														if(orgOus[0].ouType === 'org' || orgOus[0].ouName === key_user.org.name) {
+													// if(key_user.orgUnit.type === 'state') {
+													// 	if(orgOus[0].ouType === 'org' || orgOus[0].ouName === key_user.org.name) {
+													// 		orgOus = orgOus[0].ous;
+													// 	}
+													// }
+													if(key_user.orgUnit.level === 2) {
+														if(orgOus[0].ouLevel === 1 || orgOus[0].ouName === key_user.org.name) {
 															orgOus = orgOus[0].ous;
 														}
 													}
@@ -346,7 +359,7 @@ module.exports = {
 							Err.sendError(res,err,'report_controller','orgTree -- Finding OUs --',false,false,'User: ' + key_user.name);
 						});
 
-				} else {
+				} else { // Si es un nivel 3 (level >= 3)
 					let query = {orgUnit:mongoose.Types.ObjectId(key_user.orgUnit._id)};
 					if(req.query.project) {
 						query.project = mongoose.Types.ObjectId(req.query.project);
@@ -403,6 +416,7 @@ module.exports = {
 							ouLongName	: '$ou.longName',
 							ouId				: '$ou._id',
 							ouType			: '$ou.type',
+							ouLevel 		: '$ou.level',
 							ouParent		: '$ou.parent',
 							groups	 		: '$groups',
 							query				: '$query',
@@ -563,8 +577,9 @@ module.exports = {
 						}
 
 						Group.find({_id: {$in: group_ids}})
-							.select('name code orgUnit')
-							.populate('orgUnit', 'name longName parent')
+							.select('name code orgUnit course')
+							.populate('orgUnit', 'name longName parent level')
+							.populate('course', 'title code')
 							.then((groups) => {
 								if(groups.length > 0 ) {
 									groups.forEach(function(group) {
@@ -576,8 +591,11 @@ module.exports = {
 												results[i].groupId 		= group._id;
 												results[i].group  		= group.name;
 												results[i].code  			= group.code;
+												results[i].course  		= group.course.title;
+												results[i].courseCode = group.course.code;
 												results[i].ouName 		= group.orgUnit.name;
 												results[i].ouLongName = group.orgUnit.longName;
+												results[i].ouLevel		= group.orgUnit.level;
 												results[i].ouId 			= group.orgUnit._id;
 												results[i].ouParent 	= group.orgUnit.parent;
 											}
@@ -612,7 +630,9 @@ module.exports = {
 														totalUsers		: b.totalUsers,
 														groupId				: b.groupId,
 														groupName			: b.group,
-														groupCode 		: b.code
+														groupCode 		: b.code,
+														course				: b.course,
+														courseCode 		: b.courseCode
 														//ouName				: b.ouName,
 														//ouLongName		: b.ouLongName,
 														//ouParent			: b.ouParent
