@@ -47,6 +47,14 @@ const OrgUnitsSchema = new Schema ({
 		type: Boolean,
 		default: false
 	},
+	displayRFC:{
+		type: Boolean,
+		default:false
+	},
+	displayShift:{
+		type: Boolean,
+		default: false
+	},
 	contactPhone: [String],
 	formatted_address: String,
 	geometry:PointSchema,

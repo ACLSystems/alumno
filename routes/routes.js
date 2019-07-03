@@ -201,6 +201,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/admin/user/get', 						MassUsersController.get);
 	app.get ('/api/v1/admin/user/minget', 				MassUsersController.minimalGet);
 	app.get ('/api/v1/admin/user/count', 					UserController.count);
+	app.put ('/api/v1/admin/user/modify', 				UserController.modify);
 	app.get ('/api/v1/admin/org/list', 						OrgController.list);
 	app.get ('/api/v1/admin/orgunit/list', 				OrgUnitController.list);
 	app.get ('/api/v1/admin/orgunit/get', 				OrgUnitController.get);
@@ -240,6 +241,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/admin/group/moveroster', 		GroupController.moveRoster);
 	app.put ('/api/v1/admin/user/actas', 					UserController.actAs);
 	app.put ('/api/v1/admin/group/unreport', 			ReportController.unReport);
+	app.get ('/api/v1/admin/user/getdetails',			UserController.getDetailsSuper);
 
 	// Rutas para roles de 'isOrg'
 

@@ -690,6 +690,7 @@ module.exports = {
 		} else {
 			Group.findById(groupid)
 				.populate('course', 'title duration durationUnits')
+				.populate('orgUnit', 'displayRFC')
 				.then((group) => {
 					if(group) {
 						Roster.aggregate()
@@ -712,13 +713,14 @@ module.exports = {
 								name				:	'$myUser.person.name',
 								fatherName	:	'$myUser.person.fatherName',
 								motherName	: '$myUser.person.motherName',
-								email				: '$myUser.person.email'
-								// fiscal 			: { $arrayElemAt: ['$myUser.fiscal', 0]}
+								email				: '$myUser.person.email',
+								RFC					: '$myUser.admin.initialPassword'
 							})
 							.unwind('name')
 							.unwind('fatherName')
 							.unwind('motherName')
 							.unwind('email')
+							.unwind('RFC')
 							.unwind('grades')
 							.unwind('id')
 							.match({$or: [{'grades.wq': {$gt:0}},{'grades.wt': {$gt:0}}]})
@@ -738,8 +740,8 @@ module.exports = {
 								fatherName	:	1,
 								motherName	:	1,
 								email				:	1,
+								RFC					: 1,
 								id					: 1,
-								// fiscal			: 1,
 								blockTitle	:	'$myBlocks.title',
 								blockGrade	:	'$grades.finalGrade',
 								blockPond		:	'$grades.w'
@@ -751,8 +753,8 @@ module.exports = {
 									fatherName	: '$fatherName',
 									motherName	: '$motherName',
 									email				: '$email',
+									RFC 				: '$RFC',
 									id					: '$id',
-									// fiscal			: '$fiscal',
 									track				: '$track',
 									finalGrade	: '$finalGrade',
 									pass				: '$pass',
@@ -773,7 +775,7 @@ module.exports = {
 								fatherName	: '$_id.fatherName',
 								motherName	: '$_id.motherName',
 								email				: '$_id.email',
-								// fiscal			: '$_id.fiscal',
+								RFC					: '$_id.RFC',
 								track				: '$_id.track',
 								finalGrade	: '$_id.finalGrade',
 								pass				: '$_id.pass',
@@ -782,53 +784,36 @@ module.exports = {
 								grades			: true,
 								_id 				: false
 							})
-							// .lookup({
-							// 	from				: 'fiscalcontacts',
-							// 	localField	: 'email',
-							// 	foreignField: 'email',
-							// 	as					: 'myFiscal'
-							// })
-							// .project({
-							// 	id					: 1,
-							// 	name				: 1,
-							// 	fatherName	: 1,
-							// 	motherName	: 1,
-							// 	email				: 1,
-							// 	RFC					: {$arrayElemAt: ['$myFiscal',0]},
-							// 	track				: 1,
-							// 	finalGrade	: 1,
-							// 	pass				: 1,
-							// 	passDate		: 1,
-							// 	certificateNumber	: 1,
-							// 	grades			: 1,
-							// 	_id 				: false
-							// })
-							// .unwind('RFC')
-							// .project({
-							// 	id					: 1,
-							// 	name				: 1,
-							// 	fatherName	: 1,
-							// 	motherName	: 1,
-							// 	email				: 1,
-							// 	RFC					:'$RFC.identification',
-							// 	track				: 1,
-							// 	finalGrade	: 1,
-							// 	pass				: 1,
-							// 	passDate		: 1,
-							// 	certificateNumber	: 1,
-							// 	grades			: 1,
-							// 	_id 				: false
-							// })
 							.then((items) => {
 								if(items && items.length > 0 ){
 									items.forEach(i => {
-										if(i.passDate) {i.passDateSpa = dateInSpanish(i.passDate);}
+										let passDate = false;
+										if(group.dates &&
+											Array.isArray(group.dates) &&
+											group.dates.length > 0
+										) {
+											let findCertificateDate = group.dates.find(date => date.type === 'certificate');
+											// esta parte era por si la fecha mínima era la de liberación de constancia
+											//if(findCertificateDate && send_grade.passDate < findCertificateDate.beginDate) {
+											// Y esta es la fecha de liberación de constancia
+											if(findCertificateDate) {
+												passDate = findCertificateDate.beginDate;
+											}
+										}
+										if(i.passDate) {
+											if(passDate) {
+												i.passDate = passDate;
+												i.passDateSpa = dateInSpanish(passDate);
+											} else {
+												i.passDateSpa = dateInSpanish(i.passDate);
+											}
+										}
 									});
 								}
 								res.status(200).json({
-									'status'				: 200,
 									'group'					: group.name,
 									'groupCode'			: group.code,
+									'displayRFC'		: group.orgUnit.displayRFC,
 									'course'				: group.course.title,
 									'courseDuration': group.course.duration,
 									'courseDurUnits': units(group.course.durationUnits),

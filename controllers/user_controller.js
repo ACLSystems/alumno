@@ -469,7 +469,10 @@ module.exports = {
 		User.findOne({ name: username })
 			.populate('org','name')
 			.populate('orgUnit', 'name longName')
+			.populate('project')
 			.populate('workShift')
+			.populate('fiscal')
+			.select('-perm -__v -password')
 			.then((user) => {
 				if (!user) {
 					res.status(200).json({
@@ -477,54 +480,12 @@ module.exports = {
 					});
 				} else {
 					//const result = permissions.access(key_user,user,'user');
-					var send_user = {
-						userid			: user._id,
-						username		: user.name,
-						org					: user.org.name,
-						orgUnit			: user.orgUnit.name,
-						orgUnitLong	: user.orgUnit.longName,
-						char1				: user.char1,
-						char2				: user.char2,
-						workShift		: user.workShift,
-						attachedToWShift: user.attachedToWShift
-					};
 					if(user.admin && user.admin.initialPassword) {
-						send_user.initialPassword = user.admin.initialPassword;
+						user.initialPassword = user.admin.initialPassword;
 					} else {
-						send_user.initialPassword = 'No initial Password set for user';
+						user.initialPassword = 'No initial Password set for user';
 					}
-					if(user.person) {
-						send_user.person = {
-							name			: user.person.name,
-							fatherName: user.person.fatherName,
-							motherName: user.person.motherName,
-							email			: user.person.email,
-							birthDate	: user.person.birthDate,
-							mainPhone	: user.person.mainPhone,
-							celPhone	: user.person.celPhone,
-							genre 		: user.person.genre,
-							alias			: user.person.alias
-						};
-					}
-					if(user.student){
-						send_user.student = {
-							studentid	: user.student.id,
-							career		: user.student.career,
-							term			: user.student.term,
-							isActive	: user.student.isActive,
-							type			: user.student.type
-						};
-						if(user.student.external) { send_user.student.external 	= user.student.external;}
-						if(user.student.origin	) { send_user.student.origin 		= user.student.origin;  }
-					}
-					if(user.corporate) {
-						send_user.corporate = {
-							corporateid	: user.corporate.id,
-							isActive		: user.corporate.isActive,
-							type				: user.corporate.type
-						};
-					}
-					res.status(200).json(send_user);
+					res.status(200).json(user);
 				}
 			})
 			.catch((err) => {
