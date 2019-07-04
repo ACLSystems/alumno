@@ -955,10 +955,15 @@ module.exports = {
 			});
 	}, // filesBygroup
 
-	gradesByCampus(req,res) {
+	gradesByCampus(req,res) { // Revisar y rearmar porque no funciona correctamente
 		const key_user 	= res.locals.user;
+		const project   = req.query.project || null;
 		if(key_user.orgUnit.type === 'state') {
-			OrgUnit.find({parent: key_user.orgUnit.name, org: key_user.org._id})
+			let query = {parent: key_user.orgUnit.name, org: key_user.org._id};
+			if(project) {
+				query.project = mongoose.Types.ObjectId(project);
+			}
+			OrgUnit.find(query)
 				.select('_id')
 				.then((ous) => {
 					Roster.find({ orgUnit: {$in: ous}, isActive: true })
@@ -1128,7 +1133,11 @@ module.exports = {
 				});
 		} else
 		if(key_user.orgUnit.type === 'campus') {
-			Roster.find({ orgUnit: key_user.orgUnit._id, report: true })
+			let query = { orgUnit: key_user.orgUnit._id, report: {$ne:false} };
+			if(project) {
+				query.project = mongoose.Types.ObjectId(project);
+			}
+			Roster.find(query)
 				.populate('student', 'name person')
 				.populate({
 					path: 'group',
