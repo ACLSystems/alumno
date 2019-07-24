@@ -2017,10 +2017,10 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give data by query to process'
 			});
-		} else if (!req.query.groupid) {
+		} else if (!req.query.groupid && !req.query.groupcode) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give group id by query to process'
+				'message': 'Error -: Please, give group id or group code by query to process'
 			});
 		} else {
 			next();
