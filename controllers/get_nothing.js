@@ -3,8 +3,7 @@ const bcrypt = require('bcrypt-nodejs');
 
 module.exports = {
 	greeting(req, res) {
-		res.status(200);
-		res.json({
+		res.status(200).json({
 			app: version.app,
 			version: version.version
 		});

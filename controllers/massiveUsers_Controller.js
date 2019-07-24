@@ -1,24 +1,36 @@
+const bcrypt 							= require('bcrypt-nodejs');
+const generate						= require('nanoid/generate');
+const urlencode 					= require('urlencode');
+const StatusCodes 				= require('http-status-codes');
 const User 								= require('../src/users');
 const Org 								= require('../src/orgs');
 const OrgUnit 						= require('../src/orgUnits');
-const bcrypt 							= require('bcrypt-nodejs');
 const mailjet 						= require('../shared/mailjet');
-const generate						= require('nanoid/generate');
 const Err 								= require('../controllers/err500_controller');
 const Fiscal 							= require('../src/fiscalContacts');
 const Project 						= require('../src/projects');
 const WorkShift						= require('../src/workShift');
 const logger 							= require('../shared/winston-logger');
-const url 								= process.env.LIBRETA_URI;
-const urlencode 					= require('urlencode');
-var template_user_admin = 339990; // plantilla para el usuario que es registrado por el administrador
+
+
+/**
+	* CONFIG
+	* Todo se extrae de variables de Ambiente
+	*/
+/** @const {number}  - plantilla para el usuario que es registrado por el administrador */
+const template_user_admin 		= parseInt(process.env.MJ_TEMPLATE_USER_ADMIN);
+/** @const {number} - plantilla ESPECIAL para notificar al alumno su registro en grupo */
+const template_user_SPECIAL 	= parseInt(process.env.MJ_TEMPLATE_GROUPREG_SPECIAL);
+/** @const {number} - En qué casos aplica el usuario "ESPECIAL" */
+const user_SPECIAL 						= parseInt(process.env.MJ_TEMPLATE_USER_SPECIAL);
+/** @const {string}  - url de libreta */
+const url 								= process.env.NODE_LIBRETA_URI;
+// --------------------------------------------------------------
 
 module.exports = {
-	//massiveRegister(req,res,next) {
 	massiveRegister(req,res) {
 		if(!req.body ) {
-			res.status(406).json({
-				'status': 406,
+			res.status(StatusCodes.NOT_ACCEPTABLE).json({
 				'message': 'Please, give data to process'
 			});
 		} else {
@@ -238,10 +250,9 @@ module.exports = {
 										numUsers.failed = failed.length;
 										var result = numUsers;
 										result.details = failed;
-										res.status(200);
+										res.status(StatusCodes.OK);
 										res.json({
 										//res.end(JSON.stringify({
-											'status': 200,
 											'message': result
 										//}));
 										});
@@ -258,9 +269,8 @@ module.exports = {
 						sendError(res,err,'orgs');
 					});
 			} else {
-				res.status(403);
+				res.status(StatusCodes.FORBIDDEN);
 				res.json({
-					'status': 403,
 					'message': 'User not authorized'
 				});
 			}
@@ -273,6 +283,7 @@ module.exports = {
 		// Ignorar '?'
 		const char 			= '?';
 		const email 		= userProps.person.email;
+		var templateId  = template_user_admin;
 		if(email.includes(char)) {
 			const index 		= email.indexOf(email);
 			userProps.person.email = (email.slice(index+1));
@@ -281,7 +292,7 @@ module.exports = {
 		const challenge = /\S+@\S+\.\S+/;
 		const validate  = userProps.person.email.match(challenge);
 		if(!validate) {
-			res.status(406).json({
+			res.status(StatusCodes.NOT_ACCEPTABLE).json({
 				'message': 'Error: email no formateado correctamente'
 			});
 			return;
@@ -290,11 +301,11 @@ module.exports = {
 		if(userProps.name !== userProps.person.email) { // que el nombre de usuario sera igual a su correo
 			userProps.name = userProps.person.email;
 		}
-		// checamos si el usuario viene de la SEPH
-		var SEPH = false;
-		if(userProps.orgUnit === 'SEPH') {
-			SEPH = true;
-			template_user_admin = 877911;
+		// checamos si el usuario es especial
+		var SPECIAL = false;
+		if(userProps.orgUnit === user_SPECIAL) {
+			SPECIAL = true;
+			templateId = template_user_SPECIAL;
 		}
 		Promise.all([
 			Org.findOne({name: userProps.org })
@@ -310,31 +321,31 @@ module.exports = {
 			.then((results) =>{
 				var [org,ou,user,project,workShift] = results;
 				if(!org) {
-					res.status(200).json({
+					res.status(StatusCodes.NOT_ACCEPTABLE).json({
 						'message': 'Error: Org not found or not valid. Please check'
 					});
 					return;
 				}
 				if(!ou) {
-					res.status(200).json({
+					res.status(StatusCodes.NOT_ACCEPTABLE).json({
 						'message': 'Error: OrgUnit not found or not valid. Please check'
 					});
 					return;
 				}
 				if(!project) {
-					res.status(200).json({
+					res.status(StatusCodes.NOT_ACCEPTABLE).json({
 						'message': 'Error: Project not found or not valid. Please check'
 					});
 					return;
 				}
 				if(!workShift) {
-					res.status(200).json({
+					res.status(StatusCodes.NOT_ACCEPTABLE).json({
 						'message': 'Error: workShift not found or not valid. Please check'
 					});
 					return;
 				}
 				if(ou.org + '' !== org._id + '') {
-					res.status(200).json({
+					res.status(StatusCodes.NOT_ACCEPTABLE).json({
 						'message': 'Error: OrgUnit not valid. OrgUnit provided does not belong to org. Please check',
 						'org': org._id,
 						'ou': ou.org
@@ -358,7 +369,7 @@ module.exports = {
 						}
 					}
 					user.save().then((user) => {
-						res.status(200).json({
+						res.status(StatusCodes.OK).json({
 							'message': 'User already registered',
 							'user': {
 								'id': user._id,
@@ -369,7 +380,7 @@ module.exports = {
 						});
 						return;
 					}).catch(() => {
-						res.status(200).json({
+						res.status(StatusCodes.OK).json({
 							'message': 'User already registered',
 							'user': {
 								'id': user._id,
@@ -426,11 +437,11 @@ module.exports = {
 							user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
 							user.save()
 								.then((user) => {
-									if(SEPH) {
+									if(SPECIAL) {
 										var fiscal = new Fiscal({
 											identification: user.admin.initialPassword,
 											name: user.person.name + ' ' + user.person.fatherName + ' ' +user.person.motherName,
-											observations: 'Usuario creado para SEPH',
+											observations: 'Usuario ESPECIAL',
 											email: user.person.email,
 											type: 'client',
 											cfdiUse: 'G03',
@@ -444,27 +455,26 @@ module.exports = {
 										fiscal.save().then().catch(() => {});
 									}
 									var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
-									//mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',template_user_admin,link)
-									//.then(() => {
-									res.status(201).json({
-										'status': 201,
-										'message': 'User -' + userProps.name + '- created',
-										'userid': user._id,
-										'uri': link
-									});
-									// })
-									// .catch((err) => {
-									// 	let mailErr = err.toString();
-									// 	if(mailErr === '401: Unauthorized'){
-									// 		res.status(201).json({
-									// 			'message': 'User -' + userProps.name + '- created and NO email sent',
-									// 			'userid': user._id,
-									// 			'uri': link
-									// 		});
-									// 	} else {
-									// 		Err.sendError(res,err,'user_controller','muir -- Sending Mail --');
-									// 	}
-									// });
+									mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
+										.then(() => {
+											res.status(StatusCodes.CREATED).json({
+												'message': 'User -' + userProps.name + '- created',
+												'userid': user._id,
+												'uri': link
+											});
+										})
+										.catch((err) => {
+											let mailErr = err.toString();
+											if(mailErr === '401: Unauthorized'){
+												res.status(StatusCodes.CREATED).json({
+													'message': 'User -' + userProps.name + '- created and NO email sent',
+													'userid': user._id,
+													'uri': link
+												});
+											} else {
+												Err.sendError(res,err,'user_controller','muir -- Sending Mail --');
+											}
+										});
 								})
 								.catch((err) => {
 									Err.sendError(res,err,'user_controller','muir -- Saving User validation String --');
@@ -493,15 +503,13 @@ module.exports = {
 					users.forEach(user => {
 						send_users.push(user._id);
 					});
-					res.status(200).json({
-						'status'	: 200,
+					res.status(StatusCodes.OK).json({
 						'usersNum': users.length,
 						'usersArray': send_users,
 						'users'		: users
 					});
 				} else {
-					res.status(200).json({
-						'status'	: 200,
+					res.status(StatusCodes.NOT_FOUND).json({
 						'message'	: 'No users found'
 					});
 				}
@@ -521,15 +529,13 @@ module.exports = {
 					users.forEach(user => {
 						send_users.push(user._id);
 					});
-					res.status(200).json({
-						'status'	: 200,
+					res.status(StatusCodes.OK).json({
 						'usersNum': users.length,
 						'usersArray': send_users,
 						'users'		: users
 					});
 				} else {
-					res.status(200).json({
-						'status'	: 200,
+					res.status(StatusCodes.NOT_FOUND).json({
 						'message'	: 'No users found'
 					});
 				}
@@ -575,8 +581,7 @@ function encryptPass(obj) {
 function sendError(res, err, section) {
 	logger.error('MassiveUsers Controller -- Section: ' + section + '----');
 	logger.error(err);
-	res.status(500).json({
-		'status': 500,
+	res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 		'message': 'Error',
 		'Error': err
 	});

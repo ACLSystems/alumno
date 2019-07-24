@@ -11,14 +11,18 @@ const routes 							= require('./routes/routes');
 const FileController 			= require('./controllers/file_controller');
 const app 								= express();
 
-var dir 										= process.env.ORDIR;
-const fileSize 							= 1048576;
-const files 								= 1;
-if(!dir) {
-	dir = '/usr/src/data/files';
-}
+/**
+ * CONFIG
+ */
+/** @const {string} - directorio local para almacenar archivos */
+const dir 								= process.env.DBX_ORDIR || '/usr/src/data/files' ;
+/** @const {number} - tamaño máximo de archivos */
+const fileSize 						= parseInt(process.env.DBX_FILESIZE) || 1048576;
+/** @const {number} - número máximo de archivos por transacción */
+const files 							= parseInt(process.env.DBX_FILES) || 1;
+/** @const {string} - tamaño máximo del cuerpo JSON a procesar (ajustar) */
+const jsonBodyLimit				= process.env.NODE_JSONBODYLIMIT || '50mb';
 // var whitelist = process.env.WHITELIST.split(' ') || '*';
-
 
 var upload = multer({
 	dest: dir,
@@ -49,7 +53,7 @@ app.post('/api/v1/file/upload', upload.single('file'), FileController.upload);
 // Para el resto de APIs validaciones del cuerpo
 // Esto solo si en un momento dado necesitamos un cuerpo URL encoded
 // app.use(bodyParser.urlencoded({extended:true, limit: '10mb'}));
-app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.json({limit: jsonBodyLimit}));
 app.use(bodyParserJsonError());
 routes(app);
 
@@ -57,7 +61,6 @@ routes(app);
 //app.use(function(req, res, next) {
 app.use(function(req, res) {
 	res.status(404).json({
-		'status': 404,
 		'message': 'Error 100: API not found'
 	});
 });

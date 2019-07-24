@@ -3,8 +3,19 @@ const keys = require('../config/keys');
 const {promisify} = require('util');
 const logger = require('../shared/winston-logger');
 const version = require('../version/version');
-const timeToLiveSessions = process.env.TTL_SESSIONS || 900;
-const timeToLive = process.env.TTL || 900;
+
+/**
+	* CONFIG
+	* Todo se extrae de variables de Ambiente
+	*/
+/** @const {number} - TTL de las sessiones
+	* @default 				- 900
+*/
+const timeToLiveSessions = parseInt(process.env.CACHE_TTL_SESSIONS) || 900;
+/** @const {number}  - TTL de la demás información
+	* @default 				- 900
+*/
+const timeToLive = parseInt(process.env.CACHE_TTL) || 900;
 
 const options = {
 	url: keys.redisUrl

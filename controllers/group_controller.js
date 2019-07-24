@@ -1,3 +1,7 @@
+/**
+
+*/
+
 const mongoose 		= require('mongoose');
 const User 				= require('../src/users'										);
 const orgUnit 		= require('../src/orgUnits'									);
@@ -15,10 +19,29 @@ const Attempt 		= require('../src/attempts'									);
 const TA 					= require('time-ago'												);
 const cache 			= require('../src/cache'										);
 
-const url = process.env.LIBRETA_URI;
-const supportEmail = process.env.SUPPORT_EMAIL;
-const portal = process.env.PORTAL;
-var template_user = 339994;
+/**
+	* CONFIG
+	* Todo se extrae de variables de Ambiente
+	*/
+/** @const {string}  - URL de libreta */
+const url 										= process.env.NODE_LIBRETA_URI;
+/** @const {string}  - email de soporte */
+const supportEmail 						= process.env.NODE_SUPPORT_EMAIL;
+/** @const {string}  - email del portal (alumno) */
+const portal 									= process.env.NODE_PORTAL;
+/** @const {number} - plantilla para notificar al alumno su registro en grupo */
+var template_user 						= parseInt(process.env.MJ_TEMPLATE_GROUPREG);
+/** @const {number} - plantilla ESPECIAL para notificar al alumno su registro en grupo */
+const template_user_SPECIAL 	= parseInt(process.env.MJ_TEMPLATE_GROUPREG_SPECIAL);
+/** @const {number} - En qué casos aplica el usuario "ESPECIAL" */
+const user_SPECIAL 						= parseInt(process.env.MJ_TEMPLATE_USER_SPECIAL);
+/** @const {number} - plantilla para notificar al tutor sobre la asignación de un grupo */
+const template_tutor 					= parseInt(process.env.MJ_TEMPLATE_TUTOR);
+/** @const {number} - plantilla para notificar mandar aviso a los alumnos de un grupo */
+const template_notGroup 			= parseInt(process.env.MJ_TEMPLATE_NOTGROUP);
+/** @const {number} - plantilla para notificar al admin sobre la creación de un grupo */
+const template_notGroupCreate = parseInt(process.env.MJ_TEMPLATE_NOTGROUPCREATE);
+// -----------------------------------------------------------------------
 
 module.exports = {
 	create(req,res) {
@@ -145,10 +168,10 @@ module.exports = {
 												}
 											});
 											if(course.type === 'tutor') {
-												mailjet.sendMail(instructor.person.email, instructor.person.name, 'Se ha creado un grupo y participas como tutor: ' + group.code,880116,'https://conalepvirtual.superatemexico.com/#/tutorial',group.course.title);
-												mailjet.sendMail(supportEmail, 'Administrador', 'Alerta: Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code,679640,portal,'Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code + ' ' + group.course.title);
+												mailjet.sendMail(instructor.person.email, instructor.person.name, 'Se ha creado un grupo y participas como tutor: ' + group.code,template_tutor,url + '/tutorial',group.course.title);
+												mailjet.sendMail(supportEmail, 'Administrador', 'Alerta: Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code,template_notGroupCreate,portal,'Se ha generado un grupo de tipo tutor. Favor de gestionar. +' + group.code + ' ' + group.course.title);
 											} else {
-												mailjet.sendMail(supportEmail, 'Administrador', 'Aviso: Se ha generado un grupo. + ' + group.code,679640,portal,'Se ha generado un grupo. + ' + group.code + ' ' + course.title);
+												mailjet.sendMail(supportEmail, 'Administrador', 'Aviso: Se ha generado un grupo. + ' + group.code,template_notGroupCreate,portal,'Se ha generado un grupo. + ' + group.code + ' ' + course.title);
 											}
 										})
 										.catch((err) => {
@@ -572,8 +595,8 @@ module.exports = {
 												my_roster.push(new_roster._id);
 												new_roster.save()
 													.then(() => {
-														if(student.char2 === 'SEPH') {
-															template_user = 877918;
+														if(student.char2 === user_SPECIAL) {
+															template_user = template_user_SPECIAL;
 														}
 														mailjet.sendMail(student.person.email, student.person.name, 'Has sido enrolado al curso ' + group.course.title,template_user,link,group.course.title);
 														var not = new Notification({
@@ -723,7 +746,7 @@ module.exports = {
 									'groups'	: send_groups
 								});
 								items.forEach(function(roster) {
-									mailjet.sendMail(roster.student.person.email, roster.student.person.name, 'Mensaje del curso ' + roster.group.course.title,391119,roster.group.course.title,message);
+									mailjet.sendMail(roster.student.person.email, roster.student.person.name, 'Mensaje del curso ' + roster.group.course.title,template_notGroup,roster.group.course.title,message);
 								});
 							} else {
 								res.status(200).json({
@@ -2205,9 +2228,9 @@ module.exports = {
 										}
 									}
 									block.grade = grade.finalGrade;
-									if(!block.blockTitle) {
-										console.log(grade);
-									}
+									// if(!block.blockTitle) {
+									// 	console.log(grade);
+									// }
 									if(item.group && item.group.rubric && item.group.rubric.length > 0){
 										let rubricItem = item.group.rubric.find(rItem => rItem.block + ''  === block.blockId + '');
 										if(rubricItem.text) {
@@ -2613,8 +2636,8 @@ module.exports = {
 						res.status(200).json({
 							'message': `Group ${group.code} has new instructor: ${instructor.name}. Former instructor: ${formerInstructor.name}`
 						});
-						mailjet.sendMail(instructor.person.email, instructor.person.name, 'Se ha creado un grupo y participas como tutor: ' + group.code,880116,'https://conalepvirtual.superatemexico.com/#/tutorial',group.course.title);
-						mailjet.sendMail(formerInstructor.person.email, formerInstructor.person.name, 'Se te ha dado de baja como tutor: ' + group.code,880116,'https://conalepvirtual.superatemexico.com/#/tutorial',group.course.title);
+						mailjet.sendMail(instructor.person.email, instructor.person.name, 'Se ha creado un grupo y participas como tutor: ' + group.code,template_tutor,url + '/tutorial',group.course.title);
+						mailjet.sendMail(formerInstructor.person.email, formerInstructor.person.name, 'Se te ha dado de baja como tutor: ' + group.code,template_tutor,url + '/tutorial',group.course.title);
 					}).catch((err) => {
 						Err.sendError(res,err,'group_controller','changeInstructor -- Saving Group --');
 					});
@@ -3709,7 +3732,7 @@ module.exports = {
 	test(req,res) {
 		//var message = 'Mensaje de prueba';
 		res.status(200).json({
-			'url': process.env.LIBRETA_URI,
+			'url': process.env.NODE_LIBRETA_URI,
 			'public': process.env.MJ_APIKEY_PUBLIC,
 			'private': process.env.MJ_APIKEY_PRIVATE,
 			'hola': 'mundo'

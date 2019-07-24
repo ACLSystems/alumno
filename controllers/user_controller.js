@@ -11,10 +11,21 @@ const Err 								= require('../controllers/err500_controller'	);
 const permissions 				= require('../shared/permissions'							);
 const mailjet							= require('../shared/mailjet'									);
 
-const url 									= process.env.LIBRETA_URI;
-const template_user					= 310518; // plantilla para el usuario que se registra por su cuenta
-const template_user_admin 	= 339990; // plantilla para el usuario que es registrado por el administrador
-const template_user_change 	= 630058;
+/**
+	* CONFIG
+	* Todo se extrae de variables de Ambiente
+	*/
+/** @const {string} */
+const url 									= process.env.NODE_LIBRETA_URI;
+// plantilla para el usuario que se registra por su cuenta
+//const template_user					= 310518;
+const template_user					= parseInt(process.env.MJ_TEMPLATE_USER);
+// plantilla para el usuario que es registrado por el administrador
+//const template_user_admin 	= 339990;
+const template_user_admin		= parseInt(process.env.MJ_TEMPLATE_USER_ADMIN);
+// plantilla para notificación al usuario sobre el cambio de password hecho por el administrador
+//const template_user_change 	= 630058;
+const template_user_change	= parseInt(process.env.MJ_TEMPLATE_USER_CHANGE);
 
 module.exports = {
 	register(req, res) {

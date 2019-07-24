@@ -1,9 +1,18 @@
 //const mongoose 			= require('mongoose'												);
+const StatusCodes 	= require('http-status-codes');
+const TA 						= require('time-ago');
 const Notification 	= require('../src/notifications'						);
 const User 					= require('../src/users'										);
 const Err 					= require('../controllers/err500_controller');
 const mailjet 			= require('../shared/mailjet'								);
-const TA 						= require('time-ago'												);
+
+
+/**
+	* CONFIG
+	* Todo se extrae de variables de Ambiente
+	*/
+/** @const {number}  -  plantilla para el usuario que es registrado por el administrador */
+const template_notuser = parseInt(process.env.MJ_TEMPLATE_NOTUSER);
 
 module.exports = {
 
@@ -18,8 +27,7 @@ module.exports = {
 				}
 			});
 			if(errorInObjects) {
-				res.status(200).json({
-					'status': '400',
+				res.status(StatusCodes.NOT_ACCEPTABLE).json({
 					'message': 'Bad Objects array. Missing "item" in one object in the array'
 				});
 				return;
@@ -49,27 +57,26 @@ module.exports = {
 						if(query.objects && query.objects.length > 0 ) { message.objects = query.objects; }
 						message.save()
 							.then(() => {
-								res.status(200).json({
-									'status': '200',
+								res.status(StatusCodes.CREATED).json({
 									'notificationid': message._id,
 									'message': `Notification for: ${destination.name} created successfully`
 								});
 								if(send_email) {
-									mailjet.sendMail(destination.person.email, destination.person.name, 'Tienes una notificación',493237,message.message);
+									mailjet.sendMail(destination.person.email, destination.person.name, 'Tienes una notificación',template_notuser,message.message);
 								}
 							})
 							.catch((err) => {
 								Err.sendError(res,err,'notification_controller','create -- Creating Notification --',false,false,`Destination: ${destination.name} Source: ${source.name}`);
 							});
 					} else {
-						res.status(200).json({
-							'status': '404',
+						res.status(StatusCodes.OK).json({
+							//'status': '404',
 							'message': 'Destination not found'
 						});
 					}
 				} else {
-					res.status(200).json({
-						'status': '404',
+					res.status(StatusCodes.OK).json({
+						//'status': '404',
 						'message': 'Source not found'
 					});
 				}
@@ -84,13 +91,11 @@ module.exports = {
 		Notification.countDocuments({'destination.item': key_user._id, read: false})
 			.then((count) => {
 				if(count > 0){
-					res.status(200).json({
-						'status': 200,
+					res.status(StatusCodes.OK).json({
 						'newNotifications': count
 					});
 				} else {
-					res.status(200).json({
-						'status': 200,
+					res.status(StatusCodes.OK).json({
 						'message': 'No new notifications'
 					});
 				}
@@ -195,13 +200,12 @@ module.exports = {
 						}
 						nots.push(not);
 					});
-					res.status(200).json({
-						'status': 200,
+					res.status(StatusCodes.OK).json({
 						'message': nots
 					});
 				} else {
-					res.status(200).json({
-						'status': 404,
+					res.status(StatusCodes.OK).json({
+						//'status': 404,
 						'message': 'No messages found'
 					});
 				}
@@ -220,8 +224,7 @@ module.exports = {
 					notification.dateRead = new Date();
 					notification.save()
 						.then(() => {
-							res.status(200).json({
-								'status': 200,
+							res.status(StatusCodes.OK).json({
 								'message': 'Notification saved'
 							});
 						})
@@ -229,8 +232,8 @@ module.exports = {
 							Err.sendError(res,err,'notification_controller','closeNotification -- Save Notification --');
 						});
 				} else {
-					res.status(200).json({
-						'status': 404,
+					res.status(StatusCodes.OK).json({
+						//'status': 404,
 						'message': 'No notification found'
 					});
 				}
@@ -248,8 +251,7 @@ module.exports = {
 					notification.dateRead = new Date();
 					notification.save()
 						.then(() => {
-							res.status(200).json({
-								'status': 200,
+							res.status(StatusCodes.OK).json({
 								'message': 'Notification saved'
 							});
 						})
@@ -257,8 +259,7 @@ module.exports = {
 							Err.sendError(res,err,'notification_controller','closeNotification -- Save Notification --');
 						});
 				} else {
-					res.status(200).json({
-						'status': 404,
+					res.status(StatusCodes.OK).json({
 						'message': 'No notification found'
 					});
 				}

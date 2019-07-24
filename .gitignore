@@ -59,6 +59,10 @@ Thumbs.db
 # para que instale todo lo que node necesita
 node_modules/*
 
+# Ambiente					 #
+######################
+.env
+
 # otros archivos     #
 ######################
 doc/Oferta*

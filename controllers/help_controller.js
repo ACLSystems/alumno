@@ -2,8 +2,7 @@ const version = require('../version/version');
 
 module.exports = {
 	help(req, res) {
-		res.status(200);
-		res.json({
+		res.status(200).json({
 			'App': version.app,
 			'Version': version.version,
 			'description': version.description,

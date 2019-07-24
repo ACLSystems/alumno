@@ -3,13 +3,28 @@ const fs = require('fs');
 const dropbox = require('dropbox').Dropbox;
 const Err = require('../controllers/err500_controller');
 
-// Este módulo usa "Multer" y la definición está en routes/routes.js
+/** Este módulo usa "Multer" y la definición está en routes/routes.js */
+/**
+	* CONFIG
+	*/
+/** @const {number} - tamaño máximo del archivo a procesar
+	* @default 				- 1048576 bytes o sea 1MB
+*/
+const filesize 		= parseInt(process.env.DBX_FILESIZE) || 1048576;
+/** @const {string} - directorio local para procesar archivos temporalmente
+	* @default 				- /usr/src/app/files <- esto no funciona en docker
+*/
+const ordir 			= process.env.DBX_ORDIR || '/usr/src/app/files';
+/** @const {string} - se genera un directorio por ambiente
+	* @default 				- development
+*/
+const file_dir		= process.env.NODE_ENV || 'development';
+/** @const {string} - token de Dropbox */
+const accessToken	= process.env.DBX_TOKEN || null;
 
 module.exports = {
-
 	upload(req,res) {
 		const key_user 	= res.locals.user;
-		const filesize = 1048576;
 		if(!req.file) {
 			res.status(406).json({
 				'status': 406,
@@ -34,24 +49,26 @@ module.exports = {
 		// El directorio se formará en dropbox con la siguiente estructura:
 		// /file_dir/dir1/dir2 bajo la carpeta destinada en Dropbox
 		// ordir es el directorio local
-		var dir1 					= 'base1';
-		var dir2 					= 'base2';
-		var ordir 			= process.env.ORDIR;
-		var file_dir		= process.env.NODE_ENV;
-		var accessToken	= process.env.DBX_TOKEN;
-
-		if(!file_dir) {
-			file_dir = 'production';
+		const dir1 				= req.query.dir1 || 'base1';
+		const dir2 				= req.query.dir2 || 'base2';
+		if(!accessToken){
+			res.status(404).json({
+				'message'	: 'No hay accessToken configurado y por lo tanto no puede completarse la transacción. Contacte al administrador'
+			});
+			return;
 		}
-		if(!ordir) {
-			ordir = '/usr/src/app/files';
-		}
-		if(req.query.dir1) {
-			dir1 = req.query.dir1;
-		}
-		if(req.query.dir2) {
-			dir2 = req.query.dir2;
-		}
+		// if(!file_dir) {
+		// 	file_dir = 'production';
+		// }
+		// if(!ordir) {
+		// 	ordir = '/usr/src/app/files';
+		// }
+		// if(req.query.dir1) {
+		// 	dir1 = req.query.dir1;
+		// }
+		// if(req.query.dir2) {
+		// 	dir2 = req.query.dir2;
+		// }
 		var filename = req.file.filename;
 		if(req.file && !req.file.filename) {
 			filename = req.file.originalname;
@@ -142,8 +159,6 @@ module.exports = {
 		File.findOne(query)
 			.then((file) => {
 				if(file) {
-					const accessToken	= process.env.DBX_TOKEN;
-					var ordir = process.env.ORDIR;
 					require('isomorphic-fetch');
 					var dbx = new dropbox({ accessToken: accessToken});
 					if(properties){
@@ -235,9 +250,6 @@ module.exports = {
 								Err.sendError(res,err,'file_controller','download -- Searching File in dropbox --');
 							});
 					} else {
-						if(!ordir) {
-							ordir = '/usr/src/app/files';
-						}
 						if(fs.existsSync(ordir + '/' + file.filename)) {
 							res.set({'Content-type': file.mimetype});
 							res.download(ordir + '/' + file.filename,file.name);
