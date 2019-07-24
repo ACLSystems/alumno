@@ -186,9 +186,15 @@ module.exports = {
 	}, // create
 
 	get(req,res) {
-		// se requiere el ID del grupo
 		//const key_user = res.locals.user;
-		Group.findById(req.query.groupid)
+		var query = {};
+		if(req.query.groupid) {
+			query = {_id: req.query.groupid};
+		}
+		if(req.query.groupcode) {
+			query = {code: req.query.groupcode};
+		}
+		Group.findOne(query)
 			.then((group) => {
 				if(group) {
 					var varEnum	= {
@@ -204,7 +210,7 @@ module.exports = {
 				} else {
 					res.status(200).json({
 						status	: 200,
-						message	: 'Group ' + req.query.groupid + ' not found'
+						message	: 'Group not found'
 					});
 				}
 			})
@@ -960,7 +966,7 @@ module.exports = {
 						if(s.grades && s.grades.length > 0) {
 							var lastBlockSeen = -1;
 							var acc 					= 0;
-							s.grades.forEach(function(g) {
+							s.grades.forEach(g => {
 								var send_grade 	= {};
 								var flag 				= false;
 								if(g.w && g.w > 0) {
@@ -2099,8 +2105,13 @@ module.exports = {
 					select: 'title blocks duration durationUnits',
 					populate: {
 						path: 'blocks',
-						select: 'title section number w wq wt type',
-						options: { lean: true }
+						select: 'title section number w wq wt type order',
+						options: {
+							lean: true,
+							sort: {
+								order: 1
+							}
+						}
 					},
 					options: { lean: true }
 				},
@@ -2111,7 +2122,7 @@ module.exports = {
 					var blocks		= [];
 					const bs 			= item.group.course.blocks;
 					var rubric  	= [];
-					if(item.group.rubric) {
+					if(item.group.rubric && Array.isArray(item.group.rubric) && item.group.rubric.length > 0) {
 						rubric 	= item.group.rubric;
 					}
 					// ------------
@@ -2128,12 +2139,14 @@ module.exports = {
 								grades[j].w 			= rubric[i].w;
 								grades[j].wq 			= rubric[i].wq;
 								grades[j].wt 			= rubric[i].wt;
+								grades[j].order 	= rubric[i].order;
 								grades[j].repair	= 1;
 								found = true;
 							} else if(bs[i]._id + '' === grades[j].block + '') {
 								grades[j].w 			= bs[i].w;
 								grades[j].wq 			= bs[i].wq;
 								grades[j].wt 			= bs[i].wt;
+								grades[j].order 	= bs[i].order;
 								grades[j].repair	= 1;
 								found = true;
 							}
@@ -2146,6 +2159,7 @@ module.exports = {
 									w 		: rubric[i].w,
 									wq 		:	rubric[i].wq,
 									wt		: rubric[i].wt,
+									order : rubric[i].order,
 									repair: 1
 								});
 							} else {
@@ -2154,18 +2168,23 @@ module.exports = {
 									w 		: bs[i].w,
 									wq 		: bs[i].wq,
 									wt		: bs[i].wt,
+									order : bs[i].order,
 									repair: 1
 								});
 							}
 						}
 						i++;
 					}
+					// ordenar el arreglo de grades
+
+					//grades.sort((a,b) => (a.order > b.order) ? 1 : -1);
+
 					item.grades = grades;
 					item.repair = 1;
 					item.save()
 						.then((item) => {
 						// ------
-							item.grades.forEach(function(grade) {
+							item.grades.forEach(grade => {
 								if(grade.wq > 0 || grade.wt > 0) {
 									var i = 0;
 									var block = {};
@@ -2175,6 +2194,7 @@ module.exports = {
 												blockTitle	: bs[i].title,
 												blockSection: bs[i].section,
 												blockNumber	: bs[i].number,
+												blockOrder 	: bs[i].order,
 												blockW			: grade.w,
 												blockType		: bs[i].type,
 												blockId			: bs[i]._id
@@ -2185,6 +2205,9 @@ module.exports = {
 										}
 									}
 									block.grade = grade.finalGrade;
+									if(!block.blockTitle) {
+										console.log(grade);
+									}
 									if(item.group && item.group.rubric && item.group.rubric.length > 0){
 										let rubricItem = item.group.rubric.find(rItem => rItem.block + ''  === block.blockId + '');
 										if(rubricItem.text) {

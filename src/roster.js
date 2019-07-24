@@ -192,6 +192,9 @@ const GradesSchema = new Schema ({
 	dependencies: [depSchema],
 	repair: {
 		type: Number
+	},
+	order: {
+		type: Number
 	}
 });
 

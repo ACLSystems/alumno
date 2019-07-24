@@ -195,7 +195,7 @@ module.exports = {
 					const salt = bcrypt.genSaltSync(10);
 					const password = bcrypt.hashSync(newpass.admin(), salt);
 					const admin = new Users({
-						name: 'admin',
+						name: 'admin@aclsystems.mx',
 						password: password,
 						org: orgPublic._id,
 						orgUnit: ouPublic._id,

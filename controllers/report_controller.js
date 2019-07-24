@@ -877,7 +877,7 @@ module.exports = {
 							fatherName 	: '$user.person.fatherName',
 							motherName	: '$user.person.motherName',
 							email				: '$user.person.email',
-							RFC					: '$user.fiscal.id',
+							RFC					: '$user.admin.initialPassword',
 							file				: true
 						})
 						.then((items) => {
