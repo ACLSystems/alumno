@@ -20,19 +20,14 @@ const mailjet							= require('../shared/mailjet'									);
 const url 									= process.env.NODE_LIBRETA_URI;
 /** @const {number} - plantilla para el usuario que se registra por su cuenta */
 const template_user					= parseInt(process.env.MJ_TEMPLATE_USER);
-//const template_user					= 310518;
 /** @const {number} - plantilla para el usuario que es registrado por el administrador */
 const template_user_admin		= parseInt(process.env.MJ_TEMPLATE_USER_ADMIN);
-//const template_user_admin 	= 339990;
 /** @const {number} - plantilla para notificación al usuario sobre el cambio de password hecho por el administrador */
 const template_user_change	= parseInt(process.env.MJ_TEMPLATE_USER_CHANGE);
-//const template_user_change 	= 630058;
 /** @const {number} - plantilla para recuperación de contraseña */
 const template_pass_recovery	= parseInt(process.env.MJ_TEMPLATE_PASSREC);
-//const template_user_change 	= 630058;
-/** @const {number} - plantilla para recuperación de contraseña */
+/** @const {number} - plantilla notificación al usuario sobre el cambio de correo hecho por el administrador */
 const template_pass_change	= parseInt(process.env.MJ_TEMPLATE_PASSCHANGE);
-//const template_user_change 	= 630058;
 
 module.exports = {
 	register(req, res) {
