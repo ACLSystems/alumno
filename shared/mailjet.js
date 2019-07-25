@@ -2,27 +2,30 @@ const mailjet = require ('node-mailjet')
 	.connect(process.env.MJ_APIKEY_PUBLIC, process.env.MJ_APIKEY_PRIVATE);
 const request = mailjet.post('send', {'version': 'v3.1'});
 
-// Configuración ----------------------------
-// Correo FROM - correo de donde proviene la notificación
+/**
+	* CONFIG
+	* Todo se extrae de variables de Ambiente
+	*/
+/** @const {string} - Correo FROM - correo de donde proviene la notificación */
 const fromEmail = process.env.MJ_FROMEMAIL;
-// Nombre FROM - nombre del que proviene la notificación
+/** @const {string} - Nombre FROM - nombre del que proviene la notificación */
 const fromName = process.env.MJ_FROMNAME;
-// Arreglo de Ids para el registro de usuarios
-const mailRegUser = process.env.MJ_REG_REGUSER;
-// Arreglo de Ids para recuperación de contraseña
-const mailPassRec = process.env.MJ_REG_PASSREC;
-// Arreglo de Ids para registro en grupo
-const mailGroupReg = process.env.MJ_REG_GROUPREG;
-// Arreglo de Ids para envio de errores
-const mailError = process.env.MJ_REG_MAILERROR;
-// Arreglo de Ids para notificar a alumnos de un grupos
-const mailNotGroup = process.env.MJ_REG_NOTGROUP;
-// Arreglo de Ids para notificar a un alumno
-const mailNotUser = process.env.MJ_REG_NOTUSER;
-// Arreglo de Ids para cambio de contraseña
-const mailPassChange = process.env.MJ_REG_PASSCHANGE;
-// Arreglo de Ids para notificar al admin la creación de un grupo
-const mailNotGroupCreate = process.env.MJ_REG_NOTGROUPCREATE;
+/** @const {Array<number>} - Arreglo de Ids para el registro de usuarios */
+const mailRegUser 				= getArrStrings(process.env.MJ_REG_REGUSER);
+/** @const {Array<number>} - Arreglo de Ids para recuperación de contraseña */
+const mailPassRec 				= getArrStrings(process.env.MJ_REG_PASSREC);
+/** @const {Array<number>} - Arreglo de Ids para registro en grupo */
+const mailGroupReg				= getArrStrings(process.env.MJ_REG_GROUPREG);
+/** @const {Array<number>} - Arreglo de Ids para envio de errores */
+const mailError 					= getArrStrings(process.env.MJ_REG_MAILERROR);
+/** @const {Array<number>} - Arreglo de Ids para notificar a alumnos de un grupos */
+const mailNotGroup				= getArrStrings(process.env.MJ_REG_NOTGROUP);
+/** @const {Array<number>} - Arreglo de Ids para notificar a un alumno */
+const mailNotUser					= getArrStrings(process.env.MJ_REG_NOTUSER);
+/** @const {Array<number>} - Arreglo de Ids para cambio de contraseña */
+const mailPassChange			= getArrStrings(process.env.MJ_REG_PASSCHANGE);
+/** @const {Array<number>} - Arreglo de Ids para notificar al admin la creación de un grupo */
+const mailNotGroupCreate	= getArrStrings(process.env.MJ_REG_NOTGROUPCREATE);
 
 var find;
 
@@ -144,8 +147,18 @@ exports.sendMail = function(toEmail,toName,subject,templateID,param1,param2,para
 				resolve(result.body.Messages[0].Status);
 			})
 			.catch((err) => {
-				reject(err.statusCode + ': ' + err.response.res.statusMessage);
-				//reject(err);
+				//reject(err.statusCode + ': ' + err.response.res.statusMessage);
+				reject(err);
 			});
 	});
 };
+
+/**
+	* Private Functions
+	*/
+
+function getArrStrings(env) {
+	env = env.split(' ');
+	env = env.map(id => parseInt(id));
+	return env;
+}
