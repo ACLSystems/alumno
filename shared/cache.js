@@ -1,7 +1,15 @@
 const mongoose = require('mongoose');
-const timeToLive = process.env.TTL;
+
 const redisClient = require('../src/cache');
 const exec = mongoose.Query.prototype.exec;
+
+/**
+	* CONFIG
+	* Todo se extrae de variables de Ambiente
+	*/
+/** @const {number}  - Time to live en segundos */
+const timeToLive = parseInt(process.env.CACHE_TTL);
+
 
 // Creamos una función para acceder al cache
 mongoose.Query.prototype.cache = function(options = {}) {

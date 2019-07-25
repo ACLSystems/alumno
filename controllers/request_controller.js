@@ -1,12 +1,22 @@
+const StatusCodes 	= require('http-status-codes');
+const HTTPRequest 	= require('request-promise-native');
 const Config 				= require('../src/config'										);
 const Request 			= require('../src/requests'									);
-const HTTPRequest 	= require('request-promise-native'					);
 const Invoice 			= require('../src/invoices'									);
 const FiscalContact = require('../src/fiscalContacts'						);
 const File 					= require('../src/files'										);
 const Err 					= require('../controllers/err500_controller');
 
-const portal = process.env.PORTAL;
+/**
+	* CONFIG
+	* Todo se extrae de variables de Ambiente
+	*/
+/** @const {string} */
+const portal	= process.env.NODE_PORTAL;
+/** @const {string} */
+const ordir 	= process.env.DBX_ORDIR;
+// ---------
+
 
 module.exports = {
 	create(req,res) {
@@ -34,8 +44,7 @@ module.exports = {
 		};
 		Request.create(request)
 			.then((request)  => {
-				res.status(200).json({
-					'status': 200,
+				res.status(StatusCodes.OK).json({
 					'message': 'Request -' + request.reqNumber + '- has been created',
 					'request': {
 						'number': request.reqNumber,
@@ -95,17 +104,17 @@ module.exports = {
 			.then((request)  => {
 				if(request) {
 					if(request.invoice && request.invoice.numberTemplate && request.invoice.numberTemplate.prefix && request.invoice.numberTemplate.number) {
-						res.status(200).json({
+						res.status(StatusCodes.OK).json({
 							'request': request,
 							'invoiceNumber': '' + request.invoice.numberTemplate.prefix + request.invoice.numberTemplate.number
 						});
 					} else {
-						res.status(200).json({
+						res.status(StatusCodes.OK).json({
 							'request': request
 						});
 					}
 				} else {
-					res.status(404).json({
+					res.status(StatusCodes.NOT_FOUND).json({
 						'message': 'Request -' + req.query.number + '- not found'
 					});
 				}
@@ -128,14 +137,12 @@ module.exports = {
 			.sort('-reqNumber')
 			.then((requests)  => {
 				if(requests && requests.length > 0) {
-					res.status(200).json({
-						'status': 200,
+					res.status(StatusCodes.OK).json({
 						'message': 'Requests for -' + key_user.name + '- found',
 						'requests': requests
 					});
 				} else {
-					res.status(200).json({
-						'status': 200,
+					res.status(StatusCodes.OK).json({
 						'message': 'No requests found for -' + key_user.name
 					});
 				}
@@ -163,45 +170,45 @@ module.exports = {
 					var [request,fc] = results;
 					if(request) {
 						if(request.status === 'done') {
-							res.status(406).json({
+							res.status(StatusCodes.NOT_ACCEPTABLE).json({
 								'message': 'Request -' + request.reqNumber + '- is in status done. Cannot be changed'
 							});
 							return;
 						}
 						if(request.status === 'cancelled') {
-							res.status(406).json({
+							res.status(StatusCodes.NOT_ACCEPTABLE).json({
 								'message': 'Request -' + request.reqNumber + '- is cancelled. Cannot be finished'
 							});
 							return;
 						}
 						if(request.status === 'payment') {
-							res.status(406).json({
+							res.status(StatusCodes.NOT_ACCEPTABLE).json({
 								'message': 'Request -' + request.reqNumber + '- is already in status Payment. Cannot be finished again'
 							});
 							return;
 						}
 						if(invoice){
 							if(!request.fiscalTag && !body.fiscal.fiscalTag) {
-								res.status(406).json({
+								res.status(StatusCodes.NOT_ACCEPTABLE).json({
 									'message': 'We need fiscal tag in order to create invoice. Please provice fiscal tag or invoice=false avoid invoice creation'
 								});
 								return;
 							}
 						}
 						if(!req.body.items) {
-							res.status(406).json({
+							res.status(StatusCodes.NOT_ACCEPTABLE).json({
 								'message': 'We need items in order to create invoice. Please provice items array in body to proceed'
 							});
 							return;
 						}
 						if(!Array.isArray(req.body.items)) {
-							res.status(406).json({
+							res.status(StatusCodes.NOT_ACCEPTABLE).json({
 								'message': 'Items must be send in array to create invoice. Please provice items array in body to proceed'
 							});
 							return;
 						}
 						if(req.body.items.length === 0) {
-							res.status(406).json({
+							res.status(StatusCodes.NOT_ACCEPTABLE).json({
 								'message': 'Items array is empty. Please provice items array in body to proceed'
 							});
 							return;
@@ -241,7 +248,7 @@ module.exports = {
 						request.status = 'payment';
 						await	inv.save().then((inv) => {
 							request.save().then((request)  => {
-								res.status(200).json({
+								res.status(StatusCodes.OK).json({
 									'message': 'Request -' + request.reqNumber +
 									'- finished. Invoice '+ inv.numberTemplate.prefix +
 									inv.numberTemplate.number +' created. Payment process can proceed',
@@ -254,7 +261,7 @@ module.exports = {
 							processError(res,err,'request_controller','finish -- Saving Invoice --');
 						});
 					} else {
-						res.status(404).json({
+						res.status(StatusCodes.NOT_FOUND).json({
 							'message': 'Request -' + body.number + '- not found'
 						});
 					}
@@ -312,12 +319,12 @@ module.exports = {
 					};
 					let response = await HTTPRequest(options);
 					if(response && response.code && response.code === '200') {
-						res.status(200).json({
+						res.status(StatusCodes.OK).json({
 							'message': 'Correo enviado exitosamente',
 							'recipients': req.body.emails
 						});
 					} else {
-						res.status(503).json(response);
+						res.status(StatusCodes.SERVICE_UNAVAILABLE).json(response);
 					}
 				} catch (err){
 					res.status(err.statusCode).json({
@@ -326,12 +333,12 @@ module.exports = {
 					});
 				}
 			} else {
-				res.status(400).json({
+				res.status(StatusCodes.NOT_IMPLEMENTED).json({
 					message: 'No puede completarse su solicitud ya que el sistema no está configurado. Contacte al administrador con este mensaje: "No existe configuración de accesos para API de facturación"'
 				});
 			}
 		} catch (err) {
-			res.status(500).json({
+			res.status(StatusCodes.NOT_IMPLEMENTED).json({
 				message: 'No puede completarse su solicitud ya que el sistema no logró obtener la configuración. Contacte al administrador con este mensaje: "No se puede obtener configuración o hay un error al tratar de obtener la configuración"'
 			});
 		}
@@ -349,22 +356,19 @@ module.exports = {
 		Request.findOne(query)
 			.then((request)  => {
 				if(request.status === 'done') {
-					res.status(406).json({
-						'status': 406,
+					res.status(StatusCodes.NOT_ACCEPTABLE).json({
 						'message': 'Request -' + request.reqNumber + '- is in status done. Cannot be changed'
 					});
 					return;
 				}
 				if(request.status === 'cancelled') {
-					res.status(406).json({
-						'status': 406,
+					res.status(StatusCodes.NOT_ACCEPTABLE).json({
 						'message': 'Request -' + request.reqNumber + '- is cancelled. Cannot be changed'
 					});
 					return;
 				}
 				if(request.status === 'payment') {
-					res.status(406).json({
-						'status': 406,
+					res.status(StatusCodes.NOT_ACCEPTABLE).json({
 						'message': 'Request -' + request.reqNumber + '- is in status Payment. Cannot be changed'
 					});
 					return;
@@ -391,16 +395,14 @@ module.exports = {
 						!req.body.temp1			&&
 						!req.body.temp2			&&
 						!req.body.temp3) {
-						res.status(406).json({
-							'status': 406,
+						res.status(StatusCodes.NOT_ACCEPTABLE).json({
 							'message': 'Request -' + request.reqNumber + '- is not modified. Nothing valid to modify.'
 						});
 						return;
 					}
 					request.save()
 						.then(() => {
-							res.status(200).json({
-								'status': 200,
+							res.status(StatusCodes.OK).json({
 								'message': 'Request -' + request.reqNumber + '- updated'
 							});
 						})
@@ -427,22 +429,19 @@ module.exports = {
 			.then((request)  => {
 				if(request){
 					if(request.status === 'payment') {
-						res.status(406).json({
-							'status': 406,
+						res.status(StatusCodes.NOT_ACCEPTABLE).json({
 							'message': 'Request -' + request.reqNumber + '- is already in process to payment and cannot be cancelled'
 						});
 						return;
 					}
 					if(request.status === 'done') {
-						res.status(406).json({
-							'status': 406,
+						res.status(StatusCodes.NOT_ACCEPTABLE).json({
 							'message': 'Request -' + request.reqNumber + '- is already in status done. Cannot be cancelled'
 						});
 						return;
 					}
 					if(request.status === 'cancelled') {
-						res.status(406).json({
-							'status': 406,
+						res.status(StatusCodes.NOT_ACCEPTABLE).json({
 							'message': 'Request -' + request.reqNumber + '- is already cancelled'
 						});
 						return;
@@ -457,8 +456,7 @@ module.exports = {
 					request.dateCancelled = new Date();
 					request.save()
 						.then(() => {
-							res.status(200).json({
-								'status': 200,
+							res.status(StatusCodes.OK).json({
 								'message': 'Request -' + request.reqNumber + '- cancelled succesfully'
 							});
 						})
@@ -498,7 +496,7 @@ module.exports = {
 						try {
 							file = await File.findOne({_id: req.body.file});
 							if(file) {
-								const sourceFile = process.env.ORDIR + '/' + file.filename;
+								const sourceFile = ordir + '/' + file.filename;
 								const fs = require('fs');
 
 								formData = {
@@ -553,49 +551,49 @@ module.exports = {
 											request.filesNotes.push(req.body.notes);
 											request.files.push(file._id);
 											request.save().then(() => {
-												res.status(200).json({
+												res.status(StatusCodes.OK).json({
 													'message': 'Se ha registrado el pago y se notificó a la mesa de servicio con el ticket número: ' + response.id
 												});
 											}).catch((err) => {
 												Err.sendError(res,err,'group_controller','setPayment -- Saving request --',false,false,'Request number: ' + request.number);
 											});
 										} else {
-											res.status(400).json({
+											res.status(StatusCodes.NOT_FOUND).json({
 												message: 'No se encuentra la solicitud ' + req.body.number
 											});
 										}
 									} catch (err) {
-										res.status(500).json({
+										res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 											message: 'No pudo actualizarse la solicitud ' + req.body.number
 										});
 									}
 								} else {
-									res.status(500).json(response);
+									res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(response);
 									return;
 								}
 							} else {
-								res.status(400).json({
+								res.status(StatusCodes.NOT_FOUND).json({
 									'message': 'Archivo no encontrado'
 								});
 								return;
 							}
 						} catch (err) {
-							res.status(500).json(err);
+							res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err);
 							return;
 						}
 					}
 				} catch (err){
-					res.status(500).json({
+					res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 						'message': err
 					});
 				}
 			} else {
-				res.status(400).json({
+				res.status(StatusCodes.NOT_FOUND).json({
 					message: 'No puede completarse su solicitud ya que el sistema no está configurado. Contacte al administrador con este mensaje: "No existe configuración de accesos para API de facturación"'
 				});
 			}
 		} catch (err) {
-			res.status(500).json({
+			res.status(StatusCodes.NOT_IMPLEMENTED).json({
 				message: 'No puede completarse su solicitud ya que el sistema no logró obtener la configuración. Contacte al administrador con este mensaje: "No se puede obtener configuración o hay un error al tratar de obtener la configuración"'
 			});
 		}

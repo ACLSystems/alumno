@@ -3,8 +3,18 @@ const Users = require('../src/users');
 const Session = require('../src/sessions');
 const Time 		= require('../shared/time');
 const cache 	= require('../src/cache');
-
 const logger = require('../shared/winston-logger');
+
+/**
+	* CONFIG
+	* Todo se extrae de variables de Ambiente
+	*/
+/** @const {number} - Días de expiración
+	* @default				- 7
+*/
+const expires = parseInt(process.env.NODE_EXPIRES) || 7;
+/** @const {string} - url de login */
+const urlLogin = '/login';
 
 var auth = {
 
@@ -43,13 +53,13 @@ var auth = {
 								token: objToken.token,
 								onlyDate: getToday(),
 								date: new Date(),
-								url: '/login'
+								url: urlLogin
 							});
 							session.save()
 								.then(() => {
 									cache.hmset('session:id:'+user._id,{
 										token: objToken.token,
-										url: '/login'
+										url: urlLogin
 									});
 									cache.set('session:name:'+ user.name + ':' + user.orgUnit.name, 'session:id:'+user._id);
 									cache.expire('session:id:'+user._id,cache.ttlSessions);
@@ -84,15 +94,15 @@ var auth = {
 // private Methods
 
 function genToken(user) {
-	var expires = expiresIn(parseInt(process.env.EXPIRES));  //número de días para que el token expire
+	var expiresInt = expiresIn(expires);
 	var token = jwt.encode({
 		user: user.name,
-		exp: expires
+		exp: expiresInt
 	}, require('../config/secret')());
 
 	return {
 		token: token,
-		expires: expires,
+		expires: expiresInt,
 		user: user
 	};
 }

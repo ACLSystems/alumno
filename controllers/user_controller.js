@@ -1,6 +1,7 @@
-const generate 						= require('nanoid/generate'										);
-const bcrypt 							= require('bcrypt-nodejs'											);
-const urlencode 					= require('urlencode'													);
+const generate 						= require('nanoid/generate');
+const bcrypt 							= require('bcrypt-nodejs');
+const urlencode 					= require('urlencode');
+const StatusCodes 				= require('http-status-codes');
 const User 								= require('../src/users'											);
 const Org 								= require('../src/orgs'												);
 const OrgUnit 						= require('../src/orgUnits'										);
@@ -11,10 +12,22 @@ const Err 								= require('../controllers/err500_controller'	);
 const permissions 				= require('../shared/permissions'							);
 const mailjet							= require('../shared/mailjet'									);
 
-const url 									= process.env.LIBRETA_URI;
-const template_user					= 310518; // plantilla para el usuario que se registra por su cuenta
-const template_user_admin 	= 339990; // plantilla para el usuario que es registrado por el administrador
-const template_user_change 	= 630058;
+/**
+	* CONFIG
+	* Todo se extrae de variables de Ambiente
+	*/
+/** @const {string} - URI de Libreta */
+const url 									= process.env.NODE_LIBRETA_URI;
+/** @const {number} - plantilla para el usuario que se registra por su cuenta */
+const template_user					= parseInt(process.env.MJ_TEMPLATE_USER);
+/** @const {number} - plantilla para el usuario que es registrado por el administrador */
+const template_user_admin		= parseInt(process.env.MJ_TEMPLATE_USER_ADMIN);
+/** @const {number} - plantilla para notificación al usuario sobre el cambio de password hecho por el administrador */
+const template_user_change	= parseInt(process.env.MJ_TEMPLATE_USER_CHANGE);
+/** @const {number} - plantilla para recuperación de contraseña */
+const template_pass_recovery	= parseInt(process.env.MJ_TEMPLATE_PASSREC);
+/** @const {number} - plantilla notificación al usuario sobre el cambio de correo hecho por el administrador */
+const template_pass_change	= parseInt(process.env.MJ_TEMPLATE_PASSCHANGE);
 
 module.exports = {
 	register(req, res) {
@@ -44,8 +57,7 @@ module.exports = {
 					OrgUnit.findOne({$or: [{ name: userProps.orgUnit}, {longName: userProps.orgUnit}]})
 						.then((ou) => {
 							if (!ou) {			// si no hay ou, lo mismo
-								res.status(404).json({
-									'status': 404,
+								res.status(StatusCodes.NOT_FOUND).json({
 									'message': 'Error: OU -' + userProps.orgUnit + '- does not exist'
 								});
 							} else {
@@ -99,16 +111,20 @@ module.exports = {
 										user.save()
 											.then((user) => {
 												var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
-												var templateId = template_user;
+												let templateId = template_user;
 												if(adminCreate) {
 													link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
 													templateId = template_user_admin;
 												}
-												mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
+												let subject = 'Confirma tu correo electrónico';
+												let variables = {
+													Nombre: user.person.name,
+													confirmation_link:link
+												};
+												mailjet.sendMail(user.person.email,user.person.name,subject,templateId,variables)
 													.then(() => {
-														res.status(201).json({
-															'status': 201,
-															'message': 'User - ' + userProps.name + '- created',
+														res.status(StatusCodes.CREATED).json({
+															'message': 'Usuario - ' + userProps.name + '- creado',
 															'userid': user._id,
 															'uri': link
 														});
@@ -153,7 +169,12 @@ module.exports = {
 															.then((user) => {
 															*/
 														const link = url + 'email=' + user.person.email + '&token=' + user.admin.validationString;
-														mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',template_user,link)
+														let subject = 'Confirma tu correo electrónico';
+														let variables = {
+															Nombre: user.person.name,
+															confirmation_link:link
+														};
+														mailjet.sendMail(user.person.email,user.person.name,subject,template_user,variables)
 															.then(() => {
 																res.status(201).json({
 																	'status': 201,
@@ -649,7 +670,12 @@ module.exports = {
 					var emailID = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
 					user.admin.recoverString = emailID;
 					const link = url + '/recover/' + user.admin.recoverString + '/' + user.person.email;
-					mailjet.sendMail(user.person.email, user.person.name, 'Solicitud de recuperación de contraseña',311647,link);
+					let subject = 'Solicitud de recuperación de contraseña';
+					let variables = {
+						Nombre: user.person.name,
+						confirmation_link:link
+					};
+					mailjet.sendMail(user.person.email,user.person.name,subject,template_pass_recovery,variables);
 					user.save();
 					res.status(200).json({
 						'status': 200,
@@ -790,12 +816,20 @@ module.exports = {
 					user.mod.push(mod);
 					user.save()
 						.then (() => {
-							//mailjet.sendMail(user.person.email, user.person.name, 'Tu contraseña ha sido modificada por el administrador',393450)
-							//.then(() => {
-							res.status(200).json({
-								'status': 200,
-								'message': 'Password for user -' + req.body.username + '- reset by -' + key_user.name + '-'
-							});
+							let subject = 'Tu contraseña ha sido modificada por el administrador';
+							let variables = {
+								Nombre: user.person.name
+							};
+							mailjet.sendMail(user.person.email,user.person.name,subject,template_pass_change,variables)
+								.then(() => {
+									res.status(200).json({
+										'status': 200,
+										'message': 'Password for user -' + req.body.username + '- reset by -' + key_user.name + '-'
+									});
+								})
+								.catch((err) => {
+									Err.sendError(res,err,'user_controller','adminPasswordReset -- Saving User--');
+								});
 						})
 						.catch((err) => {
 							Err.sendError(res,err,'user_controller','adminPasswordReset -- Saving User--');
@@ -838,9 +872,14 @@ module.exports = {
 							res.status(200).json({
 								'message': user.name
 							});
-							var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
-							var templateId = template_user_change;
-							mailjet.sendMail(user.person.email, user.person.name, 'Se ha modificado tu correo electrónico',templateId,link)
+							let link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
+							let templateId = template_user_change;
+							let subject = 'Se ha modificado tu correo electrónico';
+							let variables = {
+								Nombre: user.person.name,
+								confirmation_link: link
+							};
+							mailjet.sendMail(user.person.email,user.person.name,subject,templateId,variables)
 								.catch((err) => {
 									Err.sendError(res,err,'user_controller','changeUser -- Sending Mail --');
 								});

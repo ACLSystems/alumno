@@ -25,9 +25,9 @@ const CacheController 			= require('../controllers/cache_controller'					);
 const JobController 				= require('../controllers/job_controller'						);
 const WorkShiftController		= require('../controllers/workShifts_controller'		);
 const ProjectController 		= require('../controllers/projects_controller'			);
-// var dir 										= process.env.ORDIR;
-// const fileSize 							= 1048576;
-// const files 								= 1;
+// var dir 										= process.env.DBX_ORDIR;
+// const fileSize 							= process.env.DBX_FILESIZE;
+// const files 								= process.env.DBX_FILES;
 
 require('../shared/cache');
 

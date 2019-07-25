@@ -1,14 +1,20 @@
+const StatusCodes = require('http-status-codes');
 const mailjet 	= require('../shared/mailjet'	);
 const ErrorReg	= require('../src/errors'			);
 const version 	= require('../version/version'	);
-
-//const devEmail		= 'arturocastro@aclsystems.mx';
-const devEmail		= process.env.DEV_EMAIL;
-//const devName			= 'Desarrollo API alumno';
-const devName 		= process.env.DEV_NAME;
-const templateID	= 321554;
-
 const logger = require('../shared/winston-logger');
+
+/**
+	* CONFIG
+	*/
+/** @const {string} - ambiente */
+const environment = process.env.NODE_ENV;
+/** @const {string}	- correo al que llegan notificaciones (grupo de desarrollo) */
+const devEmail		= process.env.NODE_DEV_EMAIL;
+/** @const {string}	- nombre del grupo de desarrollo */
+const devName 		= process.env.NODE_DEV_NAME;
+/** @const {number}	- plantilla a usar para enviar notificaciones por correo */
+const templateID	= parseInt(process.env.MJ_TEMPLATE_MAILERROR);
 
 exports.sendError = function(res,errorObj,controller,section,send,send_mail,message) {
 	const stringError = errorObj.toString();
@@ -25,11 +31,21 @@ exports.sendError = function(res,errorObj,controller,section,send,send_mail,mess
 		.then((errObj) => {
 			logger.error(`id: ${errObj._id}\ncontroller: ${controller}\nSection: ${section}\nStringError: ${stringError}\nStack: ${errorObj.stack}`);
 			if(!send_mail) {
-				mailjet.sendMail(devEmail, devName, `API error at ${controller}`, templateID, '',500,controller,process.env.NODE_ENV,errObj._id,errObj.error,errObj.stack,errObj.section,message);
+				let subject = `API error at ${controller}`;
+				let variables = {
+					'errNum': StatusCodes.INTERNAL_SERVER_ERROR,					// errNum
+					'controller': controller,			// controller
+					'section': section,				// section
+					'env': environment,						// environment
+					'id': errObj._id,							// id
+					'stringError': errObj.error,		// stringError
+					'errorStack': errObj.stack,			// errorStack
+					'message': message					// mensaje
+				};
+				mailjet.sendMail(devEmail,devName,subject,templateID,variables);
 			}
 			if(!send) {
-				res.status(500).json({
-					'status'	: 500,
+				res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 					'message'	: 'Error',
 					'Error'		: stringError,
 					'app'			: version.app,

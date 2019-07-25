@@ -1,6 +1,6 @@
 
 const Config = require('../src/config');
-const Err 					= require('../controllers/err500_controller');
+const Err 	= require('../controllers/err500_controller');
 
 module.exports = {
 
