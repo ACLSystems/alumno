@@ -94,7 +94,12 @@ module.exports = {
 											Notification.create(message)
 												.then(() => {
 													if(group.instructor && (!group.instructor.hasOwnProperty('preferences')  || !group.instructor.preferences.hasOwnProperty('alwaysSendEmail') || group.instructor.preferences.alwaysSendEmail)) {
-														mailjet.sendMail(group.instructor.person.email, group.instructor.person.name, 'Tienes una notificación',templateID,'curso',message.message);
+														let subject = 'Tienes una notificación';
+														let variables = {
+															'Nombre': group.instructor.person.name,
+															'mensaje': message.message
+														};
+														mailjet.sendMail(group.instructor.person.email,group.instructor.person.name,subject,templateID,variables);
 													}
 												})
 												.catch((err) => {
@@ -135,7 +140,12 @@ module.exports = {
 								Notification.create(message)
 									.then(() => {
 										if(send_email) {
-											mailjet.sendMail(f.who.item.person.email, f.who.item.person.name, 'Tienes una notificación',templateID,'curso',message.message);
+											let subject = 'Tienes una notificación';
+											let variables = {
+												'Nombre': f.who.item.person.name,
+												'mensaje': message.message
+											};
+											mailjet.sendMail(f.who.item.person.email,f.who.item.person.name,subject,templateID,variables);
 										}
 									})
 									.catch((err) => {

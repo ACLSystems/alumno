@@ -209,8 +209,12 @@ module.exports = {
 													usersToInsert.forEach(function(user) {
 														var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
 														var templateId = template_user_admin;
-
-														mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
+														let subject = 'Confirma tu correo electrónico';
+														let variables = {
+															'Nombre': user.person.name,
+															'confirmation_link':link,
+														};
+														mailjet.sendMail(user.person.email, user.person.name,subject,templateId,variables)
 															.catch((err) => {
 																Err.sendError(res,err,'massiveUser_controller','register -- Sending Mail --');
 															});
@@ -455,7 +459,12 @@ module.exports = {
 										fiscal.save().then().catch(() => {});
 									}
 									var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
-									mailjet.sendMail(user.person.email, user.person.name, 'Confirma tu correo electrónico',templateId,link)
+									let subject = 'Confirma tu correo electrónico';
+									let variables = {
+										'Nombre': user.person.name,
+										'confirmation_link':link,
+									};
+									mailjet.sendMail(user.person.email, user.person.name,subject,templateId,variables)
 										.then(() => {
 											res.status(StatusCodes.CREATED).json({
 												'message': 'User -' + userProps.name + '- created',
