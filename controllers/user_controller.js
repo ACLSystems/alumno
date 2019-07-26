@@ -31,6 +31,30 @@ const template_pass_change	= parseInt(process.env.MJ_TEMPLATE_PASSCHANGE);
 
 module.exports = {
 	register(req, res) {
+
+		/*
+			* Continua la validación
+			*/
+		if(!req.body.person.name) {
+			res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				'message': `Falta name {string} en la propiedad {person} para ${req.body.name}`
+			});
+			return;
+		} else if(!req.body.person.fatherName) {
+			res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				'message': `Falta fatherName {string} en la propiedad {person} para ${req.body.name}`
+			});
+			return;
+		} else if(!req.body.person.motherName) {
+			res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				'message': `Falta motherName {string} en la propiedad {person} para ${req.body.name}`
+			});
+			return;
+		}
+		/*
+			* Termina la validación
+			*/
+
 		var key = '';
 		const key_user 	= res.locals.user;
 		if(res.locals.user && res.locals.user.name) {
@@ -44,7 +68,7 @@ module.exports = {
 			adminCreate = true;
 		}
 		if(userProps.name !== userProps.person.email) { // que el nombre de usuario sera igual a su correo
-			userProps.name = userProps.person.email;
+			userProps.person.email = userProps.name;
 		}
 		Org.findOne({ name: userProps.org }, { name: true } ) // buscar organización
 			.then((org) => {

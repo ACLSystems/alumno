@@ -4,11 +4,13 @@ const multer 							= require('multer');
 const bodyParser 					= require('body-parser');
 const bodyParserJsonError = require('./shared/validatejson');
 const helmet 							= require('helmet');
+const StatusCodes 				= require('http-status-codes');
 // const cors 								= require('cors');
 const db 									= require('./src/db'); // eslint-disable-line no-unused-vars
 const cache 							= require('./src/cache'); // eslint-disable-line no-unused-vars
-const routes 							= require('./routes/routes');
 const FileController 			= require('./controllers/file_controller');
+const routes 							= require('./routes/routes');
+const publicRoutes				= require('./routes/public_routes');
 const app 								= express();
 
 /**
@@ -24,6 +26,7 @@ const files 							= parseInt(process.env.DBX_FILES) || 1;
 const jsonBodyLimit				= process.env.NODE_JSONBODYLIMIT || '50mb';
 // var whitelist = process.env.WHITELIST.split(' ') || '*';
 
+/** MULTER */
 var upload = multer({
 	dest: dir,
 	limits: {
@@ -33,37 +36,61 @@ var upload = multer({
 });
 
 app.disable('x-powered-by');
-// Encabezados CORS
+/** Encabezados CORS */
 app.use(function(req, res, next) {
 	res.header('Access-Control-Allow-Origin', '*'); // restrict it to the required domain
 	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
 	res.header('Access-Control-Allow-Headers', 'Content-type,Accept,X-Access-Token,X-Key');
 	if (req.method == 'OPTIONS') {
-		res.status(200).end();
+		res.status(StatusCodes.OK).end();
 	} else {
 		next();
 	}
 });
 
-// Encabezados de seguridad
+/** Encabezados de seguridad */
 app.use(helmet());
-// API para carga de archivos. Esta ruta usa Multer
-// por lo que no debe pasar por el bodyParser
+
+/**
+	*	Auth Middleware - Esto revisa si tenemos un token válido
+	* Solo peticiones que comiencen con /api/v1/* serán revisadas
+	* cualquier otro URL que no tenga este patrón debería ser
+	* evitado a menos que estemos seguros que no requiere
+	* autenticación
+	*/
+
+app.all	('/api/v1/*', [require('./controllers/validateRequest')]);
+
+/**
+	* API para carga de archivos. Esta ruta usa Multer
+ 	* por lo que no debe pasar por el bodyParser
+	*/
 app.post('/api/v1/file/upload', upload.single('file'), FileController.upload);
-// Para el resto de APIs validaciones del cuerpo
-// Esto solo si en un momento dado necesitamos un cuerpo URL encoded
+
+/**  Para el resto de APIs validaciones del body */
+
+/** Esto solo si en un momento dado necesitamos un cuerpo URL encoded */
 // app.use(bodyParser.urlencoded({extended:true, limit: '10mb'}));
+
 app.use(bodyParser.json({limit: jsonBodyLimit}));
 app.use(bodyParserJsonError());
-routes(app);
 
-// If no route is matched by now, it must be a 404
+/**
+	* RUTAS
+	*/
+routes(app);
+publicRoutes(app);
+
+/**
+	* Si no hay rutas que matchen debemos notificar que no
+	* existen RUTAS
+	* NO USAMOS next() porque ya no debería haber más middleware a partir de aquí
+	*/
 //app.use(function(req, res, next) {
 app.use(function(req, res) {
-	res.status(404).json({
-		'message': 'Error 100: API not found'
+	res.status(StatusCodes.NOT_FOUND).json({
+		'message': 'Error: API solicitada no existe'
 	});
 });
-
 
 module.exports = app;

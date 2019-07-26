@@ -3699,16 +3699,16 @@ module.exports = {
 				});
 		}
 	}, // setTracking
-	test(req,res) {
-		//var message = 'Mensaje de prueba';
-		res.status(200).json({
-			'url': process.env.NODE_LIBRETA_URI,
-			'public': process.env.MJ_APIKEY_PUBLIC,
-			'private': process.env.MJ_APIKEY_PRIVATE,
-			'hola': 'mundo'
-		});
-		//Err.sendError(res,message,'group_controller','test -- testing email --');
-	}, // test
+	// test(req,res) {
+	// 	//var message = 'Mensaje de prueba';
+	// 	res.status(200).json({
+	// 		'url': process.env.NODE_LIBRETA_URI,
+	// 		'public': process.env.MJ_APIKEY_PUBLIC,
+	// 		'private': process.env.MJ_APIKEY_PRIVATE,
+	// 		'hola': 'mundo'
+	// 	});
+	// 	//Err.sendError(res,message,'group_controller','test -- testing email --');
+	// }, // test
 
 	searchOrphanRoster(req,res) {
 		const key_user	= res.locals.user;

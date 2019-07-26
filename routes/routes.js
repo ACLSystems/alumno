@@ -1,8 +1,8 @@
-const GetNothing 						= require('../controllers/get_nothing'							);
-const HelpController 				= require('../controllers/help_controller'					);
+//const GetNothing 						= require('../controllers/get_nothing'							);
+//const HelpController 				= require('../controllers/help_controller'					);
 const ErrorMessController 	= require('../controllers/errmessage_controller'		);
 const UserController 				= require('../controllers/user_controller'					);
-const auth 									= require('./auth'																	);
+//const auth 									= require('./auth'																	);
 const MassUsersController 	= require('../controllers/massiveUsers_Controller'	);
 const OrgController 				= require('../controllers/org_controller'						);
 const OrgUnitController 		= require('../controllers/orgUnit_controller'				);
@@ -12,75 +12,32 @@ const FileController 				= require('../controllers/file_controller'					);
 const CareerController 			= require('../controllers/career_controller'				);
 const TermController 				= require('../controllers/term_controller'					);
 const DiscussionController 	= require('../controllers/discussion_controller'		);
-const CertController 				= require('../controllers/certs_controller'					);
+//const CertController 				= require('../controllers/certs_controller'					);
 const ReportController 			= require('../controllers/report_controller'				);
 const NotificationController = require('../controllers/notification_controller'	);
 const FollowController 			= require('../controllers/follow_controller'				);
 const logController 				= require('../controllers/log_controller'						);
 const RequestController 		= require('../controllers/request_controller'				);
 const SessionController			= require('../controllers/session_controller'				);
-// const multer 								= require('multer'																	);
 const ConfigController 			= require('../controllers/config_controller'				);
 const CacheController 			= require('../controllers/cache_controller'					);
 const JobController 				= require('../controllers/job_controller'						);
 const WorkShiftController		= require('../controllers/workShifts_controller'		);
 const ProjectController 		= require('../controllers/projects_controller'			);
-// var dir 										= process.env.DBX_ORDIR;
-// const fileSize 							= process.env.DBX_FILESIZE;
-// const files 								= process.env.DBX_FILES;
 
 require('../shared/cache');
 
-// if(!dir) {
-// 	dir = '/usr/src/data/files';
-// }
-
 module.exports = (app) => {
 
-	// app.all('/*', function(req, res, next) {
-	// // CORS headers
-	// 	res.header('Access-Control-Allow-Origin', '*'); // restrict it to the required domain
-	// 	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-	// 	// Set custom headers for CORS
-	// 	res.header('Access-Control-Allow-Headers', 'Content-type,Accept,X-Access-Token,X-Key');
-	// 	if (req.method == 'OPTIONS') {
-	// 		res.status(200).end();
-	// 	} else {
-	// 		next();
-	// 	}
-	// });
-
-
-
-
-	// MIDDLEWARE --------------------------------------------------------------------------
-
-	// var upload = multer({
-	// 	dest: dir,
-	// 	limits: {
-	// 		fileSize: fileSize,
-	// 		files: files
-	// 	}
-	// });
-
-
-	// Auth Middleware - This will check if the token is valid
-	// Only the requests that start with /api/v1/* will be checked for the token.
-	// Any URL's that do not follow the below pattern should be avoided unless you
-	// are sure that authentication is not needed
-	app.all	('/api/v1/*', 												[require('../controllers/validateRequest')]);
-
-	// Validate Middleware - Este middleware validará que se cumplan los requerimientos
-	// de cada API
-	app.all	('/api/user/*', 											[require('../controllers/validateParams')]);
-	app.get ('/api/errorcodes',										[require('../controllers/validateParams')]);
+	//app.all	('/api/user/*', 											[require('../controllers/validateParams')]);
+	//app.get ('/api/errorcodes',										[require('../controllers/validateParams')]);
 	app.all	('/api/v1/course/*', 									[require('../controllers/validateParams')]);
 	app.all	('/api/v1/author/course/*', 					[require('../controllers/validateParams')]);
 	//app.all	('/api/v1/author/file/*', 						[require('../controllers/validateParams')]);
 	app.all	('/api/v1/instructor/group/*',				[require('../controllers/validateParams')]);
 	app.all	('/api/v1/orgadm/*', 									[require('../controllers/validateParams')]);
-	app.all	('/api/orgunit/*', 										[require('../controllers/validateParams')]);
-	app.all	('/api/course/*', 										[require('../controllers/validateParams')]);
+	//app.all	('/api/orgunit/*', 										[require('../controllers/validateParams')]);
+	//app.all	('/api/course/*', 										[require('../controllers/validateParams')]);
 	app.all ('/api/v1/supervisor/user/*',					[require('../controllers/validateParams')]);
 	app.all ('/api/v1/requester/user/*',					[require('../controllers/validateParams')]);
 	app.all ('/api/v1/requester/request/*', 			[require('../controllers/validateParams')]);
@@ -90,28 +47,28 @@ module.exports = (app) => {
 
 	// RUTAS ---------------------------------------------------------------------------------
 
-	// Rutas públicas que cualquiera puede acceder
-
-	app.get ('/', 													GetNothing.greeting);
-	app.get ('/perf', 											GetNothing.perf);
-	app.post('/login', 											auth.login);
-	app.post('/api/test', 									GroupController.test);
-	app.post('/api/user/register', 					UserController.register);
-	app.get ('/api/user/near', 							OrgUnitController.index);
-	app.get ('/api/user/getdetails', 				UserController.getDetailsPublic);
-	app.put ('/api/user/confirm', 					UserController.confirm);
-	app.get ('/api/user/validateemail',			UserController.validateEmail);
-	app.put ('/api/user/passwordrecovery',	UserController.passwordRecovery);
-	app.get ('/api/help',										HelpController.help);
-	app.get ('/api/orgunit/list',						OrgUnitController.publiclist);
-	app.get ('/api/career/list',						CareerController.list);
-	app.get ('/api/career/listareas',				CareerController.listAreas);
-	app.get ('/api/term/list', 							TermController.list);
-	app.get ('/api/term/listtypes', 				TermController.listTypes);
-	app.get ('/api/course/getblocklist',		CourseController.getBlocklistStudents);
-	app.get ('/api/course/list', 						CourseController.listCoursesStudents);
-	app.get ('/api/course/count', 					CourseController.countCourses);
-	app.get ('/api/cert/get', 							CertController.getCertificate);
+	// // Rutas públicas que cualquiera puede acceder
+	//
+	// app.get ('/', 													GetNothing.greeting);
+	// app.get ('/perf', 											GetNothing.perf);
+	// app.post('/login', 											auth.login);
+	// app.post('/api/test', 									GroupController.test);
+	// app.post('/api/user/register', 					UserController.register);
+	// app.get ('/api/user/near', 							OrgUnitController.index);
+	// app.get ('/api/user/getdetails', 				UserController.getDetailsPublic);
+	// app.put ('/api/user/confirm', 					UserController.confirm);
+	// app.get ('/api/user/validateemail',			UserController.validateEmail);
+	// app.put ('/api/user/passwordrecovery',	UserController.passwordRecovery);
+	// app.get ('/api/help',										HelpController.help);
+	// app.get ('/api/orgunit/list',						OrgUnitController.publiclist);
+	// app.get ('/api/career/list',						CareerController.list);
+	// app.get ('/api/career/listareas',				CareerController.listAreas);
+	// app.get ('/api/term/list', 							TermController.list);
+	// app.get ('/api/term/listtypes', 				TermController.listTypes);
+	// app.get ('/api/course/getblocklist',		CourseController.getBlocklistStudents);
+	// app.get ('/api/course/list', 						CourseController.listCoursesStudents);
+	// app.get ('/api/course/count', 					CourseController.countCourses);
+	// app.get ('/api/cert/get', 							CertController.getCertificate);
 
 	// Rutas que pueden acceder solo usuarios autenticados
 

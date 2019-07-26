@@ -1,9 +1,9 @@
-const jwt 		= require('jwt-simple'											);
+const jwt 		= require('jwt-simple');
 const Users 	= require('../src/users'										);
 const Session = require('../src/sessions'									);
 const Err 		= require('../controllers/err500_controller');
-const Time 		= require('../shared/time');
-const cache 	= require('../src/cache');
+const Time 		= require('../shared/time'									);
+const Cache 	= require('../src/cache'										);
 
 //const logger = require('../shared/winston-logger');
 
@@ -150,12 +150,12 @@ module.exports = function(req, res, next) {
 						});
 						session.save()
 							.then(() => {
-								cache.hmset('session:id:'+user._id,{
+								Cache.hmset('session:id:'+user._id,{
 									url: url
 								});
-								cache.set('session:name:'+ user.name + ':' + user.orgUnit.name, 'session:id:'+user._id);
-								cache.expire('session:id:'+user._id,cache.ttlSessions);
-								cache.expire('session:name:'+ user.name + ':' + user.orgUnit.name,cache.ttlSessions);
+								Cache.set('session:name:'+ user.name + ':' + user.orgUnit.name, 'session:id:'+user._id);
+								Cache.expire('session:id:'+user._id,Cache.ttlSessions);
+								Cache.expire('session:name:'+ user.name + ':' + user.orgUnit.name,Cache.ttlSessions);
 							})
 							.catch((err) => {
 								Err.sendError(res,err,'auth -- Saving session -- User: ' + user.name + ' URL: ' + url);

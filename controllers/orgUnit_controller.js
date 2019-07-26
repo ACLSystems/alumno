@@ -1,3 +1,4 @@
+const StatusCodes = require('http-status-codes');
 const Org = require('../src/orgs');
 const OrgUnit = require('../src/orgUnits');
 const Err = require('../controllers/err500_controller');
@@ -122,9 +123,7 @@ module.exports = {
 						});
 				} //else3
 			} else { // else aqui
-				res.status(403);
-				res.json({
-					'status': 403,
+				res.status(StatusCodes.UNAUTHORIZED).json({
 					'message': 'User is not authorized'
 				});
 			}  // aqui
@@ -140,8 +139,7 @@ module.exports = {
 		var searchOU = {};
 		var searchO = {};
 		if(!key_user.roles.isOrg && !key_user.roles.isAdmin) { // Validamos si el usuario tiene permisos para crear  unidades en su organizacion
-			res.status(403).json({
-				'status': 403,
+			res.status(StatusCodes.FORBIDDEN).json({
 				'message': 'User ' + key_user.name + ' does not have permissions for Org -' + key_user.org + '-'
 			});
 		} else { //else2
@@ -240,8 +238,7 @@ module.exports = {
 								numOU.failed = failed.length;
 								var result = numOU;
 								result.details = failed;
-								res.status(200).json({
-									'status': 200,
+								res.status(StatusCodes.OK).json({
 									message: result
 								});
 							})
@@ -249,8 +246,7 @@ module.exports = {
 								Err.sendError(res,err,'orgUnit_controller','massiveRegister -- Finding orgUnits --');
 							});
 					} else {
-						res.status(404).json({
-							'status': 404,
+						res.status(StatusCodes.NOT_FOUND).json({
 							'message': 'Error: Org not found'
 						});
 					}
@@ -262,8 +258,7 @@ module.exports = {
 	}, //massiveRegister
 
 	index(req, res){
-		res.status(200).json({
-			'status': 404,
+		res.status(StatusCodes.OK).json({
 			'message': 'This API is in maintenance'
 		});
 
@@ -348,8 +343,7 @@ module.exports = {
 								address: ou.address
 							});
 						});
-						res.status(200).json({
-							'status': 200,
+						res.status(StatusCodes.OK).json({
 							'message': {
 								ousNum: send_ous.length,
 								ous: send_ous}
@@ -366,8 +360,7 @@ module.exports = {
 
 	publiclist(req,res) {
 		if(!req.query.org) {
-			res.status(200).json({
-				'status': 404,
+			res.status(StatusCodes.NOT_ACCEPTABLE).json({
 				'message': 'Error: missing org name by query'
 			});
 			return;
@@ -417,7 +410,7 @@ module.exports = {
 		OrgUnit.findOne({name: req.query.ou})
 			.select('name type parent longName')
 			.then(ou =>  {
-				res.status(200).json({
+				res.status(StatusCodes.OK).json({
 					'message': ou
 				});
 			}).catch((err) => {

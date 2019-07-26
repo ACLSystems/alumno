@@ -1,9 +1,10 @@
-const jwt = require('jwt-simple');
-const Users = require('../src/users');
-const Session = require('../src/sessions');
-const Time 		= require('../shared/time');
-const cache 	= require('../src/cache');
-const logger = require('../shared/winston-logger');
+const StatusCodes = require('http-status-codes');
+const jwt 				= require('jwt-simple');
+const Users 			= require('../src/users');
+const Session			= require('../src/sessions');
+const Time 				= require('../shared/time');
+const cache 			= require('../src/cache');
+const logger 			= require('../shared/winston-logger');
 
 /**
 	* CONFIG
@@ -24,9 +25,7 @@ var auth = {
 		var password = req.body.password || '';
 
 		if (username == '' || password == '') {
-			res.status(401).json({
-				'status': 401,
-				//'message': 'Please, give credentials'
+			res.status(StatusCodes.UNAUTHORIZED).json({
 				'message': 'Error: Por favor, proporcione las credenciales para acceder'
 			});
 			return;
@@ -39,9 +38,7 @@ var auth = {
 			})
 			.then((user) => {
 				if(!user) {
-					res.status(404).json({
-						'status': 404,
-						//'message': 'User -' + username + '- not found'
+					res.status(StatusCodes.NOT_FOUND).json({
 						'message': 'Error: el usuario o el password no son correctos'
 					});
 				} else {
@@ -64,8 +61,7 @@ var auth = {
 									cache.set('session:name:'+ user.name + ':' + user.orgUnit.name, 'session:id:'+user._id);
 									cache.expire('session:id:'+user._id,cache.ttlSessions);
 									cache.expire('session:name:'+ user.name + ':' + user.orgUnit.name,cache.ttlSessions);
-									res.status(200).json({
-										'status': 200,
+									res.status(StatusCodes.OK).json({
 										'token': objToken.token,
 										'expires': objToken.expires
 									});
@@ -75,9 +71,7 @@ var auth = {
 								});
 
 						} else {
-							res.status(400).json({
-								'status': 400,
-								//'message': 'Password incorrect'
+							res.status(StatusCodes.UNAUTHORIZED).json({
 								'message': 'Error: el usuario o el password no son correctos'
 							});
 						}
@@ -85,8 +79,8 @@ var auth = {
 				}
 			})
 			.catch((err) => {
-				const mess = {id: 500, error: 'Error: server error'};
-				res.status(500).send(mess + err);
+				const mess = {id: StatusCodes.INTERNAL_SERVER_ERROR, error: 'Error: server error'};
+				res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(mess + err);
 			});
 	}
 };
@@ -115,8 +109,7 @@ function expiresIn(numDays) {
 function sendError(res, err, section) {
 	logger.error('Auth -- Section: ' + section + '----');
 	logger.error(err);
-	res.status(500).json({
-		'status': 500,
+	res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 		'message': 'Error',
 		'Error': err.message
 	});
