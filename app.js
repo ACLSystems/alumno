@@ -11,6 +11,8 @@ const cache 							= require('./src/cache'); // eslint-disable-line no-unused-va
 const FileController 			= require('./controllers/file_controller');
 const routes 							= require('./routes/routes');
 const publicRoutes				= require('./routes/public_routes');
+const exportRoutes 				= require('./routes/export_routes');
+const authorRoutes 				= require('./routes/author_routes');
 const app 								= express();
 
 /**
@@ -79,7 +81,9 @@ app.use(bodyParserJsonError());
 	* RUTAS
 	*/
 routes(app);
+authorRoutes(app);
 publicRoutes(app);
+exportRoutes(app);
 
 /**
 	* Si no hay rutas que matchen debemos notificar que no

@@ -324,36 +324,41 @@ module.exports = {
 		if(req.query.query) { query = JSON.parse(req.query.query); }
 		Org.findOne({ name: req.query.org })
 			.then((org) => {
-				query.org = org._id;
-				OrgUnit.find(query)
-					.sort(sort)
-					.skip(skip)
-					.limit(limit)
-					.then((ous) => {
-						var send_ous = [];
-						ous.forEach(function(ou) {
-							send_ous.push({
-								id: ou._id,
-								name: ou.name,
-								longName: ou.longName,
-								type: ou.type,
-								org: org.name,
-								parent: ou.parent,
-								geometry: ou.geometry,
-								address: ou.address
+				if(org){
+					query.org = org._id;
+					OrgUnit.find(query)
+						.sort(sort)
+						.skip(skip)
+						.limit(limit)
+						.then((ous) => {
+							var send_ous = [];
+							ous.forEach(function(ou) {
+								send_ous.push({
+									id: ou._id,
+									name: ou.name,
+									longName: ou.longName,
+									type: ou.type,
+									org: org.name,
+									parent: ou.parent,
+									geometry: ou.geometry,
+									address: ou.address
+								});
 							});
+							res.status(StatusCodes.OK).json({
+								'message': {
+									ousNum: send_ous.length,
+									ous: send_ous}
+							});
+						})
+						.catch((err) => {
+							Err.sendError(res,err,'orgUnit_controller','list -- Finding orgUnit --');
 						});
-						res.status(StatusCodes.OK).json({
-							'message': {
-								ousNum: send_ous.length,
-								ous: send_ous}
-						});
-					})
-					.catch((err) => {
-						Err.sendError(res,err,'orgUnit_controller','list -- Finding orgUnit --');
+				} else {
+					res.status(StatusCodes.NOT_FOUND).json({
+						'message': `No existe la organización ${req.query.org}`
 					});
-			})
-			.catch((err) => {
+				}
+			}).catch((err) => {
 				Err.sendError(res,err,'orgUnit_controller','list -- Finding org --');
 			});
 	}, // list

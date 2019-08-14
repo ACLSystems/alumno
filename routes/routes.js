@@ -6,7 +6,6 @@ const UserController 				= require('../controllers/user_controller'					);
 const MassUsersController 	= require('../controllers/massiveUsers_Controller'	);
 const OrgController 				= require('../controllers/org_controller'						);
 const OrgUnitController 		= require('../controllers/orgUnit_controller'				);
-const CourseController 			= require('../controllers/course_controller'				);
 const GroupController 			= require('../controllers/group_controller'					);
 const FileController 				= require('../controllers/file_controller'					);
 const CareerController 			= require('../controllers/career_controller'				);
@@ -31,8 +30,6 @@ module.exports = (app) => {
 
 	//app.all	('/api/user/*', 											[require('../controllers/validateParams')]);
 	//app.get ('/api/errorcodes',										[require('../controllers/validateParams')]);
-	app.all	('/api/v1/course/*', 									[require('../controllers/validateParams')]);
-	app.all	('/api/v1/author/course/*', 					[require('../controllers/validateParams')]);
 	//app.all	('/api/v1/author/file/*', 						[require('../controllers/validateParams')]);
 	app.all	('/api/v1/instructor/group/*',				[require('../controllers/validateParams')]);
 	app.all	('/api/v1/orgadm/*', 									[require('../controllers/validateParams')]);
@@ -123,33 +120,7 @@ module.exports = (app) => {
 	app.put ('/api/v1/instructor/group/savedates', 				GroupController.saveDates);
 	app.put ('/api/v1/instructor/group/releasecert',			GroupController.releaseCert);
 
-	// Rutas para roles de 'isAuthor'  --------------- AUTHOR/EDITOR -------------------------
 
-	app.get ('/api/v1/course/listcategories', 						CourseController.listCategories);
-	app.get ('/api/v1/course/listcourses', 								CourseController.listCourses);
-	app.post('/api/v1/author/course/create', 							CourseController.create);
-	app.post('/api/v1/author/course/createblock', 				CourseController.createBlock);
-	app.put ('/api/v1/author/course/modifyblock', 				CourseController.modifyBlock);
-	app.get ('/api/v1/author/course/getblock', 						CourseController.getBlock);
-	app.get ('/api/v1/author/course/getblocklist', 				CourseController.getBlocklist);
-	app.get ('/api/v1/author/course/getblockby', 					CourseController.getBlockBy);
-	app.get ('/api/v1/author/course/get', 								CourseController.get);
-	app.put ('/api/v1/author/course/newsection', 					CourseController.newSection);
-	app.put ('/api/v1/author/course/setnextsection', 			CourseController.setNextSection);
-	app.post('/api/v1/author/course/createquestionnarie', CourseController.createQuestionnarie);
-	app.post('/api/v1/author/course/createtasks', 				CourseController.createTasks);
-	app.get ('/api/v1/author/course/getquestionnarie', 		CourseController.getQuestionnarie);
-	app.put ('/api/v1/author/course/removequestionnarie', CourseController.removeQuestionnarie);
-	app.post('/api/v1/author/course/addquestions', 				CourseController.addQuestions);
-	app.put ('/api/v1/author/course/modify', 							CourseController.modify);
-	app.put ('/api/v1/author/course/moveblock', 					CourseController.moveBlock);
-	app.put	('/api/v1/author/course/setblockorder', 			CourseController.setBlockOrder);
-	app.put ('/api/v1/author/course/makeavailable', 			CourseController.makeAvailable);
-	app.post('/api/v1/author/course/createresource', 			CourseController.createResource);
-	app.put ('/api/v1/author/course/modifyresource',			CourseController.modifyResource);
-	app.get ('/api/v1/author/course/getresource', 				CourseController.getResource);
-	app.post('/api/v1/author/course/createdependency', 		CourseController.createDependency);
-	app.put ('/api/v1/author/course/clone',								CourseController.clone);
 
 
 	// Rutas para roles de 'isAdmin' ---------------ADMIN--------------------------------------

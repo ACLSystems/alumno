@@ -31,6 +31,7 @@
     "bcrypt-nodejs": "^0.0.3",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
+    "datauri": "^2.0.0",
     "dropbox": "^4.0.17",
     "es6-promise": "^4.2.6",
     "express": "^4.17.1",

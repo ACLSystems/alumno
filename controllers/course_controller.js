@@ -1,3 +1,4 @@
+const StatusCodes 	= require('http-status-codes');
 const Course				= require('../src/courses'				);
 const Category			= require('../src/categories'			);
 const Block					= require('../src/blocks'					);
@@ -9,20 +10,23 @@ const Resource 			= require('../src/resources'			);
 const Dependency 		= require('../src/dependencies'		);
 const logger 				= require('../shared/winston-logger');
 const cache					= require('../src/cache'					);
+const Err 					= require('./err500_controller');
 
 //const redisClient = redis.createClient(keys.redisUrl);
 
 module.exports = {
 	create(req,res) {
 		const key_user 	= res.locals.user;
-		var course = req.body;
+		var course = new Course(req.body);
 		course.org = key_user.org._id;
 		course.own = {
 			user: key_user.name,
 			org: key_user.org.name,
 			orgUnit: key_user.orgUnit.name
 		};
-		course.author = key_user.person.name + ' ' + key_user.person.fatherName;
+		if(!course.author){
+			course.author = key_user.person.name + ' ' + key_user.person.fatherName;
+		}
 		course.mod = {
 			by: key_user.name,
 			when: new Date(),
@@ -37,8 +41,8 @@ module.exports = {
 		};
 		course.status = 'draft';
 		course.version = 1;
-		Course.create(course)
-			.then(() => {
+		course.save()
+			.then((course) => {
 				if(course.categories && course.categories.length > 0) {
 					course.categories.forEach( function(cat) {
 						Category.findOne({ name: cat })
@@ -62,22 +66,21 @@ module.exports = {
 							});
 					}); // foreach
 				} else {
-					res.status(200).json({
-						'status'	: 200,
+					res.status(StatusCodes.NOT_ACCEPTABLE).json({
 						'message'	: 'Category missing or not an array'
 					});
 					return;
 				}
-				res.status(201).json({
-					'status': 201,
-					'message': 'Course - ' + course.title + '- -' + course.code + '- created'
+				res.status(StatusCodes.CREATED).json({
+					'message': 'Course - ' + course.title + '- -' + course.code + '- created',
+					'id': course._id
 				});
 			})
 			.catch((err) => {
 				if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
-					res.status(406).json({
-						'status': 406,
-						'message': 'Error 1447: course -' + course.code + '- already exists'
+					res.status(StatusCodes.NOT_ACCEPTABLE).json({
+						'message': 'Error 1447: course -' + course.code + '- already exists',
+						'id': course._id
 					});
 				} else {
 					sendError(res,err,'createCourse -- Saving Course --');
@@ -439,26 +442,24 @@ module.exports = {
 								course.nextNumber			= number + 1;
 								course.save()
 									.then(() => {
-										res.status(200).json({
-											'status': 200,
-											'message': 'block -' + block.code + '- of course -' + course.code + '- was saved.'
+										res.status(StatusCodes.OK).json({
+											'message': 'block -' + block.code + '- of course -' + course.code + '- was saved.',
+											'id': block._id
 										});
 									})
 									.catch((err) => {
 										sendError(res,err,'createBlock -- Relating block, saving course --');
 									});
 							} else {
-								res.status(200).json({
-									'status': 403,
+								res.status(StatusCodes.FORBIDDEN).json({
 									'message': 'User ' + key_user.name + ' has no permissions to create block on ' + course.title
 								});
 							}
 						})
 						.catch((err) => {
 							if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
-								res.status(406).json({
-									'status': 406,
-									'message': 'Error 1439: Block -' + req.body.code + '- already exists'
+								res.status(StatusCodes.NOT_ACCEPTABLE).json({
+									'message': 'Error: Block -' + req.body.code + '- already exists'
 								});
 							} else {
 								sendError(res,err,'createBlock -- Saving Block --');
@@ -466,8 +467,7 @@ module.exports = {
 						});
 					// aquí
 				} else {
-					res.status(404).json({
-						'status': 404,
+					res.status(StatusCodes.NOT_FOUND).json({
 						'message': 'Course not found'
 					});
 				}
@@ -537,7 +537,10 @@ module.exports = {
 									questText				: q.text,
 									questW					: q.w,
 									questIsVisible	: q.isVisible,
-									questFooter			: q.footer
+									questFooter			: q.footer,
+									questFooterShow : q.footerShow,
+									questHelp				: q.help,
+									questDisplay		: q.display
 								};
 								if(q.answers && q.answers.length > 0){
 									var answers = [];
@@ -591,6 +594,7 @@ module.exports = {
 							taskVersion		: ts.version,
 							taskKeywords	: ts.keywords,
 							taskIsVisible	: ts.isVisible,
+							taskJustDelivery: ts.justDelivery
 						};
 						if(ts.items && ts.items.length > 0) {
 							var send_items = [];
@@ -603,7 +607,8 @@ module.exports = {
 									itemLabel		: i.label,
 									itemType		: i.type,
 									itemFiles		: i.files,
-									itemW				: i.w
+									itemW				: i.w,
+									itemNotifications: i.Notifications
 								};
 								send_items.push(send_item);
 							});
@@ -748,6 +753,27 @@ module.exports = {
 			})
 			.catch((err) => {
 				sendError(res,err,'get -- Searching Course --');
+			});
+	}, // get
+
+	export(req,res) { // exportar curso por code o id
+		const key_user 	= res.locals.user;
+		var query = { _id: req.query.id };
+		if(!req.query.id) {
+			query = { code: req.query.code, org: key_user.org._id };
+		}
+		Course.findOne(query)
+			.then((course) => {
+				if(course){
+					res.status(StatusCodes.OK).json({course});
+				} else {
+					res.status(StatusCodes.NOT_FOUND).json({
+						'message': 'Error 1450: Couse -'+ course.code + '- does not exist'
+					});
+				}
+			})
+			.catch((err) => {
+				sendError(res,err,'get -- Export Course --');
 			});
 	}, // get
 
@@ -1448,8 +1474,7 @@ module.exports = {
 						if(req_block.wt) 						{block.wt 					= req_block.wt;						}
 						block.save()
 							.then(() => {
-								res.status(200).json({
-									'status': 200,
+								res.status(StatusCodes.OK).json({
 									'message': 'Block -'+ block._id +'- modified'
 								});
 							})
@@ -1457,14 +1482,12 @@ module.exports = {
 								sendError(res,err,'modifyBlock -- Saving block --');
 							});
 					} else {
-						res.status(406).json({
-							'status': 406,
+						res.status(StatusCodes.FORBIDDEN).json({
 							'message': 'Error 1463: User -' + key_user.name + '- does not have permissions on requested block'
 						});
 					}
 				} else {
-					res.status(404).json({
-						'status': 404,
+					res.status(StatusCodes.NOT_FOUND).json({
 						'message': 'Error 1462: block -' + req.body.id + '- not found'
 					});
 				}
@@ -1792,6 +1815,75 @@ module.exports = {
 				sendError(res,err,'makeAvailable.courses -- Searching Course --');
 			});
 	}, // makeAvailable
+
+	async addSection(req,res) {
+		const coursecode = req.params.coursecode;
+		const section = parseInt(req.params.section);
+		try {
+			const course = await Course.findOne({code: coursecode});
+			if(course) {
+				if(course.blocks && Array.isArray(course.blocks) && course.blocks.length > 0) {
+					try {
+						const result = await Block.updateMany({_id: {$in: course.blocks}, section: {$gte: section}}, {$inc:{section:1}});
+						res.status(StatusCodes.OK).json({
+							'message': `Curso ${coursecode} encontró ${result.n} y actualizó ${result.nModified} bloques`
+						});
+					} catch (err) {
+						Err.sendError(res,err,'course_controller','addSection -- updating blocks --');
+					}
+				} else {
+					res.status(StatusCodes.NOT_FOUND).json({
+						'message': `Curso ${coursecode} no tiene bloques`
+					});
+				}
+			} else {
+				res.status(StatusCodes.NOT_FOUND).json({
+					'message': `Curso ${coursecode} no fue encontrado`
+				});
+			}
+		} catch (err) {
+			Err.sendError(res,err,'course_controller','addSection -- Finding Course --');
+		}
+	}, //addSection
+
+	async modifySection(req,res) {
+		const coursecode = req.params.coursecode;
+		const section = parseInt(req.params.section);
+		const newSection = parseInt(req.params.newsection);
+		try {
+			const course = await Course.findOne({code: coursecode}).populate({
+				path: 'blocks',
+				select: 'section',
+				match: { section: section},
+			});
+			if(course) {
+				if(course.blocks && Array.isArray(course.blocks) && course.blocks.length > 0) {
+					var blocks = [];
+					course.blocks.forEach(block => {
+						blocks.push(block._id);
+					});
+					try {
+						const result = await Block.updateMany({_id: {$in: blocks}}, {section:newSection});
+						res.status(StatusCodes.OK).json({
+							'message': `Curso ${coursecode} encontró ${result.n} y actualizó ${result.nModified} bloques`
+						});
+					} catch (err) {
+						Err.sendError(res,err,'course_controller','addSection -- updating blocks --');
+					}
+				} else {
+					res.status(StatusCodes.NOT_FOUND).json({
+						'message': `Curso ${coursecode} no tiene bloques`
+					});
+				}
+			} else {
+				res.status(StatusCodes.NOT_FOUND).json({
+					'message': `Curso ${coursecode} no fue encontrado`
+				});
+			}
+		} catch (err) {
+			Err.sendError(res,err,'course_controller','addSection -- Finding Course --');
+		}
+	}, //modifySection
 
 	createDependency(req,res) {
 		const blockid 		= req.body.blockid;

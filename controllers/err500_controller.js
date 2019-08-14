@@ -8,6 +8,8 @@ const logger = require('../shared/winston-logger');
 	* CONFIG
 	*/
 /** @const {string} - ambiente */
+const instanceName = process.env.NODE_INSTANCE_NAME;
+/** @const {string} - ambiente */
 const environment = process.env.NODE_ENV;
 /** @const {string}	- correo al que llegan notificaciones (grupo de desarrollo) */
 const devEmail		= process.env.NODE_DEV_EMAIL;
@@ -35,7 +37,8 @@ exports.sendError = function(res,errorObj,controller,section,send,send_mail,mess
 				let variables = {
 					'errNum': StatusCodes.INTERNAL_SERVER_ERROR,					// errNum
 					'controller': controller,			// controller
-					'section': section,				// section
+					'section': section,				// section,
+					'instance': instanceName, // instancia
 					'env': environment,						// environment
 					'id': errObj._id,							// id
 					'stringError': errObj.error,		// stringError
