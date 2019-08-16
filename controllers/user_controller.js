@@ -1,7 +1,8 @@
 const generate 						= require('nanoid/generate');
-const bcrypt 							= require('bcrypt-nodejs');
+const bcrypt 							= require('bcryptjs');
 const urlencode 					= require('urlencode');
 const StatusCodes 				= require('http-status-codes');
+const jsonwebtoken 				= require('jsonwebtoken');
 const User 								= require('../src/users'											);
 const Org 								= require('../src/orgs'												);
 const OrgUnit 						= require('../src/orgUnits'										);
@@ -11,6 +12,7 @@ const Notification 				= require('../src/notifications'							);
 const Err 								= require('../controllers/err500_controller'	);
 const permissions 				= require('../shared/permissions'							);
 const mailjet							= require('../shared/mailjet'									);
+const version 						= require('../version/version');
 
 /**
 	* CONFIG
@@ -762,52 +764,49 @@ module.exports = {
 			});
 	},
 
-	//passwordChange(req, res, next) {
 	passwordChange(req, res) {
-		const key_user = res.locals.user;
-		const password = req.body.password;
-		User.findById(key_user._id)
-			.then((user) => {
-				if(user) {
-					user.admin.passwordSaved = 'saved';
-					//user.password = encryptPass(password);
-					user.password = password;
-					const date = new Date();
-					var mod = {
-						by: user.name,
-						when: date,
-						what: 'Password modified'
-					};
-					user.mod.push(mod);
-					//const result = permissions.access(key_user,user,'user');
-					//if(result.canModify) {
-					user.save()
-						.then (() => {
-							res.status(200).json({
-								'status': 200,
-								'message': 'Password for user -' + key_user.name + '- modified'
-							});
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'user_controller','passwordChange -- Saving User--');
-						});
-					/*
-					} else {
-						res.status(403).json({
-							'status': 403,
-							'message': 'User ' + key_user.name + ' not authorized'
-						});
-					}
-					*/
-				} else {
-					res.status(404).json({
-						'status': 404,
-						'message': 'User not found'
-					});
-				}
+		// Para el cambio de password necesitamos borrar TODOS los tokens
+		var privateKEY  = process.env.PRIV_KEY;
+		var buff 				= Buffer.from(privateKEY,'base64');
+		privateKEY 			= buff.toString('utf-8');
+		const audience 	= process.env.NODE_LIBRETA_URI;
+		const issuer  	= version.vendor;
+		const expiresD 	= process.env.NODE_EXPIRES || '7d';
+		const payload = {
+			id: res.locals.user._id,
+			person: res.locals.user.person,
+			orgUnit: res.locals.user.orgUnit
+		};
+		const signOptions = {
+			issuer,
+			subject: res.locals.user.name,
+			audience,
+			expiresIn: expiresD,
+			algorithm: 'RS256'
+		};
+		const token = jsonwebtoken.sign(payload, privateKEY, signOptions);
+		const tokenDecoded = jsonwebtoken.decode(token);
+		res.locals.user.admin.passwordSaved = 'saved';
+		res.locals.user.password = req.body.password;
+		res.locals.user.admin.tokens = [];
+		res.locals.user.admin.tokens.push(token);
+		var mod = {
+			by: res.locals.user.name,
+			when: new Date(),
+			what: 'Password modificado'
+		};
+		res.locals.user.mod.push(mod);
+		res.locals.user.save()
+			.then (() => {
+				res.status(StatusCodes.OK).json({
+					'message': 'Password  modificado',
+					token,
+					iat: tokenDecoded.iat,
+					exp: tokenDecoded.exp
+				});
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'user_controller','passwordChange -- Finding User --');
+				Err.sendError(res,err,'user_controller','passwordChange -- Saving User--');
 			});
 	}, //passwordChange
 

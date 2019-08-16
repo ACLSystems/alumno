@@ -2,7 +2,7 @@
 //const HelpController 				= require('../controllers/help_controller'					);
 const ErrorMessController 	= require('../controllers/errmessage_controller'		);
 const UserController 				= require('../controllers/user_controller'					);
-//const auth 									= require('./auth'																	);
+const AuthController 				= require('./auth'																	);
 const MassUsersController 	= require('../controllers/massiveUsers_Controller'	);
 const OrgController 				= require('../controllers/org_controller'						);
 const OrgUnitController 		= require('../controllers/orgUnit_controller'				);
@@ -71,6 +71,8 @@ module.exports = (app) => {
 
 	// Rutas para usuarios
 
+	app.post('/api/v1/user/logout', 						AuthController.logout);
+	app.post('/api/v1/user/logoutall', 					AuthController.logoutAll);
 	app.get ('/api/v1/user/myroles', 						UserController.myRoles);
 	app.get ('/api/v1/user/getdetails', 				UserController.getDetails);
 	app.put ('/api/v1/user/passwordchange', 		UserController.passwordChange);

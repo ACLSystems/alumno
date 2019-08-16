@@ -1,4 +1,4 @@
-const bcrypt 							= require('bcrypt-nodejs');
+const bcrypt 							= require('bcryptjs');
 const generate						= require('nanoid/generate');
 const urlencode 					= require('urlencode');
 const StatusCodes 				= require('http-status-codes');

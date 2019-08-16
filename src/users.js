@@ -1,7 +1,7 @@
 // Definir requerimientos
 const mongoose 					= require('mongoose'			);
 const moment 						= require('moment'				);
-const bcrypt 						= require('bcrypt-nodejs'	);
+const bcrypt 						= require('bcryptjs'			);
 const ModSchema 				= require('./modified'		);
 const PermissionsSchema = require('./permissions'	);
 const PointSchema 			= require('./point'				);
@@ -178,37 +178,49 @@ const RolesSchema = new Schema ({
 module.exports = RolesSchema;
 
 const AdmUsrSchema = new Schema({
+	// isActive Usuario activo o inactivo
 	isActive: {
 		type: Boolean,
 		default: true
 	},
+	// isVerified Sirve para validar la cuenta de correo
 	isVerified: {
 		type: Boolean,
 		default: false
 	},
+	// isDataVerified Sirve para validar los datos del usuario
 	isDataVerified: {
 		type: Boolean,
 		default: false
 	},
+	// recoverString Cadena para validar la pérdida del password
 	recoverString: {
 		type: String,
 		default: ''
 	},
+	// passwordSaved ???
 	passwordSaved:{
 		type: String,
 		default: ''
 	},
+	// validationString <-- Investigar para qué lo pusimos
 	validationString: {
 		type: String,
 		default: ''
 	},
+	// adminCreate Cuenta creada por el administrador
 	adminCreate: {
 		type: Boolean,
 		default: false
 	},
+	// initialPassword Para guardar el password original 
 	initialPassword: {
 		type: String
-	}
+	},
+	// tokens del usuario
+	tokens: [{
+		type: String
+	}]
 },{ _id: false });
 
 // Definir virtuals

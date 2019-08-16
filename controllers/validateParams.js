@@ -2798,6 +2798,14 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/user/logout':
+		next();
+		break;
+
+	case '/api/v1/user/logoutall':
+		next();
+		break;
+
 	case '/api/v1/requester/request/sendemail':
 		if(!req.body) {  // POST
 			res.status(406).json({

@@ -1,7 +1,7 @@
 const Org = require('../src/orgs');
 const OrgUnit = require('../src/orgUnits');
 const User = require('../src/users');
-const bcrypt = require('bcrypt-nodejs');
+const bcrypt = require('bcryptjs');
 const newpass = require('../config/newpass');
 
 const logger = require('../shared/winston-logger');
