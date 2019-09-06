@@ -7,8 +7,8 @@ module.exports = (app) => {
 	/**
 		* Cambiar las siguientes rutas a Validator
 	*/
-	app.all	('/api/v1/course/*', 									[require('../controllers/validateParams')]);
-	//app.all	('/api/v1/author/course/*', 					[require('../controllers/validateParams')]);
+	app.all	('/api/v1/course/*', 									[require('../middleware/validateParams')]);
+	//app.all	('/api/v1/author/course/*', 					[require('../middleware/validateParams')]);
 
 	/** @api {listcategories} /
 		* @apiName listCategories

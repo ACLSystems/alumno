@@ -1,6 +1,8 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const mongoose 	= require('mongoose');
+
+const Schema 		= mongoose.Schema;
+const ObjectId 	= Schema.Types.ObjectId;
 
 // Definir esquema y subesquemas
 
@@ -25,46 +27,46 @@ const DiscussionsSchema = new Schema ({
 		default: 'discussion'
 	},
 	root: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'discussions'
 	},
 	comment: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'discussions'
 	},
 	replyto: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'discussions'
 	},
 	block: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'blocks'
 	},
 	blockExists: {
 		type: Boolean
 	},
 	group: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'groups'
 	},
 	course: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'courses'
 	},
 	org: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgs'
 	},
 	orgUnit: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgUnits'
 	},
 	user: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'users'
 	},
 	toUser: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'users'
 	},
 	date: {

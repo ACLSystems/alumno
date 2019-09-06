@@ -1,9 +1,11 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const ModSchema = require('./modified');
-const OwnerSchema = require('./owner');
+const mongoose 					= require('mongoose');
+const ModSchema 				= require('./modified');
+const OwnerSchema 			= require('./owner');
 const PermissionsSchema = require('./permissions');
-const Schema = mongoose.Schema;
+
+const Schema 						= mongoose.Schema;
+const ObjectId 					= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -16,7 +18,7 @@ const AdminSchema = new Schema({
 		max: [1000,'Maximum value is 1000'],
 		default: 2
 	}
-});
+},{ _id: false });
 
 module.exports = AdminSchema;
 
@@ -34,14 +36,14 @@ const DatesSchema = new Schema ({
 		type: String,
 		enum: ['general','exam','task','certificate']
 	}
-});
+},{ _id: false });
 
 module.exports = DatesSchema;
 
 
 const RubricSchema = new Schema ({
 	block: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'blocks'
 	},
 	wq: {
@@ -63,7 +65,7 @@ const RubricSchema = new Schema ({
 		default: 0
 	},
 	text: String
-});
+},{ _id: false });
 
 module.exports = RubricSchema;
 
@@ -91,19 +93,19 @@ const GroupsSchema = new Schema ({
 		default: false
 	},
 	course: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'courses'
 	},
 	instructor: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'users'
 	},
 	roster: [{
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'rosters'
 	}],
 	students: [{
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'users'
 	}],
 	presentBlockBy: {
@@ -129,17 +131,17 @@ const GroupsSchema = new Schema ({
 	}],
 	blockDates: [{
 		block: {
-			type: Schema.Types.ObjectId,
+			type: ObjectId,
 			ref: 'blocks'
 		},
 		date: Date
 	}],
 	org: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgs'
 	},
 	orgUnit: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgUnits'
 	},
 	minGrade: {
@@ -163,7 +165,7 @@ const GroupsSchema = new Schema ({
 		default: true
 	},
 	project: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'projects'
 	},
 	own: OwnerSchema,

@@ -56,6 +56,7 @@ exports.sendMail = function(toEmail,toName,subject,templateID,variables) {
 						});
 					}
 				}
+				console.log(mail_message);
 				return;
 			});
 	});

@@ -4120,7 +4120,42 @@ module.exports = {
 		}).catch((err) => {
 			Err.sendError(res,err,'group_controller','moveRoster -- Finding users --');
 		});
-	} // moveRoster
+	}, // moveRoster
+
+	async certTemplate(req,res) {
+		const datauri = require('datauri').promise;
+		const fs = require('fs');
+		try {
+			const imageFileUri = await datauri('./files/c104a.jpg');
+			if(imageFileUri) {
+				fs.writeFile('/Users/Arturo/aclprojects/cetec/src/app/user/models/docscetec.ts', 'export var constancias =' + JSON.stringify({constancia_participacion: imageFileUri, constancia_acreditacion: imageFileUri}),
+					function(err) {
+						if(err) {
+							res.status(500).json({
+								//uri: imageFileUri
+								message: 'error'
+							});
+							console.log(err);
+						} else {
+							console.log('ok');
+						}
+					});
+				res.status(200).json({
+					//uri: imageFileUri
+					message: 'ok'
+				});
+			} else {
+				res.status(404).json({
+					message: 'No existe la plantilla'
+				});
+			}
+		} catch(err) {
+			res.status(500).json({
+				message: 'Error con la plantilla',
+				err: err
+			});
+		}
+	}
 };
 
 

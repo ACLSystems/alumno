@@ -39,7 +39,6 @@ module.exports = function(req, res, next) {
 	// o del cuerpo de la solicitud (aunque esto también va pa'fuera)
 	// Validar el tema del case-insensitive para los encabezados
 	var token = req.headers['Authorization'] || req.headers['authorization'] || req.headers['x-access-token'] || (req.body && req.body.access_token) || null;
-
 	if(!token) {
 		res.status(401);
 		res.json({
@@ -107,7 +106,7 @@ module.exports = function(req, res, next) {
 		// Authorize the user to see if s/he can access our resources
 		//Users.findOne({ name: decoded.user })
 		// Usuario autenticado, veamos si puede acceder los recursos
-		Users.findOne({_id: decoded.id, 'admin.tokens': token})
+		Users.findOne({_id: decoded.userid, 'admin.tokens': token})
 			.populate({
 				path: 'org',
 				select: 'name',

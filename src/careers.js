@@ -1,6 +1,8 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const mongoose 	= require('mongoose');
+
+const Schema 		= mongoose.Schema;
+const ObjectId 	= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -25,7 +27,7 @@ const CareerSchema = new Schema ({
 		default: true
 	},
 	org: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgs'
 	}
 });
@@ -38,7 +40,7 @@ CareerSchema.index( { org		: 1					} );
 CareerSchema.index( { area	: 1					} );
 CareerSchema.index( { name	: 1, org: 1	}, { unique: true } );
 
-// Compilar esquema 
+// Compilar esquema
 
 const Career = mongoose.model('careers', CareerSchema);
 module.exports = Career;

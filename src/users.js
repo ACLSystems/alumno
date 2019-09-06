@@ -8,6 +8,7 @@ const PointSchema 			= require('./point'				);
 const AddressSchema 		= require('./address'			);
 
 const Schema 						= mongoose.Schema;
+const ObjectId 					= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -213,7 +214,7 @@ const AdmUsrSchema = new Schema({
 		type: Boolean,
 		default: false
 	},
-	// initialPassword Para guardar el password original 
+	// initialPassword Para guardar el password original
 	initialPassword: {
 		type: String
 	},
@@ -255,11 +256,11 @@ const UserSchema = new Schema ({
 		required: [true, 'Password is required']
 	},
 	org: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgs'
 	},
 	orgUnit: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgUnits'
 	},
 	report: {
@@ -288,7 +289,7 @@ const UserSchema = new Schema ({
 	student: StudentSchema,
 	corporate: CorporateSchema,
 	fiscal: [{
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'fiscalContacts'
 	}],
 	fiscalcurrent: {
@@ -296,7 +297,7 @@ const UserSchema = new Schema ({
 	},
 	preferences: PrefsSchema,
 	workShift: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'workshifts'
 	},
 	attachedToWShift: {
@@ -304,7 +305,7 @@ const UserSchema = new Schema ({
 		default: false
 	},
 	project: [{
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'projects'
 	}],
 	currentProject: {

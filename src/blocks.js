@@ -1,9 +1,11 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const ModSchema = require('./modified');
-const OwnerSchema = require('./owner');
+const mongoose 					= require('mongoose');
+const ModSchema 				= require('./modified');
+const OwnerSchema 			= require('./owner');
 const PermissionsSchema = require('./permissions');
-const Schema = mongoose.Schema;
+
+const Schema 						= mongoose.Schema;
+const ObjectId 					= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -11,7 +13,7 @@ mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 const BlocksSchema = new Schema ({
 	org: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgs'
 	},
 	code: {
@@ -44,11 +46,11 @@ const BlocksSchema = new Schema ({
 	},
 	rules: String,
 	questionnarie: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'questionnaries'
 	},
 	task: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'tasks'
 	},
 	wq: {

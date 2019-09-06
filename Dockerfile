@@ -61,6 +61,10 @@ RUN chown -R acluser:acl /usr/src/app/shared && chmod 750 -R /usr/src/app/shared
 COPY src src/
 RUN chown -R acluser:acl /usr/src/app/src && chmod 750 -R /usr/src/app/src
 
+# /middleware
+COPY middleware middleware/
+RUN chown -R acluser:acl /usr/src/app/middleware && chmod 750 -R /usr/src/app/middleware
+
 # /routes
 COPY routes routes/
 RUN chown -R acluser:acl /usr/src/app/routes && chmod 750 -R /usr/src/app/routes

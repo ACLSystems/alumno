@@ -338,7 +338,7 @@ module.exports = {
 				query.status = 'published';
 				query.isVisible = true;
 				Course.find(query)
-					.select('title code image type description categories keywords isVisible price cost author apiExternal defaultDaysDuration')
+					.select('title code image type description details categories keywords isVisible price cost author apiExternal defaultDaysDuration')
 					.cache({key: 'course:list:' + JSON.stringify(query)})
 					.lean()
 					.sort(sort)

@@ -1,10 +1,12 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const ModSchema = require('./modified');
-const OwnerSchema = require('./owner');
+const mongoose 					= require('mongoose');
+const ModSchema 				= require('./modified');
+const OwnerSchema 			= require('./owner');
 const PermissionsSchema = require('./permissions');
 //const BlocksSchema = require('./blocks');
-const Schema = mongoose.Schema;
+
+const Schema 						= mongoose.Schema;
+const ObjectId 					= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -41,7 +43,7 @@ const CoursesSchema = new Schema ({
 		required: true
 	},
 	org: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgs'
 	},
 	type: {
@@ -99,11 +101,11 @@ const CoursesSchema = new Schema ({
 	mod: [ModSchema],
 	perm: PermissionsSchema,
 	blocks: [{
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'blocks'
 	}],
 	resources: [{
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'resources'
 	}],
 	currentSection	: {

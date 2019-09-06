@@ -5,7 +5,9 @@ const ModSchema 				= require('./modified'			);
 const Config 						= require('./config'				);
 const FiscalContact 		= require('./fiscalContacts');
 const Time 							= require('../shared/time'	);
+
 const Schema 						= mongoose.Schema;
+const ObjectId 					= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -38,16 +40,16 @@ const ItemsSchema = new Schema ({
 const InvoiceSchema = new Schema ({
 	// Datos requeridos por el API
 	requester: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'users',
 		required: true
 	},
 	fiscalTag: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'fiscalContacts'
 	},
 	request: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'requests',
 		required: true
 	},

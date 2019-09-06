@@ -1,9 +1,10 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const ModSchema = require('./modified');
+const mongoose 					= require('mongoose');
+const ModSchema 				= require('./modified');
 const PermissionsSchema = require('./permissions');
-const OwnerSchema = require('./owner');
-const Schema = mongoose.Schema;
+const OwnerSchema 			= require('./owner');
+const Schema 						= mongoose.Schema;
+const ObjectId 					= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -38,7 +39,7 @@ const ItemSchema = new Schema ({
 		default: 1
 	},
 	notifications: {
-		type: [Schema.Types.ObjectId],
+		type: [ObjectId],
 		ref: 'notifications'
 	}
 });
@@ -51,11 +52,11 @@ module.exports = ItemSchema;
 
 const TaskSchema = new Schema ({
 	org: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgs'
 	},
 	orgUnit: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgUnits'
 	},
 	items: [ItemSchema],

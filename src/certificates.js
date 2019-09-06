@@ -2,7 +2,9 @@
 const mongoose 	= require('mongoose');
 const auto 			= require('mongoose-sequence')(mongoose);
 //const Roster 		= require('./roster');
+
 const Schema 		= mongoose.Schema;
+const ObjectId 	= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -14,7 +16,7 @@ const CertificateSchema = new Schema ({
 		unique: true
 	},
 	roster: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'rosters',
 		unique: true
 	},

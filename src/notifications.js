@@ -1,6 +1,8 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const mongoose 	= require('mongoose');
+
+const Schema 		= mongoose.Schema;
+const ObjectId 	= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -13,7 +15,7 @@ const NotificationSchema = new Schema({
 			default: 'users'
 		},
 		item: {
-			type: Schema.Types.ObjectId,
+			type: ObjectId,
 			refPath: 'destination.kind'
 		},
 		role: {
@@ -28,7 +30,7 @@ const NotificationSchema = new Schema({
 			default: 'users'
 		},
 		item: {
-			type: Schema.Types.ObjectId,
+			type: ObjectId,
 			refPath: 'source.kind'
 		},
 		role: {
@@ -63,7 +65,7 @@ const NotificationSchema = new Schema({
 			default: 'users'
 		},
 		item: {
-			type: Schema.Types.ObjectId,
+			type: ObjectId,
 			refPath: 'objects.kind'
 		}
 	}]

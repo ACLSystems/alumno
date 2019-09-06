@@ -1,6 +1,7 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const mongoose 	= require('mongoose');
+const Schema 		= mongoose.Schema;
+const ObjectId 	= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -9,7 +10,7 @@ mongoose.plugin(schema => { schema.options.usePushEach = true; });
 const QuerySchema = new Schema({
 	query: [],
 	user: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'users'
 	}
 });

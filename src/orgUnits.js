@@ -1,10 +1,12 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const ModSchema = require('./modified');
-const PointSchema = require('./point');
-const AddressSchema = require('./address');
+const mongoose 					= require('mongoose');
+const ModSchema 				= require('./modified');
+const PointSchema 			= require('./point');
+const AddressSchema 		= require('./address');
 const PermissionsSchema = require('./permissions');
-const Schema = mongoose.Schema;
+
+const Schema 						= mongoose.Schema;
+const ObjectId 					= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -36,7 +38,7 @@ const OrgUnitsSchema = new Schema ({
 		default: 3
 	},
 	org: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgs'
 	},
 	isActive: {

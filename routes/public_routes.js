@@ -1,7 +1,8 @@
-const Validator 				= require('express-route-validator');
-const StatusCodes 			= require('http-status-codes');
+//const Validator 				= require('express-route-validator');
+//const StatusCodes 			= require('http-status-codes');
+const Validate					= require('../middleware/validatePublic');
+const AuthMiddleware 		= require('../middleware/auth'								);
 const GetNothing 				= require('../controllers/get_nothing'				);
-const auth 							= require('./auth');
 const UserController		= require('../controllers/user_controller'		);
 const HelpController 		= require('../controllers/help_controller'		);
 const OrgUnitController = require('../controllers/orgUnit_controller'	);
@@ -12,14 +13,12 @@ const CertController 		= require('../controllers/certs_controller'		);
 
 module.exports = (app) => {
 
-
 	/** @api {get} /
 		* @apiName greeting
 		* @apiPermission none
 		* @apiGroup none
 		*/
 	app.get ('/', GetNothing.greeting);
-
 
 	/** @api {post} /login
 		* @apiName login
@@ -29,28 +28,13 @@ module.exports = (app) => {
 		* @apiParam {String} [password] password
 		* @apiSuccess (200) {Object} mixed regresa Token y Expiración
 		*/
-	app.post('/login', Validator.validate({
-		body: {
-			username: {
-				isRequired: true, isEmail: true, toLowerCase: true
-			},
-			password: {
-				isRequired: true
-			}
-		},
-		headers: {
-			'content-type': {isRequired: true, equals: 'application/json'}
-		},
-		errorHandler: function(err,req,res){
-			res.status(StatusCodes.BAD_REQUEST).json({
-				'message': 'Error: se requiere email (usuario@dominio.raiz) y password'
-			});
-			return;
-		}
-	}), auth.login);
+	app.post('/login',
+		Validate.login,
+		Validate.results,
+		AuthMiddleware.login
+	);
 
-
-	/** @api {post} /api/user/register
+	/** @api {post} /api/user
 		* @apiName Registro de usuario
 		* @apiPermission none / isAdmin
 		* @apiGroup User
@@ -61,78 +45,87 @@ module.exports = (app) => {
 		* @apiParam {String} [orgUnit] Unidad organizacional
 		* @apiSuccess (200) {Object}
 		*/
-	app.post('/api/user/register', Validator.validate({
-		body: {
-			name: {
-				isRequired: true, isEmail: true, toLowerCase: true
-			},
-			password: {
-				isRequired: true
-			},
-			person: {
-				isRequired: true
-			},
-			org: {
-				isRequired: true
-			},
-			orgUnit: {
-				isRequired: true
-			}
-		},
-		headers: {
-			'content-type': {isRequired: true, equals: 'application/json'}
-		},
-		errorHandler: function(err,req,res){
-			let returnMessage = {
-				message: 'Error: se requieren las siguientes propiedades',
-				name: req.body.name  || 'FALTA {String} (email válido)',
-				password: req.body.name || 'FALTA {String}',
-				person: req.body.person || 'FALTA {Object}',
-				org: req.body.org || 'FALTA {String}',
-				orgUnit: req.body.orgUnit || 'FALTA {String}',
-			};
-			res.status(StatusCodes.BAD_REQUEST).json(returnMessage);
-			return;
-		}
-	}),UserController.register);
+	app.post('/api/user',
+		Validate.userRegister,
+		Validate.results,
+		UserController.register);
 
-	/** @api {get} /api/user/near
+	/** @api {get} /api/orgunit/near
 		* @apiName Búsqueda de plantel más cercano
 		* @apiPermission none
-		* @apiGroup User
+		* @apiGroup OrgUnit
 		* @apiParam {String} [lng] longitud
 		* @apiParam {String} [lat] latitud
 		* @apiSuccess (200) {Object}
 		*/
-	app.get ('/api/user/near', Validator.validate({
-		body: {
-			lng: {
-				isRequired: true
-			},
-			lat: {
-				isRequired: true
-			}
-		},
-		headers: {
-			'content-type': {isRequired: true, equals: 'application/json'}
-		},
-		errorHandler: function(err,req,res){
-			let returnMessage = {
-				message: 'Error: se requieren las siguientes propiedades',
-				lat: req.body.lat  || 'FALTA {Number}',
-				lng: req.body.name || 'FALTA {Number}'
-			};
-			res.status(StatusCodes.BAD_REQUEST).json(returnMessage);
-			return;
-		}
-	}),OrgUnitController.index);
+	app.get ('/api/orgunit/near',
+		Validate.orgUnitNear,
+		Validate.results,
+		OrgUnitController.index);
 
+	/** @api {get} /api/user/:name
+		* @apiName Detalles del usuario
+		* @apiPermission none
+		* @apiGroup User
+		* @apiParam {String} [name] Nombre de usuario
+		* @apiSuccess (200) {Object}
+		*/
+	app.get ('/api/user/:name',
+		Validate.getDetailsPublic,
+		Validate.results,
+		UserController.getDetailsPublic);
 
-	app.get ('/api/user/getdetails', 				UserController.getDetailsPublic);
-	app.put ('/api/user/confirm', 					UserController.confirm);
-	app.get ('/api/user/validateemail',			UserController.validateEmail);
-	app.put ('/api/user/passwordrecovery',	UserController.passwordRecovery);
-	app.get ('/api/help',										HelpController.help);
+	/** @api {post} /api/user/confirm
+		* @apiName Confirmar cuenta del usuario
+		* @apiPermission none
+		* @apiGroup User
+		* @apiParam {String} [email] email de usuario
+		* @apiParam {String} [token] token temporal
+		* @apiParam {String} [name] Nombre de usuario
+		* @apiParam {String} [fatherName] Apellido paterno
+		* @apiParam {String} [motherName] Apellido materno
+		* @apiSuccess (200) {Object}
+		*/
+	app.post('/api/user/confirm',
+		Validate.confirm,
+		Validate.results,
+		UserController.confirm);
+
+	/** @api {post} /api/user/validateemail
+		* @apiName Validar cuenta de correo del usuario
+		* @apiPermission none
+		* @apiGroup User
+		* @apiParam {String} [email] email de usuario
+		* @apiSuccess (200) {Object}
+		*/
+	app.post('/api/user/validateemail',
+		Validate.validateEmail,
+		Validate.results,
+		UserController.validateEmail);
+
+	/** @api {post} /api/user/passwordrecovery
+		* @apiName Validar cuenta de correo para recuperar password del usuario
+		* @apiPermission none
+		* @apiGroup User
+		* @apiParam {String} [email] email de usuario
+		* @apiParam {String} [emailID] token temporal
+		* @apiParam {String} [password] password de usuario
+		* @apiSuccess (200) {Object}
+		*/
+	app.post('/api/user/passwordrecovery',
+		Validate.passwordRecovery,
+		Validate.results,
+		UserController.passwordRecovery);
+
+	/** @api {get} /api/help
+		* @apiName Ayuda y documentación (desaparecerá)
+		* @apiPermission none
+		* @apiGroup Public
+		* @apiSuccess (200) {Object}
+		*/
+	app.get ('/api/help',
+		HelpController.help);
+
 	app.get ('/api/orgunit/list',						OrgUnitController.publiclist);
 	app.get ('/api/career/list',						CareerController.list);
 	app.get ('/api/career/listareas',				CareerController.listAreas);
@@ -141,5 +134,28 @@ module.exports = (app) => {
 	app.get ('/api/course/getblocklist',		CourseController.getBlocklistStudents);
 	app.get ('/api/course/list', 						CourseController.listCoursesStudents);
 	app.get ('/api/course/count', 					CourseController.countCourses);
-	app.get ('/api/cert/get', 							CertController.getCertificate);
+
+	/** @api {post} /api/user/passwordrecovery
+		* @apiName Validar cuenta de correo para recuperar password del usuario
+		* @apiPermission none
+		* @apiGroup User
+		* @apiParam {Number} [certificate] número de folio del certificado
+		* @apiSuccess (200) {Object}
+		*/
+	app.get ('/api/cert/get',
+		Validate.getCertificate,
+		Validate.results,
+		CertController.getCertificate);
+
+	/** @api {post} /api/user/captcha
+		* @apiName Validar respuesta captcha
+		* @apiPermission none
+		* @apiGroup User
+		* @apiParam {String} [response] respuesta del captcha
+		* @apiSuccess (200) {Object}
+		*/
+	app.post('/api/user/captcha',
+		Validate.captcha,
+		Validate.results,
+		UserController.captcha);
 };

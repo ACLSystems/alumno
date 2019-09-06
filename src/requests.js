@@ -4,7 +4,9 @@ const ModSchema 				= require('./modified');
 const OwnerSchema 			= require('./owner');
 const PermissionsSchema = require('./permissions');
 const auto 							= require('mongoose-sequence')(mongoose);
+
 const Schema 						= mongoose.Schema;
+const ObjectId 					= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -12,7 +14,7 @@ mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 const RequestSchema = new Schema ({
 	requester: {						//Solicitante
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'users'
 	},
 	label: {
@@ -22,7 +24,7 @@ const RequestSchema = new Schema ({
 		type: String
 	}],
 	fiscalTag: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'fiscalContacts'
 	},
 	reqNumber: {
@@ -40,7 +42,7 @@ const RequestSchema = new Schema ({
 			default: 'groups'
 		},
 		item: {
-			type: Schema.Types.ObjectId,
+			type: ObjectId,
 			refPath: 'details.kind'
 		}
 	}],	// aquí se agregan los ids de grupos generados
@@ -60,11 +62,11 @@ const RequestSchema = new Schema ({
 		default: 0
 	},
 	coupon: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'coupons'
 	},
 	couponHold: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'couponHolders'
 	},
 	tax: {
@@ -127,7 +129,7 @@ const RequestSchema = new Schema ({
 	paymentNotes: [],
 	filesNotes: [],
 	files:[{
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'files'
 	}],
 	fiscalFiles:[],
@@ -135,7 +137,7 @@ const RequestSchema = new Schema ({
 		type: Boolean
 	},
 	invoice: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'invoices'
 	},
 	mod: [ModSchema],

@@ -1,8 +1,9 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const ModSchema = require('./modified');
+const mongoose 					= require('mongoose');
+const ModSchema 				= require('./modified');
 const PermissionsSchema = require('./permissions');
-const Schema = mongoose.Schema;
+
+const Schema 						= mongoose.Schema;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 

@@ -1,5 +1,7 @@
-const mongoose			= require('mongoose');
-const Schema 				= mongoose.Schema;
+const mongoose	= require('mongoose');
+
+const Schema 		= mongoose.Schema;
+const ObjectId 	= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -28,11 +30,11 @@ const WorkShiftSchema = new Schema({
 		type: String
 	},
 	org: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgs'
 	},
 	orgUnit: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgUnits'
 	},
 	allTime: {

@@ -26,6 +26,10 @@ var publicKEY  = process.env.PUB_KEY;
 const audience = process.env.NODE_LIBRETA_URI;
 const issuer  = version.vendor;
 
+if(!privateKEY || !publicKEY) {
+	throw new Error('No hay llaves para generar tokens');
+}
+
 // Decodificamos las llaves... vienen en base64
 var buff = Buffer.from(privateKEY,'base64');
 privateKEY = buff.toString('utf-8');
@@ -46,11 +50,15 @@ module.exports = {
 			return;
 		}
 		Users.findOne({$or: [{name: username},{'person.email': username}] })
-			.populate({
+			.populate([{
 				path: 'orgUnit',
 				select: 'name parent type longName',
 				options: { lean: true }
-			})
+			},{
+				path: 'org',
+				select: 'name longName',
+				options: { lean: true }
+			}])
 			.then((user) => {
 				if(!user) {
 					res.status(StatusCodes.NOT_FOUND).json({
@@ -60,9 +68,17 @@ module.exports = {
 					user.validatePassword(password, function(err, isOk) {
 						if(isOk) {
 							const payload = {
-								id: user._id,
+								admin: {
+									isActive : user.admin.isActive,
+									isVerified : user.admin.isVerified,
+									isDataVerified : user.admin.isDataVerified
+								},
+								attachedToWShift: user.attachedToWShift,
+								org: user.org,
+								userid: user._id,
 								person: user.person,
-								orgUnit: user.orgUnit
+								orgUnit: user.orgUnit,
+								preferences: user.preferences
 							};
 							const signOptions = {
 								issuer,

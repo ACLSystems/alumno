@@ -5,6 +5,7 @@ const Certificate		= require('./certificates');
 const Block 				= require('./blocks');
 const Task 					= require('./tasks');
 const Schema 				= mongoose.Schema;
+const ObjectId 			= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -21,7 +22,7 @@ const AdminSchema = new Schema ({
 		type: Date,
 		default: Date.now
 	}
-});
+},{ _id: false });
 
 // Definir virtuals
 
@@ -31,7 +32,7 @@ module.exports = AdminSchema;
 
 const depSchema = new Schema ({
 	dep: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'dependencies'
 	},
 	createAttempt: {
@@ -43,7 +44,7 @@ const depSchema = new Schema ({
 	saveTask: {
 		type: Boolean
 	}
-});
+},{ _id: false });
 
 // Definir virtuals
 
@@ -128,7 +129,7 @@ module.exports = QuestsSchema;
 
 const GradesSchema = new Schema ({
 	block: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'blocks'
 	},
 	tasks: [TasksSchema],
@@ -196,7 +197,7 @@ const GradesSchema = new Schema ({
 	order: {
 		type: Number
 	}
-});
+},{ _id: false });
 
 GradesSchema.pre('save', async function(next) {
 	if(this.tasks && Array.isArray(this.tasks) && this.tasks.length >0) {
@@ -309,7 +310,7 @@ module.exports = SectionSchema;
 
 const RosterSchema = new Schema ({
 	student: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'users'
 	},
 	status: {
@@ -319,15 +320,15 @@ const RosterSchema = new Schema ({
 	},
 	grades: [GradesSchema],
 	group: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'groups'
 	},
 	org: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgs'
 	},
 	orgUnit: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgUnits'
 	},
 	sections: [SectionSchema],
@@ -398,7 +399,7 @@ const RosterSchema = new Schema ({
 		default: Date.now
 	},
 	project: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'projects'
 	}
 });

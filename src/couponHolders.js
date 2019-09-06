@@ -1,6 +1,8 @@
 // Definir requerimientos
 const mongoose 	= require('mongoose');
-const Schema = mongoose.Schema;
+
+const Schema 		= mongoose.Schema;
+const ObjectId 	= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -8,7 +10,7 @@ mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 const CouponHolderSchema = new Schema ({
 	coupon: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'coupons',
 		required: true
 	},
@@ -21,7 +23,7 @@ const CouponHolderSchema = new Schema ({
 		enum: ['reserved','released','holding']
 	},
 	holder: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'users'
 	},
 	date: {

@@ -1113,6 +1113,10 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/user/certtemplate':
+		next();
+		break;
+
 	case '/api/v1/admin/user/validate':
 		next();
 		break;

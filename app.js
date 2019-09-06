@@ -42,7 +42,7 @@ app.disable('x-powered-by');
 app.use(function(req, res, next) {
 	res.header('Access-Control-Allow-Origin', '*'); // restrict it to the required domain
 	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-	res.header('Access-Control-Allow-Headers', 'Content-type,Accept,X-Access-Token,X-Key');
+	res.header('Access-Control-Allow-Headers', 'Content-type,Accept,X-Access-Token,X-Key,Authorization');
 	if (req.method == 'OPTIONS') {
 		res.status(StatusCodes.OK).end();
 	} else {
@@ -61,7 +61,7 @@ app.use(helmet());
 	* autenticación
 	*/
 
-app.all	('/api/v1/*', [require('./controllers/validateRequest')]);
+app.all	('/api/v1/*', [require('./middleware/validateRequest')]);
 
 /**
 	* API para carga de archivos. Esta ruta usa Multer

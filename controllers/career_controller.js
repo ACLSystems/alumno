@@ -1,8 +1,8 @@
-const Org = require('../src/orgs');
+const Org 		= require('../src/orgs');
 //const User = require('../src/users');
-const Career = require('../src/careers');
+const Career 	= require('../src/careers');
+const Err 		= require('../controllers/err500_controller');
 
-const logger = require('../shared/winston-logger');
 
 
 module.exports = {
@@ -185,14 +185,12 @@ module.exports = {
 									}
 								});
 							} else {
-								res.status(404).json({
-									'status': 404,
+								res.status(204).json({
 									'message': 'No areas found'
 								});
 							}
-						})
-						.catch((err) => {
-							sendError(res,err,'listAreas.Career -- Finding Areas --');
+						}).catch((err) => {
+							Err.sendError(res,err,'career_controller','listAreas -- Finding Areas --');
 						});
 				} else {
 					res.status(404).json({

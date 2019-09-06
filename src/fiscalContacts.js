@@ -6,6 +6,7 @@ const PermissionsSchema = require('./permissions'	);
 const Config 						= require('./config'			);
 
 const Schema 						= mongoose.Schema;
+const ObjectId 					= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -85,7 +86,7 @@ const FiscalContactSchema = new Schema({
 		default: false
 	},
 	orgUnit: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgUnits'
 	},
 	corporate: {

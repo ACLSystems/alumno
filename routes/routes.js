@@ -2,7 +2,7 @@
 //const HelpController 				= require('../controllers/help_controller'					);
 const ErrorMessController 	= require('../controllers/errmessage_controller'		);
 const UserController 				= require('../controllers/user_controller'					);
-const AuthController 				= require('./auth'																	);
+const AuthMiddleware 				= require('../middleware/auth'											);
 const MassUsersController 	= require('../controllers/massiveUsers_Controller'	);
 const OrgController 				= require('../controllers/org_controller'						);
 const OrgUnitController 		= require('../controllers/orgUnit_controller'				);
@@ -28,19 +28,19 @@ require('../shared/cache');
 
 module.exports = (app) => {
 
-	//app.all	('/api/user/*', 											[require('../controllers/validateParams')]);
-	//app.get ('/api/errorcodes',										[require('../controllers/validateParams')]);
-	//app.all	('/api/v1/author/file/*', 						[require('../controllers/validateParams')]);
-	app.all	('/api/v1/instructor/group/*',				[require('../controllers/validateParams')]);
-	app.all	('/api/v1/orgadm/*', 									[require('../controllers/validateParams')]);
-	//app.all	('/api/orgunit/*', 										[require('../controllers/validateParams')]);
-	//app.all	('/api/course/*', 										[require('../controllers/validateParams')]);
-	app.all ('/api/v1/supervisor/user/*',					[require('../controllers/validateParams')]);
-	app.all ('/api/v1/requester/user/*',					[require('../controllers/validateParams')]);
-	app.all ('/api/v1/requester/request/*', 			[require('../controllers/validateParams')]);
+	//app.all	('/api/user/*', 											[require('../middleware/validateParams')]);
+	//app.get ('/api/errorcodes',										[require('../middleware/validateParams')]);
+	//app.all	('/api/v1/author/file/*', 						[require('../middleware/validateParams')]);
+	app.all	('/api/v1/instructor/group/*',				[require('../middleware/validateParams')]);
+	app.all	('/api/v1/orgadm/*', 									[require('../middleware/validateParams')]);
+	//app.all	('/api/orgunit/*', 										[require('../middleware/validateParams')]);
+	//app.all	('/api/course/*', 										[require('../middleware/validateParams')]);
+	app.all ('/api/v1/supervisor/user/*',					[require('../middleware/validateParams')]);
+	app.all ('/api/v1/requester/user/*',					[require('../middleware/validateParams')]);
+	app.all ('/api/v1/requester/request/*', 			[require('../middleware/validateParams')]);
 	// Este middleware además validará si el usuario entra en un horario diferente
 	app.all	('/api/v1/user/*', 										[require('../controllers/shifts_controllers'),
-		require('../controllers/validateParams')]);
+		require('../middleware/validateParams')]);
 
 	// RUTAS ---------------------------------------------------------------------------------
 
@@ -71,8 +71,8 @@ module.exports = (app) => {
 
 	// Rutas para usuarios
 
-	app.post('/api/v1/user/logout', 						AuthController.logout);
-	app.post('/api/v1/user/logoutall', 					AuthController.logoutAll);
+	app.post('/api/v1/user/logout', 						AuthMiddleware.logout);
+	app.post('/api/v1/user/logoutall', 					AuthMiddleware.logoutAll);
 	app.get ('/api/v1/user/myroles', 						UserController.myRoles);
 	app.get ('/api/v1/user/getdetails', 				UserController.getDetails);
 	app.put ('/api/v1/user/passwordchange', 		UserController.passwordChange);
@@ -98,6 +98,7 @@ module.exports = (app) => {
 	app.post('/api/v1/user/follow/create', 			FollowController.create);
 	app.get ('/api/v1/user/follow/myfollows',		FollowController.myFollows);
 	app.put ('/api/v1/user/follow/delete', 			FollowController.delete);
+	app.get ('/api/v1/user/certtemplate', 			GroupController.certTemplate);
 
 	// Rutas que pueden acceder solo usuarios autenticados y con rol específico
 
@@ -134,8 +135,8 @@ module.exports = (app) => {
 	app.get ('/api/v1/admin/org/list', 						OrgController.list);
 	app.get ('/api/v1/admin/org/get', 						OrgController.getDetailsAdmin);
 	// ORGUNIT
-	app.get ('/api/v1/admin/orgunit/list', 				OrgUnitController.list);
-	app.get ('/api/v1/admin/orgunit/get', 				OrgUnitController.get);
+	// app.get ('/api/v1/admin/orgunit/list', 		OrgUnitController.list); <--- Esta le pertenece a isOrg
+	// app.get ('/api/v1/admin/orgunit/get', 			OrgUnitController.get); <--- Esta le pertenece a isOrg
 	// USERS
 	app.post('/api/v1/admin/user/register', 			UserController.register);
 	app.get ('/api/v1/admin/user/list', 					UserController.list);
@@ -197,6 +198,7 @@ module.exports = (app) => {
 	app.post('/api/v1/orgadm/orgunit/massiveregister', 	OrgUnitController.massiveRegister);
 	app.post('/api/v1/orgadm/orgunit/register', 				OrgUnitController.register);
 	app.get ('/api/v1/orgadm/orgunit/list', 						OrgUnitController.list);
+	app.get ('/api/v1/orgadm/orgunit/get', 							OrgUnitController.get);
 	// CAREER
 	app.post('/api/v1/orgadm/career/create', 						CareerController.create);
 	app.post('/api/v1/orgadm/career/massivecreate',			CareerController.massiveCreation);

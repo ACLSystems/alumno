@@ -1,6 +1,9 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const mongoose 	= require('mongoose');
+
+const Schema 		= mongoose.Schema;
+const ObjectId 	= Schema.Types.ObjectId;
+
 const {numVersion} = require('../version/version');
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
@@ -9,7 +12,7 @@ mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 const SessionSchema = new Schema ({
 	user: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'users'
 	},
 	token: {
@@ -31,11 +34,11 @@ const SessionSchema = new Schema ({
 		type: String
 	},
 	group: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'groups'
 	},
 	course: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'courses'
 	}
 });

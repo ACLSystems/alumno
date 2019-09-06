@@ -1,9 +1,11 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const ModSchema = require('./modified');
-const OwnerSchema = require('./owner');
+const mongoose 					= require('mongoose');
+const ModSchema 				= require('./modified');
+const OwnerSchema 			= require('./owner');
 const PermissionsSchema = require('./permissions');
-const Schema = mongoose.Schema;
+
+const Schema 						= mongoose.Schema;
+const ObjectId 					= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -128,7 +130,7 @@ module.exports = QuestionSchema;
 
 const QuestionnarieSchema = new Schema ({
 	org: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgs'
 	},
 	type: {

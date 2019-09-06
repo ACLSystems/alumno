@@ -1,9 +1,11 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const ModSchema = require('./modified');
-const OwnerSchema = require('./owner');
+const mongoose 					= require('mongoose');
+const ModSchema 				= require('./modified');
+const OwnerSchema 			= require('./owner');
 const PermissionsSchema = require('./permissions');
-const Schema = mongoose.Schema;
+
+const Schema 						= mongoose.Schema;
+const ObjectId 					= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -37,7 +39,7 @@ const JobsSchema = new Schema ({
 		type: String
 	},
 	user: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'users'
 	},
 	type: {
@@ -51,7 +53,7 @@ const JobsSchema = new Schema ({
 		default: 'time'
 	},
 	dependsOn: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'jobs'
 	},
 	priority: {
@@ -69,11 +71,11 @@ const JobsSchema = new Schema ({
 		default: 'America/Mexico_City'
 	},
 	org: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgs'
 	},
 	orgUnit: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'orgUnits'
 	},
 	own: OwnerSchema,

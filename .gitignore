@@ -72,5 +72,5 @@ doc/Oferta*
 Dockerfile
 docker-compose.yml
 process.yml
-wait-for-it.sh
-wait.sh
+.env
+*.jpg

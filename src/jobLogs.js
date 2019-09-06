@@ -1,6 +1,8 @@
 // Definir requerimientos
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const mongoose 	= require('mongoose');
+
+const Schema 		= mongoose.Schema;
+const ObjectId 	= Schema.Types.ObjectId;
 
 mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
@@ -13,7 +15,7 @@ const JobsLogSchema = new Schema ({
 		default: 'info'
 	},
 	job: {
-		type: Schema.Types.ObjectId,
+		type: ObjectId,
 		ref: 'jobs'
 	},
 	text: {

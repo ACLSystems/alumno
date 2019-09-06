@@ -348,7 +348,7 @@ module.exports = {
 	},
 
 	getDetailsPublic(req,res) {
-		const username = req.query.name;
+		const username = req.params.name;
 		User.findOne({ name: username })
 			.select('name person orgUnit admin.isVerified')
 			.populate('orgUnit', 'name')
@@ -636,16 +636,14 @@ module.exports = {
 			User.findOne({ name: userProps.name })
 				.populate('org','name')
 				.populate('orgUnit', 'name')
-				.then((user) => {
+				.then(user => {
 					if (!user) {
 						res.status(404).json({
-							'status': 404,
 							'message': 'User -' + userProps.name + '- does not exist'
 						});
 					} else {
 						if(key_user.org.name === user.org.name && !key_user.roles.isAdmin) {
 							res.status(406).json({
-								'status': 406,
 								'message': 'User ' + key_user.name + ' cannot modify roles for ' + user.name + '. They do not belong the same org.'
 							});
 						} else {
@@ -660,7 +658,7 @@ module.exports = {
 								if(userProps.roles.isInstructor !== undefined ) { user.roles.isInstructor = userProps.roles.isInstructor; }
 								if(userProps.roles.isSupervisor  !== undefined ) { user.roles.isSupervisor = userProps.roles.isSupervisor; }
 								if(userProps.roles.isRequester  !== undefined ) { user.roles.isRequester = userProps.roles.isRequester; }
-								user.save().catch((err) => {
+								user.save().catch(err => {
 									Err.sendError(res,err,'user_controller','setRoles -- Saving User--');
 								});
 								res.status(200).json({
@@ -799,7 +797,7 @@ module.exports = {
 		res.locals.user.save()
 			.then (() => {
 				res.status(StatusCodes.OK).json({
-					'message': 'Password  modificado',
+					'message': 'Password modificado',
 					token,
 					iat: tokenDecoded.iat,
 					exp: tokenDecoded.exp
@@ -938,6 +936,7 @@ module.exports = {
 		if(userProps.name) {
 			username = userProps.name;
 		}
+		console.log(userProps);
 		User.findOne({ 'name': username })
 			.then((user) => {
 				if(user) {
@@ -1596,6 +1595,40 @@ module.exports = {
 				Err.sendError(res,err,'user_controller','validatePassword -- Finding user--' + req.body.username);
 			});
 	}, // validatePassword
+
+	async captcha(req,res) {
+		const HTTPRequest = require('request-promise-native');
+		const secretKey = process.env.CAPTCHA_SECRET_KEY || null ;
+		const captchaServer = process.env.CAPTCHA_URL || null ;
+		if(!secretKey) {
+			res.status(StatusCodes.NOT_IMPLEMENTED).json({
+				message: 'Esta función está desactivada'
+			});
+		}
+		if(!captchaServer) {
+			res.status(StatusCodes.NOT_IMPLEMENTED).json({
+				message: 'Esta función está desactivada'
+			});
+		}
+		try {
+			let options = {
+				method	: 'POST',
+				uri			:	captchaServer,
+				headers	: {
+					'Content-type': 'application/x-www-form-urlencoded'
+				},
+				body		: `secret=${secretKey}&response=${req.body.response}`
+			};
+			let response = JSON.parse(await HTTPRequest(options));
+			if(response && response.success) {
+				res.status(StatusCodes.OK).json(response);
+			} else {
+				res.status(StatusCodes.BAD_REQUEST).json(response);
+			}
+		} catch (err) {
+			res.status(StatusCodes.BAD_REQUEST).json(err);
+		}
+	}, //captcha
 
 	actAs(req,res) {
 		User.findOne({name: req.query.username})

@@ -58,7 +58,7 @@ module.exports = {
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'cert_controller','Finding Roster -- Saving group -- certNumber: ' +
+				Err.sendError(res,err,'cert_controller','getCertificate -- Finding Roster, certNumber: ' +
 					cert);
 			});
 	}
