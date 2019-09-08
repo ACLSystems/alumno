@@ -132,7 +132,7 @@ module.exports = (app) => {
 	app.get ('/api/term/list', 							TermController.list);
 	app.get ('/api/term/listtypes', 				TermController.listTypes);
 	app.get ('/api/course/getblocklist',		CourseController.getBlocklistStudents);
-	app.get ('/api/course/list', 						CourseController.listCoursesStudents);
+	app.get ('/api/course/list', 						CourseController.listCoursesPublic);
 	app.get ('/api/course/count', 					CourseController.countCourses);
 
 	/** @api {post} /api/user/passwordrecovery

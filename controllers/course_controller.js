@@ -309,7 +309,7 @@ module.exports = {
 			});
 	}, // listCourses
 
-	listCoursesStudents(req,res) {
+	listCoursesPublic(req,res) {
 		var query = {};
 		Org.findOne({ name: req.query.org })
 			.select('name')
@@ -334,6 +334,9 @@ module.exports = {
 				}
 				if(req.query.author) {
 					query.author = { author: req.query.author };
+				}
+				if(req.query.priority) {
+					query.priority = { priority: req.query.priority };
 				}
 				query.status = 'published';
 				query.isVisible = true;
@@ -361,6 +364,8 @@ module.exports = {
 								cost: 				course.cost,
 								author: 			course.author,
 								apiExternal: 	course.apiExternal,
+								priority: 		course.priority,
+								order: 				course.order,
 								duration		: course.duration + '' + course.durationUnits,
 								defaultDaysDuration: course.defaultDaysDuration
 							});
@@ -374,13 +379,13 @@ module.exports = {
 						});
 					})
 					.catch((err) => {
-						sendError(res,err,'listCourses -- Finding Course --');
+						sendError(res,err,'listCoursesPublic -- Finding Course --');
 					});
 			})
 			.catch((err) => {
-				sendError(res,err,'listCourses -- Finding User --');
+				sendError(res,err,'listCoursesPublic -- Finding User --');
 			});
-	}, // listCoursesStudents
+	}, // listCoursesPublic
 
 	createBlock(req,res) {
 		const key_user 	= res.locals.user;

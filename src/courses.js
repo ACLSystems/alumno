@@ -140,6 +140,11 @@ const CoursesSchema = new Schema ({
 		type: Number,
 		default: 0
 	},
+	priority: {
+		type: String,
+		enum: ['new','popular','standard'],
+		default: 'standard'
+	},
 	apiExternal: APIExternalSchema
 });
 
@@ -167,6 +172,7 @@ CoursesSchema.index( { author			: 1 } );
 CoursesSchema.index( { keyworkds	: 1	}	);
 CoursesSchema.index( { categories	: 1	}	);
 CoursesSchema.index( { code				: 1, org: 1 }, { unique: true } );
+CoursesSchema.index( { priority		: 1	}	);
 
 // Compilar esquema
 
