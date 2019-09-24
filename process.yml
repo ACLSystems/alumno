@@ -1,5 +1,0 @@
-apps:
-  - script    : 'index.js'
-    name      : 'Alumno'
-    exec_mode : 'cluster'
-    instances : 4
