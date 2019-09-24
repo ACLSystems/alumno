@@ -2078,7 +2078,7 @@ module.exports = {
 		const groupid		= req.query.groupid;
 		const key_user 	= res.locals.user;
 		Roster.findOne({student: key_user._id, group: groupid})
-			.populate({
+			.populate([{
 				path: 'group',
 				select: 'course certificateActive beginDate endDate type rubric dates',
 				populate: {
@@ -2097,7 +2097,11 @@ module.exports = {
 					options: { lean: true }
 				},
 				options: { lean: true }
-			})
+			},
+			{
+				path: 'folio',
+				select: 'folio status'
+			}])
 			.then((item) => {
 				if(item) {
 					var blocks		= [];
@@ -2237,6 +2241,10 @@ module.exports = {
 							}
 							if(item.passDate) {
 								send_grade.passDateSpa = dateInSpanish(item.passDate);
+							}
+							if(item.folio) {
+								send_grade.folio	= item.folio.folio;
+								send_grade.folioStatus = item.folio.status;
 							}
 							if(item.group.course.duration) {
 								send_grade.duration 			= item.group.course.duration;

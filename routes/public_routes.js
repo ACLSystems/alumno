@@ -10,6 +10,7 @@ const CareerController 	= require('../controllers/career_controller'	);
 const TermController 		= require('../controllers/term_controller'		);
 const CourseController 	= require('../controllers/course_controller'	);
 const CertController 		= require('../controllers/certs_controller'		);
+const ChangeParams			= require('../middleware/changeParams'				);
 
 module.exports = (app) => {
 
@@ -87,6 +88,7 @@ module.exports = (app) => {
 		* @apiSuccess (200) {Object}
 		*/
 	app.post('/api/user/confirm',
+		ChangeParams.confirm,
 		Validate.confirm,
 		Validate.results,
 		UserController.confirm);

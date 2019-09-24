@@ -4,6 +4,7 @@ const ModSchema			= require('./modified');
 const Certificate		= require('./certificates');
 const Block 				= require('./blocks');
 const Task 					= require('./tasks');
+const Folio 				= require('./folio');
 const Schema 				= mongoose.Schema;
 const ObjectId 			= Schema.Types.ObjectId;
 
@@ -401,6 +402,10 @@ const RosterSchema = new Schema ({
 	project: {
 		type: ObjectId,
 		ref: 'projects'
+	},
+	folio: {
+		type: ObjectId,
+		ref: 'folios'
 	}
 });
 
@@ -408,9 +413,10 @@ const RosterSchema = new Schema ({
 
 // Definir middleware
 
-RosterSchema.pre('save', function(next) {
+RosterSchema.pre('save', async function(next) {
+	var item = this;
 	const now = new Date;
-	var grades = this.grades;
+	var grades = item.grades;
 	var fg = 0;
 	var i = 0;
 	var w = 0;
@@ -422,34 +428,48 @@ RosterSchema.pre('save', function(next) {
 		i++;
 	});
 
-	if(w > 0) { this.finalGrade = fg/w; }
-	this.track = parseInt(track / i);
+	if(!item.folio) {
+		var folio = new Folio({
+			user: item.student,
+			roster: item._id
+		});
+		folio.save().then(folio => {
+			item.folio = folio._id;
+		}).catch((err) => {
+			console.log('Cannot create folio. Roster: ' + item._id + ' ' + err); //eslint-disable-line
+		});
 
-	if(!this.pass && (this.finalGrade > this.minGrade && this.track > this.minTrack)) {
-		this.pass 		= true;
-		this.passDate	= now;
+	}
 
-		if(!this.certificateNumber || this.certificateNumber === 0) {
+	if(w > 0) { item.finalGrade = fg/w; }
+	item.track = parseInt(track / i);
+
+	if(!item.pass && (item.finalGrade > item.minGrade && item.track > item.minTrack)) {
+		item.pass 		= true;
+		item.passDate	= now;
+
+		if(!item.certificateNumber || item.certificateNumber === 0) {
 			var cert 	= new Certificate;
-			cert.roster = this._id;
+			cert.roster = item._id;
 			Certificate.findOne({roster: cert.roster})
 				.then((certFound) => {
 					if(certFound) {
-						this.certificateNumber = certFound.number;
+						item.certificateNumber = certFound.number;
 						next();
 					} else {
 						cert.save()
 							.then((cert) => {
-								this.certificateNumber = cert.number;
+								item.certificateNumber = cert.number;
 								next();
 							})
 							.catch((err) => {
-								console.log('Cannot create certificate. Roster: ' + this._id + ' ' + err); //eslint-disable-line
+								console.log('Cannot create certificate. Roster: ' + item._id + ' ' + err); //eslint-disable-line
 							});
 					}
+					next();
 				})
 				.catch((err) => {
-					console.log('Error trying to find certificate. Roster: ' + this._id + ' ' + err); //eslint-disable-line
+					console.log('Error trying to find certificate. Roster: ' + item._id + ' ' + err); //eslint-disable-line
 				});
 		}
 	} else {
@@ -470,6 +490,7 @@ RosterSchema.index( {orgUnit						: 1	} );
 RosterSchema.index( {project						: 1	} );
 RosterSchema.index( {certificateNumber	: 1	}, { sparse: true } );
 RosterSchema.index( {student						: 1, status: 	1 } );
+RosterSchema.index( {folio							: 1 } );
 
 // Compilar esquema
 
