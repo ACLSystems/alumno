@@ -97,6 +97,10 @@ const QuestionSchema = new Schema ({
 		// none		>>> Preguntas vacías (sin preguntas y sin respuesta). Sirven para colocar texto en medio de los cuestionarios.
 		required: true
 	},
+	order: {
+		type: Boolean,
+		default: false
+	},
 	options: [OptionSchema],
 	answers: [AnswerSchema],
 	isVisible: {

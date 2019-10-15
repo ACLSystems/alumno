@@ -24,10 +24,15 @@ const FolioSchema = new Schema ({
 		],
 		default: 'pending'
 	},
-	user: {
+	student: {
 		type: ObjectId,
 		ref: 'users',
 		required: [true, '"student" es requerido']
+	},
+	group: {
+		type: ObjectId,
+		ref: 'groups',
+		required: [true, '"group" es requerido']
 	},
 	roster: {
 		type: ObjectId,
@@ -41,7 +46,7 @@ const FolioSchema = new Schema ({
 
 FolioSchema.methods.assignFolio =
 function() {
-	var rack = hat.rack(72,17);
+	var rack = hat.rack(53,10);
 	this.folio = rack();
 };
 
@@ -51,12 +56,19 @@ FolioSchema.pre('save', function(next) {
 	if(!this.folio) {
 		this.assignFolio();
 	}
+	if(this.isDirectModified('folio')){
+		this.folio = this.folio.toUpperCase();
+	}
 	next();
 });
 
 // Definir índices
 
-FolioSchema.index({ folio: 1});
+FolioSchema.index({ folio: 		1 });
+FolioSchema.index({ roster: 	1 },{ unique: true });
+FolioSchema.index({ groupId: 	1 });
+FolioSchema.index({ student:	1 });
+
 
 // Compilar esquema
 

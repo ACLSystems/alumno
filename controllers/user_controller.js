@@ -29,7 +29,7 @@ const template_user_change	= parseInt(process.env.MJ_TEMPLATE_USER_CHANGE);
 /** @const {number} - plantilla para recuperación de contraseña */
 const template_pass_recovery	= parseInt(process.env.MJ_TEMPLATE_PASSREC);
 /** @const {number} - plantilla notificación al usuario sobre el cambio de correo hecho por el administrador */
-const template_pass_change	= parseInt(process.env.MJ_TEMPLATE_PASSCHANGE);
+const template_adm_pass_change	= parseInt(process.env.MJ_TEMPLATE_ADM_PASS_CHANGE);
 
 module.exports = {
 	register(req, res) {
@@ -687,7 +687,7 @@ module.exports = {
 
 	//validateEmail(req, res, next) {
 	validateEmail(req, res) {
-		const email = req.query.email;
+		const email = req.body.email;
 		User.findOne({ 'person.email': email})
 			.then((user) => {
 				if(user) {
@@ -739,6 +739,12 @@ module.exports = {
 									'status': 200,
 									'message': 'Password recovery sucessfully'
 								});
+								let template_pass_change = parseInt(process.env.MJ_TEMPLATE_PASSCH);
+								let subject = 'Solicitud de recuperación de contraseña';
+								let variables = {
+									Nombre: user.person.name
+								};
+								mailjet.sendMail(user.person.email,user.person.name,subject,template_pass_change, variables);
 							})
 							.catch((err) => {
 								Err.sendError(res,err,'user_controller','passwordRecovery -- Saving User --');
@@ -841,16 +847,11 @@ module.exports = {
 							let variables = {
 								Nombre: user.person.name
 							};
-							mailjet.sendMail(user.person.email,user.person.name,subject,template_pass_change,variables)
-								.then(() => {
-									res.status(200).json({
-										'status': 200,
-										'message': 'Password for user -' + req.body.username + '- reset by -' + key_user.name + '-'
-									});
-								})
-								.catch((err) => {
-									Err.sendError(res,err,'user_controller','adminPasswordReset -- Saving User--');
-								});
+							res.status(200).json({
+								'status': 200,
+								'message': 'Password for user -' + req.body.username + '- reset by -' + key_user.name + '-'
+							});
+							mailjet.sendMail(user.person.email,user.person.name,subject,template_adm_pass_change,variables);
 						})
 						.catch((err) => {
 							Err.sendError(res,err,'user_controller','adminPasswordReset -- Saving User--');

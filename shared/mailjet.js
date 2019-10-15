@@ -13,6 +13,7 @@ const fromName = process.env.MJ_FROMNAME;
 
 
 exports.sendMail = function(toEmail,toName,subject,templateID,variables) {
+	templateID = (typeof templateID != 'number') ? parseInt(templateID): templateID;
 	var mail_message =
 		{
 			'From': {
@@ -47,14 +48,10 @@ exports.sendMail = function(toEmail,toName,subject,templateID,variables) {
 				console.log('Error(es) de mailjet:');
 				if(err.response &&
 					err.response.res &&
-					err.response.text
+					err.response.res.text
 				){
-					let text = JSON.parse(err.response.res.text) || [];
-					if(Array.isArray(text.Messages) && text.Messages.length > 0){
-						text.Messages.forEach(message => {
-							console.log(JSON.stringify(message,null,2));
-						});
-					}
+					let text = JSON.parse(err.response.res.text);
+					console.log(JSON.stringify(text,null,2));
 				}
 				console.log(mail_message);
 				return;

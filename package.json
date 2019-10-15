@@ -1,6 +1,6 @@
 {
   "name": "alumno",
-  "version": "1.18.0",
+  "version": "1.19.0",
   "description": "Proyecto alumno",
   "main": "index.js",
   "scripts": {
@@ -20,15 +20,15 @@
     "plataforma",
     "arturo"
   ],
-  "author": "Arturo Castro / Hector Ramirez",
+  "author": "Arturo Castro",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/ACLSystems/alumno/issues"
   },
   "homepage": "https://github.com/ACLSystems/alumno#readme",
   "dependencies": {
+    "axios": "^0.19.0",
     "base64-js": "^1.3.1",
-    "bcrypt-nodejs": "^0.0.3",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",

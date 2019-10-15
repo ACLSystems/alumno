@@ -3,8 +3,11 @@ const HTTPRequest 	= require('request-promise-native');
 const Config 				= require('../src/config'										);
 const Request 			= require('../src/requests'									);
 const Invoice 			= require('../src/invoices'									);
+const Folio					= require('../src/folio'										);
+const Roster 				= require('../src/roster'										);
 const FiscalContact = require('../src/fiscalContacts'						);
 const File 					= require('../src/files'										);
+const mailjet				= require('../shared/mailjet'								);
 const Err 					= require('../controllers/err500_controller');
 
 /**
@@ -597,7 +600,55 @@ module.exports = {
 				message: 'No puede completarse su solicitud ya que el sistema no logró obtener la configuración. Contacte al administrador con este mensaje: "No se puede obtener configuración o hay un error al tratar de obtener la configuración"'
 			});
 		}
-	} //setPayment
+	}, //setPayment
+
+	async setFolios(req,res) {
+		const key_user 	= res.locals.user;
+		const folios 		= req.body || [];
+
+		if(folios.length === 0) {
+			res.status(StatusCodes.NO_CONTENT).json({
+				'message': 'No hay folios en la solicitud'
+			});
+			return;
+		} else {
+			var results = [];
+			for(var i=0; i < folios.length; i++) {
+				const res = await processFolio(folios[i],key_user.name);
+				if(res == 1) {
+					results.push({
+						status: 'error',
+						folio: folios[i],
+						message: 'El folio no fue encontrado'
+					});
+				} else if(res == 2) {
+					results.push({
+						status: 'error',
+						folio: folios[i],
+						message: 'El folio ya estaba procesado'
+					});
+				} else if(res == 3) {
+					results.push({
+						status: 'error',
+						folio: folios[i],
+						message: 'El roster/alumno de este folio no fue encontrado'
+					});
+				} else if(res.folio) {
+					results.push({
+						status: 'ok',
+						folio: folios[i],
+						message: 'El pago del folio fue registrado correctamente',
+						student: res.student.person,
+						group: res.group
+					});
+				}
+			}
+			res.status(StatusCodes.OK).json({
+				'meesage': `Se han procesado ${results.length} registros`,
+				'results': results
+			});
+		}
+	} //setFolios
 
 };
 
@@ -617,5 +668,67 @@ function processError(res,err,controllerMessage) {
 		});
 	} else {
 		Err.sendError(res,err,'request_controller',controllerMessage);
+	}
+}
+
+async function processFolio(folio, user) {
+	const template = parseInt(process.env.MJ_TEMPLATE_NOTUSER);
+	try {
+		/* Buscar folio */
+		const folioFound = await Folio.findOne({folio: folio})
+			.populate('student','name person')
+			.populate({
+				path: 'group',
+				select: 'course code name',
+				populate: {
+					path: 'course',
+					select: 'title'
+				}
+			});
+		if(folioFound) {
+			/* Validar que el folio esté en estatus 'pending'*/
+			if(folioFound.status === 'pending') {
+				/* Modificar registro de folio*/
+				folioFound.status = 'payed';
+				const date = new Date();
+				folioFound.mod.push({
+					by: user,
+					when: date,
+					what: 'Pago de folio procesado'
+				});
+				/* Buscar roster*/
+				var item = await Roster.findById(folioFound.roster);
+				if(item) {
+					item.mod.push({
+						by: user,
+						when: date,
+						what: `Pago de folio ${folioFound.folio} procesado`
+					});
+					item.status = 'active';
+					await item.save();
+					const variables = {
+						Nombre: folioFound.student.person.name,
+						mensaje: `El pago de tu curso - "${folioFound.group.course.title}" - ha sido procesado. Puedes descargar tu constancia desde plataforma.`
+					};
+					mailjet.sendMail(
+						folioFound.student.name,
+						folioFound.student.person.name,
+						'El pago de tu curso ha sido procesado',
+						template,
+						variables
+					);
+					await folioFound.save();
+					return folioFound;
+				} else {
+					return 3;
+				}
+			} else {
+				return 2;
+			}
+		} else {
+			return 1;
+		}
+	} catch (err) {
+		console.log(err);
 	}
 }

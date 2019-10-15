@@ -1,6 +1,6 @@
 
-const mongoose 	= require( 'mongoose' );
-const bcrypt 		= require('bcrypt-nodejs'			);
+const mongoose 	= require('mongoose');
+const bcrypt 		= require('bcryptjs');
 const logger 		= require('../shared/winston-logger');
 const newpass 	= require('../config/newpass'	);
 const Control 	= require('./control'					);
@@ -191,9 +191,7 @@ module.exports = {
 					});
 
 					// Creacion del usuario admin
-
-					const salt = bcrypt.genSaltSync(10);
-					const password = bcrypt.hashSync(newpass.admin(), salt);
+					const password = encryptPass(newpass.admin());
 					const admin = new Users({
 						name: 'admin@aclsystems.mx',
 						password: password,
@@ -328,3 +326,10 @@ module.exports = {
 			});
 	}
 };
+
+
+function encryptPass(obj) {
+	var salt = bcrypt.genSaltSync(10);
+	obj = bcrypt.hashSync(obj, salt);
+	return obj;
+}

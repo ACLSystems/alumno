@@ -290,6 +290,8 @@ module.exports = (app) => {
 	// REPORTS
 	app.get ('/api/v1/requester/report/groupsquery', 			ReportController.groupsQuery);
 
+	app.patch('/api/v1/requester/folio', 									RequestController.setFolios);
+
 	// Rutas para archivos
 
 	// app.post('/api/v1/file/upload', 	upload.single('file'), FileController.upload);

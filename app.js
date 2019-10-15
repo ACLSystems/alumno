@@ -41,7 +41,7 @@ app.disable('x-powered-by');
 /** Encabezados CORS */
 app.use(function(req, res, next) {
 	res.header('Access-Control-Allow-Origin', '*'); // restrict it to the required domain
-	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,PATCH,DELETE,OPTIONS');
 	res.header('Access-Control-Allow-Headers', 'Content-type,Accept,X-Access-Token,X-Key,Authorization');
 	if (req.method == 'OPTIONS') {
 		res.status(StatusCodes.OK).end();

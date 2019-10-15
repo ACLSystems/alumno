@@ -2729,6 +2729,17 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/requester/folio':
+		if(!req.body) {  // Patch
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -: Please, give data by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/requester/request/get':
 		if(!req.query) {  // GET
 			res.status(406).json({

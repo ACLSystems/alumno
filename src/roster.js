@@ -4,7 +4,6 @@ const ModSchema			= require('./modified');
 const Certificate		= require('./certificates');
 const Block 				= require('./blocks');
 const Task 					= require('./tasks');
-const Folio 				= require('./folio');
 const Schema 				= mongoose.Schema;
 const ObjectId 			= Schema.Types.ObjectId;
 
@@ -345,6 +344,10 @@ const RosterSchema = new Schema ({
 		max: [100,'Maximum value is 100'],
 		default: 0
 	},
+	currentBlock: {
+		type: ObjectId,
+		ref: 'blocks'
+	},
 	minGrade: {
 		type: Number,
 		min: [0,'Minimum value is 0'],
@@ -402,10 +405,6 @@ const RosterSchema = new Schema ({
 	project: {
 		type: ObjectId,
 		ref: 'projects'
-	},
-	folio: {
-		type: ObjectId,
-		ref: 'folios'
 	}
 });
 
@@ -413,7 +412,7 @@ const RosterSchema = new Schema ({
 
 // Definir middleware
 
-RosterSchema.pre('save', async function(next) {
+RosterSchema.pre('save', function(next) {
 	var item = this;
 	const now = new Date;
 	var grades = item.grades;
@@ -427,19 +426,6 @@ RosterSchema.pre('save', async function(next) {
 		w += g.w;
 		i++;
 	});
-
-	if(!item.folio) {
-		var folio = new Folio({
-			user: item.student,
-			roster: item._id
-		});
-		folio.save().then(folio => {
-			item.folio = folio._id;
-		}).catch((err) => {
-			console.log('Cannot create folio. Roster: ' + item._id + ' ' + err); //eslint-disable-line
-		});
-
-	}
 
 	if(w > 0) { item.finalGrade = fg/w; }
 	item.track = parseInt(track / i);
@@ -490,7 +476,6 @@ RosterSchema.index( {orgUnit						: 1	} );
 RosterSchema.index( {project						: 1	} );
 RosterSchema.index( {certificateNumber	: 1	}, { sparse: true } );
 RosterSchema.index( {student						: 1, status: 	1 } );
-RosterSchema.index( {folio							: 1 } );
 
 // Compilar esquema
 
