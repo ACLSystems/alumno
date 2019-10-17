@@ -80,8 +80,8 @@ module.exports = {
 			// Esta parte sirve para recolectar la rúbrica
 				.populate({
 					path: 'blocks',
-					match: {type: {$in: ['task','questionnarie']}},
-					select: 'w wt wq'
+					// match: {type: {$in: ['task','questionnarie']}},
+					select: 'section number w wt wq'
 				}),
 			// ----
 			// Hay que ver si el instructor es un usuario válido
@@ -148,7 +148,10 @@ module.exports = {
 									block	: block._id,
 									w			: block.w,
 									wq		: block.wq,
-									wt		: block.wt
+									wt		: block.wt,
+									section: block.section,
+									number: block.number,
+									text: ''
 								});
 							});
 						}
@@ -444,6 +447,7 @@ module.exports = {
 	createRoster(req,res){
 		const key_user 	= res.locals.user;
 		var roster = req.body;
+		const version = 2;
 		var org 	 = '';
 		if(!roster.org) {
 			org = key_user.org;
@@ -531,6 +535,8 @@ module.exports = {
 												blocks.forEach(function(block) {
 													var gradePushed = {
 														block					: block._id,
+														blockSection	: block.section, // version 2
+														blockNumber 	: block.number,  // version 2
 														track					: 0,
 														maxGradeQ 		: 0,
 														gradeT				: 0,
@@ -599,6 +605,7 @@ module.exports = {
 													org				: group.org,
 													orgUnit		: group.orgUnit,
 													sections 	: sections,
+													version		: version,		// version 2
 													admin 		: [{
 														what		: 'Roster creation',
 														who			: key_user.name,
@@ -2152,63 +2159,93 @@ module.exports = {
 					// ------------
 
 					var grades = item.grades;
-					var i=0;
-					while(i < grades.length) {
-						var j=0;
-						var found = false;
-						let gradeOnRubric = rubric.find(rubric =>
-							rubric.block + '' === grades[i].block + '');
-						if(gradeOnRubric) {
-							console.log('Encontrado!');
-							console.log(gradeOnRubric);
-						}
-						while(!found && j < grades.length) {
-							// console.log(rubric[i]);
-							// console.log(grades[j]);
-							if(rubric.length > 0 &&
-								rubric[i] &&
-								rubric[i].block + '' === grades[j].block + '') {
-								console.log('sí encontré el bloque en la rúbrica');
-								grades[j].w 			= rubric[i].w;
-								grades[j].wq 			= rubric[i].wq;
-								grades[j].wt 			= rubric[i].wt;
-								grades[j].order 	= rubric[i].order;
-								grades[j].repair	= 1;
-								found = true;
-							} else if(bs[i]._id + '' === grades[j].block + '') {
-								grades[j].w 			= bs[i].w;
-								grades[j].wq 			= bs[i].wq;
-								grades[j].wt 			= bs[i].wt;
-								grades[j].order 	= bs[i].order;
-								grades[j].repair	= 1;
-								found = true;
-							}
-							j++;
-						}
 
-						if(!found) {
-							if(rubric.length > 0){
-								grades.push({
-									block	: rubric[i].block,
-									w 		: rubric[i].w,
-									wq 		:	rubric[i].wq,
-									wt		: rubric[i].wt,
-									order : rubric[i].order,
-									repair: 1
-								});
-							} else {
-								grades.push({
-									block	: bs[i]._id,
-									w 		: bs[i].w,
-									wq 		: bs[i].wq,
-									wt		: bs[i].wt,
-									order : bs[i].order,
-									repair: 1
-								});
+					// grades.forEach(g => {
+					// 	if(g.block + '' === '5a9d73f66fee79001c6d3b63'){
+					// 		console.log(g);
+					// 	}
+					// });
+
+					// Lograr lo siguiente:
+					// Revisar que grades tenga todos los bloques. Esto lo podríamos asegurar porque "nextBlock" se encarga de cargar TODOS los bloques en grades. Sin embargo, hay que revisar.
+					// ¿Cómo podemos saber si existen TODOS los bloques en grades?
+					// - Número de bloques en curso vs número de bloques en grades
+					// - Revisando uno por uno y comparando id's (funciones some, include)
+					// Revisar que exista RUBRIC en el grupo y reflejarlo en grades. RUBRIC en el grupo llevará la batuta hacia grades. Cualquier cambio en RUBRIC se debe ver reflejado en grades.
+
+					// console.log(`Tamaño de bloques ${bs.length}`);
+					// console.log(`Tamaño de grades ${grades.length}`);
+					// console.log(`Tamaño de rubric ${rubric.length}`);
+
+					// Checar que rubric sea compatible con bloques
+
+					var rubricOk = true;
+					// primer loop
+					if(rubric.length > 0  && bs.length > 0) {
+						var i=0;
+						rubric.forEach(rub => {
+							// bs.forEach(block => {
+							// 	if(rub.block + '' === block._id + '') {
+							// 		i++;
+							// 	}
+							// });
+							if(bs.some(b => b._id + '' === rub.block + '')) {
+								i++;
 							}
+						});
+						// console.log(i);
+						if(i !== rubric.length) {
+							rubricOk = false;
+						// 	console.log('chin!');
+						// } else {
+						// 	console.log('Vientos! Rubrica está completa');
 						}
-						i++;
 					}
+
+					// Checar que grades sea compatible con rúbrica
+					// segundo loop
+					var gradesOk = true;
+					if(grades.length > 0  && rubric.length > 0) {
+						i=0;
+						grades.forEach(g => {
+							// rubric.forEach(r => {
+							// 	if(r.block + '' === g.block + '') {
+							// 		i++;
+							// 	}
+							// });
+							if(rubric.some(r => r.block + '' === g.block + '')) {
+								i++;
+							}
+						});
+						// console.log(i);
+						if(i !== grades.length) {
+							gradesOk = false;
+						// 	console.log('chin!');
+						// } else {
+						// 	console.log('Vientos! grades está completa');
+						}
+					}
+
+					if(gradesOk && rubricOk) {
+						// Ya sabemos que todo está completo
+						// ahora la rúbrica manda sobre grades
+						// así que grades recibe los pesos de rúbrica
+						// En teoría son los mismos pesos.
+
+						// La rúbrica puede cambiar incluso ya comenzadas las actividades
+						// Por lo que es de vital importancia que siempre se lea
+						// correctamente la rúbrica y se plasme en grades.
+						// Tercer loop
+						grades.forEach(g => {
+							const foundR = rubric.find(r => r.block + '' === g.block + '');
+							if(foundR) {
+								g.w = foundR.w;
+								g.wq = foundR.wq;
+								g.wt = foundR.wt;
+							}
+						});
+					}
+
 					// ordenar el arreglo de grades
 
 					//grades.sort((a,b) => (a.order > b.order) ? 1 : -1);
@@ -2219,7 +2256,7 @@ module.exports = {
 						.then((item) => {
 						// ------
 							item.grades.forEach(grade => {
-								if(grade.wq > 0 || grade.wt > 0) {
+								if(grade.wq > 0 || grade.wt > 0 || grade.w > 0) {
 									var i = 0;
 									var block = {};
 									while (i < bs.length) {
@@ -2244,10 +2281,14 @@ module.exports = {
 									// }
 									if(item.group && item.group.rubric && item.group.rubric.length > 0){
 										let rubricItem = item.group.rubric.find(rItem => rItem.block + ''  === block.blockId + '');
-										if(rubricItem.text) {
+										if(rubricItem && rubricItem.text) {
 											block.blockRubricText = rubricItem.text;
 										}
 									}
+									// if(block.blockId + '' === '5a9d73f66fee79001c6d3b63') {
+									// 	console.log(grade);
+									// 	console.log(block);
+									// }
 									blocks.push(block);
 								}
 							});
@@ -4247,6 +4288,63 @@ module.exports = {
 				err: err
 			});
 		}
+	}, //certTemplate
+
+	async rosterMigrateV2(req,res) {
+		const rosterid = req.query.rosterid;
+		try {
+			var item = await Roster.findById(rosterid)
+				.populate({
+					path: 'group',
+					select: 'course',
+					populate: {
+						path: 'course',
+						select: 'blocks',
+						populate: {
+							path: 'blocks',
+							select: 'section number w wt wq'
+						}
+					}
+				});
+			if(item) {
+				if(item.grades && item.grades.length > 0) {
+					// console.log('acá andamos');
+					// console.log(item.group);
+					var blocks = item.group.course.blocks ? item.group.course.blocks : [];
+					// console.log(blocks);
+					item.grades.forEach(grade => {
+						let found = blocks.findIndex(block => block._id + '' === grade.block + '');
+						if(found > -1) {
+							grade.blockNumber = blocks[found].number;
+							grade.blockSection = blocks[found].section;
+							grade.w = blocks[found].w;
+							grade.wt = blocks[found].wt;
+							grade.wq = blocks[found].wq;
+						}
+					});
+					item.version = 2;
+					// console.log(item.grades);
+					await item.save();
+					res.status(200).json({
+						'message': 'roster migrado'
+					});
+				} else {
+					res.status(404).json({
+						message: 'El roster no tiene calificaciones. Favor de revisar.'
+					});
+				}
+			} else {
+				res.status(404).json({
+					message: 'No existe el roster solicitado'
+				});
+			}
+		} catch (err) {
+			res.status(500).json({
+				message: 'Error al tratar de localizar el roster',
+				err: err
+			});
+		}
+
 	}
 };
 

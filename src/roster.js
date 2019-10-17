@@ -132,6 +132,12 @@ const GradesSchema = new Schema ({
 		type: ObjectId,
 		ref: 'blocks'
 	},
+	blockSection: {
+		type: Number
+	},
+	blockNumber: {
+		type: Number
+	},
 	tasks: [TasksSchema],
 	tasktries: [{
 		type: Date
@@ -268,9 +274,11 @@ GradesSchema.pre('save', function(next) {
 		}
 	}
 	var wTotal = this.wq + this.wt;
-	if(wTotal > 0 && this.track === 100) {
+	if(wTotal > 0 && this.track === 100){
+		console.log('Aquí cambiamos el finalGrade');
 		this.finalGrade = (((this.wq * this.maxGradeQ)+(this.wt*this.gradeT))/(wTotal));
-	} else {
+	} else if(this.w === 0){
+		// Esta parte es para asegurarnos que no haya calificaciones en donde no debe
 		this.finalGrade = 0;
 	}
 	next();
@@ -405,6 +413,10 @@ const RosterSchema = new Schema ({
 	project: {
 		type: ObjectId,
 		ref: 'projects'
+	},
+	version: {
+		type: Number,
+		default: 1
 	}
 });
 
@@ -412,24 +424,70 @@ const RosterSchema = new Schema ({
 
 // Definir middleware
 
-RosterSchema.pre('save', function(next) {
+RosterSchema.pre('save', async function(next) {
 	var item = this;
 	const now = new Date;
 	var grades = item.grades;
-	var fg = 0;
 	var i = 0;
 	var w = 0;
+	var fg = 0;
 	var track = 0;
-	grades.forEach(function(g) {
-		fg = fg + (g.finalGrade * g.w);
-		track = track + g.track;
-		w += g.w;
-		i++;
-	});
+	if(item.version === 1){
+		grades.forEach(function(g) {
+			fg = fg + (g.finalGrade * g.w);
+			track = track + g.track;
+			w += g.w;
+			i++;
+		});
+		if(w > 0) { item.finalGrade = fg/w; }
+	}
+	if(item.version === 2) {
+		var grades2 = [];
+		grades.forEach(grade => {
+			track = track + grade.track;
+			i++;
+			if(grade.blockNumber === 0 && grade.w > 0) {
+				grades2.push({
+					section: grade.blockSection,
+					grades: [],
+					w: grade.w,
+					finalGrade: 0
+				});
+			} else {
+				let found = grades2.findIndex(grade2 => grade2.section === grade.blockSection);
+				if(found > -1 && grade.w > 0) {
+					grades2[found].grades.push({
+						number: grade.blockNumber,
+						w: grade.w,
+						wt: grade.wt,
+						wq: grade.wq,
+						finalGrade: grade.finalGrade
+					});
+				}
+			}
+		});
 
-	if(w > 0) { item.finalGrade = fg/w; }
+		if(grades2.length > 0) {
+			// ahora vamos sección por sección sacando calificaciones
+			// con la versión 2 de ponderación
+			grades2.forEach(sec => {
+				if(sec.grades && sec.grades.length > 0) {
+					sec.wTotal = sec.grades.reduce((acc,curr) => acc + curr.w,0);
+					sec.grades.forEach(g => {
+						g.wPer = sec.wTotal ? g.w / sec.wTotal : 0;
+					});
+					sec.finalGrade = sec.grades.reduce((acc,curr) => acc + curr.finalGrade * curr.wPer,0);
+				}
+			});
+			const wTotal = grades2.reduce((acc,curr) => acc + curr.w,0);
+			const finalGrade = grades2.reduce((acc,curr) => acc + (curr.w / wTotal) * curr.finalGrade,0);
+			// console.log(wTotal, finalGrade);
+			item.finalGrade = finalGrade;
+		}
+		// console.log(JSON.stringify(grades2,null,2));
+	}
+
 	item.track = parseInt(track / i);
-
 	if(!item.pass && (item.finalGrade > item.minGrade && item.track > item.minTrack)) {
 		item.pass 		= true;
 		item.passDate	= now;

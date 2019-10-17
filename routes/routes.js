@@ -189,6 +189,7 @@ module.exports = (app) => {
 	// PROJECTS
 	app.post('/api/v1/admin/proyect/create', 			ProjectController.create);
 	app.get ('/api/v1/admin/proyect/list', 				ProjectController.list);
+	app.get ('/api/v1/admin/roster/migrate', 			GroupController.rosterMigrateV2);
 
 	// Rutas para roles de 'isOrg' ---------------ORG--------------------------------------
 

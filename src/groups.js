@@ -64,6 +64,12 @@ const RubricSchema = new Schema ({
 		max: [100,'Maximum value is 100'],
 		default: 0
 	},
+	section: {
+		type: Number
+	},
+	number: {
+		type: Number
+	},
 	text: String
 },{ _id: false });
 
