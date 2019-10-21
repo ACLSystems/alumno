@@ -275,7 +275,7 @@ GradesSchema.pre('save', function(next) {
 	}
 	var wTotal = this.wq + this.wt;
 	if(wTotal > 0 && this.track === 100){
-		console.log('Aquí cambiamos el finalGrade');
+		// console.log('Aquí cambiamos el finalGrade');
 		this.finalGrade = (((this.wq * this.maxGradeQ)+(this.wt*this.gradeT))/(wTotal));
 	} else if(this.w === 0){
 		// Esta parte es para asegurarnos que no haya calificaciones en donde no debe
@@ -442,6 +442,7 @@ RosterSchema.pre('save', async function(next) {
 		if(w > 0) { item.finalGrade = fg/w; }
 	}
 	if(item.version === 2) {
+		// Aquí solo poblamos el arreglo de secciones y las lecciones van dentro de cada sección
 		var grades2 = [];
 		grades.forEach(grade => {
 			track = track + grade.track;
@@ -449,6 +450,7 @@ RosterSchema.pre('save', async function(next) {
 			if(grade.blockNumber === 0 && grade.w > 0) {
 				grades2.push({
 					section: grade.blockSection,
+					block: grade.block,
 					grades: [],
 					w: grade.w,
 					finalGrade: 0
@@ -466,19 +468,27 @@ RosterSchema.pre('save', async function(next) {
 				}
 			}
 		});
-
+		// console.log(JSON.stringify(grades2,null,2));
 		if(grades2.length > 0) {
 			// ahora vamos sección por sección sacando calificaciones
 			// con la versión 2 de ponderación
 			grades2.forEach(sec => {
-				if(sec.grades && sec.grades.length > 0) {
+				if(sec.grades && sec.grades.length > 0) { // checar si no está vacío
+					// sacar ponderaciones para la sección
 					sec.wTotal = sec.grades.reduce((acc,curr) => acc + curr.w,0);
 					sec.grades.forEach(g => {
 						g.wPer = sec.wTotal ? g.w / sec.wTotal : 0;
 					});
 					sec.finalGrade = sec.grades.reduce((acc,curr) => acc + curr.finalGrade * curr.wPer,0);
+					let found = item.grades.findIndex(grade => grade.block + '' === sec.block + '');
+					if(found > -1) {
+						item.grades[found].finalGrade = sec.finalGrade;
+					}
 				}
 			});
+
+			// console.log(JSON.stringify(grades2,null,2));
+
 			const wTotal = grades2.reduce((acc,curr) => acc + curr.w,0);
 			const finalGrade = grades2.reduce((acc,curr) => acc + (curr.w / wTotal) * curr.finalGrade,0);
 			// console.log(wTotal, finalGrade);

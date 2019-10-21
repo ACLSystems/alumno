@@ -2276,6 +2276,7 @@ module.exports = {
 										}
 									}
 									block.grade = grade.finalGrade;
+									block.track = grade.track;
 									// if(!block.blockTitle) {
 									// 	console.log(grade);
 									// }
@@ -2300,6 +2301,7 @@ module.exports = {
 								status						: item.status,
 								groupType					: item.group.type,
 								course						: item.group.course.title,
+								courseId					: item.group.course._id,
 								courseDuration		: item.group.course.duration,
 								courseDurUnits		: units(item.group.course.durationUnits),
 								certificateActive : item.group.certificateActive,
