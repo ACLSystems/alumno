@@ -462,7 +462,7 @@ module.exports = {
 					select: 'blocks title',
 					populate: {
 						path: 'blocks',
-						select: 'section w wq wt',
+						select: 'section number w wq wt',
 						options: { sort: {order: 1} }
 					}
 				})
@@ -536,7 +536,7 @@ module.exports = {
 													var gradePushed = {
 														block					: block._id,
 														blockSection	: block.section, // version 2
-														blockNumber 	: block.number,  // version 2
+														blockNumber 	: (block.number === 0) ? 0: block.number,  // version 2
 														track					: 0,
 														maxGradeQ 		: 0,
 														gradeT				: 0,
@@ -3249,7 +3249,7 @@ module.exports = {
 										const grades = item.grades;
 										if(Array.isArray(grades) && grades.length > 0) {
 											let grade = grades.find(grade => grade.block._id + '' === blockid);
-											console.log(grade);
+											// console.log(grade);
 											if(grade) {
 												send_block.blockGrade = grade.finalGrade;
 												send_block.blockGradedQ = grade.gradedQ;
@@ -4272,7 +4272,7 @@ module.exports = {
 							});
 							console.log(err);
 						} else {
-							console.log('ok');
+							// console.log('ok');
 						}
 					});
 				res.status(200).json({

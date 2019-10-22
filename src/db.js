@@ -23,6 +23,8 @@ let options = {
 mongoose.connect(encodeMongoURI(dbURI), options);
 mongoose.set('useCreateIndex', true);
 mongoose.set('useFindAndModify', false);
+mongoose.set('useNewUrlParser', true);
+mongoose.set('useUnifiedTopology', true);
 
 // Agregado para hacer debug. Apagar inmediatamente y por ningún motivo prenderlo en producción
 if(process.env.NODE_ENV &&

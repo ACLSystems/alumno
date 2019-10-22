@@ -442,11 +442,13 @@ RosterSchema.pre('save', async function(next) {
 		if(w > 0) { item.finalGrade = fg/w; }
 	}
 	if(item.version === 2) {
+		// console.log(item.version);
 		// Aquí solo poblamos el arreglo de secciones y las lecciones van dentro de cada sección
 		var grades2 = [];
 		grades.forEach(grade => {
 			track = track + grade.track;
 			i++;
+			// console.log(grade);
 			if(grade.blockNumber === 0 && grade.w > 0) {
 				grades2.push({
 					section: grade.blockSection,
@@ -487,11 +489,11 @@ RosterSchema.pre('save', async function(next) {
 				}
 			});
 
-			// console.log(JSON.stringify(grades2,null,2));
+			console.log(JSON.stringify(grades2,null,2));
 
 			const wTotal = grades2.reduce((acc,curr) => acc + curr.w,0);
 			const finalGrade = grades2.reduce((acc,curr) => acc + (curr.w / wTotal) * curr.finalGrade,0);
-			// console.log(wTotal, finalGrade);
+			console.log(wTotal, finalGrade);
 			item.finalGrade = finalGrade;
 		}
 		// console.log(JSON.stringify(grades2,null,2));
