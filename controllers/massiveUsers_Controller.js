@@ -203,7 +203,7 @@ module.exports = {
 													};
 													userToUpdate.mod.push(mod);
 													delete userToUpdate.password;
-													User.update({_id: userToUpdate._id}, {$set: userToUpdate})
+													User.updateMany({_id: userToUpdate._id}, {$set: userToUpdate})
 														.catch((err) => {
 															Err.sendError(res,err,'massiveUser_controller','register -- Users update --');
 														});

@@ -106,7 +106,7 @@ module.exports = {
 				}
 				if(term_updated.length > 0) {
 					term_updated.forEach(function(term2Up) {
-						Term.update({_id: term_updated._id}, {$set: term2Up})
+						Term.updateMany({_id: term_updated._id}, {$set: term2Up})
 							.catch((err) => {
 								sendError(res,err,'massiveCreation.Term -- updating terms --');
 							});

@@ -96,7 +96,7 @@ module.exports = {
 				}
 				if(car_updated.length > 0){
 					car_updated.forEach(function(car2Up) {
-						Career.update({_id: car_updated._id}, {$set: car2Up})
+						Career.updateMany({_id: car_updated._id}, {$set: car2Up})
 							.catch((err) => {
 								sendError(res,err,'massiveCreation.Career -- Updating --');
 							});

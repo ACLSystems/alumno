@@ -1510,7 +1510,7 @@ module.exports = {
 					if(block.questionnarie) {
 						Questionnarie.remove({_id:block.questionnarie})
 							.then(() => {
-								Block.update({_id:block._id},{$unset: {questionnarie: 1}})
+								Block.updateMany({_id:block._id},{$unset: {questionnarie: 1}})
 									.then(() => {
 										res.status(200).json({
 											'status': 200,

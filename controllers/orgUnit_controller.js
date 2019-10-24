@@ -228,7 +228,7 @@ module.exports = {
 								}
 								if(ouToUpdate) {
 									ouToUpdate.forEach(function(ou2Up) {
-										OrgUnit.update({_id: ou2Up._id}, {$set: ou2Up})
+										OrgUnit.updateMany({_id: ou2Up._id}, {$set: ou2Up})
 											.catch((err) => {
 												Err.sendError(res,err,'orgUnit_controller','massiveRegister -- updating orgUnits --');
 											});
