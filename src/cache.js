@@ -24,6 +24,7 @@ const redisClient = redis.createClient(options);
 redisClient.hget 			= promisify(redisClient.hget);
 redisClient.hgetall 	= promisify(redisClient.hgetall);
 redisClient.hmset 		= promisify(redisClient.hmset);
+redisClient.hset			= promisify(redisClient.hset);
 redisClient.set 			= promisify(redisClient.set);
 redisClient.get 			= promisify(redisClient.get);
 redisClient.lpush			= promisify(redisClient.lpush);

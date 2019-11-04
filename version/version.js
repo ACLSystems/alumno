@@ -1,4 +1,4 @@
-const version = '1.20.0';
+const version = '1.20.10';
 
 const now = new Date();
 module.exports = {

@@ -31,6 +31,8 @@ const template_pass_recovery	= parseInt(process.env.MJ_TEMPLATE_PASSREC);
 /** @const {number} - plantilla notificación al usuario sobre el cambio de correo hecho por el administrador */
 const template_adm_pass_change	= parseInt(process.env.MJ_TEMPLATE_ADM_PASS_CHANGE);
 
+const template_valemail_wopr = parseInt(process.env.MJ_TEMPLATE_VALEMAIL_WOPR);
+
 module.exports = {
 	register(req, res) {
 
@@ -257,6 +259,9 @@ module.exports = {
 						'message': 'No user ' + req.params.name + ' found'
 					});
 				} else {
+					const redisClient = require('../src/cache');
+					const hashKey = 'user:details:' + req.params.name;
+					redisClient.del(hashKey);
 					Promise.all([
 						Roster.deleteMany({student:user._id}),
 						Notification.deleteMany({
@@ -350,9 +355,11 @@ module.exports = {
 	getDetailsPublic(req,res) {
 		const username = req.params.name;
 		User.findOne({ name: username })
+			// .cache({key: 'user:details:' + username})
 			.select('name person orgUnit admin.isVerified')
 			.populate('orgUnit', 'name')
 			.then((user) => {
+				console.log(user);
 				if (!user) {
 					res.status(200).json({
 						'status': 404,
@@ -384,6 +391,7 @@ module.exports = {
 		const key_user = res.locals.user;
 		const username = req.query.name || key_user.name;
 		User.findOne({ name: username })
+			.cache({key: 'user:details:' + username})
 			.populate('org','name')
 			.populate('orgUnit', 'name')
 			.populate({
@@ -394,7 +402,6 @@ module.exports = {
 					select: 'name parent longName type'
 				}
 			})
-			.cache({key: 'user:details:' + username})
 			.lean()
 			.then((user) => {
 				if (!user) {
@@ -452,7 +459,8 @@ module.exports = {
 							send_user.admin = {
 								isActive		: user.admin.isActive,
 								isVerified	: user.admin.isVerified,
-								isDataVerified : user.admin.isDataVerified
+								isDataVerified : user.admin.isDataVerified,
+								recoverString: user.admin.recoverString
 							};
 						}
 						if(user.address) {
@@ -514,6 +522,7 @@ module.exports = {
 		const key_user = res.locals.user;
 		const username = req.query.username;
 		User.findOne({ name: username })
+			.cache({key: 'user:details:' + username})
 			.populate('org','name')
 			.populate('orgUnit', 'name longName')
 			.populate('project')
@@ -547,6 +556,7 @@ module.exports = {
 			User.findOne({ name: username })
 				.populate('org','name')
 				.populate('orgUnit', 'name longName parent type')
+				.select('name roles')
 				.then((user) => {
 					if (!user) {
 						res.status(404).json({
@@ -720,10 +730,134 @@ module.exports = {
 			});
 	},
 
-	passwordRecovery(req, res) {
-		const email = (req.body && req.body.email);
+	async validateEmailWithoutPasswordReset(req, res) {
+		const key_user = res.locals.user;
+		const redisClient = require('../src/cache');
+		const timeToLive = parseInt(process.env.CACHE_TTL);
+		try {
+			var user = await User.findOne({name: key_user.name});
+			if(user) {
+				var emailID = generate('1234567890abcdefghijklmnopqrstwxyz', 16);
+				user.admin.recoverString = emailID;
+				let subject = 'Confirmar correo electrónico';
+				let variables = {
+					Nombre: user.person.name,
+					clave: emailID
+				};
+				const hashKey = 'user:details:' + key_user.name;
+				const key = JSON.stringify(
+					Object.assign({}, {
+						name: key_user.name,
+						collection: 'users'
+					})
+				);
+				mailjet.sendMail(user.person.email,user.person.name,subject,template_valemail_wopr,variables);
+				await user.save();
+				await redisClient.hset(hashKey,key,JSON.stringify(user));
+				await redisClient.expire(hashKey, timeToLive);
+				res.status(200).json({
+					'message': 'Email found',
+					'id': emailID,
+				});
+			} else {
+				res.status(404);
+				res.json({
+					'status': 404,
+					'message': 'Usuario no existe'
+				});
+			}
+		} catch (err) {
+			Err.sendError(res,err,'user_controller','validateEmailWOPR -- Finding email --');
+		}
+	},
+
+	async confirmEmail(req, res) {
+		const key_user = res.locals.user;
 		const emailID = (req.body && req.body.emailID);
-		const password = (req.body && req.body.password);
+		const redisClient = require('../src/cache');
+		const timeToLive = parseInt(process.env.CACHE_TTL);
+		try {
+			var user = await User.findOne({name: key_user.name});
+			if(user) {
+				if(emailID === user.admin.recoverString) {
+					user.admin.recoverString = '';
+					user.admin.isVerified = true;
+					const hashKey = 'user:details:' + key_user.name;
+					const key = JSON.stringify(
+						Object.assign({}, {
+							name: key_user.name,
+							collection: 'users'
+						})
+					);
+					await user.save();
+					await redisClient.hset(hashKey,key,JSON.stringify(user));
+					await redisClient.expire(hashKey, timeToLive);
+					res.status(200).json({
+						'message': 'Validación de correo exitoso'
+					});
+				} else {
+					res.status(400).json({
+						'message': 'Código incorrecto. No podemos confirmar el correo electrónico'
+					});
+				}
+			} else {
+				res.status(404).json({
+					'message': 'Usuario inexistente'
+				});
+			}
+		} catch (err) {
+			Err.sendError(res,err,'user_controller','confirmEmail -- Finding user --');
+		}
+	},
+
+	async validateUserMaindata(req,res) {
+		const key_user = res.locals.user;
+		const name = req.body.name;
+		const fatherName = req.body.fatherName;
+		const motherName = req.body.motherName;
+		try {
+			var user = await User.findOne({name: key_user.name});
+			if(user) {
+				if(user.admin && user.admin.isDataVerified === false) {
+					user.person.name = name;
+					user.person.fatherName = fatherName;
+					user.person.motherName = motherName;
+					user.admin.isDataVerified = true;
+					await user.save();
+					const redisClient = require('../src/cache');
+					const timeToLive = parseInt(process.env.CACHE_TTL);
+					const hashKey = 'user:details:' + key_user.name;
+					const key = JSON.stringify(
+						Object.assign({}, {
+							name: key_user.name,
+							collection: 'users'
+						})
+					);
+					await redisClient.hset(hashKey,key,JSON.stringify(user));
+					await redisClient.expire(hashKey, timeToLive);
+					res.status(200).json({
+						'message': `Usuario ${key_user.name} actualizado`
+					});
+				} else {
+					res.status(406).json({
+						'message': `Usuario ${key_user.name} ya ha sido actualizado previamente`
+					});
+				}
+			} else {
+				res.status(404).json({
+					'message': 'Usuario no encontrado'
+				});
+			}
+		} catch (err) {
+			Err.sendError(res,err,'user_controller','validateUserMaindata -- Finding user --');
+		}
+
+	}, //validateUserMaindata
+
+	passwordRecovery(req, res) {
+		const email = req.body.email;
+		const emailID = req.body.emailID;
+		const password = req.body.password;
 		User.findOne({ name: email})
 			.then((user) => {
 				if(user) {

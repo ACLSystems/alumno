@@ -1,7 +1,9 @@
 const File = require('../src/files');
 const fs = require('fs');
+const fsprom = require('fs').promises;
 const dropbox = require('dropbox').Dropbox;
 const Err = require('../controllers/err500_controller');
+const User = require('../src/users');
 
 /** Este módulo usa "Multer" y la definición está en routes/routes.js */
 /**
@@ -21,6 +23,9 @@ const ordir 			= process.env.DBX_ORDIR || '/usr/src/app/files';
 const file_dir		= process.env.NODE_ENV || 'development';
 /** @const {string} - token de Dropbox */
 const accessToken	= process.env.DBX_TOKEN || null;
+
+
+
 
 module.exports = {
 	upload(req,res) {
@@ -115,6 +120,71 @@ module.exports = {
 			});
 
 	}, // upload
+
+	async imageUpload(req,res) {
+		const redisClient = require('../src/cache');
+		const timeToLive = parseInt(process.env.CACHE_TTL);
+		const key_user 	= res.locals.user;
+		if(!req.file) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1440: Please, give file to process'
+			});
+			return;
+		}
+		if(req.file.size > filesize) {
+			req.status(200).json({
+				'status': 200,
+				'message': 'File size is bigger than ' + filesize + ' bytes'
+			});
+			return;
+		}
+		try {
+			const hashKey = 'user:details:' + key_user.name;
+			const key = JSON.stringify(
+				Object.assign({}, {
+					name: key_user.name,
+					collection: 'users'
+				})
+			);
+			var user = await User.findOne({name: key_user.name});
+			// const filename = ordir + '/' + req.file.filename;
+			// const file = await fsprom.readFile(filename);
+			user.image = {
+				data: req.file.buffer,
+				contentType : req.file.mimetype,
+				originalName: req.file.originalname
+			};
+			await user.save();
+			await redisClient.hset(hashKey,key,JSON.stringify(user));
+			await redisClient.expire(hashKey, timeToLive);
+			res.status(200).json({
+				message	: 'Imagen cargada'
+			});
+		} catch (err) {
+			Err.sendError(res,err,'file_controller','imageUpload -- Saving Image --');
+		}
+
+	}, // imageUpload
+
+	async imageDownload(req,res) {
+		const key_user 	= res.locals.user;
+		try {
+			var user = await User.findOne({name: key_user.name})
+				.cache({key: 'user:details:' + key_user.name});
+			if(user.image && user.image.data) {
+				res.set({'Content-type': user.image.contentType});
+				res.send(user.image.data);
+			} else {
+				res.status(404).json({
+					'message': 'No existe imagen'
+				});
+			}
+		} catch (err) {
+			Err.sendError(res,err,'file_controller','imageDownload -- Saving File --');
+		}
+
+	}, // imageDownload
 
 	download(req,res) {
 		if(!req.query) {  // GET

@@ -9,10 +9,17 @@ const StatusCodes 				= require('http-status-codes');
 const db 									= require('./src/db'); // eslint-disable-line no-unused-vars
 const cache 							= require('./src/cache'); // eslint-disable-line no-unused-vars
 const FileController 			= require('./controllers/file_controller');
-const routes 							= require('./routes/routes');
+// const routes 							= require('./routes/routes');
 const publicRoutes				= require('./routes/public_routes');
 const exportRoutes 				= require('./routes/export_routes');
 const authorRoutes 				= require('./routes/author_routes');
+const userRoutes					= require('./routes/user_routes');
+const filesRoutes					= require('./routes/files_routes');
+const instructorRoutes 		= require('./routes/instructor_routes');
+const adminRoutes 				= require('./routes/admin_routes');
+const orgAdmRoutes 				= require('./routes/orgAdm_routes');
+const supervisorRoutes 		= require('./routes/supervisor_routes');
+const requesterRoutes 		= require('./routes/requester_routes');
 const app 								= express();
 
 /**
@@ -80,10 +87,17 @@ app.use(bodyParserJsonError());
 /**
 	* RUTAS
 	*/
-routes(app);
+//routes(app);
+filesRoutes(app);
+userRoutes(app);
+instructorRoutes(app);
 authorRoutes(app);
 publicRoutes(app);
 exportRoutes(app);
+supervisorRoutes(app);
+adminRoutes(app);
+orgAdmRoutes(app);
+requesterRoutes(app);
 
 /**
 	* Si no hay rutas que matchen debemos notificar que no

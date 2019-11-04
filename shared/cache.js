@@ -14,7 +14,7 @@ const timeToLive = parseInt(process.env.CACHE_TTL);
 // Creamos una función para acceder al cache
 mongoose.Query.prototype.cache = function(options = {}) {
 	this.useCache = true;
-	this.hashKey = JSON.stringify(options.key || '');
+	this.hashKey = (typeof options.key === 'string') ? options.key : JSON.stringify(options.key || '');
 	return this;
 };
 
@@ -29,12 +29,12 @@ mongoose.Query.prototype.exec = async function() {
 	}
 
 	// Se construye la llave usando el nombre de la colección
+
 	const key = JSON.stringify(
 		Object.assign({}, this.getQuery(), {
 			collection: this.mongooseCollection.name
 		})
 	);
-
 	// Vemos si ya tenemos un valor para la llave (key)
 	const cacheValue = await redisClient.hget(this.hashKey, key);
 

@@ -310,6 +310,14 @@ const UserSchema = new Schema ({
 	}],
 	currentProject: {
 		type: String
+	},
+	image: {
+		data: Buffer,
+		contentType: String,
+		originalName: String
+	},
+	bio : {
+		type: String
 	}
 });
 // Definir virtuals

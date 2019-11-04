@@ -404,6 +404,47 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/user/validatemaindata':
+		if(!req.body.name) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Falta el nombre. Favor de corregir'
+			});
+		} else if(!req.body.fatherName) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Falta el apellido paterno. Favor de corregir'
+			});
+		} else if(!req.body.motherName) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Falta el apellido materno. Favor de corregir'
+			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/user/valemailwopr':
+		next();
+		break;
+
+	case '/api/v1/user/confirmemail':
+		if(!req.body) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1750: Please, give data by body to process'
+			});
+		} else if(!req.body.emailID) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error 1752: Please, give email token by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/passwordchange':
 		if(!req.body) {
 			res.status(406).json({
@@ -2882,8 +2923,7 @@ module.exports = function(req, res, next) {
 
 	default:
 		res.status(404).json({
-			'status': 404,
-			'message': 'Error 101: API not found'
+			'message': 'Error 101: API not found - validateParams'
 		});
 	}
 };

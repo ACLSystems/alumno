@@ -1,12 +1,14 @@
 {
   "name": "alumno",
-  "version": "1.19.0",
+  "version": "1.20.0",
   "description": "Proyecto alumno",
   "main": "index.js",
   "scripts": {
 		"start": "node index.js",
     "test": "NODE_ENV=development nodemon -r dotenv/config index.js",
-    "jest": "jest"
+    "jest": "jest",
+		"docker:build": "docker build -t aclsystems/alumno:$(node ./misc/getVersion.js) .; docker tag aclsystems/alumno:$(node ./misc/getVersion.js) aclsystems/alumno:latest; docker images",
+		"docker:push": "docker push aclsystems/alumno:$(node ./misc/getVersion.js); docker push aclsystems/alumno:latest"
   },
   "jest": {
     "testRegex": "tests/.*\\.(js|jsx)$"
