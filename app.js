@@ -107,7 +107,7 @@ requesterRoutes(app);
 //app.use(function(req, res, next) {
 app.use(function(req, res) {
 	res.status(StatusCodes.NOT_FOUND).json({
-		'message': 'Error: API solicitada no existe'
+		'message': `Error: API solicitada no existe: ${req.method} ${req.url}`
 	});
 });
 

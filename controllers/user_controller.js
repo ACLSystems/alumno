@@ -359,7 +359,7 @@ module.exports = {
 			.select('name person orgUnit admin.isVerified')
 			.populate('orgUnit', 'name')
 			.then((user) => {
-				console.log(user);
+				// console.log(user);
 				if (!user) {
 					res.status(200).json({
 						'status': 404,
