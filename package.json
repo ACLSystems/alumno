@@ -4,11 +4,11 @@
   "description": "Proyecto alumno",
   "main": "index.js",
   "scripts": {
-		"start": "node index.js",
+    "start": "node index.js",
     "test": "NODE_ENV=development nodemon -r dotenv/config index.js",
     "jest": "jest",
-		"docker:build": "docker build -t aclsystems/alumno:$(node ./misc/getVersion.js) .; docker tag aclsystems/alumno:$(node ./misc/getVersion.js) aclsystems/alumno:latest; docker images",
-		"docker:push": "docker push aclsystems/alumno:$(node ./misc/getVersion.js); docker push aclsystems/alumno:latest"
+    "docker:build": "docker build -t aclsystems/alumno:$(node ./misc/getVersion.js) .; docker tag aclsystems/alumno:$(node ./misc/getVersion.js) aclsystems/alumno:latest; docker images",
+    "docker:push": "docker push aclsystems/alumno:$(node ./misc/getVersion.js); docker push aclsystems/alumno:latest"
   },
   "jest": {
     "testRegex": "tests/.*\\.(js|jsx)$"
@@ -40,26 +40,26 @@
     "express": "^4.17.1",
     "express-body-parser-json-error": "^0.1.0",
     "express-route-validator": "^0.2.5",
-    "express-validator": "^6.1.1",
+    "express-validator": "^6.3.0",
     "hat": "0.0.3",
-    "helmet": "^3.20.0",
+    "helmet": "^3.21.2",
     "http": "0.0.0",
-    "http-status-codes": "^1.3.2",
+    "http-status-codes": "^1.4.0",
     "isomorphic-fetch": "^2.2.1",
     "jsonwebtoken": "^8.5.1",
     "jwt-simple": "^0.5.6",
     "lz-string": "^1.4.4",
     "moment": "^2.24.0",
     "mongodb-uri": "^0.9.7",
-    "mongoose": "^5.6.9",
-    "mongoose-sequence": "^5.1.0",
+    "mongoose": "^5.8.1",
+    "mongoose-sequence": "^5.2.2",
     "multer": "^1.4.2",
-    "nanoid": "^2.0.3",
+    "nanoid": "^2.1.7",
     "node-mailjet": "^3.3.1",
     "randomatic": "^3.1.1",
     "redis": "^2.8.0",
     "request": "^2.88.0",
-    "request-promise-native": "^1.0.7",
+    "request-promise-native": "^1.0.8",
     "socket.io": "^2.3.0",
     "time-ago": "^0.2.1",
     "urlencode": "^1.1.0",
@@ -67,8 +67,8 @@
     "winston-daily-rotate-file": "^3.10.0"
   },
   "devDependencies": {
-    "dotenv": "^8.0.0",
-    "eslint": "^6.1.0",
+    "dotenv": "^8.2.0",
+    "eslint": "^6.7.2",
     "nodemon": "^1.19.1"
   }
 }
