@@ -3,13 +3,19 @@ const bcrypt 							= require('bcryptjs');
 const urlencode 					= require('urlencode');
 const StatusCodes 				= require('http-status-codes');
 const jsonwebtoken 				= require('jsonwebtoken');
+const mongoose 						= require('mongoose');
 const User 								= require('../src/users'											);
 const Org 								= require('../src/orgs'												);
 const OrgUnit 						= require('../src/orgUnits'										);
+const Group 							= require('../src/groups'											);
 const Roster 							= require('../src/roster'											);
 const FiscalContact 			= require('../src/fiscalContacts'							);
+const Discussion 					= require('../src/discussions'								);
+const Follow 							= require('../src/follow'											);
 const Notification 				= require('../src/notifications'							);
 const Err 								= require('../controllers/err500_controller'	);
+const Attempt 						= require('../src/attempts'										);
+const Certificate 				= require('../src/certificates'								);
 const permissions 				= require('../shared/permissions'							);
 const mailjet							= require('../shared/mailjet'									);
 const version 						= require('../version/version');
@@ -250,46 +256,79 @@ module.exports = {
 			});
 	},
 
-	delete(req,res) {
-		User.findOne({name:req.params.name})
-			.then((user) => {
-				if(!user) {
-					res.status(200).json({
-						'status': 404,
-						'message': 'No user ' + req.params.name + ' found'
-					});
-				} else {
-					const redisClient = require('../src/cache');
-					const hashKey = 'user:details:' + req.params.name;
-					redisClient.del(hashKey);
-					Promise.all([
-						Roster.deleteMany({student:user._id}),
-						Notification.deleteMany({
-							$or: [
-								{'destination.item': user._id},
-								{'source.item': user._id}
-							]})
-					])
-						.then(() => {
-							User.findByIdAndDelete(user._id)
-								.then(() => {
-									res.status(200).json({
-										'status': 200,
-										'message': 'User -' + req.params.name + '- deleted'
-									});
-								})
-								.catch((err) => {
-									Err.sendError(res,err,'user_controller','delete -- Deleting main document --');
-								});
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'user_controller','delete -- Deleting secondary documents --');
-						});
+	async delete(req,res) {
+		try {
+			var user = await User.findOne({name:req.params.name});
+			if(!user) {
+				res.status(200).json({
+					'status': 404,
+					'message': 'No user ' + req.params.name + ' found'
+				});
+			} else {
+				const redisClient = require('../src/cache');
+				const hashKey = 'user:details:' + req.params.name;
+				await redisClient.del(hashKey);
+				const rosters = await Roster.find({student:user._id});
+				const rostersIDs = rosters.map(({_id}) => _id);
+				if(rosters && Array.isArray(rosters) && rosters.length > 0) {
+					let rostersObjIDs = rosters.map(roster => mongoose.Types.ObjectId(roster._id));
+					await Certificate.deleteMany({rosters: {$in: rostersObjIDs}});
+					var groups = Group.find({rosters: {$in: rostersObjIDs}});
+					if(groups && Array.isArray(groups) && groups.length > 0) {
+						for(var i=0; i < groups.length; i++) {
+							// Quitar el userID del grupo
+							groups[i].students = groups[i].students.filter(student => student !== user._id);
+							// Del arreglo de rosters buscar en los Grupos
+							// Y al encontrar el grupo, quitar el roster del arreglo
+							rostersIDs.forEach(roster => {
+								let rosterFound = groups[i].roster.find(ros => ros + '' === roster +'');
+								if(rosterFound) {
+									groups[i].roster = groups[i].roster.filter(roster => roster + '' !== rosterFound + '');
+								}
+							});
+							// Guardamos el grupo
+							await groups[i].save();
+						}
+					}
 				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'user_controller','delete -- Finding user --');
-			});
+				if(user.fiscal && Array.isArray(user.fiscal) && user.fiscal.length > 0) {
+					let fiscals = user.fiscal.map(fiscal => mongoose.Types.ObjectId(fiscal));
+					await FiscalContact.deleteMany({_id: {$in: fiscals}});
+				}
+				Promise.all([
+					Roster.deleteMany({student:user._id}),
+					Notification.deleteMany({
+						$or: [
+							{'destination.item': user._id},
+							{'source.item': user._id}
+						]}),
+					Follow.deleteMany({'who.item': user._id}),
+					Attempt.deleteMany({user: user._id}),
+					Discussion.deleteMany({user: user._id}),
+					// Poner requests
+					// POner Sessions
+				])
+					.then(() => {
+						User.findByIdAndDelete(user._id)
+							.then(() => {
+								res.status(200).json({
+									'status': 200,
+									'message': 'User -' + req.params.name + '- deleted'
+								});
+							})
+							.catch((err) => {
+								Err.sendError(res,err,'user_controller','delete -- Deleting main document --');
+							});
+					})
+					.catch((err) => {
+						Err.sendError(res,err,'user_controller','delete -- Deleting secondary documents --');
+					});
+			}
+		} catch (e) {
+			Err.sendError(res,e,'user_controller','delete -- Finding user --');
+		}
+
+
 	}, // delete
 
 	confirm(req,res) {
@@ -1143,10 +1182,10 @@ module.exports = {
 							user.geometry = mergeDeep(user.geometry,userProps.geometry);
 						}
 						if(key_user.roles.isAdmin) {
-							if(userProps.hasOwnProperty('report'))	{user.report	= userProps.report;	}
-							if(userProps.hasOwnProperty('char1')) 	{user.char1 	= userProps.char1;	}
-							if(userProps.hasOwnProperty('char2')) 	{user.char2 	= userProps.char2;	}
-							if(userProps.hasOwnProperty('orgUnit')) {user.orgUnit = userProps.orgUnit;}
+							user.report = userProps.report || undefined;
+							user.char1 	= userProps.char1 || undefined;
+							user.char2 	= userProps.char2 || undefined;
+							user.orgUnit 	= userProps.orgUnit || undefined;
 							if(userProps.admin){
 								user.admin = mergeDeep(user.admin,userProps.admin);
 							}
