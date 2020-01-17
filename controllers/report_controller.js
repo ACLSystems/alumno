@@ -161,7 +161,7 @@ module.exports = {
 							if(resOUs && resOUs.length > 0){
 								var ouIds = [];
 								resOUs.forEach(ou => {ouIds.push(mongoose.Types.ObjectId(ou._id));});
-								Group.find({orgUnit: {$in: resOUs}})
+								Group.find({orgUnit: {$in: resOUs},report: {$ne:false}})
 									.select('name code orgUnit course')
 									.populate('orgUnit', 'name parent longName type level')
 									.populate('course', 'title')
@@ -206,17 +206,17 @@ module.exports = {
 													var i=0;
 													if(orgOus && orgOus.length > 0) {
 														var firstLiners = orgOus.map(a => a.ouName);
-														if(firstLiners  && firstLiners .length > 0) {
+														if(firstLiners  && firstLiners.length > 0) {
 															i=0;
-															firstLiners .forEach(fl => {
+															firstLiners.forEach(fl => {
 																var j=0;
 																orgOus.forEach(gps => {
 																	if(gps.ous && gps.ous.length > 0) {
 																		var k=0;
 																		gps.ous.forEach(ou => {
 																			if(fl === ou.ouName) {
-																				if(ou.oulevel === 1) {
-																				//if(ou.ouType === 'org') {
+																				if(ou.ouLevel === 1) {
+																					//if(ou.ouType === 'org') {
 																					orgOus[i].ouLevel 		= ou.ouLevel;
 																					orgOus[i].ouType 			= ou.ouType;
 																					orgOus[i].ouId	 			= ou.ouId;
@@ -224,7 +224,7 @@ module.exports = {
 																					orgOus[i].groups 			= ou.groups;
 																					orgOus[i].ous.splice(k,1);
 																				} else {
-																					orgOus[j].ous[k].ous 	= orgOus[i].ous;
+																					orgOus[j].ous[k].ous 	= [...orgOus[i].ous];
 																					cut.push(fl);
 																				}
 																			}
@@ -244,13 +244,15 @@ module.exports = {
 														});
 													}
 													// Ahora metemos los grupos dentro del árbol
-
 													orgOus.forEach(n1 => {
 														var g1 = [];
 														// Primero vemos si hay grupos para el primer nivel
 														i=0;
 														grps.forEach(g => {
 															if(g.orgUnit.name === n1.ouName) {
+																if(!n1.groups) {
+																	n1.groups = [];
+																}
 																n1.groups.push({
 																	groupId 		: g._id,
 																	groupName		: g.name,
@@ -266,6 +268,9 @@ module.exports = {
 															i=0;
 															grps.forEach(g => {
 																if(g.orgUnit.name === n2.ouName) {
+																	if(!n2.groups) {
+																		n2.groups = [];
+																	}
 																	n2.groups.push({
 																		groupId			: g._id,
 																		groupName		: g.name,
@@ -335,10 +340,10 @@ module.exports = {
 															orgOus = orgOus[0].ous;
 														}
 													}
-
 													if(orgOus.length === 1) {
 														orgOus = orgOus[0];
 													}
+													// console.log(require('util').inspect(orgOus, { depth: 3, colors:true}));
 													res.status(200).json({
 														'displayEvals': key_user.orgUnit.displayEvals,
 														'groupNumber' : grps.length,
@@ -353,6 +358,12 @@ module.exports = {
 									.catch((err) => {
 										Err.sendError(res,err,'report_controller','orgTree -- Finding Groups --',false,false,'User: ' + key_user.name);
 									});
+							} else {
+								res.status(200).json({
+									'displayEvals': false,
+									'groupNumber' : 0,
+									'tree'			: []
+								});
 							}
 						})
 						.catch((err) => {
@@ -576,7 +587,7 @@ module.exports = {
 							return;
 						}
 
-						Group.find({_id: {$in: group_ids}})
+						Group.find({_id: {$in: group_ids}, report: {$ne:false}})
 							.select('name code orgUnit course')
 							.populate('orgUnit', 'name longName parent level')
 							.populate('course', 'title code')

@@ -174,6 +174,10 @@ const GroupsSchema = new Schema ({
 		type: ObjectId,
 		ref: 'projects'
 	},
+	report: {
+		type: Boolean,
+		default: true
+	},
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema,
