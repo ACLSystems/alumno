@@ -2316,7 +2316,8 @@ module.exports = {
 								minTrack					: item.minTrack + '%',
 								pass							: item.pass,
 								passDate					: item.passDate,
-								blocks						: blocks
+								blocks						: blocks,
+								tookCertificate		: item.tookCertificate
 							};
 							if(item.group &&
 								item.group.dates &&

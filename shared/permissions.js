@@ -54,11 +54,10 @@ module.exports = {
 
 		// Checar acceso al objeto con permiso para usuario
 		// ---------------------------------------
-
 		var users = object.perm.users;
 		var foundUser = users.find(x => x.name === user.name); // buscamos los accesos del usuario
 		if(foundUser) {
-			returnObj =  {
+			var returnObj =  {
 				by: 'user',
 				canRead: foundUser.canRead,
 				canModify: foundUser.canModify

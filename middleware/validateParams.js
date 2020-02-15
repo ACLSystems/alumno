@@ -1076,6 +1076,17 @@ module.exports = function(req, res, next) {
 		next();
 		break;
 
+	case '/api/v1/user/message':
+		if(!req.query.notificationid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give notificationid by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/message/close':
 		if(!req.body) {
 			res.status(406).json({
@@ -1202,6 +1213,18 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error: Please, give newuser by body to process'
 			});
+		} else {
+			next();
+		}
+		break;
+
+	case '/api/v1/supervisor/user/resendconf':
+		if(!req.query.name) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please, give username (email) by query to process'
+			});
+			return;
 		} else {
 			next();
 		}

@@ -10,6 +10,7 @@ const ConfigController 			= require('../controllers/config_controller'				);
 const CacheController 			= require('../controllers/cache_controller'					);
 const JobController 				= require('../controllers/job_controller'						);
 const ProjectController 		= require('../controllers/projects_controller'			);
+const SocketConstroller 		= require('../controllers/socket_controller');
 
 module.exports = (app) => {
 
@@ -78,5 +79,6 @@ module.exports = (app) => {
 	app.post('/api/v1/admin/proyect/create', 			ProjectController.create);
 	app.get ('/api/v1/admin/proyect/list', 				ProjectController.list);
 	app.get ('/api/v1/admin/roster/migrate', 			GroupController.rosterMigrateV2);
+	app.post('/api/v1/admin/message', 						SocketConstroller.sendMessage);
 
 };

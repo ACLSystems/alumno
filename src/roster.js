@@ -489,11 +489,11 @@ RosterSchema.pre('save', async function(next) {
 				}
 			});
 
-			console.log(JSON.stringify(grades2,null,2));
+			// console.log(JSON.stringify(grades2,null,2));
 
 			const wTotal = grades2.reduce((acc,curr) => acc + curr.w,0);
 			const finalGrade = grades2.reduce((acc,curr) => acc + (curr.w / wTotal) * curr.finalGrade,0);
-			console.log(wTotal, finalGrade);
+			// console.log(wTotal, finalGrade);
 			item.finalGrade = finalGrade;
 		}
 		// console.log(JSON.stringify(grades2,null,2));

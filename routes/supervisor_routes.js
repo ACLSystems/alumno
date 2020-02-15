@@ -54,5 +54,6 @@ module.exports = (app) => {
 	app.put ('/api/v1/supervisor/projects/current', 			ProjectController.current);
 	// SESSION GROUP
 	app.get ('/api/v1/supervisor/group/userscube', 				SessionController.usersCube);
+	app.get ('/api/v1/supervisor/user/resendconf', 				UserController.resendConfirmation);
 
 };

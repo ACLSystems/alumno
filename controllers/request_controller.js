@@ -621,12 +621,12 @@ module.exports = {
 						folio: folios[i],
 						message: 'El folio no fue encontrado'
 					});
-				} else if(res == 2) {
-					results.push({
-						status: 'error',
-						folio: folios[i],
-						message: 'El folio ya estaba procesado'
-					});
+				// } else if(res == 2) {
+				// 	results.push({
+				// 		status: 'error',
+				// 		folio: folios[i],
+				// 		message: 'El folio ya estaba procesado'
+				// 	});
 				} else if(res == 3) {
 					results.push({
 						status: 'error',
@@ -634,13 +634,18 @@ module.exports = {
 						message: 'El roster/alumno de este folio no fue encontrado'
 					});
 				} else if(res.folio) {
-					results.push({
+					let result = {
 						status: 'ok',
 						folio: folios[i],
 						message: 'El pago del folio fue registrado correctamente',
 						student: res.student.person,
 						group: res.group
-					});
+					};
+					if(res.tempStatus === 'info') {
+						result.message = 'El folio ya estaba procesado anteriormente';
+						result.status = 'info';
+					}
+					results.push(result);
 				}
 			}
 			res.status(StatusCodes.OK).json({
@@ -723,7 +728,8 @@ async function processFolio(folio, user) {
 					return 3;
 				}
 			} else {
-				return 2;
+				folioFound.tempStatus = 'info';
+				return folioFound;
 			}
 		} else {
 			return 1;

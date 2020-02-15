@@ -25,7 +25,7 @@ const PermUnitSchema = new Schema ({
 		type: Boolean,
 		default: false
 	}
-});
+}, { _id: false });
 
 // Definir virtuals
 

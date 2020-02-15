@@ -36,6 +36,7 @@ exports.sendMail = function(toEmail,toName,subject,templateID,variables) {
 			},
 			'Variables': variables
 		};
+	// console.log(mail_message);
 
 	// Regresamos la promesa
 	return new Promise(function(resolve) {

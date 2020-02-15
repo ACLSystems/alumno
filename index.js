@@ -2,7 +2,8 @@ const version = require('./version/version');
 const app 		= require('./app');
 const server	= require('http').Server(app);
 const logger	= require('./shared/winston-logger');
-var io = require('socket.io')(server);
+const io			= require('socket.io')(server);
+
 /**
 	* CONFIG
 	* Todo se extrae de variables de Ambiente
@@ -11,7 +12,7 @@ var io = require('socket.io')(server);
 	* @default 				- Puerto default 3050
 */
 
-const port 										= parseInt(process.env.NODE_PORT) || 3050;
+const port 		= parseInt(process.env.NODE_PORT) || 3050;
 
 app.set('port', port);
 
@@ -21,11 +22,4 @@ server.listen(app.get('port'),() => {
 	logger.info('Listening on port ' + server.address().port);
 });
 
-io.on('connection', function(socket) {
-	socket.emit('message', {
-		hola: 'mundo'
-	});
-	socket.on('message', function(data) {
-		console.log(data);
-	});
-});
+require('./controllers/io_controller')(io);

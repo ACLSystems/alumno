@@ -57,8 +57,8 @@ module.exports = {
 		body('password').exists(),
 	],
 	getCertificate: [
-		header('content-type','Encabezado incorrecto - solo application/json')
-			.equals('application/json'),
+		// header('content-type','Encabezado incorrecto - solo application/json')
+		// 	.equals('application/json'),
 		query('certificate').exists()
 	],
 	captcha: [

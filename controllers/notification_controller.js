@@ -6,6 +6,9 @@ const User 					= require('../src/users'										);
 const Err 					= require('../controllers/err500_controller');
 const mailjet 			= require('../shared/mailjet'								);
 
+const redisClient = require('../src/cache');
+
+
 
 /**
 	* CONFIG
@@ -22,7 +25,8 @@ module.exports = {
 		if(query.objects && query.objects.length > 0) {
 			var errorInObjects = false;
 			query.objects.forEach(function(object) {
-				if(!object.hasOwnProperty('item')) {
+				const properties = Object.keys(object);
+				if(!properties.includes('item')) {
 					errorInObjects = true;
 				}
 			});
@@ -69,6 +73,19 @@ module.exports = {
 									};
 									mailjet.sendMail(destination.person.email,destination.person.name,subject,template_notuser,variables);
 								}
+								if(message.destination.role === 'user') {
+									var allClients = getAllClients();
+									if(allClients && Array.isArray(allClients) && allClients > 0) {
+										const found = allClients.find(client => client.client + '' === destination._id + '');
+										if(found) {
+											emit(destination._id+'',{
+												command: 'notification',
+												channel: destination._id + '',
+												message: 'reload'
+											});
+										}
+									}
+								}
 							})
 							.catch((err) => {
 								Err.sendError(res,err,'notification_controller','create -- Creating Notification --',false,false,`Destination: ${destination.name} Source: ${source.name}`);
@@ -110,6 +127,22 @@ module.exports = {
 			});
 	}, //newNotifications
 
+	async getNotification(req,res) {
+		try {
+			const notification = await Notification.findById(req.query.notificationid);
+			console.log(notification);
+			if(notification) {
+				res.status(StatusCodes.OK).json(notification);
+			} else {
+				res.status(StatusCodes.OK).json({
+					message: 'No notification found with this id'
+				});
+			}
+		} catch (e) {
+			Err.sendError(res,e,'notification_controller','getNotification - finding notification' );
+		}
+	}, //getNotification
+
 	myNotifications(req,res) {
 		const key_user 	= res.locals.user;
 		var skip			=	0;
@@ -131,23 +164,25 @@ module.exports = {
 		Notification.find(query)
 			.populate([{
 				path: 'objects.item',
-				select: '_id'
+				select: '_id name title code'
 			},
 			{
-				path: 'source.item'
+				path: 'source.item',
+				select: 'person'
 			},
 			{
-				path: 'destination.item'
+				path: 'destination.item',
+				select: 'person'
 			}
 			])
 			.skip(skip)
 			.limit(limit)
-			.sort('-date')
+			// .sort('-date')
 			.lean()
 			.then((notifications) => {
 				if(notifications && notifications.length > 0) {
 					var nots = [];
-					notifications.forEach(function(notification) {
+					notifications.forEach(notification => {
 						var not = {
 							notificationid	: notification._id,
 							source					: notification.source,
@@ -161,40 +196,6 @@ module.exports = {
 							date						: notification.date,
 							objects					: notification.objects
 						};
-						if(not.source.kind === 'users' || not.sourceType === 'user') {
-							if(not.source.item){
-								if(not.source.item.password	) {delete not.source.item.password;	}
-								if(not.source.item.perm			)	{delete not.source.item.perm;			}
-								if(not.source.item.admin		) {delete not.source.item.admin;		}
-								if(not.source.item.roles		) {delete not.source.item.roles;		}
-								if(not.source.item.mod			)	{delete not.source.item.mod;			}
-								if(not.source.item.fiscal		)	{delete not.source.item.fiscal;		}
-								if(not.source.item.student	)	{delete not.source.item.student;	}
-								if(not.source.item.corporate)	{delete not.source.item.corporate;}
-								if(not.source.item.__v			)	{delete not.source.item.__v;			}
-								if(not.source.item._id			)	{delete not.source.item.person._id;}
-								if(not.source.item.char1		)	{delete not.source.item.char1;		}
-								if(not.source.item.char2		)	{delete not.source.item.char2;		}
-								if(not.source.item.report		)	{delete not.source.item.report;		}
-							}
-						}
-						if(not.destination.kind === 'users') {
-							if(not.destination.item){
-								if(not.destination.item.password	) {delete not.destination.item.password;}
-								if(not.destination.item.perm			)	{delete not.destination.item.perm;		}
-								if(not.destination.item.admin			)	{delete not.destination.item.admin;		}
-								if(not.destination.item.roles			) {delete not.destination.item.roles;		}
-								if(not.destination.item.mod				) {delete not.destination.item.mod;			}
-								if(not.destination.item.fiscal		) {delete not.destination.item.fiscal;	}
-								if(not.destination.item.student		) {delete not.destination.item.student;	}
-								if(not.destination.item.corporate	) {delete not.destination.item.corporate;}
-								if(not.destination.item.__v				) {delete not.destination.item.__v;			}
-								if(not.destination.item._id				) {delete not.destination.item.person._id;}
-								if(not.destination.item.char1			) {delete not.destination.item.char1;		}
-								if(not.destination.item.char2			) {delete not.destination.item.char2;		}
-								if(not.destination.item.report		) {delete not.destination.item.report;	}
-							}
-						}
 						if(not.objects && not.objects.length > 0){
 							not.objects.forEach(function(object) {
 								if(object._id) {delete object._id;}
@@ -232,6 +233,19 @@ module.exports = {
 							res.status(StatusCodes.OK).json({
 								'message': 'Notification saved'
 							});
+							if(notification.destination.role === 'user') {
+								var allClients = getAllClients();
+								if(allClients && Array.isArray(allClients) && allClients > 0) {
+									const found = allClients.find(client => client.client + '' === notification.destination.item + '');
+									if(found) {
+										emit(notification.destination.item +'',{
+											command: 'notification',
+											channel: notification.destination.item + '',
+											message: 'reload'
+										});
+									}
+								}
+							}
 						})
 						.catch((err) => {
 							Err.sendError(res,err,'notification_controller','closeNotification -- Save Notification --');
@@ -277,3 +291,18 @@ module.exports = {
 
 
 // Private Functions
+
+async function getAllClients() {
+	var allClients = await redisClient.get('clients');
+	if(allClients) {
+		allClients = [...JSON.parse(allClients)];
+	} else {
+		allClients = [];
+	}
+	return allClients;
+}
+
+async function emit(destination, message) {
+	const io = require('socket.io-emitter')(redisClient);
+	io.to(destination).emit(destination,message);
+}

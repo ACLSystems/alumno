@@ -341,7 +341,6 @@ module.exports = {
 				query.status = 'published';
 				query.isVisible = true;
 				Course.find(query)
-					.select('title code image type description details categories keywords isVisible price cost author apiExternal defaultDaysDuration')
 					.cache({key: 'course:list:' + JSON.stringify(query)})
 					.lean()
 					.sort(sort)
@@ -366,7 +365,7 @@ module.exports = {
 								apiExternal: 	course.apiExternal,
 								priority: 		course.priority,
 								order: 				course.order,
-								duration		: course.duration + '' + course.durationUnits,
+								duration: 		course.duration + '' + course.durationUnits,
 								defaultDaysDuration: course.defaultDaysDuration
 							});
 						});
@@ -760,6 +759,36 @@ module.exports = {
 				sendError(res,err,'get -- Searching Course --');
 			});
 	}, // get
+
+	async getPublic(req,res) {
+		var query = {};
+		if(req.query.id) {
+			query._id = req.query.id;
+		}
+		if(req.query.code) {
+			query.code = req.query.code;
+		}
+		if(!req.query.code && !req.query.id) {
+			res.status(406).json({
+				'message': 'Hace falta el id o el code del curso solicitado'
+			});
+			return;
+		}
+		try {
+			const course = await Course.findOne(query)
+				.select('id title code image type description categories keywords isVisible price cost author priority order duration durationUnits defaultDaysDuration details level');
+			if(course) {
+				res.status(200).json(course);
+			} else {
+				res.status(200).json({
+					'message': 'No existe curso con el criterio de búsqueda solicitado'
+				});
+			}
+			return;
+		} catch (e) {
+			sendError(res,e,'get -- Searching Course --');
+		}
+	}, //getPublic
 
 	export(req,res) { // exportar curso por code o id
 		const key_user 	= res.locals.user;

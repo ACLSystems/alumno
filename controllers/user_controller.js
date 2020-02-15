@@ -144,10 +144,10 @@ module.exports = {
 										user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
 										user.save()
 											.then((user) => {
-												var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
+												var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
 												let templateId = template_user;
 												if(adminCreate) {
-													link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
+													link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
 													templateId = template_user_admin;
 												}
 												let subject = 'Confirma tu correo electrónico';
@@ -255,6 +255,41 @@ module.exports = {
 				Err.sendError(res,err,'user_controller','register -- Finding org --');
 			});
 	},
+
+	async resendConfirmation(req,res) {
+		const username = req.query.name.toLowerCase();
+		try {
+			var user = await User.findOne({name: username}).lean();
+			if(!user) {
+				res.status(200).json({
+					'message': 'No user ' + username + ' found'
+				});
+				return;
+			} else {
+				if(user.admin.isVerified) {
+					res.status(200).json({
+						'message': 'User ' + username + ' is already verified'
+					});
+					return;
+				} else {
+					const link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
+					const subject = 'Confirma tu correo electrónico - RE-ENVIADO';
+					const variables = {
+						Nombre: user.person.name,
+						confirmation_link:link
+					};
+					const templateId = template_user_admin;
+					mailjet.sendMail(user.person.email,user.person.name,subject,templateId,variables);
+					res.status(200).json({
+						'message': 'Verification email for user ' + username + ' sent'
+					});
+				}
+			}
+
+		} catch (err) {
+			Err.sendError(res,err,'user_controller','resendConfirmation -- Finding User --');
+		}
+	}, //resendConfirmation
 
 	async delete(req,res) {
 		try {
@@ -430,7 +465,7 @@ module.exports = {
 		const key_user = res.locals.user;
 		const username = req.query.name || key_user.name;
 		User.findOne({ name: username })
-			.cache({key: 'user:details:' + username})
+			// .cache({key: 'user:details:' + username})
 			.populate('org','name')
 			.populate('orgUnit', 'name')
 			.populate({
@@ -561,7 +596,7 @@ module.exports = {
 		const key_user = res.locals.user;
 		const username = req.query.username;
 		User.findOne({ name: username })
-			.cache({key: 'user:details:' + username})
+			// .cache({key: 'user:details:' + username})
 			.populate('org','name')
 			.populate('orgUnit', 'name longName')
 			.populate('project')
@@ -913,7 +948,7 @@ module.exports = {
 									'message': 'Password recovery sucessfully'
 								});
 								let template_pass_change = parseInt(process.env.MJ_TEMPLATE_PASSCH);
-								let subject = 'Solicitud de recuperación de contraseña';
+								let subject = 'Tu contraseña ha sido modificada';
 								let variables = {
 									Nombre: user.person.name
 								};
@@ -1110,7 +1145,7 @@ module.exports = {
 		if(userProps.name) {
 			username = userProps.name;
 		}
-		console.log(userProps);
+		//console.log(userProps);
 		User.findOne({ 'name': username })
 			.then((user) => {
 				if(user) {
@@ -1569,7 +1604,7 @@ module.exports = {
 		};
 		Roster.findOne({student: key_user._id})
 			.select('_id')
-			.cache({key: 'user:rosterExists:'+ key_user._id})
+			// .cache({key: 'user:rosterExists:'+ key_user._id})
 			.lean()
 			.then((item) => {
 				if(item) {
@@ -1582,7 +1617,8 @@ module.exports = {
 						name: ou.name,
 						longName: ou.longName,
 						parent: ou.parent,
-						type: ou.type
+						type: ou.type,
+						level: ou.level
 					};
 					var query = {};
 					var send_ous = [];

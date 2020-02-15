@@ -10,21 +10,26 @@ var dbURI = 'mongodb://operator:Password01@mongo:27017/alumno';
 if(process.env.MONGO_URI) { dbURI = process.env.MONGO_URI; }
 
 let options = {
-	//useMongoClient: true,
-	autoReconnect: true,
-	reconnectTries: 2,
-	//reconnectTries: 3600, // Intenta conectarte cada segundo hasta en una hora
-	reconnectInterval: 1000,
+	// autoReconnect: true,
+	// reconnectTries: 3600,
+	// reconnectInterval: 1000,
+	connectTimeoutMS: 10000,
 	poolSize: 10,
-	useNewUrlParser: true
+	useNewUrlParser: true,
+	useUnifiedTopology: true,
+	useCreateIndex: true,
+	useFindAndModify: false,
 };
 
 // Create the database connection
-mongoose.connect(encodeMongoURI(dbURI), options);
-mongoose.set('useCreateIndex', true);
-mongoose.set('useFindAndModify', false);
-mongoose.set('useNewUrlParser', true);
-mongoose.set('useUnifiedTopology', true);
+console.log('Initiating DB connection');
+mongoose.connect(encodeMongoURI(dbURI), options)
+	.catch((e) => {
+		console.log('DB Connection error: ');
+		console.log(e.message);
+		console.log('Shutting down server');
+		process.exit(1);
+	});
 
 // Agregado para hacer debug. Apagar inmediatamente y por ningún motivo prenderlo en producción
 if(process.env.NODE_ENV &&
@@ -58,9 +63,9 @@ mongoose.connection.on('connected', function () {
 
 // If the connection throws an error
 mongoose.connection.on('error',function (err) {
-	message = 'DB connection error: ' + err;
+	message = 'DB connection error: ' + err.message;
 	logger.error(message);
-	console.log(message); // eslint-disable-line
+	// console.log(message); // eslint-disable-line
 });
 
 // When the connection is disconnected
