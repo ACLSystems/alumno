@@ -7,6 +7,7 @@ const mongoose 						= require('mongoose');
 const User 								= require('../src/users'											);
 const Org 								= require('../src/orgs'												);
 const OrgUnit 						= require('../src/orgUnits'										);
+const Course 							= require('../src/courses'										);
 const Group 							= require('../src/groups'											);
 const Roster 							= require('../src/roster'											);
 const FiscalContact 			= require('../src/fiscalContacts'							);
@@ -16,6 +17,7 @@ const Notification 				= require('../src/notifications'							);
 const Err 								= require('../controllers/err500_controller'	);
 const Attempt 						= require('../src/attempts'										);
 const Certificate 				= require('../src/certificates'								);
+const Dependency 	= require('../src/dependencies'							);
 const permissions 				= require('../shared/permissions'							);
 const mailjet							= require('../shared/mailjet'									);
 const version 						= require('../version/version');
@@ -28,6 +30,8 @@ const version 						= require('../version/version');
 const url 									= process.env.NODE_LIBRETA_URI;
 /** @const {number} - plantilla para el usuario que se registra por su cuenta */
 const template_user					= parseInt(process.env.MJ_TEMPLATE_USER);
+/** @const {number} - plantilla para notificar al alumno su inscripción */
+var template_user_inscr 						= parseInt(process.env.MJ_TEMPLATE_GROUPREG);
 /** @const {number} - plantilla para el usuario que es registrado por el administrador */
 const template_user_admin		= parseInt(process.env.MJ_TEMPLATE_USER_ADMIN);
 /** @const {number} - plantilla para notificación al usuario sobre el cambio de password hecho por el administrador */
@@ -1678,6 +1682,160 @@ module.exports = {
 			});
 	}, // myRoles
 
+	async createRosterSelf(req,res){
+		const key_user = res.locals.user;
+		const defaultDaysDuration = 60;
+		const date = new Date();
+		const finishDate = addDays(date,defaultDaysDuration);
+		const link = url;
+		const rosterVersion = 2;
+		const minGrade = 75;
+		const minTrack = 80;
+		const type = 'public';
+		try {
+			const course = await Course.findById(req.body.courseid)
+				.populate({
+					path: 'blocks',
+					select: 'section number w wq wt',
+					options: { sort: {order: 1} }
+				})
+				.lean();
+			if(course) {
+				if(course.status === 'published') {
+					var mod = {
+						by: key_user.name,
+						when: date,
+						what: 'Roster created'
+					};
+					const blocks = course.blocks;
+					const deps = await Dependency.find({block: {$in: blocks}});
+					if(deps && deps.length > 0) {
+						deps.forEach(dep => {
+							var foundB = false;
+							var foundOnB = false;
+							var cursor = 0;
+							while(!(foundB && foundOnB) && cursor < blocks.length) {
+								if(dep.block + '' === blocks[cursor]._id + '') {
+									if(!blocks[cursor].dependencies) {
+										blocks[cursor].dependencies = [];
+									}
+									blocks[cursor].dependencies.push({
+										dep: dep._id,
+										createAttempt: false,
+										track: false,
+										saveTask: false
+									});
+									foundB = true;
+								}
+								if(dep.onBlock + '' === blocks[cursor]._id + '') {
+									if(!blocks[cursor].dependencies) {
+										blocks[cursor].dependencies = [];
+									}
+									blocks[cursor].dependencies.push({
+										dep: dep._id
+									});
+									foundOnB = true;
+								}
+								cursor++;
+							}
+						});
+					}
+					var grades = [];
+					var sec = 0;
+					blocks.forEach(block => {
+						grades.push({
+							block: block._id,
+							blockSection: block.section,
+							blockNumber: (block.number === 0) ? 0 : block.number,
+							track: 0,
+							maxGradeQ: 0,
+							gradeT: 0,
+							w: block.w,
+							wq: block.wq,
+							wt: block.wt,
+							dependencies: block.dependencies
+						});
+						if(block.section !== sec) {
+							sec++;
+						}
+					});
+					if(blocks[0].section === 0) {
+						sec++;
+					}
+					var sections = [];
+					var j=0;
+					while(j < sec) {
+						sections.push({});
+						j++;
+					}
+					var new_roster = new Roster({
+						student: key_user._id,
+						grades,type,
+						course: course._id,
+						minGrade,minTrack,
+						org: key_user.org._id,
+						orgUnit: key_user.orgUnit._id,
+						sections,
+						version: rosterVersion,
+						admin: [],
+						mod: [mod],
+						createDate: date,
+						endDate: finishDate
+					});
+					await new_roster.save();
+					let subject = `Te has inscrito al curso ${course.title}`;
+					let variables = {
+						'Nombre': key_user.person.name,
+						'confirmation_link': link,
+						'curso': course.title
+					};
+					await mailjet.sendMail(
+						key_user.person.email,
+						key_user.person.name,
+						subject,
+						template_user_inscr,
+						variables
+					);
+					var notification = new Notification({
+						destination: {
+							kind: 'users',
+							item: key_user._id,
+							role: 'user'
+						},
+						objects: [
+							{
+								kind: 'courses',
+								item: course._id
+							},
+							{
+								kind: 'blocks',
+								item: course.blocks[0]._id
+							}
+						],
+						type: 'system',
+						message: `Te has inscrito al curso ${course.title}`
+					});
+					await notification.save();
+					res.status(200).json({
+						message: `Te has inscrito al curso ${course.title}`
+					});
+				} else {
+					res.status(200).json({
+						'message': 'Curso seleccionado no está disponible'
+					});
+					return;
+				}
+			} else {
+				res.status(200).json({
+					'message': 'Curso seleccionado no existe'
+				});
+				return;
+			}
+		} catch (err) {
+			Err.sendError(res,err,'user_controller','createRoster -- Finding Course --');
+		}
+	}, //createRosterSelf
+
 	encrypt(req, res){
 		//const key_user 	= res.locals.user;
 		const username			= req.query.username;
@@ -1933,4 +2091,10 @@ function processError(err,res,controllerMessage) {
 	} else {
 		Err.sendError(res,err,'user_controller',controllerMessage);
 	}
+}
+
+function addDays(date, days) {
+	const copy = new Date(Number(date));
+	copy.setDate(date.getDate() + days);
+	return copy;
 }

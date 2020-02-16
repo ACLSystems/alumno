@@ -13,6 +13,14 @@ const fromName = process.env.MJ_FROMNAME;
 
 
 exports.sendMail = function(toEmail,toName,subject,templateID,variables) {
+	if(!toEmail || !toName) {
+		console.log('No está definido el destinatario de correo');
+		return;
+	}
+	if(!templateID) {
+		console.log('No está definida la plantilla de correo');
+		return;
+	}
 	templateID = (typeof templateID != 'number') ? parseInt(templateID): templateID;
 	var mail_message =
 		{

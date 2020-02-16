@@ -331,6 +331,10 @@ const RosterSchema = new Schema ({
 		type: ObjectId,
 		ref: 'groups'
 	},
+	course: {
+		type: ObjectId,
+		ref: 'courses'
+	},
 	org: {
 		type: ObjectId,
 		ref: 'orgs'
@@ -410,6 +414,9 @@ const RosterSchema = new Schema ({
 		type: Date,
 		default: Date.now
 	},
+	endDate: {
+		type: Date
+	},
 	project: {
 		type: ObjectId,
 		ref: 'projects'
@@ -417,8 +424,21 @@ const RosterSchema = new Schema ({
 	version: {
 		type: Number,
 		default: 1
+	},
+	type: {
+		type: String,
+		enum: ['group','public'],
+		default: 'group'
 	}
 });
+
+RosterSchema.path('course').required(function() {
+	return this.type === 'public';
+}, 'Cuando se genera un roster de tipo público es necesario el course');
+
+RosterSchema.path('group').required(function() {
+	return (this.type === 'group' || this.type === '');
+}, 'Cuando se genera un roster de tipo group es necesario el group');
 
 // Definir virtuals
 

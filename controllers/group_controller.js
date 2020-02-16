@@ -1074,40 +1074,59 @@ module.exports = {
 			var send_groups = [];
 			items.forEach(item => {
 				var send_group = {};
-				send_group = {
-					code						: item.group.code,
-					groupid					: item.group._id,
-					name						: item.group.name,
-					beginDate				: item.group.beginDate,
-					endDate					: item.group.endDate,
-					status					: item.group.status,
-					type						: item.group.type,
-					course					: item.group.course.title,
-					courseid				: item.group.course._id,
-					courseCode			: item.group.course.code,
-					courseBlocks		: item.group.course.numBlocks,
-					instructor			: item.group.instructor.person.name + ' ' + item.group.instructor.person.fatherName,
-					instructorEmail	: item.group.instructor.person.email,
-					presentBlockBy	: item.group.presentBlockBy,
-					myStatus				: item.status,
-					track						: item.track,
-					finalGrade			: item.finalGrade || 0,
-					firstBlock			: item.group.course.blocks[0]
-				};
-				if(send_group.instructor === 'Sin Instructor') {
-					send_group.instructorEmail = 'Sin Instructor';
-				}
-				if(item.group.course.duration) {
-					send_group.duration = item.group.course.duration + item.group.course.durationUnits;
-				}
-				if(item.group.course.beginDate) {
-					send_group.beginDate = item.group.course.beginDate;
-				}
-				if(item.group.course.endDate) {
-					send_group.endDate = item.group.course.endDate;
-				}
-				if(item.group.presentBlockBy === 'lapse' && item.group.lapse) {
-					send_group.lapse = item.group.course.lapse;
+				if(item.type && item.type === 'public') {
+					send_group = {
+						rosterType		: item.type,
+						rosterid 			: item._id,
+						beginDate			: item.createDate,
+						endDate				: item.endDate,
+						course				: item.course.title,
+						courseid			: item.course.id,
+						courseCode 		: item.course.code,
+						courseBlocks	: item.course.numBlocks,
+						myStatus			: item.status,
+						track					: item.track,
+						finalGrade		: item.finalGrade || 0,
+						firstBlock		: item.course.blocks[0]
+					};
+				} else {
+					send_group = {
+						rosterType			: item.type || 'group',
+						rosterid 				: item._id,
+						code						: item.group.code,
+						groupid					: item.group._id,
+						name						: item.group.name,
+						beginDate				: item.group.beginDate,
+						endDate					: item.group.endDate,
+						status					: item.group.status,
+						type						: item.group.type,
+						course					: item.group.course.title,
+						courseid				: item.group.course._id,
+						courseCode			: item.group.course.code,
+						courseBlocks		: item.group.course.numBlocks,
+						instructor			: item.group.instructor.person.name + ' ' + item.group.instructor.person.fatherName,
+						instructorEmail	: item.group.instructor.person.email,
+						presentBlockBy	: item.group.presentBlockBy,
+						myStatus				: item.status,
+						track						: item.track,
+						finalGrade			: item.finalGrade || 0,
+						firstBlock			: item.group.course.blocks[0]
+					};
+					if(send_group.instructor === 'Sin Instructor') {
+						send_group.instructorEmail = 'Sin Instructor';
+					}
+					if(item.group.course.duration) {
+						send_group.duration = item.group.course.duration + item.group.course.durationUnits;
+					}
+					if(item.group.course.beginDate) {
+						send_group.beginDate = item.group.course.beginDate;
+					}
+					if(item.group.course.endDate) {
+						send_group.endDate = item.group.course.endDate;
+					}
+					if(item.group.presentBlockBy === 'lapse' && item.group.lapse) {
+						send_group.lapse = item.group.course.lapse;
+					}
 				}
 				send_groups.push(send_group);
 			});
@@ -1125,7 +1144,7 @@ module.exports = {
 		//let myGroups = await cache.hget('mygroups:' + key_user._id, 'groups');
 		// if(!myGroups) {
 		Roster.find({student: key_user._id})
-			.populate({
+			.populate([{
 				path: 'group',
 				model: 'groups',
 				select: 'code name beginDate endDate presentBlockBy lapse status',
@@ -1141,8 +1160,13 @@ module.exports = {
 						select: 'person.name person.fatherName person.email'
 					}
 				]
-			})
-			.select('status track group finalGrade')
+			},{
+				path: 'course',
+				model: 'courses',
+				select: 'title code numBlocks blocks price cost duration durationUnits',
+				match: { isVisible: true }
+			}])
+			.select('type status track group course finalGrade')
 			.lean()
 			.then((items) => {
 				if(items.length > 0) {
@@ -1188,10 +1212,21 @@ module.exports = {
 
 		const key_user 	= res.locals.user;
 		const groupid		= req.query.groupid;
+		const rosterid  = req.query.rosterid;
+		var queryFolio = {};
+		var query = {};
+		if(groupid) {
+			queryFolio = {student: key_user._id, group: groupid};
+			query = {student: key_user._id, group: groupid};
+		}
+		if(rosterid) {
+			queryFolio = {student: key_user._id, roster: rosterid};
+			query = {_id: rosterid};
+		}
 		Promise.all([
-			Folio.findOne({student: key_user._id, group: groupid}),
-			Roster.findOne({student: key_user._id, group: groupid})
-				.populate({
+			Folio.findOne(queryFolio),
+			Roster.findOne(query)
+				.populate([{
 					path: 'group',
 					select: 'name course dates beginDate endDate code type instructor',
 					populate: [{
@@ -1206,18 +1241,38 @@ module.exports = {
 						path: 'instructor',
 						select: 'person'
 					}]
-				})
+				},{
+					path: 'course',
+					select: 'code author title blocks numBlocks description details image categories keywords',
+					populate: {
+						path: 'blocks',
+						match: { isVisible: true, status: 'published' },
+						select: 'title type section number questionnarie task duration durationUnits'
+					}
+				}])
 				.lean()
 		])
 			.then(results => {
 				var [folio,item] = results;
 				if(item) {
 					var myStatus 	= item.status;
-					var course		= item.group.course._id;
+					var course		= (item.type && item.type === 'public') ?
+						JSON.parse(JSON.stringify(item.course)) :
+						JSON.parse(JSON.stringify(item.group.course));
 					var blocks 		= [];
-					if(item.group.course.blocks && item.group.course.blocks.length > 0) {
-						blocks = item.group.course.blocks;
+					if(course && course.blocks && course.blocks.length > 0) {
+						blocks 			= [...course.blocks];
 					}
+					// if((!item.type || item.type === 'group') &&
+					// 	item.group.course.blocks &&
+					// 	item.group.course.blocks.length > 0) {
+					// 	blocks = [...item.group.course.blocks];
+					// }
+					// if(item.type && item.type === 'public' &&
+					// 	item.course.blocks &&
+					// 	item.course.blocks.length > 0) {
+					// 	blocks = [...item.course.blocks];
+					// }
 					var new_blocks	= [];
 					var new_block		= {};
 					blocks.forEach(function(block) {
@@ -1267,47 +1322,49 @@ module.exports = {
 					});
 					var newFolio;
 					if(!folio) {
-						newFolio = createFolio(key_user._id,item._id,item.group._id);
+						if(item.type && item.type === 'public') {
+							newFolio = createFolio(key_user._id,item._id,key_user._id,null);
+						} else {
+							newFolio = createFolio(key_user._id,item._id,key_user._id,item.group._id);
+						}
 						newFolio.assignFolio();
 						newFolio.save();
 					}
 					// console.log(folio);
 					// console.log(newFolio);
+					delete course.blocks;
+					var message = {
+						student		: key_user.person.fullName,
+						studentid	: key_user._id,
+						roster		: item._id,
+						currentBlock : item.currentBlock,
+						myStatus	: myStatus,
+						folio			: folio ? folio.folio.match(/(\d{4})/g).join(' ') : newFolio.folio.match(/(\d{4})/g).join(' '),
+						folioStatus : folio ? folio.status : newFolio.status,
+						track			: parseInt(item.track) + '%',
+						minGrade	: item.minGrade,
+						minTrack  : item.minTrack,
+						finalGrade: item.finalGrade,
+						courseid	: course._id,
+						blocks		: new_blocks,
+						course 		: course
+					};
+					if(item.type && item.type === 'public') {
+						message.blockNum	= item.course.numBlocks;
+						message.beginDate = item.createDate;
+						message.endDate		= item.endDate;
+					} else {
+						message.groupid		= item.group._id;
+						message.groupCode = item.group.code;
+						message.groupType = item.group.type;
+						message.dates			= item.group.dates;
+						message.blockNum	= item.group.course.numBlocks;
+						message.beginDate = item.group.beginDate;
+						message.endDate		= item.group.endDate;
+						message.instructor = item.group.instructor;
+					}
 					res.status(200).json({
-						'message': {
-							student		: key_user.person.fullName,
-							studentid	: key_user._id,
-							roster		: item._id,
-							currentBlock : item.currentBlock,
-							myStatus	: myStatus,
-							folio			: folio ? folio.folio.match(/(\d{4})/g).join(' ') : newFolio.folio.match(/(\d{4})/g).join(' '),
-							folioStatus : folio ? folio.status : newFolio.status,
-							groupCode : item.group.code,
-							groupType : item.group.type,
-							dates			: item.group.dates,
-							track			: parseInt(item.track) + '%',
-							minGrade	: item.minGrade,
-							minTrack  : item.minTrack,
-							finalGrade: item.finalGrade,
-							blockNum	: item.group.course.numBlocks,
-							courseid	: course,
-							groupid		: item.group._id,
-							blocks		: new_blocks,
-							beginDate : item.group.beginDate,
-							endDate		: item.group.endDate,
-							course		: {
-								id: item.group.course._id,
-								code: item.group.course.code,
-								categories: item.group.course.categories,
-								keywords: item.group.course.keywords,
-								title: item.group.course.title,
-								description: item.group.course.description,
-								image: item.group.course.image,
-								author: item.group.course.author,
-								details: item.group.course.details
-							},
-							instructor: item.group.instructor
-						}
+						'message': message
 					});
 					//setCache(item.group._id,course,item.orgUnit,key_user.orgUnit.parent,key_user._id,item.group.name,item.group.course.title,key_user.orgUnit.name,key_user.name);
 
@@ -2121,11 +2178,22 @@ module.exports = {
 
 	async myGrades(req,res){
 		const groupid		= req.query.groupid;
+		const rosterid 	= req.query.rosterid;
 		const key_user 	= res.locals.user;
+		var queryFolio = {};
+		var query = {};
+		if(groupid) {
+			queryFolio = {student: key_user._id, group: groupid};
+			query = {student: key_user._id, group: groupid};
+		}
+		if(rosterid) {
+			queryFolio = {student: key_user._id, roster: rosterid};
+			query = {_id: rosterid};
+		}
 		Promise.all([
-			Folio.findOne({student: key_user._id, group: groupid}),
-			Roster.findOne({student: key_user._id, group: groupid})
-				.populate({
+			Folio.findOne(queryFolio),
+			Roster.findOne(query)
+				.populate([{
 					path: 'group',
 					select: 'course certificateActive beginDate endDate type rubric dates',
 					populate: {
@@ -2144,16 +2212,31 @@ module.exports = {
 						options: { lean: true }
 					},
 					options: { lean: true }
-				})])
+				},{
+					path: 'course',
+					select: 'title blocks duration durationUnits',
+					populate: {
+						path: 'blocks',
+						select: 'title section number w wq wt type order',
+						options: {
+							lean: true,
+							sort: {
+								order: 1
+							}
+						}
+					},
+					options: { lean: true }
+				}])])
 			.then(results => {
 				var [folio,item] = results;
 				if(item) {
 					// let displayGrades = [...item.grades];
 					// console.log(JSON.stringify(displayGrades,null,2));
+					const type = (item.type && item.type === 'public') ? 'public' : 'group';
 					var blocks		= [];
-					const bs 			= item.group.course.blocks;
-					var rubric  	= [];
-					if(item.group.rubric && Array.isArray(item.group.rubric) && item.group.rubric.length > 0) {
+					const bs 			= (type === 'public' && item.course ) ? item.course.blocks : item.group.course.blocks;
+					var rubric  	= (type === 'group') ? [] : undefined;
+					if(type === 'group' && item.group && item.group.rubric && Array.isArray(item.group.rubric) && item.group.rubric.length > 0) {
 						rubric 	= item.group.rubric;
 					}
 					// ------------
@@ -2181,7 +2264,7 @@ module.exports = {
 
 					var rubricOk = true;
 					// primer loop
-					if(rubric.length > 0  && bs.length > 0) {
+					if(rubric && rubric.length > 0  && bs.length > 0) {
 						var i=0;
 						rubric.forEach(rub => {
 							// bs.forEach(block => {
@@ -2205,7 +2288,7 @@ module.exports = {
 					// Checar que grades sea compatible con rúbrica
 					// segundo loop
 					var gradesOk = true;
-					if(grades.length > 0  && rubric.length > 0) {
+					if(type=== 'group' && grades.length > 0  && rubric.length > 0) {
 						i=0;
 						grades.forEach(g => {
 							// rubric.forEach(r => {
@@ -2226,7 +2309,7 @@ module.exports = {
 						}
 					}
 
-					if(gradesOk && rubricOk) {
+					if(type === 'group' && gradesOk && rubricOk) {
 						// Ya sabemos que todo está completo
 						// ahora la rúbrica manda sobre grades
 						// así que grades recibe los pesos de rúbrica
@@ -2280,7 +2363,7 @@ module.exports = {
 									// if(!block.blockTitle) {
 									// 	console.log(grade);
 									// }
-									if(item.group && item.group.rubric && item.group.rubric.length > 0){
+									if(type === 'group' && item.group && item.group.rubric && item.group.rubric.length > 0){
 										let rubricItem = item.group.rubric.find(rItem => rItem.block + ''  === block.blockId + '');
 										if(rubricItem && rubricItem.text) {
 											block.blockRubricText = rubricItem.text;
@@ -2297,19 +2380,8 @@ module.exports = {
 							var send_grade = {
 								name							: key_user.person.fullName,
 								rosterid					: item._id,
-								groupid						: item.group._id,
 								status						: item.status,
-								groupType					: item.group.type,
-								course						: item.group.course.title,
-								courseId					: item.group.course._id,
-								courseDuration		: item.group.course.duration,
-								courseDurUnits		: units(item.group.course.durationUnits),
-								certificateActive : item.group.certificateActive,
 								certificateTutor	: item.certificateTutor,
-								beginDate					: item.group.beginDate,
-								endDate						: item.group.endDate,
-								beginDateSpa			: dateInSpanish(item.group.beginDate),
-								endDateSpa				: dateInSpanish(item.group.endDate),
 								finalGrade				: item.finalGrade,
 								minGrade					: item.minGrade,
 								track							: parseInt(item.track) + '%',
@@ -2319,7 +2391,29 @@ module.exports = {
 								blocks						: blocks,
 								tookCertificate		: item.tookCertificate
 							};
-							if(item.group &&
+							if(type === 'group') {
+								send_grade.groupid 	= item.group._id;
+								send_grade.groupType= item.group.type;
+								send_grade.course		= item.group.course.title;
+								send_grade.courseId	= item.group.course._id;
+								send_grade.courseDuration	= item.group.course.duration;
+								send_grade.courseDurUnits	= units(item.group.course.durationUnits);
+								send_grade.certificateActive = item.group.certificateActive;
+								send_grade.beginDate= item.group.beginDate;
+								send_grade.endDate	= item.group.endDate;
+								send_grade.beginDateSpa	= dateInSpanish(item.group.beginDate);
+								send_grade.endDateSpa	= dateInSpanish(item.group.endDate);
+							}
+							if(type === 'public') {
+								send_grade.course		= item.course.title;
+								send_grade.courseId	= item.course._id;
+								send_grade.beginDate= item.createDate;
+								send_grade.endDate	= item.endDate;
+								send_grade.beginDateSpa	= dateInSpanish(item.createDate);
+								send_grade.endDateSpa	= dateInSpanish(item.endDate);
+							}
+
+							if(type === 'group' && item.group &&
 								item.group.dates &&
 								Array.isArray(item.group.dates) &&
 								item.group.dates.length > 0
@@ -2336,7 +2430,7 @@ module.exports = {
 								send_grade.passDateSpa = dateInSpanish(item.passDate);
 							}
 							if(!folio) {
-								var newFolio = createFolio(key_user._id,item._id,item.group._id);
+								var newFolio = (type === 'group') ?  createFolio(key_user._id,item._id,key_user._id, item.group._id) : createFolio(key_user._id,item._id,key_user._id,null);
 								newFolio.assignFolio();
 								newFolio.save();
 								send_grade.folio	= newFolio.folio.match(/(\d{4})/g).join(' ');
@@ -2345,9 +2439,12 @@ module.exports = {
 								send_grade.folio	= folio.folio.match(/(\d{4})/g).join(' ');
 								send_grade.folioStatus = folio.status;
 							}
-							if(item.group.course.duration) {
+							if(type === 'group' && item.group.course.duration) {
 								send_grade.duration 			= item.group.course.duration;
 								send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
+							} else {
+								send_grade.duration 			= item.course.duration;
+								send_grade.durationUnits	= units(item.course.durationUnits,item.course.duration);
 							}
 							if(item.certificateNumber > 0) {
 								var certificate = '' + item.certificateNumber;
@@ -2819,13 +2916,17 @@ module.exports = {
 		const groupid 	= req.query.groupid;
 		//const courseid 	= req.query.courseid;
 		const blockid 	= req.query.blockid;
-		var		lastid 		= 'empty';
+		const rosterid	= req.query.rosterid;
+		var		lastid 		= req.query.lastid || 'empty';
 		const key_user	= res.locals.user;
-		if(req.query.lastid) {
-			lastid = req.query.lastid;
-		}
+		var 	query 		= rosterid ? {
+			_id: rosterid
+		} : {
+			student: key_user._id,
+			group: groupid
+		};
 		// buscar Roster del alumno
-		Roster.findOne({student: key_user._id, group: groupid})
+		Roster.findOne(query)
 			.populate([{
 				path: 'group',
 				select: 'course name code admin presentBlockBy beginDate endDate dates lapse lapseBlocks blockDates',
@@ -2842,6 +2943,10 @@ module.exports = {
 				// 	select: 'beginDate endDate'
 				// }
 				]
+			},{
+				path: 'course',
+				match: { isVisible: true, status: 'published'},
+				select: 'blocks numBlocks code'
 			}, // esta parte de abajo está sospechosa, porque de todos modos tengo que ir por el dato del bloque
 			{
 				path: 'grades.block',
@@ -2858,8 +2963,10 @@ module.exports = {
 				// o hay un error... posiblemente error de token?
 				if(item) {
 					const studentStatus = item.status;
+					const type = (!item.type || item.type === 'group') ? 'group' : 'public';
 					// Detener el flujo aquí si el curso está inactivo
-					if(!item.group.course) {
+
+					if(((!item.type || item.type === 'group') && !item.group.course) || (item.type && item.type === 'public' && !item.course)) {
 						res.status(200).json({
 							'status'	: 204,
 							'message'	: `Course for group -${item.group.name}- is not available, not visible or not published`
@@ -2867,7 +2974,7 @@ module.exports = {
 						return;
 					}
 					//
-					const blocks = item.group.course.blocks;
+					const blocks = (type === 'public') ? item.course.blocks : item.group.course.blocks;
 					// Guardamos el bloque como bloque actual, si existe.
 					if(lastid !== 'empty') {
 						let blockExists = blocks.find(block => block._id === lastid);
@@ -2884,7 +2991,7 @@ module.exports = {
 					var 	save 			= false;
 					//var 	new_date	= new Date();
 					var blockDates;
-					if(item.group.blockDates && Array.isArray(item.group.blockDates) && item.group.blockDates.length > 0) {
+					if(type === 'group' && item.group.blockDates && Array.isArray(item.group.blockDates) && item.group.blockDates.length > 0) {
 						blockDates = item.group.blockDates;
 						let foundBlock = blockDates.find(blockDate => blockDate.block + '' === blockid + '');
 						if(foundBlock && now < foundBlock.date) {
@@ -2893,7 +3000,7 @@ module.exports = {
 							causeSP = causeSP + ' Esta lección debe presentarse según el calendario ' + foundBlock.date.toString();
 						}
 					} else
-					if(item.group.presentBlockBy && item.group.presentBlockBy === 'dates'){
+					if(type === 'group' && item.group.presentBlockBy && item.group.presentBlockBy === 'dates'){
 						if(item.group.beginDate && item.group.beginDate > now ) {
 							ok 		= false;
 							cause = 'Course will begin at ' + item.group.beginDate + '. ';
@@ -2920,7 +3027,7 @@ module.exports = {
 					}
 					var blocksPresented = 0;
 					var blocksPending 	= 2;
-					if(item.group.admin && item.group.admin.blocksPending) {
+					if(type === 'group' && item.group.admin && item.group.admin.blocksPending) {
 						blocksPending = item.group.admin.blocksPending;
 					}
 					if(grades.length > 0) {
@@ -3019,7 +3126,7 @@ module.exports = {
 								item.sections[lastSection].viewed = now;	// entonces registrar la fecha en que se está "viendo" la sección
 								save = true;
 							}
-							if(item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){ // ahora, si el tipo de presentación de la sección es "lapse"
+							if(type === 'group' && item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){ // ahora, si el tipo de presentación de la sección es "lapse"
 								if(item.sections[nextSection] && !item.sections[nextSection].viewed) { // y existe la siguiente sección y no ha sido vista
 									// y existe
 									if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]){
@@ -3042,7 +3149,7 @@ module.exports = {
 								save = true;
 							}
 						} else if(lastid !== 'empty'){
-							if(item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){ // Si el grupo está seteado por lapso
+							if(type === 'group' && item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){ // Si el grupo está seteado por lapso
 								if(item.sections[lastSection]){
 									item.sections[lastSection].viewed	= now;
 								} else {
@@ -3091,8 +3198,7 @@ module.exports = {
 						var blockIndex 	= blocks.findIndex(blockIndex => blockIndex == blockid + '');
 						if(blockIndex === -1) {
 							res.status(200).json({
-								'status': 200,
-								'message': 'Block not found. Please check groupid and blockid. '
+								'message': 'Block not found. Please check groupid/rosterid and blockid. '
 							});
 							return;
 						} else if (blocks.length === 1) {
@@ -3124,11 +3230,7 @@ module.exports = {
 							)
 							.then((block) => {
 								if(block) {
-									const send_block = {
-										courseCode				: item.group.course.code,
-										courseId					: item.group.course._id,
-										groupCode					: item.group.code,
-										groupId 					: item.group._id,
+									var send_block = {
 										track							: item.track,
 										finalGrade				: item.finalGrade,
 										blockCode					: block.code,
@@ -3146,6 +3248,16 @@ module.exports = {
 										studentid					: key_user._id,
 										rosterid					: item._id
 									};
+									if(type === 'group') {
+										send_block.courseCode	= item.group.course.code;
+										send_block.courseId		= item.group.course._id;
+										send_block.groupCode	= item.group.code;
+										send_block.groupId 		= item.group._id;
+									} else {
+										send_block.courseCode	= item.course.code;
+										send_block.courseId		= item.course._id;
+									}
+
 									if(block.type === 'textVideo' && block.begin) {
 										send_block.blockBegin = true;
 									}
@@ -3173,13 +3285,22 @@ module.exports = {
 										questions.forEach(function(q) {
 											var send_question = {};
 											// Crear una forma de generar el id de la pregunta y guardarla si esta no existe
-											if(q._id)					{send_question.id					= q._id;				}
-											else
-											{
-												Err.sendError(res,'question without id','group_controller','nextBlock -- Finding question -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid + ' Questionnarie: ' + questionnarie._id);
+											if(q._id) {
+												send_question.id = q._id;
+											} else {
+												if(type === 'group') {
+													Err.sendError(res,'question without id','group_controller','nextBlock -- Finding question -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid + ' Questionnarie: ' + questionnarie._id);
+												} else {
+													Err.sendError(res,'question without id','group_controller','nextBlock -- Finding question -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' RosterId: ' + rosterid+ ' Block: ' + blockid + ' Questionnarie: ' + questionnarie._id);
+												}
+
 											}
-											if(q.header) 			{send_question.header 		= q.header;			}
-											if(q.footer) 			{send_question.footer 		= q.footer;			}
+											if(q.header){
+												send_question.header = q.header;
+											}
+											if(q.footer){
+												send_question.footer = q.footer;
+											}
 											if(q.footerShow) 	{send_question.footerShow = q.footerShow;	}
 											if(q.type) 				{send_question.type 			= q.type;				}
 											if(q.w) 					{send_question.w 					= q.w;					}
@@ -3266,10 +3387,15 @@ module.exports = {
 												text: item.text,
 												type: item.type
 											};
-											if(item._id)					{send_item.id					= item._id;				}
-											else
-											{
-												Err.sendError(res,'task without id','group_controller','nextBlock -- Finding task -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid + ' Questionnarie: ' + task._id);
+											if(item._id){
+												send_item.id = item._id;
+											} else {
+												if(type === 'group') {
+													Err.sendError(res,'task without id','group_controller','nextBlock -- Finding task -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid + ' Questionnarie: ' + task._id);
+												} else {
+													Err.sendError(res,'task without id','group_controller','nextBlock -- Finding task -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' RosterId: ' + rosterid + ' Block: ' + blockid + ' Questionnarie: ' + task._id);
+												}
+
 											}
 											if(item.header) {send_item.header = item.header;}
 											if(item.footer) {send_item.footer = item.footer;}
@@ -3293,33 +3419,33 @@ module.exports = {
 									}
 									if(studentStatus === 'pending' && blocksPresented > blocksPending) {
 										res.status(200).json({
-											'status': 200,
 											'message': 'Your student status is pending and you can only have -' + blocksPending + '- free blocks'
 										});
 									} else if (studentStatus === 'remove') {
 										res.status(200).json({
-											'status': 200,
 											'message': 'Your student status is remove and you cannot have blocks from this course'
 										});
 									} else {
 										res.status(200).json({
-											'status': 200,
 											'message': send_block
 										});
 									}
 								} else { // if(block)
 									res.status(200).json({
-										'status': 200,
 										'message': 'Block requested is not found'
 									});
 								}
 							}) // then((block))
 							.catch((err) => {
-								Err.sendError(res,err,'group_controller','nextBlock -- Finding Block -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid);
+								if(type === 'group') {
+									Err.sendError(res,err,'group_controller','nextBlock -- Finding Block -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid);
+								} else {
+									Err.sendError(res,err,'group_controller','nextBlock -- Finding Block -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' RosterId: ' + rosterid + ' Block: ' + blockid);
+								}
+
 							});
 					} else { // if(ok)
 						res.status(200).json({
-							'status': 200,
 							'message': 'Block cannot be displayed because: ' + cause,
 							'messageUser': 'El bloque no puede presentarse debido a: ' + causeSP
 						});
@@ -3327,12 +3453,17 @@ module.exports = {
 				} else {
 					res.status(200).json({
 						'status': 200,
-						'message': 'You are not enrolled to this group'
+						'message': 'You are not enrolled to this group/course'
 					});
 				}
 			})
 			.catch((err) => {
-				Err.sendError(res,err,'group_controller','nextBlock -- Finding Roster --',false,false, `User: ${key_user.name} Userid: ${key_user._id} GroupId: ${groupid} BlockId: ${blockid}`);
+				if(groupid) {
+					Err.sendError(res,err,'group_controller','nextBlock -- Finding Roster --',false,false, `User: ${key_user.name} Userid: ${key_user._id} GroupId: ${groupid} BlockId: ${blockid}`);
+				} else {
+					Err.sendError(res,err,'group_controller','nextBlock -- Finding Roster --',false,false, `User: ${key_user.name} Userid: ${key_user._id} RosterId: ${rosterid} BlockId: ${blockid}`);
+				}
+
 			});
 	}, // nextBlock
 
@@ -4461,12 +4592,17 @@ function unique(arrAY) {
 	});
 }
 
-function createFolio(student,roster,group,user) {
+function createFolio(student,roster,user,group) {
 	var newFolio = new Folio({
 		student: student,
-		roster: roster,
-		group: group
+		roster: roster
 	});
+	if(group){
+		newFolio.group = group;
+	}
+	if(!user) {
+		user = student;
+	}
 	const date = new Date();
 	newFolio.mod = [{
 		by: user,

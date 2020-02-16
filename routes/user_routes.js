@@ -23,6 +23,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/user/getdetails', 				UserController.getDetails);
 	app.put ('/api/v1/user/passwordchange', 		UserController.passwordChange);
 	app.put ('/api/v1/user/modify', 						UserController.modify);
+	app.post('/api/v1/user/enroll', UserController.createRosterSelf);
 	app.get ('/api/v1/user/mygroups', 					GroupController.myGroups);
 	app.get ('/api/v1/user/mygroup', 						GroupController.myGroup);
 	app.put ('/api/v1/user/createattempt', 			GroupController.createAttempt);

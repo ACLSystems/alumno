@@ -22,7 +22,7 @@ const ModSchema = new Schema ({
 		required: true,
 		default: 'Modified'
 	}
-});
+},{ _id: false });
 
 // Definir virtuals
 

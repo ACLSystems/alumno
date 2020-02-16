@@ -281,6 +281,22 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/user/enroll':
+		if(!req.body){
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please give data by body to process'
+			});
+		} else if(!req.body.courseid) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error: Please give courseid by body to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/user/myroles':
 		next();
 		break;
@@ -707,10 +723,10 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1780: Please, give data by query to process'
 			});
-		} else if (!req.query.groupid) {
+		} else if (!req.query.groupid && !req.query.rosterid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1780: Please, give group id by query to process'
+				'message': 'Error 1780: Please, give groupid or rosterid by query to process'
 			});
 		} else {
 			next();
@@ -909,10 +925,10 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1780: Please, give data by query to process'
 			});
-		} else if (!req.query.groupid) {
+		} else if (!req.query.groupid && !req.query.rosterid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1780: Please, give group id by query to process'
+				'message': 'Error 1780: Please, give groupid or rosterid by query to process'
 			});
 		} else {
 			next();
@@ -994,10 +1010,10 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1780: Please, give data by query to process'
 			});
-		} else if(!req.query.groupid) {
+		} else if(!req.query.groupid && !req.query.rosterid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1781: Please, give groupid by query to process'
+				'message': 'Error 1781: Please, give groupid or rosterid by query to process'
 			});
 		/*
 		} else if(!req.query.courseid) {

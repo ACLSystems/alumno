@@ -29,15 +29,14 @@ const FolioSchema = new Schema ({
 		ref: 'users',
 		required: [true, '"student" es requerido']
 	},
-	group: {
-		type: ObjectId,
-		ref: 'groups',
-		required: [true, '"group" es requerido']
-	},
 	roster: {
 		type: ObjectId,
 		ref: 'rosters',
 		required: [true, '"roster" es requerido']
+	},
+	group: {
+		type: ObjectId,
+		ref: 'groups'
 	},
 	mod: [ModSchema],
 });
