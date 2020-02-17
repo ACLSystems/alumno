@@ -18,6 +18,7 @@ const mailjet 		= require('../shared/mailjet'								);
 const Notification = require('../src/notifications'						);
 const Attempt 		= require('../src/attempts'									);
 const TA 					= require('time-ago'												);
+const StatusCodes = require('http-status-codes'								);
 //const cache 			= require('../src/cache'										);
 
 /**
@@ -2190,13 +2191,30 @@ module.exports = {
 			queryFolio = {student: key_user._id, roster: rosterid};
 			query = {_id: rosterid};
 		}
-		Promise.all([
-			Folio.findOne(queryFolio),
-			Roster.findOne(query)
-				.populate([{
-					path: 'group',
-					select: 'course certificateActive beginDate endDate type rubric dates',
-					populate: {
+		try {
+			var [folio,item] = await Promise.all([
+				Folio.findOne(queryFolio),
+				Roster.findOne(query)
+					.populate([{
+						path: 'group',
+						select: 'course certificateActive beginDate endDate type rubric dates',
+						populate: {
+							path: 'course',
+							select: 'title blocks duration durationUnits',
+							populate: {
+								path: 'blocks',
+								select: 'title section number w wq wt type order',
+								options: {
+									lean: true,
+									sort: {
+										order: 1
+									}
+								}
+							},
+							options: { lean: true }
+						},
+						options: { lean: true }
+					},{
 						path: 'course',
 						select: 'title blocks duration durationUnits',
 						populate: {
@@ -2210,297 +2228,259 @@ module.exports = {
 							}
 						},
 						options: { lean: true }
-					},
-					options: { lean: true }
-				},{
-					path: 'course',
-					select: 'title blocks duration durationUnits',
-					populate: {
-						path: 'blocks',
-						select: 'title section number w wq wt type order',
-						options: {
-							lean: true,
-							sort: {
-								order: 1
-							}
+					}])]);
+			if(item) {
+				// let displayGrades = [...item.grades];
+				// console.log(JSON.stringify(displayGrades,null,2));
+				const type = (item.type && item.type === 'public') ? 'public' : 'group';
+				var blocks		= [];
+				const bs 			= (type === 'public' && item.course ) ? item.course.blocks : item.group.course.blocks;
+				var rubric  	= (type === 'group') ? [] : undefined;
+				if(type === 'group' && item.group && item.group.rubric && Array.isArray(item.group.rubric) && item.group.rubric.length > 0) {
+					rubric 	= item.group.rubric;
+				}
+				// ------------
+
+				var grades = item.grades;
+
+				// grades.forEach(g => {
+				// 	if(g.block + '' === '5a9d73f66fee79001c6d3b63'){
+				// 		console.log(g);
+				// 	}
+				// });
+
+				// Lograr lo siguiente:
+				// Revisar que grades tenga todos los bloques. Esto lo podríamos asegurar porque "nextBlock" se encarga de cargar TODOS los bloques en grades. Sin embargo, hay que revisar.
+				// ¿Cómo podemos saber si existen TODOS los bloques en grades?
+				// - Número de bloques en curso vs número de bloques en grades
+				// - Revisando uno por uno y comparando id's (funciones some, include)
+				// Revisar que exista RUBRIC en el grupo y reflejarlo en grades. RUBRIC en el grupo llevará la batuta hacia grades. Cualquier cambio en RUBRIC se debe ver reflejado en grades.
+
+				// console.log(`Tamaño de bloques ${bs.length}`);
+				// console.log(`Tamaño de grades ${grades.length}`);
+				// console.log(`Tamaño de rubric ${rubric.length}`);
+
+				// Checar que rubric sea compatible con bloques
+
+				var rubricOk = true;
+				// primer loop
+				if(rubric && rubric.length > 0  && bs.length > 0) {
+					var i=0;
+					rubric.forEach(rub => {
+						// bs.forEach(block => {
+						// 	if(rub.block + '' === block._id + '') {
+						// 		i++;
+						// 	}
+						// });
+						if(bs.some(b => b._id + '' === rub.block + '')) {
+							i++;
 						}
-					},
-					options: { lean: true }
-				}])])
-			.then(results => {
-				var [folio,item] = results;
-				if(item) {
-					// let displayGrades = [...item.grades];
-					// console.log(JSON.stringify(displayGrades,null,2));
-					const type = (item.type && item.type === 'public') ? 'public' : 'group';
-					var blocks		= [];
-					const bs 			= (type === 'public' && item.course ) ? item.course.blocks : item.group.course.blocks;
-					var rubric  	= (type === 'group') ? [] : undefined;
-					if(type === 'group' && item.group && item.group.rubric && Array.isArray(item.group.rubric) && item.group.rubric.length > 0) {
-						rubric 	= item.group.rubric;
+					});
+					// console.log(i);
+					if(i !== rubric.length) {
+						rubricOk = false;
+					// 	console.log('chin!');
+					// } else {
+					// 	console.log('Vientos! Rubrica está completa');
 					}
-					// ------------
+				}
 
-					var grades = item.grades;
-
-					// grades.forEach(g => {
-					// 	if(g.block + '' === '5a9d73f66fee79001c6d3b63'){
-					// 		console.log(g);
-					// 	}
-					// });
-
-					// Lograr lo siguiente:
-					// Revisar que grades tenga todos los bloques. Esto lo podríamos asegurar porque "nextBlock" se encarga de cargar TODOS los bloques en grades. Sin embargo, hay que revisar.
-					// ¿Cómo podemos saber si existen TODOS los bloques en grades?
-					// - Número de bloques en curso vs número de bloques en grades
-					// - Revisando uno por uno y comparando id's (funciones some, include)
-					// Revisar que exista RUBRIC en el grupo y reflejarlo en grades. RUBRIC en el grupo llevará la batuta hacia grades. Cualquier cambio en RUBRIC se debe ver reflejado en grades.
-
-					// console.log(`Tamaño de bloques ${bs.length}`);
-					// console.log(`Tamaño de grades ${grades.length}`);
-					// console.log(`Tamaño de rubric ${rubric.length}`);
-
-					// Checar que rubric sea compatible con bloques
-
-					var rubricOk = true;
-					// primer loop
-					if(rubric && rubric.length > 0  && bs.length > 0) {
-						var i=0;
-						rubric.forEach(rub => {
-							// bs.forEach(block => {
-							// 	if(rub.block + '' === block._id + '') {
-							// 		i++;
-							// 	}
-							// });
-							if(bs.some(b => b._id + '' === rub.block + '')) {
-								i++;
-							}
-						});
-						// console.log(i);
-						if(i !== rubric.length) {
-							rubricOk = false;
-						// 	console.log('chin!');
-						// } else {
-						// 	console.log('Vientos! Rubrica está completa');
+				// Checar que grades sea compatible con rúbrica
+				// segundo loop
+				var gradesOk = true;
+				if(type=== 'group' && grades.length > 0  && rubric.length > 0) {
+					i=0;
+					grades.forEach(g => {
+						// rubric.forEach(r => {
+						// 	if(r.block + '' === g.block + '') {
+						// 		i++;
+						// 	}
+						// });
+						if(rubric.some(r => r.block + '' === g.block + '')) {
+							i++;
 						}
+					});
+					// console.log(i);
+					if(i !== grades.length) {
+						gradesOk = false;
+					// 	console.log('chin!');
+					// } else {
+					// 	console.log('Vientos! grades está completa');
 					}
+				}
 
-					// Checar que grades sea compatible con rúbrica
-					// segundo loop
-					var gradesOk = true;
-					if(type=== 'group' && grades.length > 0  && rubric.length > 0) {
-						i=0;
-						grades.forEach(g => {
-							// rubric.forEach(r => {
-							// 	if(r.block + '' === g.block + '') {
-							// 		i++;
-							// 	}
-							// });
-							if(rubric.some(r => r.block + '' === g.block + '')) {
-								i++;
-							}
-						});
-						// console.log(i);
-						if(i !== grades.length) {
-							gradesOk = false;
-						// 	console.log('chin!');
-						// } else {
-						// 	console.log('Vientos! grades está completa');
+				if(type === 'group' && gradesOk && rubricOk) {
+					// Ya sabemos que todo está completo
+					// ahora la rúbrica manda sobre grades
+					// así que grades recibe los pesos de rúbrica
+					// En teoría son los mismos pesos.
+
+					// La rúbrica puede cambiar incluso ya comenzadas las actividades
+					// Por lo que es de vital importancia que siempre se lea
+					// correctamente la rúbrica y se plasme en grades.
+					// Tercer loop
+					grades.forEach(g => {
+						const foundR = rubric.find(r => r.block + '' === g.block + '');
+						if(foundR) {
+							g.w = foundR.w;
+							g.wq = foundR.wq;
+							g.wt = foundR.wt;
 						}
-					}
-
-					if(type === 'group' && gradesOk && rubricOk) {
-						// Ya sabemos que todo está completo
-						// ahora la rúbrica manda sobre grades
-						// así que grades recibe los pesos de rúbrica
-						// En teoría son los mismos pesos.
-
-						// La rúbrica puede cambiar incluso ya comenzadas las actividades
-						// Por lo que es de vital importancia que siempre se lea
-						// correctamente la rúbrica y se plasme en grades.
-						// Tercer loop
-						grades.forEach(g => {
-							const foundR = rubric.find(r => r.block + '' === g.block + '');
-							if(foundR) {
-								g.w = foundR.w;
-								g.wq = foundR.wq;
-								g.wt = foundR.wt;
-							}
-						});
-					}
-
-					// ordenar el arreglo de grades
-
-					//grades.sort((a,b) => (a.order > b.order) ? 1 : -1);
-
-					item.grades = grades;
-					item.repair = 1;
-					item.save()
-						.then((item) => {
-						// ------
-							item.grades.forEach(grade => {
-								if(grade.wq > 0 || grade.wt > 0 || grade.w > 0) {
-									var i = 0;
-									var block = {};
-									while (i < bs.length) {
-										if(grade.block + '' === bs[i]._id + '') {
-											block = {
-												blockTitle	: bs[i].title,
-												blockSection: bs[i].section,
-												blockNumber	: bs[i].number,
-												blockOrder 	: bs[i].order,
-												blockW			: grade.w,
-												blockType		: bs[i].type,
-												blockId			: bs[i]._id
-											};
-											i = bs.length;
-										} else {
-											i++;
-										}
-									}
-									block.grade = grade.finalGrade;
-									block.track = grade.track;
-									// if(!block.blockTitle) {
-									// 	console.log(grade);
-									// }
-									if(type === 'group' && item.group && item.group.rubric && item.group.rubric.length > 0){
-										let rubricItem = item.group.rubric.find(rItem => rItem.block + ''  === block.blockId + '');
-										if(rubricItem && rubricItem.text) {
-											block.blockRubricText = rubricItem.text;
-										}
-									}
-									// if(block.blockId + '' === '5a9d73f66fee79001c6d3b63') {
-									// 	console.log(grade);
-									// 	console.log(block);
-									// }
-									blocks.push(block);
-								}
-							});
-
-							var send_grade = {
-								name							: key_user.person.fullName,
-								rosterid					: item._id,
-								status						: item.status,
-								certificateTutor	: item.certificateTutor,
-								finalGrade				: item.finalGrade,
-								minGrade					: item.minGrade,
-								track							: parseInt(item.track) + '%',
-								minTrack					: item.minTrack + '%',
-								pass							: item.pass,
-								passDate					: item.passDate,
-								blocks						: blocks,
-								tookCertificate		: item.tookCertificate
-							};
-							if(type === 'group') {
-								send_grade.groupid 	= item.group._id;
-								send_grade.groupType= item.group.type;
-								send_grade.course		= item.group.course.title;
-								send_grade.courseId	= item.group.course._id;
-								send_grade.courseDuration	= item.group.course.duration;
-								send_grade.courseDurUnits	= units(item.group.course.durationUnits);
-								send_grade.certificateActive = item.group.certificateActive;
-								send_grade.beginDate= item.group.beginDate;
-								send_grade.endDate	= item.group.endDate;
-								send_grade.beginDateSpa	= dateInSpanish(item.group.beginDate);
-								send_grade.endDateSpa	= dateInSpanish(item.group.endDate);
-							}
-							if(type === 'public') {
-								send_grade.course		= item.course.title;
-								send_grade.courseId	= item.course._id;
-								send_grade.beginDate= item.createDate;
-								send_grade.endDate	= item.endDate;
-								send_grade.beginDateSpa	= dateInSpanish(item.createDate);
-								send_grade.endDateSpa	= dateInSpanish(item.endDate);
-							}
-
-							if(type === 'group' && item.group &&
-								item.group.dates &&
-								Array.isArray(item.group.dates) &&
-								item.group.dates.length > 0
-							) {
-								let findCertificateDate = item.group.dates.find(date => date.type === 'certificate');
-								// esta parte era por si la fecha mínima era la de liberación de constancia
-								//if(findCertificateDate && send_grade.passDate < findCertificateDate.beginDate) {
-								// Y esta es la fecha de liberación de constancia
-								if(findCertificateDate) {
-									send_grade.passDate = findCertificateDate.beginDate;
-								}
-							}
-							if(item.passDate) {
-								send_grade.passDateSpa = dateInSpanish(item.passDate);
-							}
-							if(!folio) {
-								var newFolio = (type === 'group') ?  createFolio(key_user._id,item._id,key_user._id, item.group._id) : createFolio(key_user._id,item._id,key_user._id,null);
-								newFolio.assignFolio();
-								newFolio.save();
-								send_grade.folio	= newFolio.folio.match(/(\d{4})/g).join(' ');
-								send_grade.folioStatus = newFolio.status;
-							} else {
-								send_grade.folio	= folio.folio.match(/(\d{4})/g).join(' ');
-								send_grade.folioStatus = folio.status;
-							}
-							if(type === 'group' && item.group.course.duration) {
-								send_grade.duration 			= item.group.course.duration;
-								send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
-							} else {
-								send_grade.duration 			= item.course.duration;
-								send_grade.durationUnits	= units(item.course.durationUnits,item.course.duration);
-							}
-							if(item.certificateNumber > 0) {
-								var certificate = '' + item.certificateNumber;
-								send_grade.certificateNumber = certificate.padStart(7, '0');
-							}
-							if(item.pass && item.certificateNumber === 0) {
-								var cert = new Certificate();
-								cert.roster = item._id;
-								Certificate.findOne({roster:cert.roster})
-									.then((certFound) => {
-										if(certFound) {
-											var certificate = '' + certFound.number;
-											send_grade.certificateNumber = certificate.padStart(7, '0');
-											res.status(200).json({
-												'status': 200,
-												'message': send_grade
-											});
-										} else {
-											cert.save()
-												.then((cert) => {
-													var certificate = '' + cert.number;
-													send_grade.certificateNumber = certificate.padStart(7, '0');
-													res.status(200).json({
-														'status': 200,
-														'message': send_grade
-													});
-												})
-												.catch((err) => {
-													Err.sendError(res,err,'group_controller','mygrades -- Saving certificate -- Roster: '  + item._id);
-												});
-										}
-									})
-									.catch((err) => {
-										Err.sendError(res,err,'group_controller','mygrades -- Finding certificate -- Roster: '  + item._id);
-									});
-
-							} else {
-								res.status(200).json({
-									'status': 200,
-									'message': send_grade
-								});
-							}
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'group_controller','mygrades -- Reparing Roster --');
-						});
-				} else {
-					res.status(200).json({
-						'status': 200,
-						'message': 'You are not enrolled in this group'
 					});
 				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'group_controller','mygrades -- Finding Roster --');
-			});
+
+				// ordenar el arreglo de grades
+
+				//grades.sort((a,b) => (a.order > b.order) ? 1 : -1);
+
+				item.grades = grades;
+				item.repair = 1;
+				await item.save();
+				item.grades.forEach(grade => {
+					if(grade.wq > 0 || grade.wt > 0 || grade.w > 0) {
+						var i = 0;
+						var block = {};
+						while (i < bs.length) {
+							if(grade.block + '' === bs[i]._id + '') {
+								block = {
+									blockTitle	: bs[i].title,
+									blockSection: bs[i].section,
+									blockNumber	: bs[i].number,
+									blockOrder 	: bs[i].order,
+									blockW			: grade.w,
+									blockType		: bs[i].type,
+									blockId			: bs[i]._id
+								};
+								i = bs.length;
+							} else {
+								i++;
+							}
+						}
+						block.grade = grade.finalGrade;
+						block.track = grade.track;
+						// if(!block.blockTitle) {
+						// 	console.log(grade);
+						// }
+						if(type === 'group' && item.group && item.group.rubric && item.group.rubric.length > 0){
+							let rubricItem = item.group.rubric.find(rItem => rItem.block + ''  === block.blockId + '');
+							if(rubricItem && rubricItem.text) {
+								block.blockRubricText = rubricItem.text;
+							}
+						}
+						// if(block.blockId + '' === '5a9d73f66fee79001c6d3b63') {
+						// 	console.log(grade);
+						// 	console.log(block);
+						// }
+						blocks.push(block);
+					}
+				});
+
+				var send_grade = {
+					name							: key_user.person.fullName,
+					rosterid					: item._id,
+					status						: item.status,
+					certificateTutor	: item.certificateTutor,
+					finalGrade				: item.finalGrade,
+					minGrade					: item.minGrade,
+					track							: parseInt(item.track) + '%',
+					minTrack					: item.minTrack + '%',
+					pass							: item.pass,
+					passDate					: item.passDate,
+					blocks						: blocks,
+					tookCertificate		: item.tookCertificate
+				};
+				if(type === 'group') {
+					send_grade.groupid 	= item.group._id;
+					send_grade.groupType= item.group.type;
+					send_grade.course		= item.group.course.title;
+					send_grade.courseId	= item.group.course._id;
+					send_grade.courseDuration	= item.group.course.duration;
+					send_grade.courseDurUnits	= units(item.group.course.durationUnits);
+					send_grade.certificateActive = item.group.certificateActive;
+					send_grade.beginDate= item.group.beginDate;
+					send_grade.endDate	= item.group.endDate;
+					send_grade.beginDateSpa	= dateInSpanish(item.group.beginDate);
+					send_grade.endDateSpa	= dateInSpanish(item.group.endDate);
+				}
+				if(type === 'public') {
+					send_grade.course		= item.course.title;
+					send_grade.courseId	= item.course._id;
+					send_grade.beginDate= item.createDate;
+					send_grade.endDate	= item.endDate;
+					send_grade.beginDateSpa	= dateInSpanish(item.createDate);
+					send_grade.endDateSpa	= dateInSpanish(item.endDate);
+				}
+
+				if(type === 'group' && item.group &&
+					item.group.dates &&
+					Array.isArray(item.group.dates) &&
+					item.group.dates.length > 0
+				) {
+					let findCertificateDate = item.group.dates.find(date => date.type === 'certificate');
+					// esta parte era por si la fecha mínima era la de liberación de constancia
+					//if(findCertificateDate && send_grade.passDate < findCertificateDate.beginDate) {
+					// Y esta es la fecha de liberación de constancia
+					if(findCertificateDate) {
+						send_grade.passDate = findCertificateDate.beginDate;
+					}
+				}
+				if(item.passDate) {
+					send_grade.passDateSpa = dateInSpanish(item.passDate);
+				}
+				if(!folio) {
+					var newFolio = (type === 'group') ?
+						createFolio(key_user._id,item._id,key_user._id, item.group._id) :
+						createFolio(key_user._id,item._id,key_user._id,null);
+					newFolio.assignFolio();
+					await newFolio.save();
+					send_grade.folio	= newFolio.folio.match(/(\d{4})/g).join(' ');
+					send_grade.folioStatus = newFolio.status;
+				} else {
+					send_grade.folio	= folio.folio.match(/(\d{4})/g).join(' ');
+					send_grade.folioStatus = folio.status;
+				}
+				if(type === 'group' && item.group.course.duration) {
+					send_grade.duration 			= item.group.course.duration;
+					send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
+				} else {
+					send_grade.duration 			= item.course.duration;
+					send_grade.durationUnits	= units(item.course.durationUnits,item.course.duration);
+				}
+				if(item.certificateNumber > 0) {
+					var certificate = '' + item.certificateNumber;
+					send_grade.certificateNumber = certificate.padStart(7, '0');
+				}
+				if(item.pass && item.certificateNumber === 0) {
+					var cert = new Certificate();
+					cert.roster = item._id;
+					var certFound = await Certificate.findOne({roster:cert.roster});
+					if(certFound) {
+						let certificate = '' + certFound.number;
+						send_grade.certificateNumber = certificate.padStart(7, '0');
+						res.status(StatusCodes.OK).json({
+							'message': send_grade
+						});
+					} else {
+						await cert.save();
+						let certificate = '' + cert.number;
+						send_grade.certificateNumber = certificate.padStart(7, '0');
+						res.status(StatusCodes.OK).json({
+							'message': send_grade
+						});
+					}
+				} else {
+					res.status(StatusCodes.OK).json({
+						'message': send_grade
+					});
+				}
+			} else {
+				res.status(StatusCodes.OK).json({
+					'message': 'No estás inscrito en este grupo/curso'
+				});
+			}
+		} catch (err) {
+			Err.sendError(res,err,'group_controller','mygrades');
+		}
 	}, // myGrades
 
 	getGrade(req,res) {
