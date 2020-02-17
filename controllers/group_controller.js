@@ -820,7 +820,7 @@ module.exports = {
 		try {
 			var results = rosterid ?
 				await Roster.findById(rosterid) :
-				await Roster.find(query);
+				await Roster.find(query).select('status mod').lean();
 			if(rosterid) {
 				if(results) {
 					if(results.mod && results.mod.length > 0) {
@@ -850,29 +850,30 @@ module.exports = {
 				}
 			} else {
 				if(results && results.length > 0) {
-					for(var i; i < results.length; i++) {
+					for(var i = 0; i < results.length; i++) {
+						var mod = [];
 						if(results[i].mod && results[i].mod.length > 0){
-							results[i].mod.push({
+							mod = results[i].mod;
+							mod.push({
 								by: key_user.name,
 								when: date,
 								what: `Cambiando status a ${status}`
 							});
 						} else {
-							results[i].mod = [{
+							mod = [{
 								by: key_user.name,
 								when: date,
 								what: `Cambiando status a ${status}`
 							}];
 						}
-						results[i].status = status;
-						await results[i].save();
+						await Roster.findOneAndUpdate({_id:results[i]._id},{$set: {status}});
 					}
 					res.status(StatusCodes.OK).json({
 						'message': 'Estados modificados',
 						'rostersModified': results.length
 					});
 				} else {
-					res.status(200).json({
+					res.status(StatusCodes.OK).json({
 						'message': 'No existen roster con el criterio solicitado'
 					});
 				}
@@ -953,12 +954,16 @@ module.exports = {
 					var students 	= [];
 					var pending 	= 0;
 					var active 		= 0;
+					var finished  = 0;
+					var removed 	= 0;
 					group.roster.forEach(function(s) {
 						if(!s.pass) {
 							s.pass = false;
 						}
 						if(s.status === 'pending')	{ pending++;}
 						if(s.status === 'active')		{ active++;	}
+						if(s.status === 'finished')	{ finished++;}
+						if(s.status === 'remove')		{ removed++;	}
 						var send_student = {
 							userid					: s.student._id,
 							userName				: s.student.person.name,
@@ -1068,8 +1073,10 @@ module.exports = {
 						send_student.grades = send_grades;
 						students.push(send_student);
 					});
-					send_group.totalActive = active;
-					send_group.totalPending = pending;
+					send_group.totalActive 		= active;
+					send_group.totalPending 	= pending;
+					send_group.totalFinished	= finished;
+					send_group.totalRemoved 	= removed;
 					send_group.students = students;
 					res.status(200).json({
 						'status': 200,
@@ -1405,78 +1412,95 @@ module.exports = {
 			});
 	}, // mygroup
 
-	getGroups(req,res) {
+	async getGroups(req,res) {
 		//const key_user	= res.locals.user;
 		const username  = req.query.username;
-		User.findOne({name: username})
-			.select('name person')
-			.then((user) => {
-				if(user) {
-					let populate = {
-						path: 'group',
-						select: 'course code name beginDate endDate status',
-						populate: {
-							path: 'course',
-							select: 'code title'
-						}
-					};
-					if (req.query.active) {
-						populate.match = {
-							status: 'active'
-						};
+		try {
+			const user = await User.findOne({name: username})
+				.select('name person');
+			if(user) {
+				let populate = [{
+					path: 'group',
+					select: 'course code name beginDate endDate status',
+					populate: {
+						path: 'course',
+						select: 'code title'
 					}
-					Roster.find({student:user._id})
-						.populate(populate)
-						.lean()
-						.then((items) => {
-							if(items.length > 0 ) {
-								var send_items = [];
-								items.forEach(function(item) {
-									var beginDate;
-									var endDate;
-									if(item.group.beginDate) {beginDate = new Date(item.group.beginDate);}
-									if(item.group.endDate) {endDate = new Date(item.group.endDate);}
-									send_items.push({
-										status			: item.status,
-										group				: {
-											id				: item.group._id,
-											name			: item.group.name,
-											code			: item.group.code,
-											status 		: item.group.status,
-											beginDate	: beginDate.toDateString(),
-											endDate		: endDate.toDateString()
-										},
-										course			:	{
-											title			: item.group.course.title,
-											code 			:	item.group.course.code,
-										}
-									});
-								});
-								res.status(200).json({
-									'message': {
-										'name'	: user.person.fullName,
-										'id'		: user._id,
-										'groups': send_items
-									}
-								});
-							} else {
-								res.status(200).json({
-									'message': 'User ' + user.person.fullName + ' -'+ user._id +'- '+' has no groups'
-								});
+				},{
+					path: 'course',
+					select: 'code title'
+				}];
+				if (req.query.active) {
+					populate.match = {
+						status: 'active'
+					};
+				}
+				const items = await Roster.find({student:user._id})
+					.populate(populate)
+					.lean();
+				if(items.length > 0 ) {
+					var send_items = [];
+					items.forEach(function(item) {
+						var beginDate;
+						var endDate;
+						if(item.group){
+							if(item.group.beginDate) {
+								beginDate = new Date(item.group.beginDate);
 							}
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'group_controller','getGroups -- Finding Roster Group Course --');
-						});
+							if(item.group.endDate) {
+								endDate = new Date(item.group.endDate);
+							}
+							send_items.push({
+								type				: item.type || 'group',
+								status			: item.status,
+								group				: {
+									id				: item.group._id,
+									name			: item.group.name,
+									code			: item.group.code,
+									status 		: item.group.status,
+									beginDate	: beginDate.toDateString(),
+									endDate		: endDate.toDateString()
+								},
+								course			:	{
+									title			: item.group.course.title,
+									code 			:	item.group.course.code
+								}
+							});
+						} else if(item.course) {
+							send_items.push({
+								type 				: item.type,
+								status			: item.status,
+								course			:	{
+									title			: item.course.title,
+									code 			:	item.course.code,
+									beginDate : item.createDate.toDateString(),
+									endDate		: item.endDate.toDateString()
+								}
+							});
+						}
+					});
+					res.status(StatusCodes.OK).json({
+						'message': {
+							'name'	: user.person.fullName,
+							'id'		: user._id,
+							'groups': send_items
+						}
+					});
 				} else {
-					res.status(200).json({
-						'message': 'User not found'
+					res.status(StatusCodes.OK).json({
+						'message': `Usuario ${user.person.fullName} -${user._id}- no tiene grupos`
 					});
 				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'group_controller','getGroups -- Finding User --');
-			});
+			} else {
+				res.status(StatusCodes.OK).json({
+					'message': 'Usuario no existe'
+				});
+			}
+		} catch (err) {
+			Err.sendError(res,err,'group_controller','getGroups -- Finding User --');
+		}
+
+
 	}, //getGroups
 
 	getGroupsByRFC(req,res) {
