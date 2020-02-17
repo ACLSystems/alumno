@@ -1537,24 +1537,46 @@ module.exports = {
 			});
 	}, //getGroupsByRFC
 
-	createAttempt(req,res) {
+	async createAttempt(req,res) {
 		const key_user	= res.locals.user;
 		const groupid 	= req.body.groupid;
 		const blockid 	= req.body.blockid;
+		const rosterid	= req.body.rosterid;
 		const answers 	= req.body.answers;
 		const grade			= req.body.grade;
-		const date = Date();
+		const date = new Date();
 		var quest = {
 			answers : answers,
 			grade		: grade,
 			attempt : date
 		};
+		var query = {};
+		if(groupid) {
+			query = {student: key_user._id, group: groupid};
+		}
+		if(rosterid) {
+			query = {_id: rosterid};
+		}
 		var maxAttempts = 5;
-		Roster.findOne({student: key_user._id, group: groupid})
-			.populate([{
-				path: 'group',
-				select: 'course',
-				populate: {
+		try {
+			var item = await Roster.findOne(query)
+				.populate([{
+					path: 'group',
+					select: 'course',
+					populate: {
+						path: 'course',
+						select: 'blocks',
+						populate: {
+							path: 'blocks',
+							match: { _id: blockid },
+							select: 'questionnarie w wq wt',
+							populate: {
+								path: 'questionnarie',
+								select: 'maxAttempts'
+							}
+						}
+					}
+				},{
 					path: 'course',
 					select: 'blocks',
 					populate: {
@@ -1566,186 +1588,249 @@ module.exports = {
 							select: 'maxAttempts'
 						}
 					}
+				},{
+					path: 'grades.dependencies.dep'
+				}]);
+			if(item) {
+				var type = (item.type && item.type === 'public') ? 'public' : 'group';
+				if(type === 'public' &&
+					(!(item.course &&
+						item.course.blocks &&
+						Array.isArray(item.course.blocks) &&
+						item.course.blocks.length > 0))) {
+					res.status(StatusCodes.CONFLICT).json({
+						'message': 'El curso no está listo para recibir respuestas de exámenes'
+					});
 				}
-			},
-			{
-				path: 'grades.dependencies.dep'
-			}])
-			.then((item) => {
-				if(item) {
-					if(item && item.group && item.group.course && item.group.course.blocks && item.group.course.blocks > 0 && item.group.course.blocks[0].questionnarie && item.group.course.blocks[0].questionnarie.maxAttempts ) {
-						maxAttempts = item.group.course.blocks[0].questionnarie.maxAttempts;
+				if(type === 'group' &&
+					(!(item.group &&
+						item.group.course &&
+						item.group.course.blocks &&
+						Array.isArray(item.group.course.blocks) &&
+						item.group.course.blocks.length > 0))) {
+					res.status(StatusCodes.CONFLICT).json({
+						'message': 'El curso no está listo para recibir respuestas de exámenes'
+					});
+				}
+				var blocks = (type === 'public') ? item.course.blocks : item.group.course.blocks;
+				if(blocks.length === 0) {
+					res.status(StatusCodes.CONFLICT).json({
+						'message': 'El curso no está listo para recibir respuestas de exámenes'
+					});
+				}
+				if(blocks[0].questionnarie &&
+					blocks[0].questionnarie.maxAttempts) {
+					maxAttempts = blocks[0].questionnarie.maxAttempts;
+				}
+				var grades = [];
+				var myGrade;
+				var k = 0;
+				var index = -1;
+				if(type === 'group') {
+					if(item.group.rubric &&
+					item.group.rubric.length > 0) {
+						index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + '');
 					}
-					var grades = [];
-					var myGrade = {};
-					var k = 0;
-					var index = -1;
-					if(item.group.rubric && item.group.rubric.length > 0) { index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + ''); }
-					if(item.grades.length > 0) {
-						grades = item.grades;
-						var len = grades.length;
-						var found = false;
-						while ((k < len) && !found) {
-							if(grades[k].block + '' === blockid) {
-								myGrade = grades[k];
-								found = true;
-							} else {
-								k++;
-							}
-						}
-						// verificamos las dependencias y que estas se cumplan
-						const myDeps = myGrade.dependencies;
+				}
+				if(type === 'public') {
+					index = blocks.findIndex(i => i._id + '' === myGrade.block + '');
+				}
+				if(item.grades.length > 0) {
+					grades = item.grades;
+					var len = grades.length;
+					var found = false;
+					// while ((k < len) && !found) {
+					// 	if(grades[k].block + '' === blockid) {
+					// 		myGrade = grades[k];
+					// 		found = true;
+					// 	} else {
+					// 		k++;
+					// 	}
+					// }
+					myGrade = grades.find(k => k.block + '' === blockid);
+					if(myGrade) {
+						found = true;
+					}
+					// verificamos las dependencias y que estas se cumplan
+					const myDeps = myGrade.dependencies;
 
-						if(myDeps.length > 0) { // hay dependencias?
-							//Solo buscamos las dependencias de las que somos origen
-							myDeps.forEach(function(dep) {
-								if(myGrade.block +'' === dep.dep.onBlock +'') {
-									found = false;
-									var l = 0;
-									var m	= 0;
-									var founddep = false;
-									while ((l < len) && !found) {
-										if(grades[l].block + '' === dep.dep.block + '') {
-											m=0;
-											founddep = false;
-											if(grades[l].dependencies && grades[l].dependencies.length > 0) {
-												while((m < grades[l].dependencies.length) && !founddep) {
-													if(grades[l].dependencies[m].dep._id + '' === dep.dep._id + '') {
-														if(grades[l].dependencies[m].dep.createAttempt) {
-															item.grades[l].dependencies[m].createAttempt = true;
-														}
-														founddep = true;
+					if(myDeps.length > 0) { // hay dependencias?
+						//Solo buscamos las dependencias de las que somos origen
+						myDeps.forEach(dep => {
+							if(myGrade.block +'' === dep.dep.onBlock +'') {
+								found = false;
+								var l = 0;
+								var m	= 0;
+								var founddep = false;
+								while ((l < len) && !found) {
+									if(grades[l].block + '' === dep.dep.block + '') {
+										m=0;
+										founddep = false;
+										if(grades[l].dependencies && grades[l].dependencies.length > 0) {
+											while((m < grades[l].dependencies.length) && !founddep) {
+												if(grades[l].dependencies[m].dep._id + '' === dep.dep._id + '') {
+													if(grades[l].dependencies[m].dep.createAttempt) {
+														item.grades[l].dependencies[m].createAttempt = true;
 													}
-													m++;
+													founddep = true;
 												}
+												m++;
 											}
-											found = true;
 										}
-										l++;
+										found = true;
 									}
+									l++;
 								}
-							});
-						}
-
-						if(myGrade.quests && myGrade.quests.length > 0) {
-							if(myGrade.quests.length > maxAttempts - 1) {
-								res.status(406).json({
-									'status': 406,
-									'message': 'Max number of attempts has reached. No more attempts allowed'
-								});
-								return;
-							} else {
-								if(!found) {
-									myGrade.block = blockid;
-								}
-								myGrade.quests.push(quest);
-								myGrade.gradedQ = true;
 							}
+						});
+					}
+
+					if(myGrade.quests && myGrade.quests.length > 0) {
+						if(myGrade.quests.length > maxAttempts - 1) {
+							res.status(StatusCodes.NOT_ACCEPTABLE).json({
+								'message': 'Maximo número de intentos alcanzados'
+							});
+							return;
 						} else {
-							myGrade.quests 	= [quest];
-							myGrade.track		= 100;
-							myGrade.gradedQ = true;
 							if(!found) {
 								myGrade.block = blockid;
 							}
+							myGrade.quests.push(quest);
+							myGrade.gradedQ = true;
 						}
+					} else {
+						myGrade.quests 	= [quest];
+						myGrade.track		= 100;
+						myGrade.gradedQ = true;
+						if(!found) {
+							myGrade.block = blockid;
+						}
+					}
 
-						if(myGrade.w === 0) {
-							//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
-							//	myGrade.w = item.group.course.blocks[0].w;
-							//}
-							// implementamos la rúbrica desde el grupo
-							if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].w) {
-								myGrade.w = item.group.rubric[index].w;
-							}
-						}
-						if(myGrade.wq === 0) {
-							//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
-							//	myGrade.wq = item.group.course.blocks[0].wq;
-							//}
-							if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wq) {
-								myGrade.wq = item.group.rubric[index].wq;
-							}
-						}
-						if(myGrade.wt === 0) {
-							//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
-							//	myGrade.wt = item.group.course.blocks[0].wt;
-							//}
-							if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wt) {
-								myGrade.wt = item.group.rubric[index].wt;
-							}
-						}
-						item.grades[k] = myGrade;
-					} else {	// El siguiente bloque de código no debería existir porque al crear el roster se generan los bloques
-						myGrade = {
-							block	: blockid,
-							quests: [quest],
-							track	: 100,
-							gradedQ: true
-						};
+					// Esta parte es como una doble validación de que exista la ponderación. Además, si la ponderación fue modificada posterior a la creación del roster. Aplica para las w
+					if(myGrade.w === 0) {
 						//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
 						//	myGrade.w = item.group.course.blocks[0].w;
 						//}
-						if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].w) {
+						// implementamos la rúbrica desde el grupo
+						if(type === 'group' &&
+							item.group &&
+							item.group.rubric &&
+							item.group.rubric.length > 0 &&
+							index > -1 &&
+							item.group.rubric[index].w) {
 							myGrade.w = item.group.rubric[index].w;
 						}
+						if(type === 'public' &&
+							index > -1
+							&& blocks[index]
+							&& blocks[index].w) {
+							myGrade.w = blocks[index].w;
+						}
+					}
+					if(myGrade.wq === 0) {
 						//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
 						//	myGrade.wq = item.group.course.blocks[0].wq;
 						//}
-						if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wq) {
+						if(type === 'group' &&
+							item.group &&
+							item.group.rubric &&
+							item.group.rubric.length > 0 &&
+							index > -1 &&
+							item.group.rubric[index].wq) {
 							myGrade.wq = item.group.rubric[index].wq;
 						}
+						if(type === 'public' &&
+							index > -1
+							&& blocks[index]
+							&& blocks[index].wq) {
+							myGrade.wq = blocks[index].wq;
+						}
+					}
+					if(myGrade.wt === 0) {
 						//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
 						//	myGrade.wt = item.group.course.blocks[0].wt;
 						//}
-						if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wt) {
+						if(type === 'group' &&
+							item.group &&
+							item.group.rubric &&
+							item.group.rubric.length > 0 &&
+							index > -1 &&
+							item.group.rubric[index].wt) {
 							myGrade.wt = item.group.rubric[index].wt;
 						}
-						item.grades = [myGrade];
+						// Esta parte en teoría no aplicaría... pero si en algún momento
+						// se implementan tareas para rosters sin grupo... no sabemos
+						if(type === 'public' &&
+							index > -1
+							&& blocks[index]
+							&& blocks[index].wt) {
+							myGrade.wt = blocks[index].wt;
+						}
 					}
-					item.save()
-						.then((item) => {
-							const attempt = new Attempt({
-								attempt : quest,
-								roster	: item._id,
-								block		: blockid,
-								user		: key_user._id
-							});
-							attempt.save()
-								.then(() => {
-									res.status(200).json({
-										'status': 200,
-										'message': 'Attempt saved'
-									});
-								})
-								.catch((err) => {
-									Err.sendError(res,err,'group_controller','createAttempt -- Saving attempt --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + ' Quest: ' + JSON.stringify(quest));
-								});
-						})
-						.catch((err) => {
-							var errString = err.toString();
-							var re = new RegExp('VersionError: No matching document found for id');
-							var found = errString.match(re);
-							if(found) {
-								res.status(200).json({
-									'status': 200,
-									'message': 'Attempt saved',
-									'warning': 'VersionError'
-								});
-							}
-							Err.sendError(res,err,'group_controller','createAttempt -- Saving Roster --',false,false,'Roster: ' + item._id + ' User: '+ key_user.name + ' Quest: ' + JSON.stringify(quest));
-						});
-				} else {
-					res.status(200).json({
-						'status': 200,
-						'message': 'Roster not found with params given'
-					});
+					item.grades[k] = myGrade;
+				} else {	// El siguiente bloque de código no debería existir porque al crear el roster se generan los bloques, pero lo tenemos de salvaguarda
+					myGrade = {
+						block	: blockid,
+						quests: [quest],
+						track	: 100,
+						gradedQ: true
+					};
+					//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
+					//	myGrade.w = item.group.course.blocks[0].w;
+					//}
+					if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].w) {
+						myGrade.w = item.group.rubric[index].w;
+					}
+					//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
+					//	myGrade.wq = item.group.course.blocks[0].wq;
+					//}
+					if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wq) {
+						myGrade.wq = item.group.rubric[index].wq;
+					}
+					//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
+					//	myGrade.wt = item.group.course.blocks[0].wt;
+					//}
+					if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wt) {
+						myGrade.wt = item.group.rubric[index].wt;
+					}
+					item.grades = [myGrade];
 				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'group_controller','createAttempt -- Finding Roster -- user: ' +
-					key_user.name + ' id: ' + key_user._id + ' groupid: ' + groupid + ' blockid: ' + blockid );
-			});
+				await item.save();
+				const attempt = new Attempt({
+					attempt : quest,
+					roster	: item._id,
+					block		: blockid,
+					user		: key_user._id
+				});
+				await attempt.save();
+				res.status(StatusCodes.OK).json({
+					'message': 'Attempt saved'
+				});
+			} else {
+				res.status(StatusCodes.OK).json({
+					'message': 'Roster not found with params given'
+				});
+			}
+		} catch (err) {
+			var errString = err.toString();
+			var re = new RegExp('VersionError: No matching document found for id');
+			found = errString.match(re);
+			if(found) {
+				res.status(StatusCodes.OK).json({
+					'message': 'Attempt saved',
+					'warning': 'VersionError'
+				});
+				return;
+			}
+			if(groupid) {
+				Err.sendError(res,err,'group_controller', `createAttempt -- Finding Roster -- user: ${key_user.name} id: ${key_user._id} groupid: ${groupid} blockid: ${blockid}`);
+			} else {
+				Err.sendError(res,err,'group_controller', `createAttempt -- Finding Roster -- user: ${key_user.name} id: ${key_user._id} rosterid: ${rosterid} blockid: ${blockid}`);
+			}
+
+		}
+
 	}, // createAttempt
 
 	saveTask(req,res) {

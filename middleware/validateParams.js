@@ -739,15 +739,15 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1780: Please, give data by body to process'
 			});
-		} else if (!req.body.groupid) {
+		} else if (!req.body.groupid && !req.body.rosterid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1780: Please, give group id by body to process'
+				'message': 'Error 1780: Please, give groupid or rosterid by body to process'
 			});
 		} else if (!req.body.blockid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1780: Please, give group id by body to process'
+				'message': 'Error 1780: Please, give blockid by body to process'
 			});
 		} else if (!req.body.answers) {
 			res.status(406).json({
