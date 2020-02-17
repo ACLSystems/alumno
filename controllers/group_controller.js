@@ -805,56 +805,81 @@ module.exports = {
 			});
 	},
 
-	modifyRosterStatus(req,res) {
+	async modifyRosterStatus(req,res) {
 		const key_user 	= res.locals.user;
 		var groupid			= req.body.groupid;
+		var rosterid 		= req.body.rosterid;
 		var roster			= req.body.roster;
 		var status			= req.body.status;
-		var query				= { group: groupid };
+		var query				= req.body.groupid ? { group: groupid } : { _id: rosterid };
 
 		if(roster && roster.length > 0) {
 			query.student = { $in: roster };
 		}
 		const date = new Date();
-		Roster.find(query).select('_id mod').lean()
-			.then((results) => {
+		try {
+			var results = rosterid ?
+				await Roster.findById(rosterid) :
+				await Roster.find(query);
+			if(rosterid) {
+				if(results) {
+					if(results.mod && results.mod.length > 0) {
+						results.mod.push({
+							by: key_user.name,
+							when: date,
+							what: `Cambiando status a ${status}`
+						});
+					} else {
+						results.mod = [{
+							by: key_user.name,
+							when: date,
+							what: `Cambiando status a ${status}`
+						}];
+					}
+					results.status = status;
+					await results.save();
+					res.status(StatusCodes.OK).json({
+						'message': `Estatus del roster ${results._id} modificado`
+					});
+					return;
+				} else {
+					res.status(StatusCodes.OK).json({
+						'message': 'No se encontró roster'
+					});
+					return;
+				}
+			} else {
 				if(results && results.length > 0) {
-					results.forEach(function(item) {
-						var mod = [];
-						if(item.mod && item.mod.length > 0){
-							mod = item.mod;
-							mod.push({
+					for(var i; i < results.length; i++) {
+						if(results[i].mod && results[i].mod.length > 0){
+							results[i].mod.push({
 								by: key_user.name,
 								when: date,
-								what: 'Changing status to ' + status
+								what: `Cambiando status a ${status}`
 							});
 						} else {
-							mod = [{
+							results[i].mod = [{
 								by: key_user.name,
 								when: date,
-								what: 'Changing status to ' + status
+								what: `Cambiando status a ${status}`
 							}];
 						}
-						Roster.findByIdAndUpdate(item._id,{$set: {status: status, mod: mod}})
-							.catch((err) => {
-								Err.sendError(res,err,'group_controller','modifyRosterStatus -- Updating status --', false,false,'Roster: ' + item + ' status: ' + status);
-							});
-					});
-					res.status(200).json({
-						'status': 200,
-						'message': 'Status modified',
+						results[i].status = status;
+						await results[i].save();
+					}
+					res.status(StatusCodes.OK).json({
+						'message': 'Estados modificados',
 						'rostersModified': results.length
 					});
 				} else {
 					res.status(200).json({
-						'status': 404,
-						'message': 'No rosters found'
+						'message': 'No existen roster con el criterio solicitado'
 					});
 				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'group_controller','modifyRosterStatus -- Finding rosters --');
-			});
+			}
+		} catch (err) {
+			Err.sendError(res,err,'group_controller','modifyRosterStatus -- Finding roster(s) --');
+		}
 	}, //modifyRosterStatus
 
 	listRoster(req,res) {

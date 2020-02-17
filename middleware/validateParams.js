@@ -266,10 +266,10 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error: Please give status by body to process'
 			});
-		} else if(!req.body.groupid) {
+		} else if(!req.body.groupid && !req.body.rosterid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error: Please give group id by body to process'
+				'message': 'Error: Please give groupid or rosterid by body to process'
 			});
 		} else if(req.body.roster && !Array.isArray(req.body.roster)) {
 			res.status(406).json({
