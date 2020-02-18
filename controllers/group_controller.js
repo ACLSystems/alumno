@@ -1650,6 +1650,7 @@ module.exports = {
 					res.status(StatusCodes.CONFLICT).json({
 						'message': 'El curso no está listo para recibir respuestas de exámenes'
 					});
+					return;
 				}
 				if(type === 'group' &&
 					(!(item.group &&
@@ -1660,34 +1661,31 @@ module.exports = {
 					res.status(StatusCodes.CONFLICT).json({
 						'message': 'El curso no está listo para recibir respuestas de exámenes'
 					});
+					return;
 				}
 				var blocks = (type === 'public') ? item.course.blocks : item.group.course.blocks;
+				// Solo debería devolver un arreglo con un solo bloque (porque estamos haciendo un match del blockid)
 				if(blocks.length === 0) {
 					res.status(StatusCodes.CONFLICT).json({
 						'message': 'El curso no está listo para recibir respuestas de exámenes'
 					});
 				}
+
 				if(blocks[0].questionnarie &&
 					blocks[0].questionnarie.maxAttempts) {
 					maxAttempts = blocks[0].questionnarie.maxAttempts;
 				}
+
 				var grades = [];
 				var myGrade;
 				var k = 0;
 				var index = -1;
-				if(type === 'group') {
-					if(item.group.rubric &&
-					item.group.rubric.length > 0) {
-						index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + '');
-					}
-				}
-				if(type === 'public') {
-					index = blocks.findIndex(i => i._id + '' === myGrade.block + '');
-				}
+
 				if(item.grades.length > 0) {
 					grades = item.grades;
 					var len = grades.length;
 					var found = false;
+					k = grades.findIndex(g => g.block +'' === blockid);
 					// while ((k < len) && !found) {
 					// 	if(grades[k].block + '' === blockid) {
 					// 		myGrade = grades[k];
@@ -1696,9 +1694,21 @@ module.exports = {
 					// 		k++;
 					// 	}
 					// }
-					myGrade = grades.find(k => k.block + '' === blockid);
+					myGrade = grades.find(g => g.block + '' === blockid);
+					// console.log(myGrade);
 					if(myGrade) {
 						found = true;
+						if(type === 'group') {
+							if(item.group.rubric &&
+							item.group.rubric.length > 0) {
+								index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + '');
+							}
+						}
+						if(type === 'public') {
+							index = blocks.findIndex(i => i._id + '' === myGrade.block + '');
+							// Blocks solo tiene un elemento... index siempre será cero!!!
+							// para rosters de tipo "public"
+						}
 					}
 					// verificamos las dependencias y que estas se cumplan
 					const myDeps = myGrade.dependencies;
@@ -1817,7 +1827,7 @@ module.exports = {
 							myGrade.wt = blocks[index].wt;
 						}
 					}
-					item.grades[k] = myGrade;
+					item.grades[k] = myGrade; // cuánto vale k?
 				} else {	// El siguiente bloque de código no debería existir porque al crear el roster se generan los bloques, pero lo tenemos de salvaguarda
 					myGrade = {
 						block	: blockid,
@@ -3090,12 +3100,6 @@ module.exports = {
 					//
 					const blocks = (type === 'public') ? item.course.blocks : item.group.course.blocks;
 					// Guardamos el bloque como bloque actual, si existe.
-					if(lastid !== 'empty') {
-						let blockExists = blocks.find(block => block._id === lastid);
-						if(blockExists) {
-							item.currentBlock = lastid;
-						}
-					}
 					// Averiguamos si el bloque debe presentarse por fecha y/o por lapso (también fecha)
 					// En todo caso, ambas fechas deben ser menores a la actual.
 					const now				= new Date();
@@ -3103,8 +3107,16 @@ module.exports = {
 					var 	cause 		= '';
 					var		causeSP		= '';
 					var 	save 			= false;
-					//var 	new_date	= new Date();
 					var blockDates;
+
+					if(lastid !== 'empty') {
+						let blockExists = blocks.find(block => block._id + '' === lastid);
+						if(blockExists) {
+							item.currentBlock = lastid;
+							save = true;
+						}
+					}
+
 					if(type === 'group' && item.group.blockDates && Array.isArray(item.group.blockDates) && item.group.blockDates.length > 0) {
 						blockDates = item.group.blockDates;
 						let foundBlock = blockDates.find(blockDate => blockDate.block + '' === blockid + '');

@@ -1,9 +1,14 @@
 // Definir requerimientos
 const mongoose			= require('mongoose');
 const ModSchema			= require('./modified');
+const User					= require('./users');
+const Course				= require('./courses');
+const Group					= require('./groups');
 const Certificate		= require('./certificates');
 const Block 				= require('./blocks');
 const Task 					= require('./tasks');
+const Mailjet				= require('../shared/mailjet');
+const DefaultConfig	= require('../src/default');
 const Schema 				= mongoose.Schema;
 const ObjectId 			= Schema.Types.ObjectId;
 
@@ -468,8 +473,13 @@ RosterSchema.pre('save', async function(next) {
 		grades.forEach(grade => {
 			track = track + grade.track;
 			i++;
-			// console.log(grade);
+			// console.log('Block: ' + grade.block + '');
+			// console.log('Block section: ' + grade.blockSection);
+			// console.log('Block number: ' + grade.blockNumber);
+			// console.log('Block grade: ' + grade.w);
 			if(grade.blockNumber === 0 && grade.w > 0) {
+				// Primero se busca el bloque número 0 de la sección
+				// y se resetea el registro de la sección
 				grades2.push({
 					section: grade.blockSection,
 					block: grade.block,
@@ -478,8 +488,12 @@ RosterSchema.pre('save', async function(next) {
 					finalGrade: 0
 				});
 			} else {
+				// Para el resto de los bloques se busca solamente que
+				// pertenezcan a la sección que estamos indagando
 				let found = grades2.findIndex(grade2 => grade2.section === grade.blockSection);
 				if(found > -1 && grade.w > 0) {
+					// Si encontramos la sección y tiene grado para calificación
+					// se le agrega la calificación
 					grades2[found].grades.push({
 						number: grade.blockNumber,
 						w: grade.w,
@@ -490,6 +504,7 @@ RosterSchema.pre('save', async function(next) {
 				}
 			}
 		});
+		// console.log('Grades2');
 		// console.log(JSON.stringify(grades2,null,2));
 		if(grades2.length > 0) {
 			// ahora vamos sección por sección sacando calificaciones
@@ -509,6 +524,7 @@ RosterSchema.pre('save', async function(next) {
 				}
 			});
 
+			// console.log('Grades2');
 			// console.log(JSON.stringify(grades2,null,2));
 
 			const wTotal = grades2.reduce((acc,curr) => acc + curr.w,0);
@@ -523,30 +539,66 @@ RosterSchema.pre('save', async function(next) {
 	if(!item.pass && (item.finalGrade > item.minGrade && item.track > item.minTrack)) {
 		item.pass 		= true;
 		item.passDate	= now;
-
 		if(!item.certificateNumber || item.certificateNumber === 0) {
-			var cert 	= new Certificate;
-			cert.roster = item._id;
-			Certificate.findOne({roster: cert.roster})
-				.then((certFound) => {
-					if(certFound) {
-						item.certificateNumber = certFound.number;
-						next();
-					} else {
-						cert.save()
-							.then((cert) => {
-								item.certificateNumber = cert.number;
-								next();
-							})
-							.catch((err) => {
-								console.log('Cannot create certificate. Roster: ' + item._id + ' ' + err); //eslint-disable-line
-							});
+			try {
+				var certFound = await Certificate.findOne({roster: item._id});
+				if(certFound) {
+					item.certificateNumber = certFound.number;
+				} else {
+					var cert 	= new Certificate({
+						roster : item._id
+					});
+					await cert.save();
+					item.certificateNumber = cert.number;
+				}
+				let user = await User.findById(item.student)
+					.select('person');
+				var courseTitle = '';
+				if(item.type === 'public' && item.course) {
+					let courseFind = await Course.findById(item.course)
+						.select('title');
+					if(courseFind && courseFind.title) {
+						courseTitle = courseFind.title;
 					}
-					next();
-				})
-				.catch((err) => {
-					console.log('Error trying to find certificate. Roster: ' + item._id + ' ' + err); //eslint-disable-line
-				});
+				}
+				if((!item.time || item.type === 'group') && item.group) {
+					let groupFind = await Group.findById(item.group)
+						.select('course')
+						.populate('course', 'title');
+					if(groupFind && groupFind.course && groupFind.course.title) {
+						courseTitle = groupFind.course.title;
+					}
+				}
+				if(user) {
+					console.log('Procedemos con el correo');
+					// const [defaultConfigSub, defaultConfigMess01, defaultConfigMess02] = await Promise.all[
+					// 	DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailSubject-01'}),
+					// 	DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailMessage-01'}),
+					// 	DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailMessage-02'})
+					// ];
+					const defaultConfigSub = await DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailSubject-01'});
+					const defaultConfigMess01 = await DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailMessage-01'});
+					const defaultConfigMess02 = await DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailMessage-02'});
+					// console.log('Subject');
+					// console.log(defaultConfigSub);
+					// console.log('Message01');
+					// console.log(defaultConfigMess01);
+					// console.log('Message02');
+					// console.log(defaultConfigMess02);
+					if(defaultConfigSub && defaultConfigMess01 && defaultConfigMess02) {
+						await Mailjet.sendGenericMail(
+							user.person.email,
+							user.person.name,
+							defaultConfigSub.config,
+							`${defaultConfigMess01.config} <b>${courseTitle}</b> ${defaultConfigMess02.config}`);
+					} else {
+						console.log('No hay configuración para envío de correo para el participante al finalizar curso');
+					}
+				}
+				next();
+			} catch (err) {
+				console.log('Error trying to find/create certificate. Roster: ' + item._id + ' ' + err);
+			}
 		}
 	} else {
 		next();
@@ -555,17 +607,21 @@ RosterSchema.pre('save', async function(next) {
 
 // Definir índices
 
-RosterSchema.index( {student						: 1,	group: 	1	},{unique: true	}	);
-RosterSchema.index( {student						: 1	} );
-RosterSchema.index( {org								: 1	} );
-RosterSchema.index( {pass								: 1	}	);
-RosterSchema.index( {track							: 1	}	);
-RosterSchema.index( {group							: 1	}	);
-RosterSchema.index( {report							: 1	}	);
-RosterSchema.index( {orgUnit						: 1	} );
-RosterSchema.index( {project						: 1	} );
-RosterSchema.index( {certificateNumber	: 1	}, { sparse: true } );
-RosterSchema.index( {student						: 1, status: 	1 } );
+RosterSchema.index({student						: 1,	group	: 1	},{ unique: 1, partialFilterExpression: { group: { $type: 'objectId' }}});
+RosterSchema.index({student						: 1,	course: 1	},{ unique: 1, partialFilterExpression: { course: { $type: 'objectId' }}});
+RosterSchema.index({student						: 1,	status: 1 });
+RosterSchema.index({student						: 1	});
+RosterSchema.index({org								: 1	});
+RosterSchema.index({pass							: 1	});
+RosterSchema.index({track							: 1	});
+RosterSchema.index({group							: 1	},{ sparse: true });
+RosterSchema.index({course						: 1	},{ sparse: true });
+RosterSchema.index({status						: 1 });
+RosterSchema.index({report						: 1	});
+RosterSchema.index({orgUnit						: 1	});
+RosterSchema.index({type							: 1	},{	sparse:	true });
+RosterSchema.index({project						: 1	},{ sparse: true });
+RosterSchema.index({certificateNumber	: 1	},{ sparse: true });
 
 // Compilar esquema
 

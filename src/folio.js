@@ -65,8 +65,9 @@ FolioSchema.pre('save', function(next) {
 
 FolioSchema.index({ folio: 		1 });
 FolioSchema.index({ roster: 	1 },{ unique: true });
-FolioSchema.index({ groupId: 	1 });
+FolioSchema.index({ groupId: 	1 },{ sparse: true });
 FolioSchema.index({ student:	1 });
+FolioSchema.index({ status: 	1 });
 
 
 // Compilar esquema
