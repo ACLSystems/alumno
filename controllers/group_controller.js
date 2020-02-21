@@ -1114,14 +1114,20 @@ module.exports = {
 						beginDate			: item.createDate,
 						endDate				: item.endDate,
 						course				: item.course.title,
-						courseid			: item.course.id,
+						courseid			: item.course._id,
 						courseCode 		: item.course.code,
 						courseBlocks	: item.course.numBlocks,
+						status 				: item.openStatus,
+						openStatus		: item.openStatus,
 						myStatus			: item.status,
 						track					: item.track,
 						finalGrade		: item.finalGrade || 0,
 						firstBlock		: item.course.blocks[0]
 					};
+					const now = new Date();
+					if(now > item.endDate && item.openStatus !== 'closed') {
+						send_group.status = 'closed';
+					}
 				} else {
 					send_group = {
 						rosterType			: item.type || 'group',
@@ -1132,6 +1138,7 @@ module.exports = {
 						beginDate				: item.group.beginDate,
 						endDate					: item.group.endDate,
 						status					: item.group.status,
+						openStatus 			: item.group.status,
 						type						: item.group.type,
 						course					: item.group.course.title,
 						courseid				: item.group.course._id,
@@ -1199,7 +1206,7 @@ module.exports = {
 				select: 'title code numBlocks blocks price cost duration durationUnits',
 				match: { isVisible: true }
 			}])
-			.select('type status track group course finalGrade')
+			.select('type status createDate endDate openStatus track group course finalGrade')
 			.lean()
 			.then((items) => {
 				if(items.length > 0) {
@@ -1261,7 +1268,7 @@ module.exports = {
 			Roster.findOne(query)
 				.populate([{
 					path: 'group',
-					select: 'name course dates beginDate endDate code type instructor',
+					select: 'name course dates beginDate endDate code type instructor status',
 					populate: [{
 						path: 'course',
 						select: 'code author title blocks numBlocks description details image categories keywords',
@@ -1288,7 +1295,6 @@ module.exports = {
 			.then(results => {
 				var [folio,item] = results;
 				if(item) {
-					var myStatus 	= item.status;
 					var course		= (item.type && item.type === 'public') ?
 						JSON.parse(JSON.stringify(item.course)) :
 						JSON.parse(JSON.stringify(item.group.course));
@@ -1371,7 +1377,7 @@ module.exports = {
 						studentid	: key_user._id,
 						roster		: item._id,
 						currentBlock : item.currentBlock,
-						myStatus	: myStatus,
+						myStatus	: item.status,
 						folio			: folio ? folio.folio.match(/(\d{4})/g).join(' ') : newFolio.folio.match(/(\d{4})/g).join(' '),
 						folioStatus : folio ? folio.status : newFolio.status,
 						track			: parseInt(item.track) + '%',
@@ -1386,7 +1392,9 @@ module.exports = {
 						message.blockNum	= item.course.numBlocks;
 						message.beginDate = item.createDate;
 						message.endDate		= item.endDate;
+						message.openStatus = item.openStatus;
 					} else {
+						message.openStatus = item.group.status;
 						message.groupid		= item.group._id;
 						message.groupCode = item.group.code;
 						message.groupType = item.group.type;
@@ -2534,6 +2542,7 @@ module.exports = {
 					tookCertificate		: item.tookCertificate
 				};
 				if(type === 'group') {
+					send_grade.openStatus = item.group.status;
 					send_grade.groupid 	= item.group._id;
 					send_grade.groupType= item.group.type;
 					send_grade.course		= item.group.course.title;
@@ -2547,6 +2556,7 @@ module.exports = {
 					send_grade.endDateSpa	= dateInSpanish(item.group.endDate);
 				}
 				if(type === 'public') {
+					send_grade.openStatus = item.openStatus;
 					send_grade.course		= item.course.title;
 					send_grade.courseId	= item.course._id;
 					send_grade.beginDate= item.createDate;
@@ -2583,7 +2593,8 @@ module.exports = {
 					send_grade.folio	= folio.folio.match(/(\d{4})/g).join(' ');
 					send_grade.folioStatus = folio.status;
 				}
-				if(type === 'group' && item.group.course.duration) {
+				const keys = (type === 'group') ? Object.keys(item.group.course) : Object.keys(item.course);
+				if(type === 'group' && keys.includes('duration')) {
 					send_grade.duration 			= item.group.course.duration;
 					send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
 				} else {
@@ -2706,7 +2717,7 @@ module.exports = {
 			.catch((err) => {
 				Err.sendError(res,err,'group_controller','getGrade -- Finding Roster --',false,false,`User: ${key_user.name}, groupid: ${groupid}, blockid: ${blockid}`);
 			});
-	}, //getGrade
+	}, //promGrade
 
 	studentGrades(req,res){
 		const groupid		= req.query.groupid;
@@ -2957,7 +2968,12 @@ module.exports = {
 	tookCertificate(req,res) {
 		const key_user 	= res.locals.user;
 		const groupid		= req.query.groupid;
-		Roster.findOne({student: key_user._id, group: groupid})
+		const rosterid 	= req.query.rosterid;
+		var query = {student: key_user._id, group: groupid};
+		if(rosterid) {
+			query = {_id: rosterid};
+		}
+		Roster.findOne(query)
 			.then((item) => {
 				if(item) {
 					item.tookCertificate = true;
@@ -2986,8 +3002,13 @@ module.exports = {
 	getResource(req,res) {
 		const key_user 	= res.locals.user;
 		const groupid		= req.query.groupid;
-		Roster.findOne({student: key_user._id, group: groupid})
-			.populate({
+		const rosterid 	= req.query.rosterid;
+		var query = {student: key_user._id, group: groupid};
+		if(rosterid) {
+			query = {_id: rosterid};
+		}
+		Roster.findOne(query)
+			.populate([{
 				path: 'group',
 				select: 'course',
 				populate: {
@@ -2999,10 +3020,23 @@ module.exports = {
 						match: { status: 'published', isVisible: true}
 					}
 				}
-			})
+			},{
+				path: 'course',
+				select: 'resources code title',
+				populate: {
+					path: 'resources',
+					select: 'title content embedded',
+					match: { status: 'published', isVisible: true}
+				}
+			}])
 			.then((roster) => {
-				if(roster && roster.group && roster.group.course) {
-					var course = roster.group.course;
+				if(!roster) {
+					res.status(400).json({
+						'message': 'No se encontraron recursos para el rosterid solicitado'
+					});
+				}
+				if((roster.group && roster.group.course) || roster.course) {
+					var course = roster.course ? roster.course : roster.group.course;
 					if(course.resources && course.resources.length > 0) {
 						var send_resources = [];
 						course.resources.forEach(function(resource) {
@@ -3053,14 +3087,14 @@ module.exports = {
 		Roster.findOne(query)
 			.populate([{
 				path: 'group',
-				select: 'course name code admin presentBlockBy beginDate endDate dates lapse lapseBlocks blockDates',
+				select: 'course name code admin presentBlockBy beginDate endDate dates lapse lapseBlocks blockDates status',
 				options: {
 					lean:true
 				},
 				populate: [{
 					path: 'course',
 					match: { isVisible: true, status: 'published'},
-					select: 'blocks numBlocks code'
+					select: 'blocks numBlocks code title'
 				}
 				// ,{
 				// 	path: 'dates',
@@ -3070,7 +3104,7 @@ module.exports = {
 			},{
 				path: 'course',
 				match: { isVisible: true, status: 'published'},
-				select: 'blocks numBlocks code'
+				select: 'blocks numBlocks code title'
 			}, // esta parte de abajo está sospechosa, porque de todos modos tengo que ir por el dato del bloque
 			{
 				path: 'grades.block',
@@ -3097,8 +3131,7 @@ module.exports = {
 						});
 						return;
 					}
-					//
-					const blocks = (type === 'public') ? item.course.blocks : item.group.course.blocks;
+
 					// Guardamos el bloque como bloque actual, si existe.
 					// Averiguamos si el bloque debe presentarse por fecha y/o por lapso (también fecha)
 					// En todo caso, ambas fechas deben ser menores a la actual.
@@ -3108,6 +3141,25 @@ module.exports = {
 					var		causeSP		= '';
 					var 	save 			= false;
 					var blockDates;
+
+					// detener aquí si el curso ya está expirado
+
+					if((item.openStatus && item.openStatus === 'closed') || (type === 'group' && item.group.endDate < now) || (type === 'group' && item.group && item.group.status && item.group.status == 'closed')) {
+						const courseTitle = (type === 'group') ? item.group.course.title : item.course.title;
+						res.status(StatusCodes.OK).json({
+							'message': `El curso ${courseTitle} ya está cerrado`
+						});
+						return;
+					}
+					if(type === 'group' && item.group.status === 'coming') {
+						res.status(StatusCodes.OK).json({
+							'message': `El curso ${item.group.course.title} no ha abierto todavía`
+						});
+						return;
+					}
+
+					//
+					const blocks = (type === 'public') ? item.course.blocks : item.group.course.blocks;
 
 					if(lastid !== 'empty') {
 						let blockExists = blocks.find(block => block._id + '' === lastid);
@@ -3940,67 +3992,96 @@ module.exports = {
 			});
 	}, //resetRubric
 
-	touchGrade(req,res) {
-		const userid		= req.query.userid;
+	async touchGrade(req,res) {
+		const userid		= res.locals.user._id;
 		const groupid 	= req.query.groupid;
-		const blockid 	= req.query.blockid;
-		Roster.findOne({student: userid, group: groupid})
-			.then((item) => {
-				var grades = item.grades;
-				var i=0;
-				var keep = true;
-				var grade = 0;
-				while (keep) {
-					if(grades[i].block + '' === blockid) {
-						keep = false;
-						if(grades[i].quests.length > 0 && grades[i].quests[0].grade) {
-							//grade = parseInt(grades[i].quests[0].grade + 1);
-							grade = grades[i].quests[0].grade + 1;
-							grades[i].quests[0].grade = grade;
-						}
-					} else {
-						i++;
-					}
+		// const blockid 	= req.query.blockid;
+		const rosterid  = req.query.rosterid;
+		var query = req.query.rosterid ? {
+			_id: rosterid
+		} : {
+			student: userid,
+			group: groupid
+		};
+		try {
+			var item = await Roster.findOne(query);
+			if(item) {
+				if(Object.keys(item).includes('flag')) {
+					item.flag ++;
+				} else {
+					item.flag = 1;
 				}
-				item.save()
-					.then((item) => {
-						grades = item.grades;
-						i=0;
-						keep = true;
-						grade = 0;
-						while (keep) {
-							if(grades[i].block + '' === blockid) {
-								keep = false;
-								if(grades[i].quests.length > 0 && grades[i].quests[0].grade) {
-									//grade = parseInt(grades[i].quests[0].grade - 1);
-									grade = grades[i].quests[0].grade - 1;
-									grades[i].quests[0].grade = grade;
-								}
-							} else {
-								i++;
-							}
-						}
-						item.save()
-							.then(() => {
-								res.status(200).json({
-									'status': 200,
-									'message': 'Grade touched'
-								});
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'group_controller','touchGrade -- Saving Roster 2 -- user: ' +
-									userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
-							});
-					})
-					.catch((err) => {
-						Err.sendError(res,err,'group_controller','touchGrade -- Saving Roster 1 -- user: ' +
-							userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
-					});
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'group_controller','touchGrade -- Finding Roster -- user: ' +
-					userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
-			});
+				await item.save();
+				res.status(StatusCodes.OK).json({
+					'message': 'Calificación tocada'
+				});
+			} else {
+				res.status(StatusCodes.OK).json({
+					'message': 'No existe calificación'
+				});
+			}
+
+		} catch (err) {
+			Err.sendError(res,err,'group_controller','touchGrade -- Finding Roster -- user: ' + userid);
+		}
+
+		// Roster.findOne(query)
+		// 	.then((item) => {
+		// 		var grades = item.grades;
+		// 		var i=0;
+		// 		var keep = true;
+		// 		var grade = 0;
+		// 		while (keep) {
+		// 			if(grades[i].block + '' === blockid) {
+		// 				keep = false;
+		// 				if(grades[i].quests.length > 0 && grades[i].quests[0].grade) {
+		// 					//grade = parseInt(grades[i].quests[0].grade + 1);
+		// 					grade = grades[i].quests[0].grade + 1;
+		// 					grades[i].quests[0].grade = grade;
+		// 				}
+		// 			} else {
+		// 				i++;
+		// 			}
+		// 		}
+		// 		item.save()
+		// 			.then((item) => {
+		// 				grades = item.grades;
+		// 				i=0;
+		// 				keep = true;
+		// 				grade = 0;
+		// 				while (keep) {
+		// 					if(grades[i].block + '' === blockid) {
+		// 						keep = false;
+		// 						if(grades[i].quests.length > 0 && grades[i].quests[0].grade) {
+		// 							//grade = parseInt(grades[i].quests[0].grade - 1);
+		// 							grade = grades[i].quests[0].grade - 1;
+		// 							grades[i].quests[0].grade = grade;
+		// 						}
+		// 					} else {
+		// 						i++;
+		// 					}
+		// 				}
+		// 				item.save()
+		// 					.then(() => {
+		// 						res.status(200).json({
+		// 							'status': 200,
+		// 							'message': 'Grade touched'
+		// 						});
+		// 					})
+		// 					.catch((err) => {
+		// 						Err.sendError(res,err,'group_controller','touchGrade -- Saving Roster 2 -- user: ' +
+		// 							userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
+		// 					});
+		// 			})
+		// 			.catch((err) => {
+		// 				Err.sendError(res,err,'group_controller','touchGrade -- Saving Roster 1 -- user: ' +
+		// 					userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
+		// 			});
+		// 	})
+		// 	.catch((err) => {
+		// 		Err.sendError(res,err,'group_controller','touchGrade -- Finding Roster -- user: ' +
+		// 			userid + ' groupid: ' + groupid + ' blockid: ' + blockid );
+		// 	});
 	}, //touchGrade
 
 	setTracking(req,res) {

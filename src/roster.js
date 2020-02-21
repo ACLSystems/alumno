@@ -326,10 +326,22 @@ const RosterSchema = new Schema ({
 		type: ObjectId,
 		ref: 'users'
 	},
+	// status de la cuenta:
+	// pending >>> pendiente de pago
+	// active  >>> sin problemas de pago
+	// remove  >>> desactivada
 	status: {
 		type: String,
-		enum: ['pending','active','finished','remove'],
+		enum: ['pending','active','remove'],
 		default: 'pending'
+	},
+	// status de "apertura". Estos se usan para rosters tipo "public"
+	// y se usan en lugar del "status" del grupo, ya que los rosters
+	// públicos no tienen grupo.
+	openStatus: {
+		type: String,
+		enum: ['active','closed'],
+		default: 'active'
 	},
 	grades: [GradesSchema],
 	group: {
@@ -389,7 +401,8 @@ const RosterSchema = new Schema ({
 		default: false
 	},
 	flag: {
-		type: Number
+		type: Number,
+		default: 0
 	},
 	newTask: {
 		type: Boolean

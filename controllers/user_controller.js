@@ -102,12 +102,15 @@ module.exports = {
 								var admin = {
 									isActive: true,
 									isVerified: false,
+									isDataVerified: false,
 									recoverString: '',
 									passwordSaved: '',
 									adminCreate: false
 								};
 								if(adminCreate) {
 									admin.adminCreate = true;
+								} else {
+									admin.isDataVerified = true;
 								}
 								userProps.admin = admin;
 								var permUsers = [];
@@ -392,9 +395,11 @@ module.exports = {
 						if(password !== 'empty'){
 							user.password = password;
 						}
-						user.person.name = name;
-						user.person.fatherName = fatherName;
-						user.person.motherName = motherName;
+						if(name && fatherName && motherName) {
+							user.person.name = name;
+							user.person.fatherName = fatherName;
+							user.person.motherName = motherName;
+						}
 						user.save()
 							.then(() => {
 								if(password === 'empty'){
@@ -1693,6 +1698,18 @@ module.exports = {
 		const minTrack = 80;
 		const type = 'public';
 		try {
+			// busca roster que ya tenga este curso de tipo público
+			const findRoster = await Roster.find({
+				type: 'public',
+				student: res.locals.user._id,
+				course: req.body.courseid
+			});
+			if(findRoster) {
+				res.status(200).json({
+					message: 'Ya te habías inscrito en este curso previamente'
+				});
+				return;
+			}
 			const course = await Course.findById(req.body.courseid)
 				.populate({
 					path: 'blocks',

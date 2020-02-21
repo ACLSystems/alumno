@@ -307,10 +307,10 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1780: Please, give data by query to process'
 			});
-		} else if(!req.query.groupid) {
+		} else if(!req.query.groupid && !req.query.rosterid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1781: Please, give groupid by query to process'
+				'message': 'Error 1781: Please, give groupid or rosterid by query to process'
 			});
 		} else {
 			next();
@@ -899,21 +899,21 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1780: Please, give data by query to process'
 			});
-		} else if (!req.query.userid) {
+		// } else if (!req.query.userid) {
+		// 	res.status(406).json({
+		// 		'status': 406,
+		// 		'message': 'Error 1780: Please, give userid by query to process'
+		// 	});
+		} else if (!req.query.groupid && !req.query.rosterid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error 1780: Please, give group id by query to process'
+				'message': 'Error 1780: Please, give groupid or rosterid by query to process'
 			});
-		} else if (!req.query.groupid) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'Error 1780: Please, give group id by query to process'
-			});
-		} else if (!req.query.blockid) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'Error 1780: Please, give group id by query to process'
-			});
+		// } else if (!req.query.blockid) {
+		// 	res.status(406).json({
+		// 		'status': 406,
+		// 		'message': 'Error 1780: Please, give group id by query to process'
+		// 	});
 		} else {
 			next();
 		}
@@ -2591,10 +2591,10 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give data by query to process'
 			});
-		} else if (!req.query.groupid) {
+		} else if (!req.query.groupid && !req.query.rosterid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give group id by query to process'
+				'message': 'Error -: Please, give groupid or rosterid by query to process'
 			});
 		} else {
 			next();
@@ -2715,7 +2715,7 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give query by query to process'
 			});
-		} else if (req.query.query.hasOwnProperty('block') && !req.query.query.block) {
+		} else if (Object.keys(req.query.query).includes('block') && !req.query.query.block) {
 			delete req.query.query.block;
 			next();
 		} else {

@@ -39,10 +39,7 @@ module.exports = {
 		header('content-type','Encabezado incorrecto - solo application/json')
 			.equals('application/json'),
 		body('email').exists().isEmail(),
-		body('token').exists(),
-		body('name').exists(),
-		body('fatherName').exists(),
-		body('motherName').exists()
+		body('token').exists()
 	],
 	validateEmail: [
 		header('content-type','Encabezado incorrecto - solo application/json')
