@@ -634,6 +634,8 @@ RosterSchema.index({report						: 1	});
 RosterSchema.index({orgUnit						: 1	});
 RosterSchema.index({type							: 1	},{	sparse:	true });
 RosterSchema.index({project						: 1	},{ sparse: true });
+RosterSchema.index({createDate				: -1});
+RosterSchema.index({endDate						: -1});
 RosterSchema.index({certificateNumber	: 1	},{ sparse: true });
 
 // Compilar esquema

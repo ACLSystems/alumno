@@ -1116,12 +1116,15 @@ module.exports = {
 						course				: item.course.title,
 						courseid			: item.course._id,
 						courseCode 		: item.course.code,
+						courseImage 	: item.course.image,
 						courseBlocks	: item.course.numBlocks,
 						status 				: item.openStatus,
 						openStatus		: item.openStatus,
 						myStatus			: item.status,
 						track					: item.track,
 						finalGrade		: item.finalGrade || 0,
+						pass					: item.pass,
+						passDate 			: item.passDate,
 						firstBlock		: item.course.blocks[0]
 					};
 					const now = new Date();
@@ -1143,6 +1146,7 @@ module.exports = {
 						course					: item.group.course.title,
 						courseid				: item.group.course._id,
 						courseCode			: item.group.course.code,
+						courseImage			: item.group.course.image,
 						courseBlocks		: item.group.course.numBlocks,
 						instructor			: item.group.instructor.person.name + ' ' + item.group.instructor.person.fatherName,
 						instructorEmail	: item.group.instructor.person.email,
@@ -1150,6 +1154,8 @@ module.exports = {
 						myStatus				: item.status,
 						track						: item.track,
 						finalGrade			: item.finalGrade || 0,
+						pass						: item.pass,
+						passDate 				: item.passDate,
 						firstBlock			: item.group.course.blocks[0]
 					};
 					if(send_group.instructor === 'Sin Instructor') {
@@ -1192,7 +1198,7 @@ module.exports = {
 					{
 						path: 'course',
 						model: 'courses',
-						select: 'title _id code blocks numBlocks duration durationUnits'
+						select: 'title _id code blocks numBlocks duration durationUnits image'
 					},
 					{
 						path: 'instructor',
@@ -1203,10 +1209,10 @@ module.exports = {
 			},{
 				path: 'course',
 				model: 'courses',
-				select: 'title code numBlocks blocks price cost duration durationUnits',
+				select: 'title code numBlocks blocks price cost duration durationUnits image',
 				match: { isVisible: true }
 			}])
-			.select('type status createDate endDate openStatus track group course finalGrade')
+			.select('type status createDate endDate openStatus track group course finalGrade pass passDate')
 			.lean()
 			.then((items) => {
 				if(items.length > 0) {

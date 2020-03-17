@@ -691,6 +691,60 @@ module.exports = {
 
 	}, //percentil
 
+	async publicSummary(req,res) {
+		const lastNMonths = +req.query.lastnmonths || 0;
+		const now = new Date(),
+			y = now.getFullYear(),
+			m = now.getMonth() - lastNMonths;
+		const firstDate = new Date(y, m, 1);
+		const [totalCount,totalByCourse] = await Promise.all([
+			Roster.countDocuments({
+				type: 'public',
+				createDate: {$gte: firstDate},
+				course: {$exists: true}
+			}),
+			Roster.aggregate()
+				.match({
+					type: 'public',
+					createDate: {$gte: firstDate},
+					course: {$exists: true}
+				})
+				.group({
+					_id: '$course',
+					count:{$sum:1}
+				})
+				.lookup({
+					from: 'courses',
+					localField: '_id',
+					foreignField: '_id',
+					as: 'course'
+				})
+				.unwind('course')
+				.project({
+					_id: 0,
+					course: '$course.title',
+					courseCode: '$course.code',
+					count: '$count'
+				})
+		]);
+		totalByCourse.sort((a,b) => (a.count < b.count) ? 1 : -1);
+		const labels = [];
+		const series = [];
+		const labels2 = [];
+		totalByCourse.forEach(c => {
+			labels.push(c.course);
+			series.push(c.count);
+			labels2.push(c.courseCode);
+		});
+		res.status(200).json({
+			firstDate: firstDate,
+			totalCount: totalCount,
+			totalByCourse: {
+				labels,labels2,series
+			}
+		});
+	}, //publicSummary
+
 	gradesByGroup(req,res) {
 		//const key_user  = res.locals.user;
 		var 	groupid				= req.query.groupid || null;

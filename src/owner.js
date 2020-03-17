@@ -17,7 +17,7 @@ const OwnerSchema = new Schema ({
 		type: String,
 		required: true
 	}
-});
+},{ _id: false });
 
 // Definir virtuals
 

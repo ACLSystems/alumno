@@ -55,5 +55,6 @@ module.exports = (app) => {
 	// SESSION GROUP
 	app.get ('/api/v1/supervisor/group/userscube', 				SessionController.usersCube);
 	app.get ('/api/v1/supervisor/user/resendconf', 				UserController.resendConfirmation);
+	app.get ('/api/v1/supervisor/report/publicsumm', 			ReportController.publicSummary);
 
 };

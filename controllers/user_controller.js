@@ -1699,9 +1699,9 @@ module.exports = {
 		const type = 'public';
 		try {
 			// busca roster que ya tenga este curso de tipo público
-			const findRoster = await Roster.find({
+			const findRoster = await Roster.findOne({
 				type: 'public',
-				student: res.locals.user._id,
+				student: key_user._id,
 				course: req.body.courseid
 			});
 			if(findRoster) {
