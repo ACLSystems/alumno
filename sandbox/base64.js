@@ -17,8 +17,8 @@ const base64data = buff.toString('base64');
 
 console.log(base64data);
 
-const buffOut = Buffer.from(base64data, 'base64');
-
-const textOut = buffOut.toString('utf-8');
-
-console.log(textOut);
+// const buffOut = Buffer.from(base64data, 'base64');
+//
+// const textOut = buffOut.toString('utf-8');
+//
+// console.log(textOut);

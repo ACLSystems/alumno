@@ -252,7 +252,7 @@ module.exports = {
 			});
 	}, //countCourses
 
-	listCourses(req,res) {
+	async listCourses(req,res) {
 		var query = {};
 		const key_user 	= res.locals.user;
 		var sort = { name: 1 };
@@ -269,121 +269,80 @@ module.exports = {
 		if(req.query.author) {
 			query.author = { author: req.query.author };
 		}
-		Course.find(query)
-			.sort(sort)
-			.lean()
-			.then((courses) => {
-				var send_courses = [];
-				courses.forEach(function(course) {
-					send_courses.push({
-						id					: course._id,
-						title				: course.title,
-						code				: course.code,
-						image				: course.image,
-						type				: course.type,
-						description	: course.description,
-						categories	: course.categories,
-						keys				: course.keys,
-						isVisible		: course.isVisible,
-						version			: course.version,
-						status			: course.status,
-						price				: course.price,
-						cost 				: course.cost,
-						author			: course.author,
-						apiExternal : course.apiExternal,
-						duration		: course.duration + '' + course.durationUnits,
-						defaultDaysDuration: course.defaultDaysDuration,
-						numBlocks		: course.numBlocks
-					});
+		try {
+			var courses = await Course.find(query)
+				.select('-org -own -mod -perm -blocks -resources -currentSection -nextNumber -apiExternal -__v')
+				.sort(sort)
+				.lean();
+			if(courses.length === 0 ) {
+				return res.status(StatusCodes.OK).json({
+					'message': 'No hay cursos registrados'
 				});
-				res.status(200).json({
-					'status': 201,
-					'message': {
-						'coursesNum': send_courses.length,
-						'courses': send_courses
-					}
-				});
-			})
-			.catch((err) => {
-				sendError(res,err,'listCourses -- Finding Course --');
+			}
+			return res.status(StatusCodes.OK).json({
+				'message': {
+					'coursesNum': courses.length,
+					'courses': courses
+				}
 			});
+		} catch (e) {
+			sendError(res,e,'listCourses -- Finding Course --');
+		}
 	}, // listCourses
 
-	listCoursesPublic(req,res) {
+	async listCoursesPublic(req,res) {
 		var query = {};
-		Org.findOne({ name: req.query.org })
-			.select('name')
-			.cache({key: 'org:name:' + req.query.org})
-			.lean()
-			.then((org) => {
-				var sort = { name: 1 };
-				//var skip = 0;
-				//var limit = 15;
-				query = { org: org._id };
-				if(req.query.sort) 	{ sort 	= { name: req.query.sort }; 		}
-				//if(req.query.skip) 	{ skip 	= parseInt( req.query.skip 	); 	}
-				//if(req.query.limit) { limit = parseInt( req.query.limit ); 	}
-				if(req.query.categories) {
-					query.categories = JSON.parse(req.query.categories);
-				}
-				if(req.query.keywords) {
-					query.keywords = JSON.parse(req.query.categories);
-				}
-				if(req.query.title) {
-					query.title = { title: { $regex : /req.query.title/i }};
-				}
-				if(req.query.author) {
-					query.author = { author: req.query.author };
-				}
-				if(req.query.priority) {
-					query.priority = { priority: req.query.priority };
-				}
-				query.status = 'published';
-				query.isVisible = true;
-				Course.find(query)
-					.cache({key: 'course:list:' + JSON.stringify(query)})
-					.lean()
-					.sort(sort)
-					//.skip(skip)
-					//.limit(limit)
-					.then((courses) => {
-						var send_courses = [];
-						courses.forEach(function(course) {
-							send_courses.push({
-								id: 					course._id,
-								title: 				course.title,
-								code: 				course.code,
-								image: 				course.image,
-								type: 				course.type,
-								description:	course.description,
-								categories:		course.categories,
-								keywords: 		course.keywords,
-								isVisible: 		course.isVisible,
-								price: 				course.price,
-								cost: 				course.cost,
-								author: 			course.author,
-								apiExternal: 	course.apiExternal,
-								priority: 		course.priority,
-								order: 				course.order,
-								duration: 		course.duration + '' + course.durationUnits,
-								defaultDaysDuration: course.defaultDaysDuration
-							});
-						});
-						res.status(200).json({
-							'status': 201,
-							'message': {
-								'coursesNum': send_courses.length,
-								'courses': send_courses
-							}
-						});
-					})
-					.catch((err) => {
-						sendError(res,err,'listCoursesPublic -- Finding Course --');
-					});
-			})
-			.catch((err) => {
-				sendError(res,err,'listCoursesPublic -- Finding User --');
+		var sort = { name: 1 };
+		try {
+			const org = await Org.findOne({ name: req.query.org })
+				.select('name')
+				.cache({key: 'org:name:' + req.query.org})
+				.lean();
+			query = { org: org._id };
+			if(req.query.sort) 	{
+				sort 	= { name: req.query.sort };
+			}
+			if(req.query.categories) {
+				query.categories = JSON.parse(req.query.categories);
+			}
+			if(req.query.keywords) {
+				query.keywords = JSON.parse(req.query.categories);
+			}
+			if(req.query.title) {
+				query.title = { title: { $regex : /req.query.title/i }};
+			}
+			if(req.query.author) {
+				query.author = { author: req.query.author };
+			}
+			if(req.query.priority) {
+				query.priority = { priority: req.query.priority };
+			}
+			query.status = 'published';
+			query.isVisible = true;
+			var courses = await Course.find()
+				.select('code title type level author categories isVisible keywords description image details price cost moocPrice status duration durationUnits defaultDaysDuration order priority apiExternal')
+				// .cache({key: 'course:list:' + JSON.stringify(query)})
+				.sort(sort)
+				.lean();
+			if(courses.length === 0) {
+				return res.status(StatusCodes.OK).json({
+					'message': 'No hay cursos registrados'
+				});
+			}
+			var coursesSend = Array.from(courses);
+			coursesSend.forEach(item => {
+				item.duration = `${item.duration}${item.durationUnits}`;
+				item.id = item._id;
 			});
+			return res.status(StatusCodes.OK).json({
+				'message': {
+					'coursesNum': coursesSend.length,
+					'courses': coursesSend
+				}
+			});
+		} catch (e) {
+			sendError(res,e,'listCoursesPublic -- Finding User --');
+		}
 	}, // listCoursesPublic
 
 	createBlock(req,res) {
@@ -776,8 +735,10 @@ module.exports = {
 		}
 		try {
 			const course = await Course.findOne(query)
-				.select('id title code image type description categories keywords isVisible price cost author priority order duration durationUnits defaultDaysDuration details level');
+				.select('title code image type description categories keywords isVisible price cost author priority order duration durationUnits defaultDaysDuration details level moocPrice')
+				.lean();
 			if(course) {
+				course.id = course._id;
 				res.status(200).json(course);
 			} else {
 				res.status(200).json({

@@ -97,6 +97,11 @@ const CoursesSchema = new Schema ({
 		default: 0,
 		min: [0,'Course cost cannot be less than 0']
 	},
+	moocPrice: {
+		type: Number,
+		default: 0,
+		min: [0,'Course cost cannot be less than 0']
+	},
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema,

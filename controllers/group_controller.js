@@ -1277,7 +1277,7 @@ module.exports = {
 					select: 'name course dates beginDate endDate code type instructor status',
 					populate: [{
 						path: 'course',
-						select: 'code author title blocks numBlocks description details image categories keywords',
+						select: 'code author title blocks numBlocks description details image categories keywords moocPrice',
 						populate: {
 							path: 'blocks',
 							match: { isVisible: true, status: 'published' },
@@ -1289,7 +1289,7 @@ module.exports = {
 					}]
 				},{
 					path: 'course',
-					select: 'code author title blocks numBlocks description details image categories keywords',
+					select: 'code author title blocks numBlocks description details image categories keywords moocPrice',
 					populate: {
 						path: 'blocks',
 						match: { isVisible: true, status: 'published' },
@@ -1379,6 +1379,7 @@ module.exports = {
 					// console.log(newFolio);
 					delete course.blocks;
 					var message = {
+						rosterType: item.type,
 						student		: key_user.person.fullName,
 						studentid	: key_user._id,
 						roster		: item._id,
@@ -1399,6 +1400,7 @@ module.exports = {
 						message.beginDate = item.createDate;
 						message.endDate		= item.endDate;
 						message.openStatus = item.openStatus;
+						message.moocPrice = item.course.moocPrice;
 					} else {
 						message.openStatus = item.group.status;
 						message.groupid		= item.group._id;
@@ -2374,7 +2376,7 @@ module.exports = {
 						options: { lean: true }
 					},{
 						path: 'course',
-						select: 'title blocks duration durationUnits',
+						select: 'title blocks duration durationUnits moocPrice',
 						populate: {
 							path: 'blocks',
 							select: 'title section number w wq wt type order',
@@ -2535,6 +2537,7 @@ module.exports = {
 
 				var send_grade = {
 					name							: key_user.person.fullName,
+					rosterType				: item.type,
 					rosterid					: item._id,
 					status						: item.status,
 					certificateTutor	: item.certificateTutor,
@@ -2564,6 +2567,7 @@ module.exports = {
 				if(type === 'public') {
 					send_grade.openStatus = item.openStatus;
 					send_grade.course		= item.course.title;
+					send_grade.moocPrice = item.course.moocPrice;
 					send_grade.courseId	= item.course._id;
 					send_grade.beginDate= item.createDate;
 					send_grade.endDate	= item.endDate;

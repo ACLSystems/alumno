@@ -102,7 +102,7 @@ async function(toEmail,toName,subject,
 			'subject': subject
 		}
 	};
-	console.log(mail_message);
+	// console.log(mail_message);
 	// Regresamos la promesa
 	return new Promise(function(resolve) {
 		request.request({'Messages': [mail_message]})
