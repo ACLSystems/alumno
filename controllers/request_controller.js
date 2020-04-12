@@ -648,7 +648,7 @@ module.exports = {
 					results.push(result);
 				}
 			}
-			res.status(StatusCodes.OK).json({
+			return res.status(StatusCodes.OK).json({
 				'meesage': `Se han procesado ${results.length} registros`,
 				'results': results
 			});
@@ -683,15 +683,28 @@ async function processFolio(folio, user) {
 		const folioFound = await Folio.findOne({folio: folio})
 			.populate('student','name person')
 			.populate({
-				path: 'group',
-				select: 'course code name',
-				populate: {
+				path: 'roster',
+				select: 'course group type',
+				populate: [{
 					path: 'course',
 					select: 'title'
-				}
+				},{
+					path: 'group',
+					select: 'course',
+					populate: {
+						path: 'course',
+						select: 'title'
+					}
+				}]
 			});
 		if(folioFound) {
 			/* Validar que el folio esté en estatus 'pending'*/
+			var course;
+			if(folioFound.roster && folioFound.roster.type && folioFound.roster.type === 'public') {
+				course = folioFound.roster.course.title;
+			} else {
+				course = folioFound.roster.group.course.title;
+			}
 			if(folioFound.status === 'pending') {
 				/* Modificar registro de folio*/
 				folioFound.status = 'payed';
@@ -713,7 +726,7 @@ async function processFolio(folio, user) {
 					await item.save();
 					const variables = {
 						Nombre: folioFound.student.person.name,
-						mensaje: `El pago de tu curso - "${folioFound.group.course.title}" - ha sido procesado. Puedes descargar tu constancia desde plataforma.`
+						mensaje: `El pago de tu curso - "${course}" - ha sido procesado. Puedes descargar tu constancia desde plataforma.`
 					};
 					mailjet.sendMail(
 						folioFound.student.name,
@@ -736,5 +749,6 @@ async function processFolio(folio, user) {
 		}
 	} catch (err) {
 		console.log(err);
+		return 1;
 	}
 }

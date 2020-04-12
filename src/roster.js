@@ -462,6 +462,180 @@ RosterSchema.path('group').required(function() {
 
 // Definir middleware
 
+RosterSchema.methods.sortGrades =
+async function() {
+	let item = this;
+	let grades = [...this.grades];
+	let sectionGrades = grades.filter(grade => grade.blockNumber === 0);
+	let noSectionGrades = grades.filter(grade => grade.blockNumber !== 0);
+	sectionGrades.sort((a,b) =>
+		(a.blockSection > b.blockSection) ? 1 : -1);
+	noSectionGrades.sort((a,b) =>
+		(a.blockSection > b.blockSection) ? 1 :
+			(a.blockSection === b.blockSection) ? (
+				(a.blockNumber > b.blockNumber) ? 1 : -1) :
+				-1 );
+	item.grades = [...sectionGrades, ...noSectionGrades];
+	console.log(sectionGrades.length,noSectionGrades.length);
+	await item.save();
+};
+
+RosterSchema.methods.runGrades =
+async function(){
+	var item = this;
+	const now = new Date;
+	var grades = item.grades;
+	var i = 0;
+	var w = 0;
+	var fg = 0;
+	var track = 0;
+	if(item.version === 1){
+		grades.forEach(function(g) {
+			fg = fg + (g.finalGrade * g.w);
+			track = track + g.track;
+			w += g.w;
+			i++;
+		});
+		if(w > 0) { item.finalGrade = fg/w; }
+	}
+	if(item.version === 2) {
+		// console.log(item.version);
+		// Aquí solo poblamos el arreglo de secciones y las lecciones van dentro de cada sección
+		var grades2 = [];
+		grades.forEach(grade => {
+			track = track + grade.track;
+			i++;
+			// console.log('Block: ' + grade.block + '');
+			// console.log('Block section: ' + grade.blockSection);
+			// console.log('Block number: ' + grade.blockNumber);
+			// console.log('Block grade: ' + grade.w);
+			if(grade.blockNumber === 0 && grade.w > 0) {
+				// Primero se busca el bloque número 0 de la sección
+				// y se resetea el registro de la sección
+				grades2.push({
+					section: grade.blockSection,
+					block: grade.block,
+					grades: [],
+					w: grade.w,
+					finalGrade: 0
+				});
+			} else {
+				// Para el resto de los bloques se busca solamente que
+				// pertenezcan a la sección que estamos indagando
+				let found = grades2.findIndex(grade2 => grade2.section === grade.blockSection);
+				if(found > -1 && grade.w > 0) {
+					// Si encontramos la sección y tiene grado para calificación
+					// se le agrega la calificación
+					grades2[found].grades.push({
+						number: grade.blockNumber,
+						w: grade.w,
+						wt: grade.wt,
+						wq: grade.wq,
+						finalGrade: grade.finalGrade
+					});
+				}
+			}
+		});
+		// console.log('Grades2');
+		// console.log(JSON.stringify(grades2,null,2));
+		if(grades2.length > 0) {
+			// ahora vamos sección por sección sacando calificaciones
+			// con la versión 2 de ponderación
+			grades2.forEach(sec => {
+				if(sec.grades && sec.grades.length > 0) { // checar si no está vacío
+					// sacar ponderaciones para la sección
+					sec.wTotal = sec.grades.reduce((acc,curr) => acc + curr.w,0);
+					sec.grades.forEach(g => {
+						g.wPer = sec.wTotal ? g.w / sec.wTotal : 0;
+					});
+					sec.finalGrade = sec.grades.reduce((acc,curr) => acc + curr.finalGrade * curr.wPer,0);
+					let found = item.grades.findIndex(grade => grade.block + '' === sec.block + '');
+					if(found > -1) {
+						item.grades[found].finalGrade = sec.finalGrade;
+					}
+				}
+			});
+
+			// console.log('Grades2');
+			// console.log(JSON.stringify(grades2,null,2));
+
+			const wTotal = grades2.reduce((acc,curr) => acc + curr.w,0);
+			const finalGrade = grades2.reduce((acc,curr) => acc + (curr.w / wTotal) * curr.finalGrade,0);
+			// console.log(wTotal, finalGrade);
+			item.finalGrade = finalGrade;
+		}
+		// console.log(JSON.stringify(grades2,null,2));
+	}
+
+	item.track = parseInt(track / i);
+	if(!item.pass && (item.finalGrade > item.minGrade && item.track > item.minTrack)) {
+		item.pass 		= true;
+		item.passDate	= now;
+		if(!item.certificateNumber || item.certificateNumber === 0) {
+			try {
+				var certFound = await Certificate.findOne({roster: item._id});
+				if(certFound) {
+					item.certificateNumber = certFound.number;
+				} else {
+					var cert 	= new Certificate({
+						roster : item._id
+					});
+					await cert.save();
+					item.certificateNumber = cert.number;
+				}
+				let user = await User.findById(item.student)
+					.select('person');
+				var courseTitle = '';
+				if(item.type === 'public' && item.course) {
+					let courseFind = await Course.findById(item.course)
+						.select('title');
+					if(courseFind && courseFind.title) {
+						courseTitle = courseFind.title;
+					}
+				}
+				if((!item.time || item.type === 'group') && item.group) {
+					let groupFind = await Group.findById(item.group)
+						.select('course')
+						.populate('course', 'title');
+					if(groupFind && groupFind.course && groupFind.course.title) {
+						courseTitle = groupFind.course.title;
+					}
+				}
+				if(user) {
+					// console.log('Procedemos con el correo');
+					// const [defaultConfigSub, defaultConfigMess01, defaultConfigMess02] = await Promise.all[
+					// 	DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailSubject-01'}),
+					// 	DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailMessage-01'}),
+					// 	DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailMessage-02'})
+					// ];
+					const defaultConfigSub = await DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailSubject-01'});
+					const defaultConfigMess01 = await DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailMessage-01'});
+					const defaultConfigMess02 = await DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailMessage-02'});
+					// console.log('Subject');
+					// console.log(defaultConfigSub);
+					// console.log('Message01');
+					// console.log(defaultConfigMess01);
+					// console.log('Message02');
+					// console.log(defaultConfigMess02);
+					if(defaultConfigSub && defaultConfigMess01 && defaultConfigMess02) {
+						await Mailjet.sendGenericMail(
+							user.person.email,
+							user.person.name,
+							defaultConfigSub.config,
+							`${defaultConfigMess01.config} <b>${courseTitle}</b> ${defaultConfigMess02.config}`);
+					} else {
+						console.log('No hay configuración para envío de correo para el participante al finalizar curso');
+					}
+				}
+			} catch (err) {
+				console.log('Error trying to find/create certificate. Roster: ' + item._id + ' ' + err);
+			}
+		}
+	}
+	await this.save();
+	return;
+};
+
 RosterSchema.pre('save', async function(next) {
 	var item = this;
 	const now = new Date;
@@ -583,7 +757,7 @@ RosterSchema.pre('save', async function(next) {
 					}
 				}
 				if(user) {
-					console.log('Procedemos con el correo');
+					// console.log('Procedemos con el correo');
 					// const [defaultConfigSub, defaultConfigMess01, defaultConfigMess02] = await Promise.all[
 					// 	DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailSubject-01'}),
 					// 	DefaultConfig.findOne({ module: 'roster', code: 'courseFinishEmailMessage-01'}),

@@ -1484,6 +1484,7 @@ module.exports = {
 							});
 						} else if(item.course) {
 							send_items.push({
+								rosterid 		: item._id,
 								type 				: item.type,
 								status			: item.status,
 								course			:	{
@@ -2730,10 +2731,13 @@ module.exports = {
 	}, //promGrade
 
 	studentGrades(req,res){
-		const groupid		= req.query.groupid;
-		//const key_user 	= res.locals.user;
-		const studentid = req.query.studentid;
-		Roster.findOne({student: studentid, group: groupid})
+		const query = (req.query.groupid && req.query.studentid ) ? {
+			student: req.query.studentid,
+			group: req.query.groupid
+		} : {
+			_id: req.query.rosterid
+		};
+		Roster.findOne(query)
 			.populate([{
 				path: 'group',
 				select: 'course certificateActive beginDate endDate',
@@ -2747,6 +2751,14 @@ module.exports = {
 				}
 			},
 			{
+				path: 'course',
+				select: 'title blocks duration durationUnits',
+				populate: {
+					path: 'blocks',
+					select: 'title section number w wq wt'
+				}
+			},
+			{
 				path: 'student',
 				select: 'person'
 			}])
@@ -2754,7 +2766,8 @@ module.exports = {
 			.then((item) => {
 				if(item) {
 					var blocks	= [];
-					const bs 		= item.group.course.blocks;
+					const type = item.type;
+					const bs 		= (type === 'group') ? item.group.course.blocks : item.course.blocks;
 					item.grades.forEach(function(grade) {
 						if((grade.wq > 0 || grade.wt > 0 ) && grade.track > 0) {
 							var i = 0;
@@ -2767,10 +2780,14 @@ module.exports = {
 										blockSection: bs[i].section,
 										blockNumber	: bs[i].number,
 									};
-									var index = -1;
-									if(item.group.rubric && item.group.rubric.length > 0) { index = item.group.rubric.findIndex(e => e.block + '' === grade.block + ''); }
-									if(index > -1 ) {
-										block.blockW = item.group.rubric[index].w;
+									if(type === 'group') {
+										var index = -1;
+										if(item.group.rubric && item.group.rubric.length > 0) {
+											index = item.group.rubric.findIndex(e => e.block + '' === grade.block + '');
+										}
+										if(index > -1 ) {
+											block.blockW = item.group.rubric[index].w;
+										}
 									}
 									i = bs.length;
 								} else {
@@ -2781,7 +2798,7 @@ module.exports = {
 							blocks.push(block);
 						}
 					});
-					var send_grade = {
+					var send_grade = (type === 'group') ? {
 						rosterid					: item._id,
 						name							: item.student.person.fullName,
 						email 						: item.student.person.email,
@@ -2797,17 +2814,33 @@ module.exports = {
 						pass							: item.pass,
 						passDate					: item.passDate,
 						blocks						: blocks
+					} : {
+						rosterid					: item._id,
+						name							: item.student.person.fullName,
+						email 						: item.student.person.email,
+						course						: item.course.title,
+						beginDate					: item.beginDate,
+						endDate						: item.endDate,
+						finalGrade				: item.finalGrade,
+						minGrade					: item.minGrade,
+						status						: item.status,
+						track							: parseInt(item.track) + '%',
+						minTrack					: item.minTrack + '%',
+						pass							: item.pass,
+						passDate					: item.passDate,
+						blocks						: blocks
 					};
-					if(item.group.course.duration) {
-						send_grade.duration 			= item.group.course.duration;
-						send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
+					const course = (type === 'group') ? item.group.course : item.course;
+					if(course.duration) {
+						send_grade.duration 			= course.duration;
+						send_grade.durationUnits	= units(course.durationUnits,course.duration);
 					}
-					res.status(200).json({
+					return res.status(200).json({
 						'status': 200,
 						'message': send_grade
 					});
 				} else {
-					res.status(200).json({
+					return res.status(200).json({
 						'status': 200,
 						'message': 'You are not enrolled in this group'
 					});
@@ -4325,6 +4358,54 @@ module.exports = {
 			});
 	}, //repairRoster
 
+	async repairRosterV2(req,res) {
+		let retItemGrade = [];
+		const item = await Roster.findById(req.query.rosterid)
+			.populate({
+				path: 'course',
+				populate: {
+					path: 'blocks'
+				}
+			});
+		if(item.type !== 'public'){
+			return res.status(StatusCodes.OK).json({
+				'message': 'Roster is not public'
+			});
+		}
+		if(item) {
+			const blocks = item.course.blocks;
+			for (let block of blocks) {
+				let findBlock = item.grades.findIndex(grade => grade.block + '' === block._id +'');
+				if(findBlock === -1) {
+					item.grades.push({
+						block: block._id,
+						blockSection: block.section,
+						blockNumber: block.number,
+						track: 100,
+						wq: block.wq,
+						wt: block.wt,
+						w: block.w,
+						finalGrade: 0,
+						repair: 2
+					});
+				} else {
+					item.grades[findBlock].blockSection = block.section;
+					item.grades[findBlock].blockNumber = block.number;
+				}
+			}
+			await item.sortGrades();
+			// await item.runGrades();
+			retItemGrade.push(item.finalGrade);
+			return res.status(StatusCodes.OK).json({
+				'message': `Rosters repaired: ${retItemGrade}`
+			});
+		} else {
+			return res.status(StatusCodes.OK).json({
+				'message': 'No roster found'
+			});
+		}
+	},//repairRosterV2
+
 	repairGroup(req,res) {
 		const key_user	= res.locals.user;
 		const groupid = req.query.groupid;
@@ -4696,7 +4777,8 @@ module.exports = {
 			});
 		}
 
-	}
+	}, // rosterMigrateV2
+
 };
 
 

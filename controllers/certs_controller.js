@@ -28,22 +28,24 @@ module.exports = {
 					]
 				});
 			if(!item){
-				res.status(200).json({
+				return res.status(200).json({
 					'message': 'No hay certificado con ese número de folio',
 					noCert: true
 				});
 			}
 			const roster = item.roster || null;
 			if(!roster){
-				res.status(200).json({
+				return res.status(200).json({
 					'message': 'No existe registro de calificaciones con ese número de folio',
 					noCert: true
 				});
 			}
 			if(roster.status !== 'active') {
 				return res.status(200).json({
-					'message': `${roster.student.person.fullName} (${roster.student.person.email}) no ha completado los requisitos para obtener certificado`,
-					noCert: true
+					'message': 'No ha completado los trámites para  adquirir constancia oficial de acreditación verificada, que comprueba sus conocimientos y habilidades desarrollados en este curso.',
+					noCert: true,
+					studentName: roster.student.person.fullName,
+					email: roster.student.person.email
 				});
 			}
 			const course = roster.type === 'public' ? roster.course : roster.group.course || null;

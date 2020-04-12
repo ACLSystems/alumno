@@ -130,7 +130,7 @@ module.exports = {
 	async getNotification(req,res) {
 		try {
 			const notification = await Notification.findById(req.query.notificationid);
-			console.log(notification);
+			// console.log(notification);
 			if(notification) {
 				res.status(StatusCodes.OK).json(notification);
 			} else {

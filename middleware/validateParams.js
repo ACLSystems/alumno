@@ -2472,15 +2472,10 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error -: Please, give data by query to process'
 			});
-		} else if (!req.query.groupid) {
+		} else if (!req.query.rosterid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give group id by query to process'
-			});
-		} else if (!req.query.studentid) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'Error -: Please, give student id by query to process'
+				'message': 'Error -: Please, give rosterid by query to process'
 			});
 		} else {
 			next();

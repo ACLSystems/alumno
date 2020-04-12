@@ -53,6 +53,7 @@ module.exports = (app) => {
 	// GROUPS
 	app.get ('/api/v1/admin/group/repair',				GroupController.repairGroup);
 	app.get ('/api/v1/admin/group/repairtir',			GroupController.repairTasksInRoster);
+	app.put ('/api/v1/admin/repairrosv2', 				GroupController.repairRosterV2);
 	app.put ('/api/v1/admin/group/setrubric',			GroupController.setRubric);
 	app.put ('/api/v1/admin/group/change', 				GroupController.changeCourse);
 	app.put ('/api/v1/admin/group/addblockdates', GroupController.addBlockDates);

@@ -1833,20 +1833,18 @@ module.exports = {
 						message: `Te has inscrito al curso ${course.title}`
 					});
 					await notification.save();
-					res.status(200).json({
+					return res.status(200).json({
 						message: `Te has inscrito al curso ${course.title}`
 					});
 				} else {
-					res.status(200).json({
+					return res.status(200).json({
 						'message': 'Curso seleccionado no está disponible'
 					});
-					return;
 				}
 			} else {
-				res.status(200).json({
+				return res.status(200).json({
 					'message': 'Curso seleccionado no existe'
 				});
-				return;
 			}
 		} catch (err) {
 			Err.sendError(res,err,'user_controller','createRoster -- Finding Course --');
