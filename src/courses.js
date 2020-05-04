@@ -102,6 +102,10 @@ const CoursesSchema = new Schema ({
 		default: 0,
 		min: [0,'Course cost cannot be less than 0']
 	},
+	noCertificate: {
+		type: Boolean,
+		default: false
+	},
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema,

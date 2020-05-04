@@ -745,6 +745,23 @@ module.exports = {
 		});
 	}, //publicSummary
 
+	async publicProgress(req,res) {
+		try {
+			const items = await Roster.find({pass:true})
+				.select('status track passDate finalGrade')
+				.populate('student','name person');
+			if(items && items.length > 0) {
+				res.status(200).json(items);
+			} else {
+				res.status(200).json({
+					'message': 'No hay registros'
+				});
+			}
+		} catch (e) {
+			Err.sendError(res,e,'report_controller','gradesByGroup -- Finding group --');
+		}
+	}, //publicProgress
+
 	gradesByGroup(req,res) {
 		//const key_user  = res.locals.user;
 		var 	groupid				= req.query.groupid || null;

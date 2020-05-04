@@ -1103,11 +1103,20 @@ module.exports = {
 	}, //listRoster
 
 	async myGroups(req,res) {
+		function courseOK(course) {
+			const keys = Object.keys(course);
+			if(keys.includes('title')) {
+				return true;
+			}
+			return false;
+		}
+
 		function sendGroups(items) {
 			var send_groups = [];
 			items.forEach(item => {
+				var sendOK = true;
 				var send_group = {};
-				if(item.type && item.type === 'public') {
+				if(item.type && item.type === 'public' && courseOK(item.course)) {
 					send_group = {
 						rosterType		: item.type,
 						rosterid 			: item._id,
@@ -1131,7 +1140,7 @@ module.exports = {
 					if(now > item.endDate && item.openStatus !== 'closed') {
 						send_group.status = 'closed';
 					}
-				} else {
+				} else if(!item.type || (item.type && item.type === 'group') && courseOK(item.group.course)){
 					send_group = {
 						rosterType			: item.type || 'group',
 						rosterid 				: item._id,
@@ -1173,8 +1182,12 @@ module.exports = {
 					if(item.group.presentBlockBy === 'lapse' && item.group.lapse) {
 						send_group.lapse = item.group.course.lapse;
 					}
+				} else {
+					sendOK = false;
 				}
-				send_groups.push(send_group);
+				if(sendOK) {
+					send_groups.push(send_group);
+				}
 			});
 			res.status(200).json({
 				'status': 200,
@@ -1209,8 +1222,7 @@ module.exports = {
 			},{
 				path: 'course',
 				model: 'courses',
-				select: 'title code numBlocks blocks price cost duration durationUnits image',
-				match: { isVisible: true }
+				select: 'title code numBlocks blocks price cost duration durationUnits image'
 			}])
 			.select('type status createDate endDate openStatus track group course finalGrade pass passDate')
 			.lean()
@@ -1277,7 +1289,7 @@ module.exports = {
 					select: 'name course dates beginDate endDate code type instructor status',
 					populate: [{
 						path: 'course',
-						select: 'code author title blocks numBlocks description details image categories keywords moocPrice',
+						select: 'code author title blocks numBlocks description details image categories keywords moocPrice noCertificate',
 						populate: {
 							path: 'blocks',
 							match: { isVisible: true, status: 'published' },
@@ -1289,7 +1301,7 @@ module.exports = {
 					}]
 				},{
 					path: 'course',
-					select: 'code author title blocks numBlocks description details image categories keywords moocPrice',
+					select: 'code author title blocks numBlocks description details image categories keywords moocPrice noCertificate',
 					populate: {
 						path: 'blocks',
 						match: { isVisible: true, status: 'published' },
@@ -1440,11 +1452,11 @@ module.exports = {
 					select: 'course code name beginDate endDate status',
 					populate: {
 						path: 'course',
-						select: 'code title'
+						select: 'code title isVisible'
 					}
 				},{
 					path: 'course',
-					select: 'code title'
+					select: 'code title isVisible'
 				}];
 				if (req.query.active) {
 					populate.match = {
@@ -1479,7 +1491,8 @@ module.exports = {
 								},
 								course			:	{
 									title			: item.group.course.title,
-									code 			:	item.group.course.code
+									code 			:	item.group.course.code,
+									isVisible : item.group.course.isVisible
 								}
 							});
 						} else if(item.course) {
@@ -1490,6 +1503,7 @@ module.exports = {
 								course			:	{
 									title			: item.course.title,
 									code 			:	item.course.code,
+									isVisible : item.course.isVisible,
 									beginDate : item.createDate.toDateString(),
 									endDate		: item.endDate.toDateString()
 								}
@@ -2361,7 +2375,7 @@ module.exports = {
 						select: 'course certificateActive beginDate endDate type rubric dates',
 						populate: {
 							path: 'course',
-							select: 'title blocks duration durationUnits',
+							select: 'title blocks duration durationUnits noCertificate',
 							populate: {
 								path: 'blocks',
 								select: 'title section number w wq wt type order',
@@ -2377,7 +2391,7 @@ module.exports = {
 						options: { lean: true }
 					},{
 						path: 'course',
-						select: 'title blocks duration durationUnits moocPrice',
+						select: 'title blocks duration durationUnits moocPrice noCertificate',
 						populate: {
 							path: 'blocks',
 							select: 'title section number w wq wt type order',
@@ -2560,6 +2574,7 @@ module.exports = {
 					send_grade.courseDuration	= item.group.course.duration;
 					send_grade.courseDurUnits	= units(item.group.course.durationUnits);
 					send_grade.certificateActive = item.group.certificateActive;
+					send_grade.noCertificate = item.group.course.noCertificate || false;
 					send_grade.beginDate= item.group.beginDate;
 					send_grade.endDate	= item.group.endDate;
 					send_grade.beginDateSpa	= dateInSpanish(item.group.beginDate);
@@ -2572,6 +2587,7 @@ module.exports = {
 					send_grade.courseId	= item.course._id;
 					send_grade.beginDate= item.createDate;
 					send_grade.endDate	= item.endDate;
+					send_grade.noCertificate = item.course.noCertificate || false;
 					send_grade.beginDateSpa	= dateInSpanish(item.createDate);
 					send_grade.endDateSpa	= dateInSpanish(item.endDate);
 				}
