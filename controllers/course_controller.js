@@ -292,16 +292,13 @@ module.exports = {
 
 	async listCoursesPublic(req,res) {
 		var query = {};
-		var sort = { name: 1 };
+		const sort = { priority:1, title: 1};
 		try {
 			const org = await Org.findOne({ name: req.query.org })
 				.select('name')
 				.cache({key: 'org:name:' + req.query.org})
 				.lean();
 			query = { org: org._id };
-			if(req.query.sort) 	{
-				sort 	= { name: req.query.sort };
-			}
 			if(req.query.categories) {
 				query.categories = JSON.parse(req.query.categories);
 			}

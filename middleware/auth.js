@@ -121,7 +121,7 @@ module.exports = {
 										});
 								})
 								.catch((err) => {
-									Err.sendError(res,err,'auth', 'login -- Saving session --');
+									Err.sendError(res,err,'auth', `login -- Saving session -- con usuario ${user.name}`);
 								});
 
 						} else {

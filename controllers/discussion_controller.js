@@ -170,6 +170,7 @@ module.exports = {
 
 	get(req,res) {
 		const key_user 	= res.locals.user;
+		console.log(req.query.query);
 		const query			= JSON.parse(req.query.query);
 		if(!query.course || query.course === '' || query.course === 'undefined') {
 			delete query.course;

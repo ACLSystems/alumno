@@ -1343,6 +1343,17 @@ module.exports = function(req, res, next) {
 		}
 		break;
 
+	case '/api/v1/orgadm/orgunit/get':
+		if(!req.query) {
+			res.status(406).json({
+				'status': 406,
+				'message': 'Error -1110: Please, give data by query to process'
+			});
+		} else {
+			next();
+		}
+		break;
+
 	case '/api/v1/orgadm/user/list':
 		if(!req.query) {
 			res.status(406).json({
