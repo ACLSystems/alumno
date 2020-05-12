@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "test": "NODE_ENV=development nodemon -r dotenv/config index.js",
-    "jest": "jest",
+    "jest": "jest --watch",
     "docker:build": "docker build -t aclsystems/alumno:$(node ./misc/getVersion.js) .; docker tag aclsystems/alumno:$(node ./misc/getVersion.js) aclsystems/alumno:latest; docker images",
     "docker:push": "docker push aclsystems/alumno:$(node ./misc/getVersion.js); docker push aclsystems/alumno:latest"
   },
@@ -72,6 +72,7 @@
   "devDependencies": {
     "dotenv": "^8.2.0",
     "eslint": "^6.8.0",
+    "jest": "^26.0.1",
     "nodemon": "^2.0.2"
   }
 }

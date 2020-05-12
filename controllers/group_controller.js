@@ -944,7 +944,7 @@ module.exports = {
 						groupType		: group.type,
 						coursetitle	: group.course.title,
 						courseid		: group.course._id,
-						instructor	: `${group.instructor.person.name} ${group.instructor.person.fatherName}`,
+						instructor	: `${group.instructor.person.name} ${group.instructor.person.fatherName} (${group.instructor.name})`,
 						beginDate		: group.beginDate,
 						endDate			: group.endDate,
 						orgUnit			: group.orgUnit.name,
@@ -2971,57 +2971,56 @@ module.exports = {
 			});
 	}, //saveDate
 
-	changeInstructor(req,res) {
-		Promise.all([
-			User.findOne({name: req.query.instructor}).lean(),
-			Group.findOne({code: req.query.code})
+	async changeInstructor(req,res) {
+		try {
+			var instructor = await User.findOne({name: req.query.instructor}).lean();
+			var group = await Group.findOne({code: req.query.code})
 				.populate('instructor', 'name person')
-				.populate('course', 'title')
-		]).then(results => {
-			var [instructor, group] = results;
-			if(instructor) {
-				if(group) {
-					var formerInstructor = JSON.parse(JSON.stringify(group.instructor));
-					group.instructor = instructor._id;
-					group.mod.push({
-						by: 'System',
-						when: new Date(),
-						what: 'Change group Instructor'
-					});
-					group.save(group => {
-						res.status(200).json({
-							'message': `Group ${group.code} has new instructor: ${instructor.name}. Former instructor: ${formerInstructor.name}`
-						});
-						let subject = `Se ha creado un grupo y participas como tutor: ${group.code}`;
-						let variables = {
-							'Nombre': instructor.person.name,
-							'confirmation_link':url + '/tutorial',
-							'curso': group.course.title
-						};
-						mailjet.sendMail(instructor.person.email, instructor.person.name,subject,template_tutor,variables);
-						subject = `Se te ha dado de baja como tutor del grupo: ${group.code}`;
-						variables = {
-							'Nombre': formerInstructor.person.name,
-							'confirmation_link':url + '/tutorial',
-							'curso': group.course.title
-						};
-						mailjet.sendMail(formerInstructor.person.email, formerInstructor.person.name,subject,template_tutor,variables);
-					}).catch((err) => {
-						Err.sendError(res,err,'group_controller','changeInstructor -- Saving Group --');
-					});
-				} else {
-					res.status(404).json({
-						'message': `No group ${req.query.code} found`
-					});
-				}
-			} else {
-				res.status(404).json({
-					'message': `No group ${req.query.instructor} found`
+				.populate('course', 'title');
+			if(!instructor) {
+				return res.status(404).json({
+					'message': `No instructor ${req.query.instructor} found`
 				});
 			}
-		}).catch((err) => {
-			Err.sendError(res,err,'group_controller','changeInstructor -- Finding all --');
-		});
+			if(!group || !group.code || !group.instructor) {
+				return res.status(404).json({
+					'message': `No group ${req.query.code} found`
+				});
+			}
+			if(instructor._id +''=== group.instructor._id + '') {
+				return res.status(406).json({
+					'message': `Instructor ${req.query.instructor} ya es instructor del grupo ${req.query.code}`
+				});
+			}
+			var formerInstructor = Object.assign({},group.instructor);
+			group.instructor = instructor._id;
+			// console.log(group.code, group.name, group.instructor);
+			group.mod.push({
+				by: 'System',
+				when: new Date(),
+				what: 'Change group Instructor'
+			});
+			await group.save();
+			let subject = `Se ha creado un grupo y participas como tutor: ${group.code}`;
+			let variables = {
+				'Nombre': instructor.person.name,
+				'confirmation_link':url + '/tutorial',
+				'curso': group.course.title
+			};
+			await mailjet.sendMail(instructor.person.email, instructor.person.name,subject,template_tutor,variables);
+			subject = `Se te ha dado de baja como tutor del grupo: ${group.code}`;
+			variables = {
+				'Nombre': formerInstructor.person.name,
+				'confirmation_link':url + '/tutorial',
+				'curso': group.course.title
+			};
+			await mailjet.sendMail(formerInstructor.person.email, formerInstructor.person.name,subject,template_tutor,variables);
+			return res.status(200).json({
+				'message': `Group ${group.code} has new instructor: ${instructor.name}. Former instructor: ${formerInstructor.name}`
+			});
+		} catch (e) {
+			Err.sendError(res,e,'group_controller','changeInstructor');
+		}
 	}, //changeInstructor
 
 	tookCertificate(req,res) {

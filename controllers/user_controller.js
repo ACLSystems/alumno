@@ -209,7 +209,7 @@ module.exports = {
 														user.save()
 															.then((user) => {
 															*/
-														const link = url + 'email=' + user.person.email + '&token=' + user.admin.validationString;
+														const link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
 														let subject = 'Confirma tu correo electrónico';
 														let variables = {
 															Nombre: user.person.name,
