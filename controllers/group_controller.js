@@ -2975,8 +2975,9 @@ module.exports = {
 		try {
 			var instructor = await User.findOne({name: req.query.instructor}).lean();
 			var group = await Group.findOne({code: req.query.code})
-				.populate('instructor', 'name person')
 				.populate('course', 'title');
+			// console.log(group);
+			// return res.status(200).json(group);
 			if(!instructor) {
 				return res.status(404).json({
 					'message': `No instructor ${req.query.instructor} found`
@@ -2992,7 +2993,13 @@ module.exports = {
 					'message': `Instructor ${req.query.instructor} ya es instructor del grupo ${req.query.code}`
 				});
 			}
-			var formerInstructor = Object.assign({},group.instructor);
+			var formerInstructor = await User.findById(group.instructor).lean();
+			if(!formerInstructor) {
+				return res.status(406).json({
+					'message': `Hubo un problema ya que el instructor del grupo ${req.query.code} no existe. Favor de revisar`
+				});
+			}
+			// var formerInstructor = Object.assign({},group.instructor);
 			group.instructor = instructor._id;
 			// console.log(group.code, group.name, group.instructor);
 			group.mod.push({
@@ -3184,8 +3191,7 @@ module.exports = {
 
 					if(((!item.type || item.type === 'group') && !item.group.course) || (item.type && item.type === 'public' && !item.course)) {
 						res.status(200).json({
-							'status'	: 204,
-							'message'	: `Course for group -${item.group.name}- is not available, not visible or not published`
+							'message'	: 'El curso solicitado no está disponible'
 						});
 						return;
 					}

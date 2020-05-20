@@ -516,6 +516,9 @@ module.exports = {
 					query2.project = mongoose.Types.ObjectId(project);
 					query3.project = mongoose.Types.ObjectId(project);
 				}
+				query1.type = 'group';
+				query2.type = 'group';
+				query3.type = 'group';
 
 				Promise.all([
 					Roster.aggregate() // Buscar Track
