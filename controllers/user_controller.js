@@ -986,6 +986,7 @@ module.exports = {
 	},
 
 	passwordChange(req, res) {
+		const key_user = res.locals.user;
 		// Para el cambio de password necesitamos borrar TODOS los tokens
 		var privateKEY  = process.env.PRIV_KEY;
 		var buff 				= Buffer.from(privateKEY,'base64');
@@ -994,31 +995,34 @@ module.exports = {
 		const issuer  	= version.vendor;
 		const expiresD 	= process.env.NODE_EXPIRES || '7d';
 		const payload = {
-			id: res.locals.user._id,
-			person: res.locals.user.person,
-			orgUnit: res.locals.user.orgUnit
+			id: key_user._id,
+			person: key_user.person,
+			orgUnit: key_user.orgUnit
 		};
 		const signOptions = {
 			issuer,
-			subject: res.locals.user.name,
+			subject: key_user.name,
 			audience,
 			expiresIn: expiresD,
 			algorithm: 'RS256'
 		};
 		const token = jsonwebtoken.sign(payload, privateKEY, signOptions);
 		const tokenDecoded = jsonwebtoken.decode(token);
-		res.locals.user.admin.passwordSaved = 'saved';
-		res.locals.user.password = req.body.password;
-		res.locals.user.admin.tokens = [];
-		res.locals.user.admin.tokens.push(token);
+		key_user.admin.passwordSaved = 'saved';
+		key_user.password = req.body.password;
+		key_user.admin.tokens = [];
+		key_user.admin.tokens.push(token);
 		var mod = {
-			by: res.locals.user.name,
+			by: key_user.name,
 			when: new Date(),
 			what: 'Password modificado'
 		};
-		res.locals.user.mod.push(mod);
-		res.locals.user.save()
+		key_user.mod.push(mod);
+		key_user.save()
 			.then (() => {
+				let subject = 'Has modificado tu contraseña';
+				let message = 'Tu contraseña ha sido modificada. Si no fuiste tú, notifícalo a la Mesa de Servicio.';
+				mailjet.sendGenericMail(key_user.person.email,key_user.person.name,subject,message);
 				res.status(StatusCodes.OK).json({
 					'message': 'Password modificado',
 					token,

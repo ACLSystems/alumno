@@ -749,19 +749,30 @@ module.exports = {
 	}, //publicSummary
 
 	async publicProgress(req,res) {
-		try {
-			const items = await Roster.find({pass:true})
-				.select('status track passDate finalGrade')
-				.populate('student','name person');
-			if(items && items.length > 0) {
-				res.status(200).json(items);
-			} else {
-				res.status(200).json({
-					'message': 'No hay registros'
-				});
+		const thisMonth = req.query.date ? new Date(req.query.date) : new Date();
+		// console.log(thisMonth);
+		const firstDate = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1);
+		const firstDateNext = new Date(thisMonth.getFullYear(), thisMonth.getMonth() + 1, 1);
+		var query = {
+			type: 'public',
+			createDate: {
+				$gte: firstDate,
+				$lt: firstDateNext
 			}
-		} catch (e) {
-			Err.sendError(res,e,'report_controller','gradesByGroup -- Finding group --');
+		};
+		// console.log(query);
+		const items = await Roster.find(query)
+			.select('status track passDate finalGrade course')
+			.populate('student','name person')
+			.populate('course','title')
+			.catch(e =>
+				Err.sendError(res,e,'report_controller','publicProgress -- Finding rosters --'));
+		if(items && items.length > 0) {
+			res.status(200).json(items);
+		} else {
+			res.status(200).json({
+				'message': 'No hay registros'
+			});
 		}
 	}, //publicProgress
 

@@ -24,7 +24,7 @@ const DiscussionsSchema = new Schema ({
 		type: String,
 		enum:['discussion','question','announcement','tutor'],
 		required: true,
-		default: 'discussion'
+		default: 'question'
 	},
 	root: {
 		type: ObjectId,

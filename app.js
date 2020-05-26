@@ -76,6 +76,8 @@ app.all	('/api/v1/*', [require('./middleware/validateRequest')]);
 	*/
 app.post('/api/v1/file/upload', upload.single('file'), FileController.upload);
 
+app.post('/api/v1/user/image', upload.single('file'), FileController.imageUpload);
+
 /**  Para el resto de APIs validaciones del body */
 
 /** Esto solo si en un momento dado necesitamos un cuerpo URL encoded */
