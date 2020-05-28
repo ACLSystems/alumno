@@ -168,6 +168,11 @@ const RolesSchema = new Schema ({
 		type: Boolean,
 		required: true,
 		default: false
+	},
+	isMoocSupervisor: {
+		type: Boolean,
+		required: true,
+		default: false
 	}
 
 },{ _id: false });

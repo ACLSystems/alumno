@@ -541,7 +541,8 @@ function addRoles() {
 		isAuthor: false,
 		isInstructor: false,
 		isSupervisor: false,
-		isRequester: false
+		isRequester: false,
+		isMoocSupervisor: false
 	};
 }
 

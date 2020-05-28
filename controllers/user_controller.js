@@ -682,7 +682,8 @@ module.exports = {
 										isAuthor: user.roles.isAuthor,
 										isInstructor: user.roles.isInstructor,
 										isSupervisor: user.roles.isSupervisor,
-										isRequester: user.roles.isRequester
+										isRequester: user.roles.isRequester,
+										isMoocSupervisor: user.roles.isMoocSupervisor
 									};
 								}	else {
 									send_user.roles = {
@@ -1613,6 +1614,7 @@ module.exports = {
 			isSupervisor	: key_user.roles.isSupervisor,
 			isInstructor	: key_user.roles.isInstructor,
 			isRequester		: key_user.roles.isRequester,
+			isMoocSupervisor: key_user.roles.isMoocSupervisor,
 			isUser				: false
 		};
 		Roster.findOne({student: key_user._id})

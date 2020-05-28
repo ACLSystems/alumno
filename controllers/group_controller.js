@@ -3483,6 +3483,7 @@ module.exports = {
 										blockContent			:	block.content,
 										blockMedia				: block.media,
 										blockMinimumTime	: block.defaultmin,
+										blockBegin				: block.begin || false,
 										blockTrack				: false,
 										blockCurrentId		:	block._id,
 										blockPrevId				:	prevblockid,

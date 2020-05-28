@@ -695,6 +695,12 @@ module.exports = {
 	}, //percentil
 
 	async publicSummary(req,res) {
+		const key_user  = res.locals.user;
+		if(!key_user.roles.isMoocSupervisor) {
+			return res.status(404).json({
+				message: 'No tienes permisos para ver este reporte'
+			});
+		}
 		const lastNMonths = +req.query.lastnmonths || 0;
 		const now = new Date(),
 			y = now.getFullYear(),
@@ -749,6 +755,12 @@ module.exports = {
 	}, //publicSummary
 
 	async publicProgress(req,res) {
+		const key_user  = res.locals.user;
+		if(!key_user.roles.isMoocSupervisor) {
+			return res.status(404).json({
+				message: 'No tienes permisos para ver este reporte'
+			});
+		}
 		const thisMonth = req.query.date ? new Date(req.query.date) : new Date();
 		// console.log(thisMonth);
 		const firstDate = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1);
@@ -810,7 +822,7 @@ module.exports = {
 								fatherName	:	'$myUser.person.fatherName',
 								motherName	: '$myUser.person.motherName',
 								email				: '$myUser.person.email',
-								RFC					: '$myUser.admin.initialPassword'
+								RFC					: {$cond: [group.displayRFC,'$myUser.admin.initialPassword','--']}
 							})
 							.unwind('name')
 							.unwind('fatherName')
@@ -917,6 +929,7 @@ module.exports = {
 									'endDate'				: group.endDate,
 									'beginDateSpa'	: dateInSpanish(group.beginDate),
 									'endDateSpa'		: dateInSpanish(group.endDate),
+									'number'				: items.length,
 									'roster'				: items
 								});
 							})
