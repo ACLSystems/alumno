@@ -106,6 +106,10 @@ const CoursesSchema = new Schema ({
 		type: Boolean,
 		default: false
 	},
+	hideEnroll: {
+		type: Boolean,
+		default: false
+	},
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema,

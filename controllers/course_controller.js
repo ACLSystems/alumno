@@ -316,7 +316,7 @@ module.exports = {
 			}
 			query.status = 'published';
 			query.isVisible = true;
-			console.log(query);
+			// console.log(query);
 			var courses = await Course.find(query)
 				.select('code title type level author categories isVisible keywords description image details price cost moocPrice status duration durationUnits defaultDaysDuration order priority apiExternal')
 				// .cache({key: 'course:list:' + JSON.stringify(query)})
@@ -733,7 +733,7 @@ module.exports = {
 		}
 		try {
 			const course = await Course.findOne(query)
-				.select('title code image type description categories keywords isVisible price cost author priority order duration durationUnits defaultDaysDuration details level moocPrice')
+				.select('title code image type description categories keywords isVisible price cost author priority order duration durationUnits defaultDaysDuration details level moocPrice hideEnroll')
 				.lean();
 			if(course) {
 				course.id = course._id;
