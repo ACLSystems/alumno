@@ -176,7 +176,7 @@ module.exports = {
 				res.set({'Content-type': user.image.contentType});
 				res.send(user.image.data);
 			} else {
-				res.status(404).json({
+				res.status(200).json({
 					'message': 'No existe imagen'
 				});
 			}

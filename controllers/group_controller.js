@@ -4541,7 +4541,8 @@ module.exports = {
 					group.blockDates = Array.from(req.body.blockDates);
 					group.save().then(() => {
 						res.status(200).json({
-							'message': 'Grupo guardado`'
+							'message': 'Grupo guardado`',
+							'groupid': group._id
 						});
 					}).catch((err) => {
 						Err.sendError(res,err,'group_controller','addBlockDates -- Saving Group --');

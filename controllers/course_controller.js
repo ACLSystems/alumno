@@ -298,7 +298,7 @@ module.exports = {
 				.select('name')
 				.cache({key: 'org:name:' + req.query.org})
 				.lean();
-			query = { org: org._id };
+			query.org =  org._id;
 			if(req.query.categories) {
 				query.categories = JSON.parse(req.query.categories);
 			}
@@ -316,7 +316,8 @@ module.exports = {
 			}
 			query.status = 'published';
 			query.isVisible = true;
-			var courses = await Course.find()
+			console.log(query);
+			var courses = await Course.find(query)
 				.select('code title type level author categories isVisible keywords description image details price cost moocPrice status duration durationUnits defaultDaysDuration order priority apiExternal')
 				// .cache({key: 'course:list:' + JSON.stringify(query)})
 				.sort(sort)
@@ -837,11 +838,13 @@ module.exports = {
 
 	getBlocklistStudents(req,res) { // trae la lista de bloques para el estudiante. Este API es
 		// reemplazado por mygroup
-		var query = {};
+		var query = {
+			isVisible: true
+		};
 		if(req.query.code) {
-			query = { code: req.query.code };
+			query.code = req.query.code;
 		} else {
-			query = { _id: req.query.id };
+			query._id = req.query.id;
 		}
 		Course.findOne(query)
 			.populate({
@@ -890,13 +893,13 @@ module.exports = {
 					} else {
 						res.status(404).json({
 							'status': 404,
-							'message': 'Course you requested is not visible nor published yet'
+							'message': 'El curso solicitado no está visible o no está disponible por el momento'
 						});
 					}
 				} else {
 					res.status(404).json({
 						'status': 404,
-						'message': 'Course not found'
+						'message': 'Curso solicitado no está disponible'
 					});
 				}
 			}) // aqui
