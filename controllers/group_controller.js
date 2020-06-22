@@ -2372,7 +2372,7 @@ module.exports = {
 				Roster.findOne(query)
 					.populate([{
 						path: 'group',
-						select: 'course certificateActive beginDate endDate type rubric dates',
+						select: 'course certificateActive beginDate endDate type rubric dates status',
 						populate: {
 							path: 'course',
 							select: 'title blocks duration durationUnits noCertificate',
@@ -2567,8 +2567,10 @@ module.exports = {
 				};
 				if(type === 'group') {
 					send_grade.openStatus = item.group.status;
+					send_grade.status = item.group.status;
 					send_grade.groupid 	= item.group._id;
 					send_grade.groupType= item.group.type;
+					send_grade.groupCode = item.group.code;
 					send_grade.course		= item.group.course.title;
 					send_grade.courseId	= item.group.course._id;
 					send_grade.courseDuration	= item.group.course.duration;
@@ -2582,6 +2584,7 @@ module.exports = {
 				}
 				if(type === 'public') {
 					send_grade.openStatus = item.openStatus;
+					send_grade.status = item.status;
 					send_grade.course		= item.course.title;
 					send_grade.moocPrice = item.course.moocPrice;
 					send_grade.courseId	= item.course._id;
@@ -2989,7 +2992,7 @@ module.exports = {
 				});
 			}
 			if(instructor._id +''=== group.instructor._id + '') {
-				return res.status(406).json({
+				return res.status(200).json({
 					'message': `Instructor ${req.query.instructor} ya es instructor del grupo ${req.query.code}`
 				});
 			}
@@ -3159,7 +3162,7 @@ module.exports = {
 				populate: [{
 					path: 'course',
 					match: { isVisible: true, status: 'published'},
-					select: 'blocks numBlocks code title'
+					select: 'blocks numBlocks code title imageSponsor'
 				}
 				// ,{
 				// 	path: 'dates',
@@ -3169,7 +3172,7 @@ module.exports = {
 			},{
 				path: 'course',
 				match: { isVisible: true, status: 'published'},
-				select: 'blocks numBlocks code title'
+				select: 'blocks numBlocks code title imageSponsor'
 			}, // esta parte de abajo está sospechosa, porque de todos modos tengo que ir por el dato del bloque
 			{
 				path: 'grades.block',
@@ -3496,9 +3499,11 @@ module.exports = {
 										send_block.courseId		= item.group.course._id;
 										send_block.groupCode	= item.group.code;
 										send_block.groupId 		= item.group._id;
+										send_block.imageSponsor = item.group.course.imageSponsor;
 									} else {
 										send_block.courseCode	= item.course.code;
 										send_block.courseId		= item.course._id;
+										send_block.imageSponsor = item.course.imageSponsor;
 									}
 
 									if(block.type === 'textVideo' && block.begin) {

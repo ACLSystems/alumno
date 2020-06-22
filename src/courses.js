@@ -38,6 +38,9 @@ const CoursesSchema = new Schema ({
 		type: String,
 		required: true
 	},
+	imageSponsor: {
+		type: String
+	},
 	title: {
 		type: String,
 		required: true

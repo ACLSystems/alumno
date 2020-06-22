@@ -781,7 +781,7 @@ module.exports = {
 		Course.findOne(query)
 			.populate({
 				path: 'blocks',
-				select: 'code type title section number order status isVisible w wq wt questionnarie task',
+				select: 'code type title section number order status isVisible w wq wt questionnarie task media',
 				match: { section: {$gte: section1, $lte: section2}},
 				options: { sort: {order: 1} }
 			})
@@ -802,6 +802,7 @@ module.exports = {
 								order					: block.order,
 								status				: block.status,
 								isVisible			: block.isVisible,
+								media 				: block.media,
 								w							: block.w,
 								wq						: block.wq,
 								wt						: block.wt,
