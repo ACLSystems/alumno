@@ -3645,10 +3645,13 @@ module.exports = {
 												}
 
 											}
-											if(item.header) {send_item.header = item.header;}
-											if(item.footer) {send_item.footer = item.footer;}
-											if(item.label) 	{send_item.label	= item.label; }
-											if(item.files && item.files.length > 0) 	{send_item.files 	= item.files;	}
+											if(item.header) send_item.header	= item.header;
+											if(item.footer) send_item.footer	= item.footer;
+											if(item.label) 	send_item.label		= item.label;
+											if(item.array1) send_item.array1	= item.array1;
+											if(item.array2) send_item.array2	= item.array2;
+											if(item.style)	send_item.style 	= item.style;
+											if(item.files && item.files.length > 0) 	send_item.files 	= item.files;
 											send_items.push(send_item);
 										});
 										send_block.tasks= send_items;
@@ -4752,59 +4755,72 @@ module.exports = {
 
 	async rosterMigrateV2(req,res) {
 		const rosterid = req.query.rosterid;
-		try {
-			var item = await Roster.findById(rosterid)
-				.populate({
-					path: 'group',
-					select: 'course',
+		var item = await Roster.findById(rosterid)
+			.populate([{
+				path: 'group',
+				select: 'course',
+				populate: {
+					path: 'course',
+					select: 'blocks',
 					populate: {
-						path: 'course',
-						select: 'blocks',
-						populate: {
-							path: 'blocks',
-							select: 'section number w wt wq'
-						}
+						path: 'blocks',
+						select: 'section number w wt wq'
+					}
+				}
+			},{
+				path: 'course',
+				select: 'blocks',
+				populate: {
+					path: 'blocks',
+					select: 'section number w wt wq'
+				}
+			}]).catch(e => {
+				console.log(`Error al tratar de localizar el roster ${rosterid}:`);
+				console.log(e);
+				res.status(500).json({
+					message: 'Error al tratar de localizar el roster',
+					err: e
+				});
+			});
+		if(item) {
+			if(item.grades && item.grades.length > 0) {
+				// console.log('acá andamos');
+				// console.log(item.group);
+				var blocks = (item.type === 'group') ? item.group.course.blocks : item.course.blocks;
+				// console.log(blocks);
+				item.grades.forEach(grade => {
+					let found = blocks.findIndex(block => block._id + '' === grade.block + '');
+					if(found > -1) {
+						grade.blockNumber = blocks[found].number;
+						grade.blockSection = blocks[found].section;
+						grade.w = blocks[found].w;
+						grade.wt = blocks[found].wt;
+						grade.wq = blocks[found].wq;
 					}
 				});
-			if(item) {
-				if(item.grades && item.grades.length > 0) {
-					// console.log('acá andamos');
-					// console.log(item.group);
-					var blocks = item.group.course.blocks ? item.group.course.blocks : [];
-					// console.log(blocks);
-					item.grades.forEach(grade => {
-						let found = blocks.findIndex(block => block._id + '' === grade.block + '');
-						if(found > -1) {
-							grade.blockNumber = blocks[found].number;
-							grade.blockSection = blocks[found].section;
-							grade.w = blocks[found].w;
-							grade.wt = blocks[found].wt;
-							grade.wq = blocks[found].wq;
-						}
+				item.version = 2;
+				// console.log(item.grades);
+				await item.save().catch(e => {
+					console.log(`Error al tratar de guardar el roster ${rosterid}:`);
+					console.log(e);
+					res.status(500).json({
+						message: 'Error al tratar de guardar el roster',
+						err: e
 					});
-					item.version = 2;
-					// console.log(item.grades);
-					await item.save();
-					res.status(200).json({
-						'message': 'roster migrado'
-					});
-				} else {
-					res.status(404).json({
-						message: 'El roster no tiene calificaciones. Favor de revisar.'
-					});
-				}
+				});
+				res.status(200).json({
+					'message': 'roster migrado'
+				});
 			} else {
 				res.status(404).json({
-					message: 'No existe el roster solicitado'
+					message: 'El roster no tiene calificaciones. Favor de revisar.'
 				});
 			}
-		} catch (err) {
-			res.status(500).json({
-				message: 'Error al tratar de localizar el roster',
-				err: err
+		} else {
+			res.status(404).json({
+				message: 'No existe el roster solicitado'
 			});
 		}
-
 	}, // rosterMigrateV2
 
 };

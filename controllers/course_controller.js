@@ -568,6 +568,9 @@ module.exports = {
 									itemLabel		: i.label,
 									itemType		: i.type,
 									itemFiles		: i.files,
+									itemArray1  : i.array1,
+									itemArray2	: i.array2,
+									itemStyle		: i.style,
 									itemW				: i.w,
 									itemNotifications: i.Notifications
 								};

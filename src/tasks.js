@@ -10,6 +10,34 @@ mongoose.plugin(schema => { schema.options.usePushEach = true; });
 
 // Definir esquema y subesquemas
 
+const ArrangeSchema = new Schema({
+	left: {
+		type: String,
+		default: ''
+	},
+	middle1: {
+		type: String,
+		default: ''
+	},
+	middle2: {
+		type: String,
+		default: ''
+	},
+	right: {
+		type: String,
+		default: ''
+	}
+},{_id:false});
+
+const StyleSchema = new Schema({
+	bgLg: ArrangeSchema,
+	bgMd: ArrangeSchema,
+	bgSm: ArrangeSchema,
+	colorLg: ArrangeSchema,
+	colorMd: ArrangeSchema,
+	colorSm: ArrangeSchema
+},{_id:false});
+
 const ItemSchema = new Schema ({
 	header: {
 		type: String
@@ -26,12 +54,15 @@ const ItemSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum: ['file','text','textarea'],
+		enum: ['file','text','textarea','ddlmmr'],
 		required: true
 	},
 	files: {
 		type: [String]
 	},
+	array1: [String],
+	array2: [String],
+	style: StyleSchema,
 	w: {
 		type: Number,
 		min: [0,'Minimum value is 0'],

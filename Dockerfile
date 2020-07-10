@@ -27,7 +27,7 @@ RUN cd /tmp && npm install
 RUN mkdir -p /usr/src/app && cp -a /tmp/node_modules /usr/src/app && cp /tmp/package.json /usr/src/app && chown -R acluser:acl /usr/src/app && chmod 750 -R /usr/src/app
 
 # Creamos el directorio para datos
-RUN mkdir -p /usr/src/data && chown -R acluser:acl /usr/src/data && chmod 750 -R /usr/src/data
+RUN mkdir -p /usr/src/data/files && chown -R acluser:acl /usr/src/data && chmod 750 -R /usr/src/data
 RUN mkdir -p /usr/src/logs && chown -R acluser:acl /usr/src/logs && chmod 750 -R /usr/src/logs
 
 # Modificamos el directorio node a acluser

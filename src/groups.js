@@ -98,6 +98,10 @@ const GroupsSchema = new Schema ({
 		type: Boolean,
 		default: false
 	},
+	notMOOC: {
+		type: Boolean,
+		default: false
+	},
 	course: {
 		type: ObjectId,
 		ref: 'courses'
