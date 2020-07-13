@@ -12,6 +12,7 @@ const JobController 				= require('../controllers/job_controller'						);
 const ProjectController 		= require('../controllers/projects_controller'			);
 const SocketConstroller 		= require('../controllers/socket_controller');
 const DefaultController 		= require('../controllers/default_controller');
+const InstanceController		= require('../controllers/instance_controller');
 
 module.exports = (app) => {
 
@@ -84,5 +85,10 @@ module.exports = (app) => {
 	app.post('/api/v1/admin/message', 						SocketConstroller.sendMessage);
 	app.post('/api/v1/admin/default', 						DefaultController.create);
 	app.get ('/api/v1/admin/defaults', 						DefaultController.list);
-
+	app.post('/api/v1/admin/instance',
+		InstanceController.create
+	);
+	app.get('/api/v1/admin/instances',
+		InstanceController.list
+	);
 };

@@ -6,128 +6,108 @@ const Err = require('../controllers/err500_controller');
 
 module.exports = {
 	//register(req, res, next) {
-	register(req, res) {
-		const ouProps = req.body;
+	async register(req, res) {
+		const ouProps = Object.assign({},req.body);
 		const key_user 	= res.locals.user;
 		if( key_user.org.name !== ouProps.org && !key_user.roles.isAdmin) { // Validamos si el usuario tiene permisos para crear  unidades en su organizacion
-			res.status(403).json({
+			return res.status(403).json({
 				'status': 403,
 				'message': 'User ' + key_user.name + ' does not have permissions for Org -' + ouProps.org + '-'
 			});
-		} else { //else2
-			if(key_user.roles.isOrg) {
-				if(!ouProps.org) {
-					res.status(406).json({
-						'status': 406,
-						'message': 'Please, give OU'
-					});
-				} else { //else3
-					Org.findOne({ name: ouProps.org }, { name: true} )
-						.then((org) => {
-							if(!org) {
-								res.status(404).json({
-									'status': 404,
-									'message': 'Org -' + ouProps.org + '- does not exist'
-								});
-							} else {
-								// ------------
-								if(!ouProps.parent) {
-									ouProps.parent = ouProps.org;
-									if(ouProps.alias) {
-										const temp = ouProps.alias;
-										if(temp.constructor !== Array) {
-											ouProps.alias = [temp];
-										}
-									}
-									var permUsers = [];
-									var permUser = { name: key_user.name, canRead: true, canModify: true, canSec: true };
-									permUsers.push(permUser);
-									permUser = { name: 'admin', canRead: true, canModify: true, canSec: true };
-									permUsers.push(permUser);
-									var permRoles = [];
-									var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
-									permRoles.push(permRole);
-									permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
-									permRoles.push(permRole);
-									var permOrgs = [];
-									const permOrg = { name: ouProps.org, canRead: true, canModify: true, canSec: true };
-									permOrgs.push(permOrg);
-									ouProps.perm = { users: permUser, roles: permRoles, orgs: permOrgs };
-									const date = new Date();
-									const mod = {by: key_user.name, when: date, what: 'OU creation'};
-									ouProps.org = org._id;
-									ouProps.mod = [];
-									ouProps.mod.push(mod);
-									OrgUnit.create(ouProps)
-										.then(() => {
-											res.status(201).json({
-												'status': 201,
-												'message': 'OU -' + ouProps.name + '- created under -' + org.name + '- org'
-											});
-										})
-										.catch((err) => {
-											Err.sendError(res,err,'orgUnit_controller','create -- orgUnit --');
-										});
-								} else {
-									OrgUnit.findOne({ name: ouProps.parent}, { name: true })
-										.then((orgunitParent) => {
-											if(!orgunitParent) {
-												res.status(404).json({
-													'status': 404,
-													'message': 'Parent OU -' + ouProps.parent + '- does not exist'
-												});
-											} else {
-												var temp = ouProps.alias;
-												if(temp.constructor !== Array) {
-													ouProps.alias = [temp];
-												}
-												var permUsers = [];
-												var permUser = { name: key_user.name, canRead: true, canModify: true, canSec: true };
-												permUsers.push(permUser);
-												permUser = { name: 'admin', canRead: true, canModify: true, canSec: true };
-												permUsers.push(permUser);
-												var permRoles = [];
-												var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
-												permRoles.push(permRole);
-												permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
-												permRoles.push(permRole);
-												var permOrgs = [];
-												const permOrg = { name: ouProps.org, canRead: true, canModify: true, canSec: true };
-												permOrgs.push(permOrg);
-												ouProps.perm = { users: permUser, roles: permRoles, orgs: permOrgs };
-												const date = new Date();
-												const mod = {by: key_user.name, when: date, what: 'OU creation'};
-												ouProps.org = org._id;
-												ouProps.mod = [];
-												ouProps.mod.push(mod);
-												OrgUnit.create(ouProps)
-													.then(() => {
-														res.status(201).json({
-															'status': 201,
-															'message': 'OU -' + ouProps.name + '- created under -' + org.name + '- org'
-														});
-													})
-													.catch((err) => {
-														Err.sendError(res,err,'orgUnit_controller','create -- Finding orgUnit --');
-													});
-											}
-										})
-										.catch((err) => {
-											Err.sendError(res,err,'orgUnit_controller','create -- Finding parent orgUnit --');
-										});
-								}
-							}
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'orgUnit_controller','create -- Finding org --');
-						});
-				} //else3
-			} else { // else aqui
-				res.status(StatusCodes.UNAUTHORIZED).json({
-					'message': 'User is not authorized'
-				});
-			}  // aqui
-		} //else2
+		}
+		if(!key_user.roles.isOrg) {
+			return res.status(StatusCodes.UNAUTHORIZED).json({
+				'message': 'User is not authorized'
+			});
+		}
+		if(!ouProps.org) {
+			return res.status(406).json({
+				'status': 406,
+				'message': 'Please, give Org'
+			});
+		}
+		const org = await Org.findOne({ name: ouProps.org }).catch(e => {
+			Err.sendError(res,e,'orgUnit_controller','create -- Finding org --');
+		});
+		if(!org) {
+			res.status(404).json({
+				'status': 404,
+				'message': 'Org -' + ouProps.org + '- does not exist'
+			});
+		}
+		// console.log(org);
+		// ------------
+		if(!ouProps.parent) {
+			ouProps.parent = ouProps.org;
+		}
+		var orgunitParent = await OrgUnit.findOne({ name: ouProps.parent}).catch((err) => {
+			Err.sendError(res,err,'orgUnit_controller','create -- Finding parent orgUnit --');
+		});
+		if(!orgunitParent) {
+			return res.status(404).json({
+				'status': 404,
+				'message': 'Parent OU -' + ouProps.parent + '- does not exist'
+			});
+		}
+		if(ouProps.alias) {
+			const temp = ouProps.alias;
+			if(Array.isArray(temp)) {
+				ouProps.alias = [temp];
+			}
+		}
+		var permUsers = [];
+		var permUser = {
+			name: key_user.name,
+			canRead: true,
+			canModify: true,
+			canSec: true
+		};
+		permUsers.push(permUser);
+		permUsers.push({
+			name: 'admin',
+			canRead: true,
+			canModify: true,
+			canSec: true
+		});
+		var permRoles = [];
+		permRoles.push({
+			name: 'isAdmin',
+			canRead: true,
+			canModify: true,
+			canSec: true
+		});
+		permRoles.push({
+			name: 'isOrg',
+			canRead: true,
+			canModify: true,
+			canSec: true
+		});
+		var permOrgs = [];
+		permOrgs.push({
+			name: ouProps.org,
+			canRead: true,
+			canModify: true,
+			canSec: true
+		});
+		ouProps.perm = {
+			users: permUser,
+			roles: permRoles,
+			orgs: permOrgs
+		};
+		ouProps.org = org._id;
+		ouProps.mod = [];
+		ouProps.mod.push({
+			by: key_user.name,
+			when: new Date(),
+			what: 'OU creation'
+		});
+		await OrgUnit.create(ouProps).catch((err) => {
+			Err.sendError(res,err,'orgUnit_controller','create -- Finding orgUnit --');
+		});
+		res.status(201).json({
+			'status': 201,
+			'message': 'OU -' + ouProps.name + '- created under -' + org.name + '- org'
+		});
 	}, //register
 
 	// Masive Register -------------------------------------------

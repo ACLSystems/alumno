@@ -75,8 +75,8 @@ exports.sendMail = function(toEmail,toName,subject,templateID,variables) {
 
 exports.sendGenericMail =
 async function(toEmail,toName,subject,
-	message) {
-	const genericTemplate = await Default.findOne({module: defaultModule, code});
+	message,instance) {
+	const genericTemplate = await Default.findOne({module: defaultModule, code, instance});
 	var mail_message = {
 		// 'From': {
 		// 	'Email': fromEmail,

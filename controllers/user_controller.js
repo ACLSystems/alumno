@@ -1023,7 +1023,10 @@ module.exports = {
 			.then (() => {
 				let subject = 'Has modificado tu contraseña';
 				let message = 'Tu contraseña ha sido modificada. Si no fuiste tú, notifícalo a la Mesa de Servicio.';
-				mailjet.sendGenericMail(key_user.person.email,key_user.person.name,subject,message);
+				const instance = (key_user.orgUnit && key_user.orgUnit.type && key_user.orgUnit.type === 'state') ?
+					key_user.orgUnit.name :
+					key_user.orgUnit.parent;
+				mailjet.sendGenericMail(key_user.person.email,key_user.person.name,subject,message,instance);
 				res.status(StatusCodes.OK).json({
 					'message': 'Password modificado',
 					token,

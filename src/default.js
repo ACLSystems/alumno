@@ -21,10 +21,15 @@ const DefaultSchema = new Schema({
 		type: String,
 		required: [true, '"config" es requerido']
 	},
+	instance: {
+		type: String,
+		required: [true, '"instance" es requerido']
+	},
 	mod: [ModSchema]
 });
 
-DefaultSchema.index({ module: 1, code: 1}, { unique: true});
+DefaultSchema.index({ module: 1, code: 1, instance: 1 }, { unique: true});
+DefaultSchema.index({ instance: 1});
 DefaultSchema.index({ module: 1 });
 DefaultSchema.index({ code	: 1 });
 

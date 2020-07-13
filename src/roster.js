@@ -584,7 +584,8 @@ async function(){
 					item.certificateNumber = cert.number;
 				}
 				let user = await User.findById(item.student)
-					.select('person');
+					.select('orgUnit person')
+					.populate('orgUnit', 'name type parent');
 				var courseTitle = '';
 				if(item.type === 'public' && item.course) {
 					let courseFind = await Course.findById(item.course)
@@ -618,11 +619,14 @@ async function(){
 					// console.log('Message02');
 					// console.log(defaultConfigMess02);
 					if(defaultConfigSub && defaultConfigMess01 && defaultConfigMess02) {
+						const instance = (user.orgUnit && user.orgUnit.type && user.orgUnit.type === 'state') ?
+							user.orgUnit.name :
+							user.orgUnit.parent;
 						await Mailjet.sendGenericMail(
 							user.person.email,
 							user.person.name,
 							defaultConfigSub.config,
-							`${defaultConfigMess01.config} <b>${courseTitle}</b> ${defaultConfigMess02.config}`);
+							`${defaultConfigMess01.config} <b>${courseTitle}</b> ${defaultConfigMess02.config}`,instance);
 					} else {
 						console.log('No hay configuración para envío de correo para el participante al finalizar curso');
 					}
@@ -739,6 +743,7 @@ RosterSchema.pre('save', async function(next) {
 					item.certificateNumber = cert.number;
 				}
 				let user = await User.findById(item.student)
+					.populate('orgUnit', 'name type parent')
 					.select('person');
 				var courseTitle = '';
 				if(item.type === 'public' && item.course) {
@@ -773,11 +778,14 @@ RosterSchema.pre('save', async function(next) {
 					// console.log('Message02');
 					// console.log(defaultConfigMess02);
 					if(defaultConfigSub && defaultConfigMess01 && defaultConfigMess02) {
+						const instance = (user.orgUnit && user.orgUnit.type && user.orgUnit.type === 'state') ?
+							user.orgUnit.name :
+							user.orgUnit.parent;
 						await Mailjet.sendGenericMail(
 							user.person.email,
 							user.person.name,
 							defaultConfigSub.config,
-							`${defaultConfigMess01.config} <b>${courseTitle}</b> ${defaultConfigMess02.config}`);
+							`${defaultConfigMess01.config} <b>${courseTitle}</b> ${defaultConfigMess02.config}`, instance);
 					} else {
 						console.log('No hay configuración para envío de correo para el participante al finalizar curso');
 					}

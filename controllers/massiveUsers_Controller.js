@@ -24,7 +24,7 @@ const template_user_SPECIAL 	= parseInt(process.env.MJ_TEMPLATE_GROUPREG_SPECIAL
 /** @const {number} - En qué casos aplica el usuario "ESPECIAL" */
 const user_SPECIAL 						= parseInt(process.env.MJ_TEMPLATE_USER_SPECIAL);
 /** @const {string}  - url de libreta */
-const url 								= process.env.NODE_LIBRETA_URI;
+var url 								= process.env.NODE_LIBRETA_URI;
 // --------------------------------------------------------------
 
 module.exports = {
@@ -34,7 +34,14 @@ module.exports = {
 				'message': 'Please, give data to process'
 			});
 		} else {
-			var usersReq = req.body;
+			var usersReq;
+			if(req.body.url && req.body.users) {
+				url = req.body.url;
+				usersReq = req.body.users;
+			} else {
+				usersReq = req.body;
+			}
+
 			var numUsers = {
 				requested: usersReq.length
 			};
@@ -157,6 +164,7 @@ module.exports = {
 									});
 
 									User.find({name: {$in: usersToInsertNames}})
+										.populate('orgUnit', 'name type parent')
 										.then((usersFound) => {
 											usersFound.forEach(function(val1) {
 												usersToInsert.forEach(function(val2,index2) {
@@ -173,15 +181,18 @@ module.exports = {
 											if(usersToInsert) {
 												User.insertMany(usersToInsert)
 													.then(() => {
+
 														usersToInsert.forEach(function(user) {
 															var link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
-															var templateId = template_user_admin;
+															// var templateId = template_user_admin;
 															let subject = 'Confirma tu correo electrónico';
-															let variables = {
-																'Nombre': user.person.name,
-																'confirmation_link':link,
-															};
-															mailjet.sendMail(user.person.email, user.person.name,subject,templateId,variables)
+															// let variables = {
+															// 	'Nombre': user.person.name,
+															// 	'confirmation_link':link,
+															// };
+															const instance = (user.orgUnit.type === 'state') ? user.orgUnit.name : user.orgUnit.parent;
+															const message = `${user.person.name},<br>Bienvenido al sistema Conalep.<br>El administrador te acaba de registrar en este portal, y requiere que realices una validación de tus datos registrados. Por favor, da clic en la siguiente liga y sigue las instrucciones:<br><a href="${link}">link</a><br>Si la liga anterior no funciona, por favor copia y pega la liga en tu navegador.<br>Lo anterior te pedirá que valides tu información y que generes una contraseña.<br>Selecciona una contraseña nueva, escríbela y guárdala en y lugar seguro.<br>El Conalep se reserva el derecho a restringir el uso de la plataforma si no se le da el uso correcto a la misma.<br>En otro correo te llegará información acerca del curso o cursos en el o los que estarás enrolado.`;
+															mailjet.sendGenericMail(user.person.email, user.person.name,subject,message,instance)
 																.catch((err) => {
 																	Err.sendError(res,err,'massiveUser_controller','register -- Sending Mail --');
 																});

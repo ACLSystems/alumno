@@ -11,6 +11,7 @@ const TermController 		= require('../controllers/term_controller'		);
 const CourseController 	= require('../controllers/course_controller'	);
 const CertController 		= require('../controllers/certs_controller'		);
 const ChangeParams			= require('../middleware/changeParams'				);
+const InstanceController = require('../controllers/instance_controller');
 
 module.exports = (app) => {
 
@@ -160,5 +161,10 @@ module.exports = (app) => {
 	app.post('/api/user/captcha',
 		Validate.captcha,
 		Validate.results,
-		UserController.captcha);
+		UserController.captcha
+	);
+
+	app.get('/api/instance',
+		InstanceController.get
+	);
 };

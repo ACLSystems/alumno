@@ -516,7 +516,8 @@ module.exports = {
 									});
 								}
 								User.find({_id: { $in: roster.roster}})
-									.select('person char2')
+									.select('person char2 orgUnit')
+									.populate('orgUnit', 'name type parent')
 									.then((students) => {
 										var my_roster 		= [];
 										var new_students	= [];
@@ -626,12 +627,14 @@ module.exports = {
 															template_user = template_user_SPECIAL;
 														}
 														let subject = `Has sido enrolado al curso ${group.course.title}`;
-														let variables = {
-															'Nombre': student.person.name,
-															'confirmation_link':link,
-															'curso': group.course.title
-														};
-														mailjet.sendMail(student.person.email,student.person.name,subject,template_user,variables);
+														// let variables = {
+														// 	'Nombre': student.person.name,
+														// 	'confirmation_link':link,
+														// 	'curso': group.course.title
+														// };
+														let message = `<h4>${student.person.name}</h4><p>Has sido inscrito al curso:</p><h3>${group.course.title}</h3><p>Ingresa a la sección "Mis Cursos" en el panel del portal para comenzar tu curso.<p>`;
+														let instance = (student.orgUnit && student.orgUnit.type && student.orgUnit.type === 'state') ? student.orgUnit.name : student.orgUnit.parent;
+														mailjet.sendGenericMail(student.person.email,student.person.name,subject,message,instance);
 														var not = new Notification({
 															destination: {
 																kind: 'users',

@@ -63,6 +63,9 @@ module.exports = {
 			.equals('application/json'),
 		body('response').exists()
 	],
+	instanceGet: [
+		query('hostname','Se requiere el nombre del dominio')
+	],
 	results(req,res,next) {
 		//console.log(req.headers);
 		const errors = validationResult(req);
