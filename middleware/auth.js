@@ -38,18 +38,21 @@ publicKEY = buff.toString('utf-8');
 
 module.exports = {
 
-	login(req, res) {
-
-		var username = req.body.username || req.body.name || '';
-		var password = req.body.password || '';
-
+	async login(req, res) {
+		const username = req.body.username || req.body.name || '',
+			password = req.body.password || '';
 		if (username == '' || password == '') {
-			res.status(StatusCodes.UNAUTHORIZED).json({
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
 				'message': 'Error: Por favor, proporcione las credenciales para acceder'
 			});
-			return;
 		}
-		Users.findOne({$or: [{name: username},{'person.email': username}] })
+		var user = await Users.findOne(
+			{$or: [{
+				name: username
+			},{
+				'person.email': username
+			}]
+			})
 			.populate([{
 				path: 'orgUnit',
 				select: 'name parent type longName',
@@ -58,167 +61,142 @@ module.exports = {
 				path: 'org',
 				select: 'name longName',
 				options: { lean: true }
-			}])
-			.then((user) => {
-				if(!user) {
-					res.status(StatusCodes.NOT_FOUND).json({
-						'message': 'Error: el usuario o el password no son correctos'
-					});
-				} else {
-					user.validatePassword(password, function(err, isOk) {
-						if(isOk) {
-							const payload = {
-								admin: {
-									isActive : user.admin.isActive,
-									isVerified : user.admin.isVerified,
-									isDataVerified : user.admin.isDataVerified
-								},
-								attachedToWShift: user.attachedToWShift,
-								org: user.org,
-								userid: user._id,
-								person: user.person,
-								orgUnit: user.orgUnit,
-								preferences: user.preferences
-							};
-							const signOptions = {
-								issuer,
-								subject: user.name,
-								audience,
-								expiresIn: expiresD,
-								algorithm: 'RS256'
-							};
-							const token = jsonwebtoken.sign(payload, privateKEY, signOptions);
-							const tokenDecoded = jsonwebtoken.decode(token);
-							var session = new Session({
-								user: user._id,
-								token,
-								onlyDate: getToday(),
-								date: new Date(),
-								url: urlLogin
-							});
-							session.save()
-								.then(() => {
-									cache.hmset('session:id:'+user._id,{
-										token,
-										url: urlLogin
-									});
-									cache.set('session:name:'+ user.name + ':' + user.orgUnit.name, 'session:id:'+user._id);
-									cache.expire('session:id:'+user._id,cache.ttlSessions);
-									cache.expire('session:name:'+ user.name + ':' + user.orgUnit.name,cache.ttlSessions);
-									if(!user.admin.tokens || !Array.isArray(user.admin.tokens)){
-										user.admin.tokens = [];
-									}
-									user.admin.tokens.push(token);
-									user.save()
-										.then(() => {
-											res.status(StatusCodes.OK).json({
-												token,
-												iat: tokenDecoded.iat,
-												exp: tokenDecoded.exp
-											});
-										}).catch((err) => {
-											Err.sendError(res,err,'auth', 'login -- Saving user --');
-										});
-								})
-								.catch((err) => {
-									Err.sendError(res,err,'auth', `login -- Saving session -- con usuario ${user.name}`);
-								});
-
-						} else {
-							res.status(StatusCodes.UNAUTHORIZED).json({
-								'message': 'Error: el usuario o el password no son correctos'
-							});
-						}
-					});
-				}
-			})
-			.catch((err) => {
+			}]).catch((err) => {
 				Err.sendError(res,err,'auth','login -- Finding User --');
 			});
+		if(!user) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'Error: el usuario o el password no son correctos'
+			});
+		}
+		await user.validatePassword(password, async (err, isOk) => {
+			if(!isOk) {
+				return res.status(StatusCodes.UNAUTHORIZED).json({
+					'message': 'Error: el usuario o el password no son correctos'
+				});
+			}
+			var invalidTokens = [],
+				validToken = null;
+			for(let token of user.admin.tokens) {
+				await jsonwebtoken.verify(token,publicKEY, err => {
+					if(err) invalidTokens.push(token);
+					if(!err) validToken = token;
+				});
+			}
+			user.admin.tokens = user.admin.tokens.filter(token => {
+				return !invalidTokens.includes(token);
+			});
+			if(validToken) {
+				const tokenDecoded = await jsonwebtoken.decode(validToken);
+				return res.status(StatusCodes.OK).json({
+					token: validToken,
+					iat: tokenDecoded.iat,
+					exp: tokenDecoded.exp,
+					note: 'token reused'
+				});
+			}
+			const payload = {
+				admin: {
+					isActive : user.admin.isActive,
+					isVerified : user.admin.isVerified,
+					isDataVerified : user.admin.isDataVerified
+				},
+				attachedToWShift: user.attachedToWShift,
+				org: user.org,
+				userid: user._id,
+				person: user.person,
+				orgUnit: user.orgUnit,
+				preferences: user.preferences
+			};
+			const signOptions = {
+				issuer,
+				subject: user.name,
+				audience,
+				expiresIn: expiresD,
+				algorithm: 'RS256'
+			};
+			const token = await jsonwebtoken.sign(payload, privateKEY, signOptions);
+			const tokenDecoded = await jsonwebtoken.decode(token);
+			var session = new Session({
+				user: user._id,
+				token,
+				onlyDate: getToday(),
+				date: new Date(),
+				url: urlLogin
+			});
+			await session.save().catch((err) => {
+				Err.sendError(res,err,'auth', `login -- Guardando sesión - con usuario ${user.name}`);
+			});
+			await cache.hmset('session:id:'+user._id,{
+				token,
+				url: urlLogin
+			});
+			await cache.set('session:name:'+ user.name + ':' + user.orgUnit.name, 'session:id:'+user._id);
+			cache.expire('session:id:'+user._id,cache.ttlSessions);
+			cache.expire('session:name:'+ user.name + ':' + user.orgUnit.name,cache.ttlSessions);
+			if(!user.admin.tokens || !Array.isArray(user.admin.tokens)){
+				user.admin.tokens = [];
+			}
+			user.admin.tokens.push(token);
+			await user.save().catch((err) => {
+				Err.sendError(res,err,'auth', 'login -- Guardando usuario --');
+			});
+			res.status(StatusCodes.OK).json({
+				token,
+				iat: tokenDecoded.iat,
+				exp: tokenDecoded.exp,
+				note: 'new token'
+			});
+		});
 	}, //login
 
-	logout(req,res) {
-		Users.findOne({name: res.locals.user.name, 'admin.tokens': res.locals.token})
-			.then(user => {
-				if(user){
-					user.admin.tokens = user.admin.tokens.filter(tok => {
-						return tok !== res.locals.token;
-					});
-					user.save()
-						.then(() => {
-							res.status(StatusCodes.OK).json({
-								'message': 'Se ha cerrado la sesión'
-							});
-						}).catch((err) => {
-							Err.sendError(res,err,'auth','logout -- Finding User --');
-						});
-				} else {
-					res.status(StatusCodes.NOT_FOUND).json({
-						'message': 'Error: el usuario o la sesión no existen'
-					});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'auth','logout -- Finding User --');
+	async logout(req,res) {
+		var user = await Users.findOne({
+			name: res.locals.user.name,
+			'admin.tokens': res.locals.token
+		}).catch((err) => {
+			Err.sendError(res,err,'auth','logout -- localizando usuario --');
+		});
+		if(!user) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'Error: el usuario o la sesión no existen'
 			});
+		}
+		user.admin.tokens = user.admin.tokens.filter(tok => {
+			return tok !== res.locals.token;
+		});
+		await user.save().catch((err) => {
+			Err.sendError(res,err,'auth','logout -- Finding User --');
+		});
+		res.status(StatusCodes.OK).json({
+			'message': 'Se ha cerrado la sesión'
+		});
 	},
 
-	logoutAll(req,res) {
-		Users.findOne({name: res.locals.user.name, 'admin.tokens': res.locals.token})
-			.then(user => {
-				if(user){
-					user.admin.tokens = [];
-					user.save()
-						.then(() => {
-							res.status(StatusCodes.OK).json({
-								'message': 'Se han cerrado todas las sesiones'
-							});
-						}).catch((err) => {
-							Err.sendError(res,err,'auth','logout -- Finding User --');
-						});
-				} else {
-					res.status(StatusCodes.NOT_FOUND).json({
-						'message': 'Error: el usuario o la sesión no existen'
-					});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'auth','logout -- Finding User --');
+	async logoutAll(req,res) {
+		var user = await Users.findOne({
+			name: res.locals.user.name,
+			'admin.tokens': res.locals.token
+		}).catch((err) => {
+			Err.sendError(res,err,'auth','logout -- Finding User --');
+		});
+		if(!user) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'Error: el usuario o la sesión no existen'
 			});
+		}
+		user.admin.tokens = [];
+		await user.save().catch((err) => {
+			Err.sendError(res,err,'auth','logout -- Finding User --');
+		});
+		res.status(StatusCodes.OK).json({
+			'message': 'Se han cerrado todas las sesiones'
+		});
 	}
 };
 
 // private Methods
 
-// function genToken(user) {
-// 	var expiresInt = expiresIn(expires);
-// 	var token = jwt.encode({
-// 		user: user.name,
-// 		exp: expiresInt
-// 	}, require('../config/secret')());
-//
-// 	return {
-// 		token: token,
-// 		expires: expiresInt,
-// 		user: user
-// 	};
-// }
-//
-// function expiresIn(numDays) {
-// 	var dateObj = new Date();
-// 	return dateObj.setDate(dateObj.getDate() + numDays);
-// }
-//
-// function sendError(res, err, section) {
-// 	logger.error('Auth -- Section: ' + section + '----');
-// 	logger.error(err);
-// 	res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-// 		'message': 'Error',
-// 		'Error': err.message
-// 	});
-// 	return;
-// }
-//
 function getToday() {
 	const now = new Date();
 	let {date} = Time.displayLocalTime(now);

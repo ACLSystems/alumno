@@ -5,7 +5,7 @@ const AuthMiddleware 		= require('../middleware/auth'								);
 const GetNothing 				= require('../controllers/get_nothing'				);
 const UserController		= require('../controllers/user_controller'		);
 const HelpController 		= require('../controllers/help_controller'		);
-const OrgUnitController = require('../controllers/orgUnit_controller'	);
+// const OrgUnitController = require('../controllers/orgUnit_controller'	);
 const CareerController 	= require('../controllers/career_controller'	);
 const TermController 		= require('../controllers/term_controller'		);
 const CourseController 	= require('../controllers/course_controller'	);
@@ -52,18 +52,18 @@ module.exports = (app) => {
 		Validate.results,
 		UserController.register);
 
-	/** @api {get} /api/orgunit/near
-		* @apiName Búsqueda de plantel más cercano
-		* @apiPermission none
-		* @apiGroup OrgUnit
-		* @apiParam {String} [lng] longitud
-		* @apiParam {String} [lat] latitud
-		* @apiSuccess (200) {Object}
-		*/
-	app.get ('/api/orgunit/near',
-		Validate.orgUnitNear,
-		Validate.results,
-		OrgUnitController.index);
+	// /** @api {get} /api/orgunit/near
+	// 	* @apiName Búsqueda de plantel más cercano
+	// 	* @apiPermission none
+	// 	* @apiGroup OrgUnit
+	// 	* @apiParam {String} [lng] longitud
+	// 	* @apiParam {String} [lat] latitud
+	// 	* @apiSuccess (200) {Object}
+	// 	*/
+	// app.get ('/api/orgunit/near',
+	// 	Validate.orgUnitNear,
+	// 	Validate.results,
+	// 	OrgUnitController.index);
 
 	/** @api {get} /api/user/:name
 		* @apiName Detalles del usuario
@@ -129,7 +129,7 @@ module.exports = (app) => {
 	app.get ('/api/help',
 		HelpController.help);
 
-	app.get ('/api/orgunit/list',						OrgUnitController.publiclist);
+	// app.get ('/api/orgunit/list',						OrgUnitController.publiclist);
 	app.get ('/api/career/list',						CareerController.list);
 	app.get ('/api/career/listareas',				CareerController.listAreas);
 	app.get ('/api/term/list', 							TermController.list);

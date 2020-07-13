@@ -1,7 +1,7 @@
 const UserController 				= require('../controllers/user_controller'					);
 const MassUsersController 	= require('../controllers/massiveUsers_Controller'	);
 const OrgController 				= require('../controllers/org_controller'						);
-const OrgUnitController 		= require('../controllers/orgUnit_controller'				);
+// const OrgUnitController 		= require('../controllers/orgUnit_controller'				);
 const CareerController 			= require('../controllers/career_controller'				);
 const TermController 				= require('../controllers/term_controller'					);
 const ReportController 			= require('../controllers/report_controller'				);
@@ -18,10 +18,10 @@ module.exports = (app) => {
 	// ORG
 	app.get ('/api/v1/orgadm/org/getdetails', 					OrgController.getDetails);
 	// ORGUNIT
-	app.post('/api/v1/orgadm/orgunit/massiveregister', 	OrgUnitController.massiveRegister);
-	app.post('/api/v1/orgadm/orgunit/register', 				OrgUnitController.register);
-	app.get ('/api/v1/orgadm/orgunit/list', 						OrgUnitController.list);
-	app.get ('/api/v1/orgadm/orgunit/get', 							OrgUnitController.get);
+	// app.post('/api/v1/orgadm/orgunit/massiveregister', 	OrgUnitController.massiveRegister);
+	// app.post('/api/v1/orgadm/orgunit/register', 				OrgUnitController.register);
+	// app.get ('/api/v1/orgadm/orgunit/list', 						OrgUnitController.list);
+	// app.get ('/api/v1/orgadm/orgunit/get', 							OrgUnitController.get);
 	// CAREER
 	app.post('/api/v1/orgadm/career/create', 						CareerController.create);
 	app.post('/api/v1/orgadm/career/massivecreate',			CareerController.massiveCreation);

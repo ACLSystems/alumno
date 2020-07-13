@@ -20,6 +20,7 @@ const adminRoutes 				= require('./routes/admin_routes');
 const orgAdmRoutes 				= require('./routes/orgAdm_routes');
 const supervisorRoutes 		= require('./routes/supervisor_routes');
 const requesterRoutes 		= require('./routes/requester_routes');
+const ouRoutes						= require('./routes/ou_routes');
 const app 								= express();
 
 /**
@@ -99,6 +100,7 @@ exportRoutes(app);
 supervisorRoutes(app);
 adminRoutes(app);
 orgAdmRoutes(app);
+ouRoutes(app);
 requesterRoutes(app);
 
 /**
