@@ -46,37 +46,20 @@ const template_notGroupCreate = parseInt(process.env.MJ_TEMPLATE_NOTGROUPCREATE)
 // -----------------------------------------------------------------------
 
 module.exports = {
-	create(req,res) {
+	async create(req,res) {
 		const key_user 	= res.locals.user;
-		if(!mongoose.Types.ObjectId.isValid(req.body.course)) {
-			res.status(406).json({
-				'message': 'Error: course must be an ObjectID'
+		var group = await Group.findOne({code: req.body.code});
+		if(group) {
+			console.log(group);
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: `Grupo con código ${req.body.code} ya existe`
 			});
-			return;
 		}
-		if(!mongoose.Types.ObjectId.isValid(req.body.instructor)) {
-			res.status(406).json({
-				'message': 'Error: instructor must be an ObjectID'
-			});
-			return;
-		}
-		if(!mongoose.Types.ObjectId.isValid(req.body.orgUnit)) {
-			res.status(406).json({
-				'message': 'Error: orgUnit must be an ObjectID'
-			});
-			return;
-		}
-		if(req.body.project && !mongoose.Types.ObjectId.isValid(req.body.project)) {
-			res.status(406).json({
-				'message': 'Error: orgUnit must be an ObjectID'
-			});
-			return;
-		}
-		var group = req.body;
+		group = new Group(Object.assign({},req.body));
 		if(!group.instructor) {
 			group.instructor = key_user._id;
 		}
-		Promise.all([
+		const results = await Promise.all([
 			Course.findOne({ _id: group.course })
 			// Esta parte sirve para recolectar la rúbrica
 				.populate({
@@ -86,293 +69,271 @@ module.exports = {
 				}),
 			// ----
 			// Hay que ver si el instructor es un usuario válido
-			User.findById(group.instructor).lean()
-		])
-			.then((results) => {
-				var [course,instructor] = results;
-				if(!instructor) {
-					res.status(401).json({
-						'message': 'Instructor is not found. Please provide a valid user id'
-					});
-					return;
-				} else if(!instructor.roles.isInstructor) {
-					res.status(401).json({
-						'message': 'User has no role of Instructor. Please provide a valid user id with valid role'
-					});
-					return;
-				}
-				if(course) {
-					if(course.status === 'published'){
-						const date = new Date();
-						group.org = key_user.org._id;
-						if(key_user.roles.isAdmin || key_user.roles.isBusiness) {
-							if(!group.orgUnit) {
-								group.orgUnit = key_user.orgUnit._id;
-							} else {
-								if(!mongoose.Types.ObjectId.isValid(req.body.orgUnit)) {
-									res.status(401).json({
-										'message': 'Error: orgUnit is not a valid ObjectID'
-									});
-								}
-							}
-						} else {
-							group.orgUnit = key_user.orgUnit._id;
-						}
-						if(!group.type) {
-							group.type = course.type;
-						}
-						group.own = {
-							user: key_user.name,
-							org: key_user.org.name,
-							orgUnit: key_user.orgUnit.name
-						};
-						group.mod = {
-							by: key_user.name,
-							when: date,
-							what: 'Group Creation'
-						};
-						group.perm = {
-							users: [{ name: key_user.name, canRead: true, canModify: true, canSec: true }],
-							roles: [{ name: 'isInstructor', canRead: true, canModify: false, canSec: false},
-								{ name: 'isOrgContent', canRead: true, canModify: false, canSec: true}],
-							orgs: [{ name: key_user.org.name, canRead: true, canModify: false, canSec: false}],
-							orgUnits: [{ name: key_user.orgUnit.name, canRead: true, canModify: true, canSec: false}]
-						};
-						if(!group.instructor && course.type === 'tutor') {
-							group.instructor = key_user._id;
-						}
-						// Agregar la rúbrica recolectada desde los bloques
-						group.rubric = [];
-						if(course.blocks.length > 0) {
-							course.blocks.forEach(function(block) {
-								group.rubric.push({
-									block	: block._id,
-									w			: block.w,
-									wq		: block.wq,
-									wt		: block.wt,
-									section: block.section,
-									number: block.number,
-									text: ''
-								});
-							});
-						}
-						//	---------
-						group.roster = [];
-						group.students = [];
-						orgUnit.findById(group.orgUnit).lean()
-							.then((ou) => {
-								if(ou) {
-									Group.create(group)
-										.then((grp) => {
-											res.status(200).json({
-												'message': 'Group created',
-												'group': {
-													id: grp.id,
-													code: grp.code,
-													name: grp.name
-												}
-											});
-											if(course.type === 'tutor') {
-												let subject = `Se ha creado un grupo y participas como tutor: ${group.code}`;
-												let variables = {
-													'Nombre': instructor.person.name,
-													'confirmation_link':url + '/tutorial',
-													'curso': group.course.title
-												};
-												mailjet.sendMail(instructor.person.email,instructor.person.name,subject,template_tutor,variables);
-												subject = `Alerta: Se ha generado un grupo de tipo tutor. Favor de gestionar:  ${group.code}`;
-												variables = {
-													'Nombre': 'Administrador',
-													'portal': portal,
-													'mensaje': `Se ha generado un grupo de tipo tutor. Favor de gestionar. ${group.code} ${group.course.title}`
-												};
-												mailjet.sendMail(supportEmail,'Administrador',subject,template_notGroupCreate,variables);
-											} else {
-												let subject = `Alerta: Se ha generado un grupo ${group.code}`;
-												let variables = {
-													'Nombre': 'Administrador',
-													'portal': portal,
-													'mensaje': `Se ha generado un grupo. ${group.code} ${group.course.title}`
-												};
-												mailjet.sendMail(supportEmail, 'Administrador',subject,template_notGroupCreate,portal,variables);
-											}
-										})
-										.catch((err) => {
-											if(err.message.indexOf('E11000 duplicate key error collection') !== -1 ) {
-												res.status(406).json({
-													'message': 'Error -: group -' + group.code + '- already exists'
-												});
-											} else {
-												Err.sendError(res,err,'group_controller','create -- creating Group --');
-											}
-										});
-								} else {
-									res.status(401).json({
-										'message': 'Error -: orgUnit -' + group.orgUnit + '- does not exists'
-									});
-								}
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'group_controller','create -- Finding orgUnit --');
-							});
-					} else {
-						res.status(404).json({
-							'message': 'Error -: Course -'+ group.course + '- must be in published status to create group'
-						});
-					}
-				} else {
-					res.status(404).json({
-						'message': 'Error -: Course -'+ group.course + '- not found'
-					});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'group_controller','create -- Finding Course --');
+			User.findOne({$or:[{_id:group.instructor},{name:group.instructor}]}),
+			orgUnit.find({$or:[{_id:group.orgUnit},{name:group.orgUnit}]})
+		]).catch((err) => {
+			Err.sendError(res,err,'group_controller','create -- Finding Course --');
+			return;
+		});
+		var [
+			course,
+			instructor,
+			ou
+		] = results;
+		// console.log(instructor);
+		if(!instructor) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'No se encuentra al instructor'
 			});
+		}
+		if(!course) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'Error -: Curso -'+ group.course + '- no se encuentra'
+			});
+		}
+		if(!ou) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'Error -: Plantel -'+ group.orgUnit + '- no se encuentra'
+			});
+		}
+		if(!group.type) group.type = 'tutor';
+		if(!instructor.roles.isInstructor) {
+			// res.status(401).json({
+			// 	'message': 'User has no role of Instructor. Please provide a valid user id with valid role'
+			// });
+			// return;
+			instructor.roles.isInstructor = true;
+			await instructor.save().catch((err) => {
+				Err.sendError(res,err,'group_controller','create -- Saving Tutor --');
+				return;
+			});
+		}
+		group.instructor = instructor._id;
+		if(course.status !== 'published'){
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'Error -: Curso -'+ group.course + '- debe estar publicado para crear un grupo'
+			});
+		}
+		group.org = key_user.org._id;
+		group.own = {
+			user: key_user.name,
+			org: key_user.org.name,
+			orgUnit: key_user.orgUnit.name
+		};
+		group.mod = [{
+			by: key_user.name,
+			when: new Date(),
+			what: 'Group Creation'
+		}];
+		group.perm = {
+			users: [{ name: key_user.name, canRead: true, canModify: true, canSec: true }],
+			roles: [{ name: 'isInstructor', canRead: true, canModify: false, canSec: false},
+				{ name: 'isOrgContent', canRead: true, canModify: false, canSec: true}],
+			orgs: [{ name: key_user.org.name, canRead: true, canModify: false, canSec: false}],
+			orgUnits: [{ name: key_user.orgUnit.name, canRead: true, canModify: true, canSec: false}]
+		};
+		// Agregar la rúbrica recolectada desde los bloques
+		group.rubric = [];
+		if(course.blocks.length > 0) {
+			course.blocks.forEach(function(block) {
+				group.rubric.push({
+					block	: block._id,
+					w			: block.w,
+					wq		: block.wq,
+					wt		: block.wt,
+					section: block.section,
+					number: block.number,
+					text: ''
+				});
+			});
+		}
+		//	---------
+		group.roster = [];
+		group.students = [];
+
+		await group.save().catch((err) => {
+			Err.sendError(res,err,'group_controller','create -- creating Group --');
+			return;
+		});
+
+		// Falta cambiar los mensajes por GENERICOS
+		let subject = `Se ha creado un grupo y participas como tutor: ${group.code}`;
+		let variables = {
+			'Nombre': instructor.person.name,
+			'confirmation_link':url + '/tutorial',
+			'curso': group.course.title
+		};
+		if(course.type === 'tutor') {
+			await mailjet.sendMail(instructor.person.email,instructor.person.name,subject,template_tutor,variables);
+		}
+		subject = `Alerta: Se ha generado el grupo ${group.code}`;
+		variables = {
+			'portal': portal,
+			'mensaje': `Se ha generado e grupo: ${group.code} ${group.course.title}`
+		};
+		var send_group = group.toObject();
+		delete send_group.__v;
+		delete send_group.mod;
+		delete send_group.perm;
+		delete send_group.own;
+		delete send_group.admin;
+		delete send_group.rubric;
+		await mailjet.sendMail(supportEmail, 'Administrador',subject,template_notGroupCreate,variables);
+		res.status(StatusCodes.OK).json(send_group);
 	}, // create
 
-	get(req,res) {
+	async get(req,res) {
 		//const key_user = res.locals.user;
-		var query = {};
-		if(req.query.groupid) {
-			query = {_id: req.query.groupid};
-		}
-		if(req.query.groupcode) {
-			query = {code: req.query.groupcode};
-		}
-		Group.findOne(query)
-			.then((group) => {
-				if(group) {
-					var varEnum	= {
-						status				: varenum('status'),
-						type					: varenum('type'),
-						presentBlockBy: varenum('presentBlockBy')
-					};
-					res.status(200).json({
-						status	: 200,
-						message	: group,
-						enum		: varEnum
-					});
-				} else {
-					res.status(200).json({
-						status	: 200,
-						message	: 'Group not found'
-					});
-				}
-			})
+		const group = await Group.findOne({$or:[{_id:req.params.groupid},{code:req.params.groupid}]})
+			.select('-org -roster -own -mod -perm -admin -__v')
+			.populate('course','name code')
+			.populate('instructor', 'person')
+			.populate('students', 'person')
+			.populate('orgUnit', 'name parent type longName')
+			.populate('project', 'name')
 			.catch((err) => {
 				Err.sendError(res,err,'group_controller','get -- Finding group --');
+				return;
 			});
+		if(!group) {
+			res.status(StatusCodes.NOT_FOUND).json({
+				message	: 'Grupo no existe'
+			});
+		}
+		res.status(StatusCodes.OK).json(group);
 	}, // get
 
-	modify(req,res) {
+	async modify(req,res) {
 		// se requiere el ID del grupo
 		const key_user = res.locals.user;
-		Group.findById(req.body.groupid)
-			.then((group) => {
-				if(group) {
-					var date = new Date();
-					var mod = {
-						by: key_user.name,
-						when: date,
-						what: 'Group modification'
-					};
-					group.mod.push(mod);
-					var req_group = req.body;
-					if(req_group.code							) {group.code 							= req_group.code;							}
-					if(req_group.name							) {group.name 							= req_group.name;							}
-					if(req_group.status						) {group.status 						= req_group.status;						}
-					if(req_group.type							) {group.type 							= req_group.type;							}
-					if(req_group.course						) {group.course 						= req_group.course;						}
-					if(req_group.instructor				) {group.instructor 				= req_group.instructor;				}
-					if(req_group.orgUnit					) {group.orgUnit		 				= req_group.orgUnit;					}
-					if(req_group.org							) {group.org				 				= req_group.org;							}
-					if(req_group.beginDate				) {group.beginDate					= req_group.beginDate;				}
-					if(req_group.endDate					) {group.endDate						= req_group.endDate;					}
-					if(req_group.rubric						) {group.rubric			 				= req_group.rubric;						}
-					if(req_group.certificateActive === false) {group.certificateActive	= false;}
-					if(req_group.isActive					) {group.isActive						= req_group.isActive;					}
-					if(req_group.minTrack					) {group.minTrack						= req_group.minTrack;					}
-					if(req_group.minGrade					) {group.minGrade						= req_group.minGrade;					}
-					if(req_group.lapseBlocks			) {group.lapseBlocks				= req_group.lapseBlocks;			}
-					if(req_group.lapse						) {group.lapse							= req_group.lapse;						}
-					if(req_group.dates						) {group.dates							= req_group.dates;						}
-					if(req_group.presentBlockBy		) {group.presentBlockBy			= req_group.presentBlockBy;		}
-					group.save()
-						.then(() => {
-							res.status(200).json({
-								'status': 200,
-								'message': 'Group -'+ group._id +'- modified'
-							});
-						});
-				} else {
-					res.status(200).json({
-						status	: 200,
-						message	: 'Group ' + req.body.groupid + ' not found'
-					});
-				}
-			})
+		if(!key_user.roles.isRequester && !key_user.roles.isAdmin) {
+			return res.status(StatusCodes.UNAUTHORIZED).json({
+				message: 'No estás autorizado a realizar esta operación'
+			});
+		}
+		var updates = Object.keys(req.body);
+		if(updates.length === 0) {
+			return res.status(StatusCodes.OK).json({
+				message: 'Nada que modificar'
+			});
+		}
+		updates = updates.filter(item => item !== '_id');
+		updates = updates.filter(item => item !== 'history');
+		const allowedUpdates = [
+			'status',
+			'code',
+			'name',
+			'type',
+			'public',
+			'notMooc',
+			'presentBlockBy',
+			'beginDate',
+			'endDate',
+			'dates',
+			'lapse',
+			'lapseBlocks',
+			'blockDates',
+			'orgUnit',
+			'minGrade',
+			'minTrack',
+			'isActive',
+			'certificateActive',
+			'project',
+			'report'
+		];
+		const isValidOperation = updates.every(update => allowedUpdates.includes(update));
+		if(!isValidOperation) {
+			return res.status(StatusCodes.BAD_REQUEST).json({
+				message: 'Existen modificaciones no permitidas'
+			});
+		}
+		var group = await Group.findById(req.params.groupid)
 			.catch((err) => {
 				Err.sendError(res,err,'group_controller','modify -- Finding group --');
+				return;
 			});
+		if(!group) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message	: 'Grupo' + req.body.groupid + ' no encontrado'
+			});
+		}
+		group = Object.assign(group,req.body);
+		var mod = {
+			by: key_user.name,
+			when: new Date(),
+			what: 'Modificación de grupo'
+		};
+		group.mod.push(mod);
+		await group.save().catch((err) => {
+			Err.sendError(res,err,'group_controller','modify -- Saving group --');
+			return;
+		});
+		var groupToSend = group.toObject();
+		delete groupToSend.mod;
+		delete groupToSend.own;
+		delete groupToSend.perm;
+		delete groupToSend.admin;
+		delete groupToSend.rubric;
+		delete groupToSend.__v;
+		res.status(200).json(groupToSend);
 	}, // modify
 
-	list(req,res) {
+	async listGroups(req,res) {
+		const key_user = res.locals.user;
+		var query = {org: key_user.org._id};
+		if(req.params.ou) {
+			query.orgUnit = req.params.ou;
+		}
+		if(req.params.course) {
+			query.course = req.params.course;
+		}
+		// console.log(query);
+		const groups = await Group.find(query)
+			.select('name code')
+			.catch((err) => {
+				console.log(err);
+				return;
+				// Err.sendError(res,err,'group_controller','create -- Finding Course --');
+			});
+		res.status(StatusCodes.OK).json(groups);
+	}, //listGroups
+
+	async list(req,res) {
 		const key_user 	= res.locals.user;
 		var query = {org: key_user.org._id};
-		if(req.query.ou) {
-			query.orgUnit = req.query.ou;
+		var ous = [];
+		if(key_user.orgUnit.type === 'state') {
+			ous = await orgUnit.find({$or:[{
+				name: key_user.orgUnit.name
+			},{
+				parent: key_user.orgUnit.name
+			}]})
+				.select('_id')
+				.catch((err) => {
+					Err.sendError(res,err,'group_controller','list -- Finding OUS --');
+					return;
+				});
+			ous = ous.map(ou => ou._id);
+		} else {
+			ous = [key_user.orgUnit._id];
 		}
-		Group.find(query)
+		query.orgUnit = {$in: ous};
+		var groups = await Group.find(query)
+			.select('-roster -rubric -org -own -mod -perm -admin -__v')
 			.populate('course', 'title code numBlocks')
 			.populate('instructor', 'name person')
 			.populate('org', 'name')
 			.populate('orgUnit', 'name longName')
-			.populate('students', 'name person')
+			.populate('project', 'name')
 			.lean()
-			.then((groups) => {
-				var send_groups = [];
-				groups.forEach(function(group) {
-					var send_group = {
-						id					: group._id,
-						code				: group.code,
-						name				: group.name,
-						status			: group.status,
-						type				: group.type,
-						course			: group.course.title,
-						coursecode	: group.course.code,
-						numBlocks		: group.course.numBlocks,
-						orgUnit 		: group.orgUnit.name,
-						orgUnitName	: group.orgUnit.longName,
-						instructor	: group.instructor.person.fullName,
-						beginDate		: group.beginDate,
-						endDate			: group.endDate,
-						numStudents : group.numStudents
-					};
-					var send_students = [];
-					group.students.forEach(function(s) {
-						send_students.push({
-							fullName: s.person.fullName
-						});
-					});
-					send_group.students = send_students;
-					send_groups.push(send_group);
-				});
-				if(send_groups.length > 0) {
-					res.status(200).json({
-						'status': 200,
-						'message': send_groups
-					});
-				} else {
-					res.status(200).json({
-						'status': 200,
-						'message': 'No groups found'
-					});
-				}
-			})
 			.catch((err) => {
-				Err.sendError(res,err,'group_controller','create -- Finding Course --');
+				Err.sendError(res,err,'group_controller','list -- Finding Groups --');
+				return;
 			});
+		groups.forEach(g => {
+			g.students = g.students.length;
+		});
+		res.status(StatusCodes.OK).json(groups);
 	},
 
 	myList(req,res) {
@@ -445,292 +406,238 @@ module.exports = {
 			});
 	},
 
-	createRoster(req,res){
-		const key_user 	= res.locals.user;
-		var roster = req.body;
+	async createRoster(req,res){
+		const key_user = res.locals.user;
+		var roster = req.body.roster;
 		const version = 2;
-		var org 	 = '';
-		if(!roster.org) {
-			org = key_user.org;
-		}
-		if(roster.roster && roster.roster.length > 0) {
-			roster.roster = unique(roster.roster);
-			const date = new Date();
-			const link = url;
-			Group.findOne({ org: org, code: roster.code })
-				.populate({
-					path: 'course',
-					select: 'blocks title',
-					populate: {
-						path: 'blocks',
-						select: 'section number w wq wt',
-						options: { sort: {order: 1} }
-					}
-				})
-				.then((group) => {
-					if(group) {
-						if(group.status !== 'active') {
-							res.status(200).json({
-								'status': 200,
-								'message': 'Group ' + group.name + ' (' + group.code + ') is not active'
-							});
-							return;
-						}
-						var mod = {
-							by: key_user.name,
-							when: date,
-							what: 'Adding student(s) to roster'
-						};
-						const blocks			= group.course.blocks;
-						Dependency.find({block: {$in: blocks}})
-							.then((deps) => {
-								if(deps.length > 0 ) { // completar "blocks" con las dependencias
-									deps.forEach(function(dep) {
-										var foundB = false;
-										var foundOnB = false;
-										var cursor = 0;
-										while (!(foundB && foundOnB) && cursor < blocks.length) {
-											if(dep.block +'' === blocks[cursor]._id +'') {
-												if(!blocks[cursor].dependencies) {
-													blocks[cursor].dependencies = [];
-												}
-												blocks[cursor].dependencies.push({
-													dep						: dep._id,
-													createAttempt	: false,
-													track					: false,
-													saveTask			: false
-												});
-												foundB = true;
-											}
-											if(dep.onBlock +'' === blocks[cursor]._id +'') {
-												if(!blocks[cursor].dependencies) {
-													blocks[cursor].dependencies = [];
-												}
-												blocks[cursor].dependencies.push({
-													dep						: dep._id
-												});
-												foundOnB = true;
-											}
-											cursor ++;
-										}
-									});
-								}
-								User.find({_id: { $in: roster.roster}})
-									.select('person char2 orgUnit')
-									.populate('orgUnit', 'name type parent')
-									.then((students) => {
-										var my_roster 		= [];
-										var new_students	= [];
-										var status				= roster.status || 'pending';
-										students.forEach(function(student) {
-											// el siguiente código es para validar si el usuario ya está registrado en este grupo
-											// si ya existe el id del usuario, se lo brinca
-											var found = false;
-											if(group.students){
-												found = group.students.find(function(st) {
-													return st + '' === student._id + '';
-												});
-											}
-											if(!found) { // Si encontramos el id del usuario, no hagas nada...
-												var grade = [];
-												var sec = 0;
-												blocks.forEach(function(block) {
-													var gradePushed = {
-														block					: block._id,
-														blockSection	: block.section, // version 2
-														blockNumber 	: (block.number === 0) ? 0: block.number,  // version 2
-														track					: 0,
-														maxGradeQ 		: 0,
-														gradeT				: 0,
-														w							: block.w,
-														wq						: block.wq,
-														wt						: block.wt,
-														dependencies	: block.dependencies
-													};
-													var gradeIndex = -1;
-													if(group.rubric && group.rubric.length > 0) { gradeIndex = group.rubric.findIndex(rubric => rubric.block + '' === gradePushed.block + ''); }
-													if(gradeIndex > -1 ) {
-														gradePushed.w 	= group.rubric[gradeIndex].w;
-														gradePushed.wt 	= group.rubric[gradeIndex].wt;
-														gradePushed.wq 	= group.rubric[gradeIndex].wq;
-													}
-													grade.push(gradePushed);
-													if(block.section !== sec) {
-														sec++;
-													}
-												});
-												if(blocks[0].section === 0) {
-													sec++;
-												}
-												var sections = [];
-												var j = 0;
-												while (j < sec) {
-													var section = {};
-													if (group.presentBlockBy && group.presentBlockBy === 'dates' && group.dates && group.dates.length > 0) {
-														section.beginDate = group.dates[j].beginDate;
-														section.endDate		= group.dates[j].endDate;
-													}
-													sections.push(section);
-													j++;
-												}
-												/*
-										// Modificar la rúbrica que trajimos el curso y colocar la del grupo
-										if(group.rubric && group.rubric.length > 0) {
-											var rubcount = 0;
-											group.rubric.forEach(function(rub) {
-												var found = false;
-												var i 		= 0;
-												while(!found && i < group.grade.length) {
-													if(rub.block + '' === group.grade[i].block + '') {
-														found = true;
-													} else {
-														i++;
-													}
-												}
-												if(found) {
-													group.rubric[rubcount].w 	= group.grade[i].w;
-													group.rubric[rubcount].wq = group.grade[i].wq;
-													group.rubric[rubcount].wt = group.grade[i].wt;
-												}
-												rubcount++;
-											});
-										}
-										*/
-												//
-												var new_roster = new Roster({
-													student		: student._id,
-													status		: status,
-													grades		: grade,
-													group			: group._id,
-													minGrade	: group.minGrade,
-													minTrack	: group.minTrack,
-													org				: group.org,
-													orgUnit		: group.orgUnit,
-													sections 	: sections,
-													version		: version,		// version 2
-													admin 		: [{
-														what		: 'Roster creation',
-														who			: key_user.name,
-														when		: date
-													}],
-													mod 		: [{
-														what		: 'Roster creation',
-														who			: key_user.name,
-														when		: date
-													}],
-												});
-												new_students.push(student._id);
-												my_roster.push(new_roster._id);
-												new_roster.save()
-													.then(() => {
-														if(student.char2 === user_SPECIAL) {
-															template_user = template_user_SPECIAL;
-														}
-														let subject = `Has sido enrolado al curso ${group.course.title}`;
-														// let variables = {
-														// 	'Nombre': student.person.name,
-														// 	'confirmation_link':link,
-														// 	'curso': group.course.title
-														// };
-														let message = `<h4>${student.person.name}</h4><p>Has sido inscrito al curso:</p><h3>${group.course.title}</h3><p>Ingresa a la sección "Mis Cursos" en el panel del portal para comenzar tu curso.<p>`;
-														let instance = (student.orgUnit && student.orgUnit.type && student.orgUnit.type === 'state') ? student.orgUnit.name : student.orgUnit.parent;
-														mailjet.sendGenericMail(student.person.email,student.person.name,subject,message,instance);
-														var not = new Notification({
-															destination: {
-																kind: 'users',
-																item: student._id,
-																role: 'user'
-															},
-															objects: [
-																{
-																	kind: 'courses',
-																	item: group.course._id
-																},
-																{
-																	kind: 'groups',
-																	item: group._id
-																},
-																{
-																	kind: 'blocks',
-																	item: group.course.blocks[0]._id
-																}
-															],
-															type: 'system',
-															message: 'Has sido enrolado al curso ' + group.course.title
-														});
-														not.save()
-															.catch((err) => {
-																Err.sendError(res,err,'group_controller','createRoster -- Creating Notification --',false,false,`Group: ${group.name} Student: ${student.person.email}`);
-															});
-													})
-													.catch((err) => {
-														Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
-													});
-											}
-										});
-										group.students 	= group.students.concat(new_students);
-										group.roster		= group.roster.concat(my_roster);
-										group.mod.push(mod);
-										group.save()
-											.catch((err) => {
-												Err.sendError(res,err,'group_controller','createRoster -- Saving group -- user: ' +
-													key_user.name + ' groupid: ' + group._id);
-											});
-										var newStudents = 0;
-										var totalRoster = 0;
-										var alreadyIn		= 0;
-										if(new_students && new_students.length > 0) {
-											newStudents = new_students.length;
-										}
-										if(group.students && group.students.length > 0) {
-											totalRoster = group.students.length;
-										}
-										alreadyIn = roster.roster.length - newStudents;
-										res.status(200).json({
-											'status': 200,
-											'message': 'Roster created',
-											'newStudents': newStudents,
-											'totalRoster': totalRoster,
-											'alreadyIn': alreadyIn
-										});
-										/*
-										group.mod.push(mod);
-										group.save()
-											.then(() => {
-												res.status(200).json({
-													'status': 200,
-													'message': 'Roster created'
-												});
-											})
-											.catch((err) => {
-												Err.sendError(res,err,'group_controller','createRoster -- Saving Group --');
-											});
-											*/
-									})
-									.catch((err) => {
-										Err.sendError(res,err,'group_controller','createRoster -- Finding Users --');
-									});
-							}) // seguramente meter el resto del código dentro de la promesa
-							.catch((err) => {
-								Err.sendError(res,err,'group_controller','createRoster -- Searching dependencies -- user: ' +
-									key_user.name + ' groupid: ' + group._id);
-							});
-					} else {
-						res.status(200).json({
-							'status': 200,
-							'mesage': 'Group -' + roster.code + '- not found'
-						});
-					}
-				})
-				.catch((err) => {
-					Err.sendError(res,err,'group_controller','createRoster -- Finding Group --');
-				});
-		} else {
-			res.status(200).json({
-				'status': 200,
-				'mesage': 'No students to add. Please send students in roster array to add.'
+		if(!roster || (roster && roster.length === 0)) {
+			return res.status(StatusCodes.OK).json({
+				mesage: 'No se encontraron participantes a agregar. Por favor envía estudiantes en el arreglo "roster".'
 			});
 		}
+		roster = unique(roster);
+		const date = new Date();
+		// const link = url;
+		var group = await Group.findById({_id: req.params.groupid})
+			.populate({
+				path: 'course',
+				select: 'blocks title',
+				populate: {
+					path: 'blocks',
+					select: 'section number w wq wt',
+					options: { sort: {order: 1} }
+				}
+			}).catch((err) => {
+				Err.sendError(res,err,'group_controller','createRoster -- Finding Group --');
+				return;
+			});
+		if(!group) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				mesage: 'Grupo -' + req.params.groupid + '- no existe'
+			});
+		}
+		if(group.status !== 'active') {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Grupo ' + group.name + ' (' + group.code + ') no está activo'
+			});
+		}
+		var mod = {
+			by: key_user.name,
+			when: date,
+			what: 'Agregando participantes al roster'
+		};
+		const blocks = group.course.blocks;
+		const deps = await Dependency.find({block: {$in: blocks}}).catch((err) => {
+			Err.sendError(res,err,'group_controller','createRoster -- Buscando dependencias -- user: ' +
+				key_user.name + ' groupid: ' + group._id);
+			return;
+		});
+		if(deps.length > 0 ) { // completar "blocks" con las dependencias
+			deps.forEach(dep => {
+				var foundB = false;
+				var foundOnB = false;
+				var cursor = 0;
+				while (!(foundB && foundOnB) && cursor < blocks.length) {
+					if(dep.block +'' === blocks[cursor]._id +'') {
+						if(!blocks[cursor].dependencies) {
+							blocks[cursor].dependencies = [];
+						}
+						blocks[cursor].dependencies.push({
+							dep						: dep._id,
+							createAttempt	: false,
+							track					: false,
+							saveTask			: false
+						});
+						foundB = true;
+					}
+					if(dep.onBlock +'' === blocks[cursor]._id +'') {
+						if(!blocks[cursor].dependencies) {
+							blocks[cursor].dependencies = [];
+						}
+						blocks[cursor].dependencies.push({
+							dep						: dep._id
+						});
+						foundOnB = true;
+					}
+					cursor ++;
+				}
+			});
+		}
+		const students = await User.find({_id: { $in: roster}})
+			.select('person char2 orgUnit')
+			.populate('orgUnit', 'name type parent')
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','createRoster -- Finding Users --');
+				return;
+			});
+		var my_roster 		= [];
+		var new_students	= [];
+		var status				= roster.status || 'pending';
+		for(let s=0; s < students.length;s++) {
+
+			const student = students[s];
+			// }
+			// students.forEach(student => {
+			// el siguiente código es para validar si el usuario ya está registrado en este grupo
+			// si ya existe el id del usuario, se lo brinca
+			let found = false;
+			if(group.students) found = group.students.find(st => st + '' === student._id + '');
+			// console.log(found);
+			if(!found) { // Si encontramos el id del usuario, no hagas nada...
+				// console.log('Ok... no existe');
+				var grade = [];
+				var sec = 0;
+				blocks.forEach(block => {
+					var gradePushed = {
+						block					: block._id,
+						blockSection	: block.section, // version 2
+						blockNumber 	: (block.number === 0) ? 0: block.number,  // version 2
+						track					: 0,
+						maxGradeQ 		: 0,
+						gradeT				: 0,
+						w							: block.w,
+						wq						: block.wq,
+						wt						: block.wt,
+						dependencies	: block.dependencies
+					};
+					var gradeIndex = -1;
+					if(group.rubric && group.rubric.length > 0) gradeIndex = group.rubric
+						.findIndex(rubric => rubric.block + '' === gradePushed.block + '');
+					if(gradeIndex > -1 ) {
+						gradePushed.w 	= group.rubric[gradeIndex].w;
+						gradePushed.wt 	= group.rubric[gradeIndex].wt;
+						gradePushed.wq 	= group.rubric[gradeIndex].wq;
+					}
+					grade.push(gradePushed);
+					if(block.section !== sec) {
+						sec++;
+					}
+				});
+				if(blocks[0].section === 0) {
+					sec++;
+				}
+				var sections = [];
+				var j = 0;
+				while (j < sec) {
+					var section = {};
+					if (group.presentBlockBy && group.presentBlockBy === 'dates' && group.dates && group.dates.length > 0) {
+						section.beginDate = group.dates[j].beginDate;
+						section.endDate		= group.dates[j].endDate;
+					}
+					sections.push(section);
+					j++;
+				}
+				var new_roster = new Roster({
+					student		: student._id,
+					status		: status,
+					grades		: grade,
+					group			: group._id,
+					minGrade	: group.minGrade,
+					minTrack	: group.minTrack,
+					org				: group.org,
+					orgUnit		: group.orgUnit,
+					sections 	: sections,
+					version		: version,		// version 2
+					admin 		: [{
+						what		: 'Roster creation',
+						who			: key_user.name,
+						when		: date
+					}],
+					mod 		: [{
+						what		: 'Roster creation',
+						who			: key_user.name,
+						when		: date
+					}],
+				});
+				new_students.push(student._id);
+				my_roster.push(new_roster._id);
+				await new_roster.save().catch((err) => {
+					Err.sendError(res,err,'group_controller','createRoster -- Saving Student --');
+					return;
+				});
+				if(student.char2 === user_SPECIAL) {
+					template_user = template_user_SPECIAL;
+				}
+				let subject = `Has sido enrolado al curso ${group.course.title}`;
+				// let variables = {
+				// 	'Nombre': student.person.name,
+				// 	'confirmation_link':link,
+				// 	'curso': group.course.title
+				// };
+				let message = `<h4>${student.person.name}</h4><p>Has sido inscrito al curso:</p><h3>${group.course.title}</h3><p>Ingresa a la sección "Mis Cursos" en el panel del portal para comenzar tu curso.<p>`;
+				let instance = (student.orgUnit && student.orgUnit.type && student.orgUnit.type === 'state') ? student.orgUnit.name : student.orgUnit.parent;
+				mailjet.sendGenericMail(student.person.email,student.person.name,subject,message,instance);
+				var not = new Notification({
+					destination: {
+						kind: 'users',
+						item: student._id,
+						role: 'user'
+					},
+					objects: [
+						{
+							kind: 'courses',
+							item: group.course._id
+						},
+						{
+							kind: 'groups',
+							item: group._id
+						},
+						{
+							kind: 'blocks',
+							item: group.course.blocks[0]._id
+						}
+					],
+					type: 'system',
+					message: 'Has sido enrolado al curso ' + group.course.title
+				});
+				await not.save().catch((err) => {
+					Err.sendError(res,err,'group_controller','createRoster -- Creating Notification --',false,false,`Group: ${group.name} Student: ${student.person.email}`);
+					return;
+				});
+			}
+		}
+		group.students 	= group.students.concat(new_students);
+		group.roster		= group.roster.concat(my_roster);
+		group.mod.push(mod);
+		await group.save().catch((err) => {
+			Err.sendError(res,err,'group_controller','createRoster -- Saving group -- user: ' + key_user.name + ' groupid: ' + group._id);
+			return;
+		});
+		var newStudents = 0;
+		var totalRoster = 0;
+		var alreadyIn		= 0;
+		if(new_students && new_students.length > 0) {
+			newStudents = new_students.length;
+		}
+		if(group.students && group.students.length > 0) {
+			totalRoster = group.students.length;
+		}
+		alreadyIn = roster.length - newStudents;
+		res.status(StatusCodes.OK).json({
+			newStudents: newStudents,
+			totalRoster: totalRoster,
+			alreadyIn: alreadyIn
+		});
 	}, //createRoster
 
 	notify(req,res) {
@@ -4933,9 +4840,8 @@ function shuffle(array) {
 }
 
 function unique(arrAY) {
-	return arrAY.filter((elem, pos, arr) => {
-		return arr.indexOf(elem) == pos;
-	});
+	if(!Array.isArray(arrAY)) return arrAY;
+	return arrAY.filter((elem, pos, arr) => arr.indexOf(elem) === pos);
 }
 
 function createFolio(student,roster,user,group) {

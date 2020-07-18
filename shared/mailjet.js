@@ -18,6 +18,7 @@ const defaultModule	= 'mail';
 const code 		= 'genericMailTemplate-01';
 
 exports.sendMail = function(toEmail,toName,subject,templateID,variables) {
+	// console.log('sendMail normal');
 	if(!toEmail || !toName) {
 		console.log('No está definido el destinatario de correo');
 		return;
@@ -26,7 +27,6 @@ exports.sendMail = function(toEmail,toName,subject,templateID,variables) {
 		console.log('No está definida la plantilla de correo');
 		return;
 	}
-	templateID = (typeof templateID != 'number') ? parseInt(templateID): templateID;
 	var mail_message =
 		{
 			'From': {
@@ -39,7 +39,7 @@ exports.sendMail = function(toEmail,toName,subject,templateID,variables) {
 					'Name': toName
 				}
 			],
-			'TemplateID': templateID,
+			'TemplateID': +templateID,
 			'TemplateLanguage': true,
 			'Subject': subject,
 			'TemplateErrorDeliver': true,
@@ -76,7 +76,11 @@ exports.sendMail = function(toEmail,toName,subject,templateID,variables) {
 exports.sendGenericMail =
 async function(toEmail,toName,subject,
 	message,instance) {
+	// console.log('Sí! - generic mail');
 	const genericTemplate = await Default.findOne({module: defaultModule, code, instance});
+	if(!genericTemplate) {
+		throw new Error('No existe configuración');
+	}
 	var mail_message = {
 		// 'From': {
 		// 	'Email': fromEmail,
@@ -104,23 +108,20 @@ async function(toEmail,toName,subject,
 	};
 	// console.log(mail_message);
 	// Regresamos la promesa
-	return new Promise(function(resolve) {
-		request.request({'Messages': [mail_message]})
-			.then((result) => {
-				resolve(result.body.Messages[0].Status);
-			})
-			.catch((err) => {
-				//reject(err.statusCode + ': ' + err.response.res.statusMessage);
-				console.log('Error(es) de mailjet:');
-				if(err.response &&
-					err.response.res &&
-					err.response.res.text
-				){
-					let text = JSON.parse(err.response.res.text);
-					console.log(JSON.stringify(text,null,2));
-				}
-				console.log(mail_message);
-				return;
-			});
+	const result = await request.request({
+		'Messages': [mail_message]
+	}).catch((err) => {
+		//reject(err.statusCode + ': ' + err.response.res.statusMessage);
+		console.log('Error(es) de mailjet:');
+		if(err.response &&
+			err.response.res &&
+			err.response.res.text
+		){
+			let text = JSON.parse(err.response.res.text);
+			console.log(JSON.stringify(text,null,2));
+		}
+		console.log(mail_message);
+		return;
 	});
+	return result;
 };

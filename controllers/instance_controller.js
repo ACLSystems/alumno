@@ -31,6 +31,8 @@ module.exports = {
 		} : {};
 		const instance = await Instance.findOne(query)
 			.select('-mod -perm -own -__v')
+			.populate('orgUnit', 'name parent type')
+			.populate('registerOrgUnit', 'name parent type')
 			.catch(e=>{
 				console.log(e);
 				return res.status(StatusCodes.INTERNAL_ERROR).json({

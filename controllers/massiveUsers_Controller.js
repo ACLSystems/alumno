@@ -5,11 +5,12 @@ const StatusCodes 				= require('http-status-codes');
 const User 								= require('../src/users');
 const Org 								= require('../src/orgs');
 const OrgUnit 						= require('../src/orgUnits');
-const mailjet 						= require('../shared/mailjet');
+const Mailjet							= require('../shared/mailjet');
 const Err 								= require('../controllers/err500_controller');
-const Fiscal 							= require('../src/fiscalContacts');
-const Project 						= require('../src/projects');
-const WorkShift						= require('../src/workShift');
+// const Fiscal 							= require('../src/fiscalContacts');
+const Instance						= require('../src/instances');
+// const Project 						= require('../src/projects');
+// const WorkShift						= require('../src/workShift');
 //const logger 							= require('../shared/winston-logger');
 
 
@@ -18,12 +19,12 @@ const WorkShift						= require('../src/workShift');
 	* Todo se extrae de variables de Ambiente
 	*/
 /** @const {number}  - plantilla para el usuario que es registrado por el administrador */
-const template_user_admin 		= parseInt(process.env.MJ_TEMPLATE_USER_ADMIN);
-/** @const {number} - plantilla ESPECIAL para notificar al alumno su registro en grupo */
-const template_user_SPECIAL 	= parseInt(process.env.MJ_TEMPLATE_GROUPREG_SPECIAL);
-/** @const {number} - En qué casos aplica el usuario "ESPECIAL" */
-const user_SPECIAL 						= parseInt(process.env.MJ_TEMPLATE_USER_SPECIAL);
-/** @const {string}  - url de libreta */
+// const template_user_admin 		= parseInt(process.env.MJ_TEMPLATE_USER_ADMIN);
+// /** @const {number} - plantilla ESPECIAL para notificar al alumno su registro en grupo */
+// const template_user_SPECIAL 	= parseInt(process.env.MJ_TEMPLATE_GROUPREG_SPECIAL);
+// /** @const {number} - En qué casos aplica el usuario "ESPECIAL" */
+// const user_SPECIAL 						= parseInt(process.env.MJ_TEMPLATE_USER_SPECIAL);
+// /** @const {string}  - url de libreta */
 var url 								= process.env.NODE_LIBRETA_URI;
 // --------------------------------------------------------------
 
@@ -192,7 +193,7 @@ module.exports = {
 															// };
 															const instance = (user.orgUnit.type === 'state') ? user.orgUnit.name : user.orgUnit.parent;
 															const message = `${user.person.name},<br>Bienvenido al sistema Conalep.<br>El administrador te acaba de registrar en este portal, y requiere que realices una validación de tus datos registrados. Por favor, da clic en la siguiente liga y sigue las instrucciones:<br><a href="${link}">link</a><br>Si la liga anterior no funciona, por favor copia y pega la liga en tu navegador.<br>Lo anterior te pedirá que valides tu información y que generes una contraseña.<br>Selecciona una contraseña nueva, escríbela y guárdala en y lugar seguro.<br>El Conalep se reserva el derecho a restringir el uso de la plataforma si no se le da el uso correcto a la misma.<br>En otro correo te llegará información acerca del curso o cursos en el o los que estarás enrolado.`;
-															mailjet.sendGenericMail(user.person.email, user.person.name,subject,message,instance)
+															Mailjet.sendGenericMail(user.person.email, user.person.name,subject,message,instance)
 																.catch((err) => {
 																	Err.sendError(res,err,'massiveUser_controller','register -- Sending Mail --');
 																});
@@ -256,13 +257,13 @@ module.exports = {
 		}
 	}, // massiveRegister
 
-	muir(req,res) {
+	async muir(req,res) {
 		const key_user 	= res.locals.user;
 		var userProps 	= req.body;
 		// Ignorar '?'
 		const char 			= '?';
 		const email 		= userProps.person.email;
-		var templateId  = template_user_admin;
+		// var templateId  = template_user_admin;
 		if(email.includes(char)) {
 			const index 		= email.indexOf(email);
 			userProps.person.email = (email.slice(index+1));
@@ -270,209 +271,237 @@ module.exports = {
 		// Validar que el correo venga mínimamente bien construido
 		const challenge = /\S+@\S+\.\S+/;
 		const validate  = userProps.person.email.match(challenge);
-		if(!validate) {
-			res.status(StatusCodes.NOT_ACCEPTABLE).json({
-				'message': 'Error: email no formateado correctamente'
-			});
-			return;
-		}
+		if(!validate) return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+			'message': 'Error: email no formateado correctamente'
+		});
 		userProps.person.email = userProps.person.email.toLowerCase();
 		if(userProps.name !== userProps.person.email) { // que el nombre de usuario sera igual a su correo
 			userProps.name = userProps.person.email;
 		}
 		// checamos si el usuario es especial
-		var SPECIAL = false;
-		if(userProps.orgUnit === user_SPECIAL) {
-			SPECIAL = true;
-			templateId = template_user_SPECIAL;
-		}
-		Promise.all([
+		// var SPECIAL = false;
+		// if(userProps.orgUnit === user_SPECIAL) {
+		// 	SPECIAL = true;
+		// 	templateId = template_user_SPECIAL;
+		// }
+		const results = await Promise.all([
 			Org.findOne({name: userProps.org })
-				.select('name'),
+				.select('name').catch((err) => {
+					Err.sendError(res,err,'massiveUser_controller','muir -- Finding Courses --');
+					return;
+				}),
 			OrgUnit.findOne({$or: [{ name: userProps.orgUnit}, {longName: userProps.orgUnit}]})
-				.select('name org'),
-			User.findOne({name:userProps.name}),
-			Project.findOne({name: userProps.project})
-				.select('name'),
-			WorkShift.findOne({name: userProps.workShift})
-				.select('name')
-		])
-			.then((results) =>{
-				var [org,ou,user,project,workShift] = results;
-				if(!org) {
-					res.status(StatusCodes.NOT_ACCEPTABLE).json({
-						'message': 'Error: Org not found or not valid. Please check'
-					});
+				.select('name type parent org').catch((err) => {
+					Err.sendError(res,err,'massiveUser_controller','muir -- Finding Courses --');
 					return;
-				}
-				if(!ou) {
-					res.status(StatusCodes.NOT_ACCEPTABLE).json({
-						'message': 'Error: OrgUnit not found or not valid. Please check'
-					});
+				}),
+			User.findOne({name:userProps.name})
+				.catch((err) => {
+					Err.sendError(res,err,'massiveUser_controller','muir -- Finding Courses --');
 					return;
-				}
-				if(!project) {
-					res.status(StatusCodes.NOT_ACCEPTABLE).json({
-						'message': 'Error: Project not found or not valid. Please check'
-					});
-					return;
-				}
-				if(!workShift) {
-					res.status(StatusCodes.NOT_ACCEPTABLE).json({
-						'message': 'Error: workShift not found or not valid. Please check'
-					});
-					return;
-				}
-				if(ou.org + '' !== org._id + '') {
-					res.status(StatusCodes.NOT_ACCEPTABLE).json({
-						'message': 'Error: OrgUnit not valid. OrgUnit provided does not belong to org. Please check',
-						'org': org._id,
-						'ou': ou.org
-					});
-					return;
-				}
-				if(user) {
-					if(userProps.char1) {user.char1 = userProps.char1;}
-					if(userProps.char2) {user.char2 = userProps.char2;}
-					if(userProps.workShift) {user.workShift = workShift._id;}
-					if(userProps.project) {
-						if(user.project && Array.isArray(user.project) && user.project.length > 0){
-							var found = user.project.find(function(pro) {
-								return pro + '' === pro._id + '';
-							});
-							if(!found){
-								user.project.push(project._id);
-							}
-						} else {
-							user.project = [project._id];
-						}
-					}
-					user.save().then((user) => {
-						res.status(StatusCodes.OK).json({
-							'message': 'User already registered',
-							'user': {
-								'id': user._id,
-								'name': user.name,
-								'person': user.person
-							},
-							'userid': user._id
-						});
-						return;
-					}).catch(() => {
-						res.status(StatusCodes.OK).json({
-							'message': 'User already registered',
-							'user': {
-								'id': user._id,
-								'name': user.name,
-								'person': user.person
-							},
-							'userid': user._id
-						});
-						return;
-					});
-				} else {
-					var admin = {
-						isActive: true,
-						isVerified: false,
-						recoverString: '',
-						passwordSaved: '',
-						adminCreate: true,
-						initialPassword: userProps.password
-					};
-					userProps.admin = admin;
-					var permUsers = [];
-					var permUser = { name: userProps.name, canRead: true, canModify: true, canSec: false };
-					permUsers.push(permUser);
-					if (userProps.name !== key_user.name) {
-						permUser = { name: key_user.name, canRead: true, canModify: true, canSec: false };
-						permUsers.push(permUser);
-					}
-					var permRoles = [];
-					var permRole = { name: 'isAdmin', canRead: true, canModify: true, canSec: true };
-					permRoles.push(permRole);
-					permRole = { name: 'isOrg', canRead: true, canModify: true, canSec: true };
-					permRoles.push(permRole);
-					var permOrgs = [];
-					const permOrg = { name: userProps.org, canRead: true, canModify: true, canSec: false };
-					permOrgs.push(permOrg);
-					userProps.perm = { users: permUsers, roles: permRoles, orgs: permOrgs };
-					userProps.org = org._id;
-					userProps.orgUnit = ou._id;
-					userProps.project = [project._id];
-					userProps.workShift = workShift._id;
-					const mod = {
-						by: key_user.name,
-						when: new Date(),
-						what: 'User creation'
-					};
-					userProps.mod = [];
-					userProps.mod.push(mod);
-					if(userProps.student && userProps.student.type === 'internal') {
-						delete userProps.student.external;
-						delete userProps.student.origin;
-					}
-					User.create(userProps)
-						.then((user) => {
-							user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
-							user.save()
-								.then((user) => {
-									if(SPECIAL) {
-										var fiscal = new Fiscal({
-											identification: user.admin.initialPassword,
-											name: user.person.name + ' ' + user.person.fatherName + ' ' +user.person.motherName,
-											observations: 'Usuario ESPECIAL',
-											email: user.person.email,
-											type: 'client',
-											cfdiUse: 'G03',
-											orgUnit: user.orgUnit,
-											mod: [{
-												what: 'Fiscal creation - new user',
-												when: new Date(),
-												by: 'System'
-											}]
-										});
-										fiscal.save().then().catch(() => {});
-									}
-									var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
-									let subject = 'Confirma tu correo electrónico';
-									let variables = {
-										'Nombre': user.person.name,
-										'confirmation_link':link,
-									};
-									mailjet.sendMail(user.person.email, user.person.name,subject,templateId,variables)
-										.then(() => {
-											res.status(StatusCodes.CREATED).json({
-												'message': 'User -' + userProps.name + '- created',
-												'userid': user._id,
-												'uri': link
-											});
-										})
-										.catch((err) => {
-											let mailErr = err.toString();
-											if(mailErr === '401: Unauthorized'){
-												res.status(StatusCodes.CREATED).json({
-													'message': 'User -' + userProps.name + '- created and NO email sent',
-													'userid': user._id,
-													'uri': link
-												});
-											} else {
-												Err.sendError(res,err,'user_controller','muir -- Sending Mail --');
-											}
-										});
-								})
-								.catch((err) => {
-									Err.sendError(res,err,'user_controller','muir -- Saving User validation String --');
-								});
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'user_controller','muir -- User Creation --');
-						});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'massiveUser_controller','muir -- Finding Courses --');
+				}),
+			// Project.findOne({name: userProps.project})
+			// 	.select('name'),
+			// WorkShift.findOne({name: userProps.workShift})
+			// 	.select('name')
+		]);
+		var [
+			org,
+			ou,
+			user,
+			// project,
+			// workShift
+		] = results;
+		if(!org) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				'message': 'Organización no existe o no es válida'
 			});
-	}, // mur (Massive User Individual Register)
+		}
+		if(!ou) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				'message': 'Plantel (OU) no existe o no es válido'
+			});
+		}
+		// if(!project) {
+		// 	res.status(StatusCodes.NOT_ACCEPTABLE).json({
+		// 		'message': 'Error: Project not found or not valid. Please check'
+		// 	});
+		// 	return;
+		// }
+		// if(!workShift) {
+		// 	res.status(StatusCodes.NOT_ACCEPTABLE).json({
+		// 		'message': 'Error: workShift not found or not valid. Please check'
+		// 	});
+		// 	return;
+		// }
+		if(ou.org + '' !== org._id + '') {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				'message': 'Plantel no válido. La organización del plantel no concuerda con la organización proporcionada',
+				'org': org._id,
+				'ou': ou.org
+			});
+		}
+		var ouParent;
+		if(ou.type !== 'state' && ou.parent) {
+			ouParent = await OrgUnit.findOne({name:ou.parent}).catch((err) => {
+				Err.sendError(res,err,'massiveUser_controller','muir -- Finding OU Parent --');
+				return;
+			});
+		}
+		var instanceOU = (ou.type === 'state') ? ou.name : ou.parent;
+		var queryOU = (ou.type === 'state') ? {
+			orgUnit: ou._id
+		} : {orgUnit: ouParent._id};
+		// console.log('queryOU');
+		// console.log(queryOU);
+		const instance = await Instance.findOne(queryOU).catch((err) => {
+			Err.sendError(res,err,'massiveUser_controller','muir -- Finding Instance --');
+			return;
+		});
+		// console.log('Instance');
+		// console.log(instance);
+		if(user) {
+			if(userProps.char1) user.char1 = userProps.char1;
+			if(userProps.char2) user.char2 = userProps.char2;
+			// if(userProps.workShift) {user.workShift = workShift._id;}
+			// if(userProps.project) {
+			// 	if(user.project && Array.isArray(user.project) && user.project.length > 0){
+			// 		var found = user.project.find(function(pro) {
+			// 			return pro + '' === pro._id + '';
+			// 		});
+			// 		if(!found){
+			// 			user.project.push(project._id);
+			// 		}
+			// 	} else {
+			// 		user.project = [project._id];
+			// 	}
+			// }
+			await user.save().catch((error) => {
+				console.log(error);
+			});
+			return res.status(StatusCodes.OK).json({
+				'message': 'Usuario previamente registrado',
+				'user': {
+					'name': user.name,
+					'person': user.person
+				},
+				'userid': user._id
+			});
+		} else {
+			userProps.admin = {
+				isActive: true,
+				isVerified: false,
+				recoverString: '',
+				passwordSaved: '',
+				adminCreate: true,
+				initialPassword: userProps.password
+			};
+			var permUsers = [];
+			permUsers.push({
+				name: userProps.name,
+				canRead: true,
+				canModify: true,
+				canSec: false
+			});
+			if (userProps.name !== key_user.name) {
+				permUsers.push({
+					name: key_user.name,
+					canRead: true,
+					canModify: true,
+					canSec: false
+				});
+			}
+			var permRoles = [];
+			permRoles.push({
+				name: 'isAdmin',
+				canRead: true,
+				canModify: true,
+				canSec: true
+			});
+			permRoles.push({
+				name: 'isOrg',
+				canRead: true,
+				canModify: true,
+				canSec: true
+			});
+			var permOrgs = [];
+			permOrgs.push({
+				name: userProps.org,
+				canRead: true,
+				canModify: true,
+				canSec: false
+			});
+			userProps.perm = { users: permUsers, roles: permRoles, orgs: permOrgs };
+			userProps.org = org._id;
+			userProps.orgUnit = ou._id;
+			userProps.mod = [];
+			// userProps.project = [project._id];
+			// userProps.workShift = workShift._id;
+			userProps.mod.push({
+				by: key_user.name,
+				when: new Date(),
+				what: 'User creation'
+			});
+			if(userProps.student && userProps.student.type === 'internal') {
+				delete userProps.student.external;
+				delete userProps.student.origin;
+			}
+			user = new User(Object.assign({},userProps));
+			user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
+			await user.save().catch((err) => {
+				Err.sendError(res,err,'user_controller','muir -- Saving User validation String --');
+			});
+			// if(SPECIAL) {
+			// 	var fiscal = new Fiscal({
+			// 		identification: user.admin.initialPassword,
+			// 		name: user.person.name + ' ' + user.person.fatherName + ' ' +user.person.motherName,
+			// 		observations: 'Usuario ESPECIAL',
+			// 		email: user.person.email,
+			// 		type: 'client',
+			// 		cfdiUse: 'G03',
+			// 		orgUnit: user.orgUnit,
+			// 		mod: [{
+			// 			what: 'Fiscal creation - new user',
+			// 			when: new Date(),
+			// 			by: 'System'
+			// 		}]
+			// 	});
+			// 	await fiscal.save().catch((error) =>
+			// 	{
+			// 		console.log(error);
+			// 	});
+			// }
+			if(instance) {
+				url = `${instance.url.libreta}/#`;
+			}
+			var link = url + '/confirm/' + user.admin.validationString + '/' + user.person.email + '/' + urlencode(user.person.name) + '/' + urlencode(user.person.fatherName) + '/' + urlencode(user.person.motherName);
+			let subject = 'Confirma tu correo electrónico';
+			// let variables = {
+			// 	'Nombre': user.person.name,
+			// 	'confirmation_link':link,
+			// };
+			const message = `${user.person.name},<br>Bienvenido al sistema Conalep.<br>El administrador te acaba de registrar en este portal, y requiere que realices una validación de tus datos registrados. Por favor, da clic en la siguiente liga y sigue las instrucciones:<br><a href="${link}">link</a><br>Si la liga anterior no funciona, por favor copia y pega la liga en tu navegador.<br>Lo anterior te pedirá que valides tu información y que generes una contraseña.<br>Selecciona una contraseña nueva, escríbela y guárdala en y lugar seguro.<br>El Conalep se reserva el derecho a restringir el uso de la plataforma si no se le da el uso correcto a la misma.<br>En otro correo te llegará información acerca del curso o cursos en el o los que estarás enrolado.`;
+			await Mailjet.sendGenericMail(user.person.email, user.person.name,subject,message,instanceOU)
+				.catch((err) => {
+					let mailErr = err.toString();
+					if(mailErr === '401: Unauthorized'){
+						return res.status(StatusCodes.CREATED).json({
+							'message': 'Usuario -' + userProps.name + '- creado. No se envió correo',
+							'userid': user._id,
+							'uri': link
+						});
+					} else {
+						Err.sendError(res,err,'user_controller','muir -- Sending Mail --');
+						return;
+					}
+				});
+			res.status(StatusCodes.CREATED).json({
+				'message': 'Usuario -' + userProps.name + '- creado',
+				'userid': user._id,
+				'uri': link
+			});
+		}
+	}, // muir (Massive User Individual Register)
 
 	get(req,res) {
 		var query = JSON.parse(req.query.find);

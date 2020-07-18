@@ -29,6 +29,10 @@ const InstanceSchema = new Schema({
 		type: ObjectId,
 		ref: 'orgUnits'
 	},
+	registerOrgUnit: {
+		type: ObjectId,
+		ref: 'orgUnits'
+	},
 	hostname: String,
 	platform: {
 		type: {

@@ -3,6 +3,7 @@ const MassUsersController 	= require('../controllers/massiveUsers_Controller'	);
 const GroupController 			= require('../controllers/group_controller'					);
 const ReportController 			= require('../controllers/report_controller'				);
 const RequestController 		= require('../controllers/request_controller'				);
+const Validate = require('../middleware/validateRequester');
 
 module.exports = (app) => {
 
@@ -12,17 +13,54 @@ module.exports = (app) => {
 	// RUTAS ---------------------------------------------------------------------------------
 
 	// USERS
-	app.get ('/api/v1/requester/user/getdetails',					UserController.getDetailsSuper);
-	app.get ('/api/v1/requester/fiscal/list',							UserController.listFiscals);
+	app.get ('/api/v1/requester/user/getdetails',
+		UserController.getDetailsSuper
+	);
+	app.get ('/api/v1/requester/fiscal/list',
+		UserController.listFiscals
+	);
 	// USERS MASSIVE
-	app.post('/api/v1/requester/user/muir',								MassUsersController.muir);
+	app.post('/api/v1/requester/user/muir',
+		MassUsersController.muir
+	);
 	// GROUPS
-	app.post('/api/v1/requester/group/create', 						GroupController.create);
-	app.get ('/api/v1/requester/group/get',								GroupController.get);
-	app.put ('/api/v1/requester/group/modify',						GroupController.modify);
-	app.get ('/api/v1/requester/group/list', 							GroupController.list);
-	app.get ('/api/v1/requester/group/listroster', 				GroupController.listRoster);
-	app.put ('/api/v1/requester/group/createroster',			GroupController.createRoster);
+	app.post('/api/v1/group',
+		Validate.create,
+		Validate.results,
+		GroupController.create
+	);
+	app.get ('/api/v1/group/:groupid',
+		Validate.get,
+		Validate.results,
+		GroupController.get
+	);
+	app.patch ('/api/v1/group/:groupid',
+		Validate.get,
+		Validate.results,
+		GroupController.modify
+	);
+	app.get ('/api/v1/groups',
+		GroupController.list
+	);
+	app.get ('api/v1/groups/:ou',
+		GroupController.listGroups
+	);
+	app.get ('/api/v1/groups/:ou/:course',
+		Validate.listGroups,
+		Validate.results,
+		GroupController.listGroups
+	);
+	app.get ('/api/v1/roster/:groupid',
+		Validate.get,
+		Validate.results,
+		GroupController.listRoster
+	);
+
+	app.post ('/api/v1/roster/:groupid',
+		Validate.get,
+		Validate.results,
+		GroupController.createRoster
+	);
 	// REQUESTS
 	app.post('/api/v1/requester/request/create',					RequestController.create);
 	app.get ('/api/v1/requester/request/get',							RequestController.get);
