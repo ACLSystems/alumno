@@ -61,6 +61,18 @@ module.exports = (app) => {
 		Validate.results,
 		GroupController.createRoster
 	);
+
+	app.get ('/api/v1/validateinstructor/:name',
+		Validate.validateInstructor,
+		Validate.results,
+		UserController.validateInstructor
+	);
+
+	app.patch ('/api/v1/group/:groupid/changetutor/:tutorid',
+		Validate.changeInstructor,
+		Validate.results,
+		GroupController.changeInstructor
+	);
 	// REQUESTS
 	app.post('/api/v1/requester/request/create',					RequestController.create);
 	app.get ('/api/v1/requester/request/get',							RequestController.get);

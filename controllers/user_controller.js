@@ -2039,7 +2039,32 @@ module.exports = {
 			}).catch((err) => {
 				Err.sendError(res,err,'user_controller','actAs -- Finding user--' + req.query.username);
 			});
-	} // actAs
+	}, // actAs
+
+	async validateInstructor(req,res) {
+		const key_user = res.locals.user;
+		if(!key_user.roles.isRequester && !key_user.roles.isAdmin) {
+			return res.status(StatusCodes.UNAUTHORIZED).json({
+				message: 'No estás autorizado'
+			});
+		}
+		var user = await User.findOne({name:req.params.name})
+			.select('person roles')
+			.lean()
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','actAs -- Finding user--' + req.query.username);
+				return;
+			});
+		if(!user) {
+			return res.status(StatusCodes.OK).json({
+				message: 'Usuario no existe'
+			});
+		}
+		user.roles = {
+			isInstructor: user.roles.isInstructor
+		};
+		res.status(StatusCodes.OK).json(user);
+	}
 
 };
 

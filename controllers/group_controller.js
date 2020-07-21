@@ -184,7 +184,10 @@ module.exports = {
 
 	async get(req,res) {
 		//const key_user = res.locals.user;
-		const group = await Group.findOne({$or:[{_id:req.params.groupid},{code:req.params.groupid}]})
+		var query = {};
+		if(req.params.groupid) query = {$or:[{_id:req.params.groupid},{code:req.params.groupid}]};
+		if(req.query.groupid) query = {$or:[{_id:req.query.groupid},{code:req.query.groupid}]};
+		const group = await Group.findOne(query)
 			.select('-org -roster -own -mod -perm -admin -__v')
 			.populate('course','name code')
 			.populate('instructor', 'person')
@@ -196,7 +199,7 @@ module.exports = {
 				return;
 			});
 		if(!group) {
-			res.status(StatusCodes.NOT_FOUND).json({
+			return res.status(StatusCodes.NOT_FOUND).json({
 				message	: 'Grupo no existe'
 			});
 		}
@@ -248,6 +251,11 @@ module.exports = {
 			});
 		}
 		var group = await Group.findById(req.params.groupid)
+			.populate('course','name code')
+			.populate('instructor', 'person')
+			.populate('students', 'person')
+			.populate('orgUnit', 'name parent type longName')
+			.populate('project', 'name')
 			.catch((err) => {
 				Err.sendError(res,err,'group_controller','modify -- Finding group --');
 				return;
@@ -301,6 +309,12 @@ module.exports = {
 	async list(req,res) {
 		const key_user 	= res.locals.user;
 		var query = {org: key_user.org._id};
+		if(!req.query.status) {
+			query.status = 'active';
+		}
+		if(req.query && req.query.status  && req.query.status === 'all') {
+			delete query.status;
+		}
 		var ous = [];
 		if(key_user.orgUnit.type === 'state') {
 			ous = await orgUnit.find({$or:[{
@@ -1833,7 +1847,7 @@ module.exports = {
 
 	}, // createAttempt
 
-	saveTask(req,res) {
+	async saveTask(req,res) {
 		const key_user	= res.locals.user;
 		const groupid 	= req.body.groupid;
 		const blockid 	= req.body.blockid;
@@ -1844,9 +1858,8 @@ module.exports = {
 		if(req.body.force) {
 			force = true;
 		}
-
-		Roster.findOne({student: key_user._id, group: groupid})
-			.populate({
+		var item = await Roster.findOne({student: key_user._id, group: groupid})
+			.populate([{
 				path: 'group',
 				select: 'course',
 				populate: {
@@ -1862,112 +1875,128 @@ module.exports = {
 						}
 					}
 				}
-			})
-			.then((item) => {
-				var grades = [];
-				var myGrade = {};
-				var k = 0;
-				var index = -1;
-				if(item.group.rubric && item.group.rubric.length > 0) { index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + ''); }
-				if(item.grades.length > 0) {
-					grades = item.grades;
-					var len = grades.length;
-					var found = false;
-					while ((k < len) && !found) {
-						if(grades[k].block + '' === blockid) {
-							myGrade = grades[k];
-							found = true;
-						} else {
-							k++;
-						}
+			},{
+				path: 'course',
+				select: 'blocks',
+				populate: {
+					path: 'blocks',
+					match: { _id: blockid },
+					select: 'task w wq wt',
+					populate: {
+						path: 'task',
+						select: 'items justDelivery'
 					}
-					if(myGrade.tasks && ((myGrade.tasks.length > 0 && force) || (myGrade.tasks.length === 0)) ) {
-						//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
-						//	myGrade.w = item.group.course.blocks[0].w;
-						//}
-						if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].w) {
-							myGrade.w = item.group.rubric[index].w;
-						}
-						//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
-						//	myGrade.wq = item.group.course.blocks[0].wq;
-						//}
-						if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wq) {
-							myGrade.wq = item.group.rubric[index].wq;
-						}
-						//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
-						//	myGrade.wt = item.group.course.blocks[0].wt;
-						//}
-						if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wt) {
-							myGrade.wt = item.group.rubric[index].wt;
-						}
-						if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].task && item.group.course.blocks[0].task.justDelivery) {
-							var c = 0;
-							while (c < task.length) {
-								task[c].justDelivery = item.group.course.blocks[0].task.justDelivery;
-								c++;
-							}
-						}
-						myGrade.tasks = task;
-						myGrade.track	= 100;
-						item.grades[k] = myGrade;
-						if(item.grades[k].tasktries && item.grades[k].tasktries.length > 0) {
-							item.grades[k].tasktries.push(now);
-						} else {
-							item.grades[k].tasktries = [now];
-						}
-					} else if(!force && myGrade.tasks.length > 0){
-						res.status(406).json({
-							'status': 406,
-							'message': 'Task cannot be replaced (or force by force = true)'
-						});
-						return;
-					}
-				} else {
-					myGrade = {
-						block	: blockid,
-						track	: 100
-					};
-					//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
-					//	myGrade.w = item.group.course.blocks[0].w;
-					//}
-					if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].w) {
-						myGrade.w = item.group.rubric[index].w;
-					}
-					//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
-					//	myGrade.wq = item.group.course.blocks[0].wq;
-					//}
-					if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wq) {
-						myGrade.wq = item.group.rubric[index].wq;
-					}
-					//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
-					//	myGrade.wt = item.group.course.blocks[0].wt;
-					//}
-					if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wt) {
-						myGrade.wt = item.group.rubric[index].wt;
-					}
-					if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].task && item.group.course.blocks[0].task.justDelivery) {
-						task.justDelivery = item.group.course.blocks[0].task.justDelivery;
-					}
-					myGrade.tasks = task;
-					item.grades = [myGrade];
-					item.grades.tasktries = [now];
 				}
-				item.newTask = true;
-				item.save()
-					.then(() => {
-						res.status(200).json({
-							'status'				: 200,
-							'message'				: 'task saved'
-						});
-					})
-					.catch((err) => {
-						Err.sendError(res,err,'group_controller','saveTask -- Saving Roster --');
-					});
-			})
-			.catch((err) => {
+			}]).catch((err) => {
 				Err.sendError(res,err,'group_controller','saveTask -- Finding Roster -- user: ' +
 					key_user.name + ' id: ' + key_user._id + ' groupid: ' + groupid + ' blockid: ' + blockid );
+				return;
 			});
+		if(!item) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'No existe roster'
+			});
+		}
+		var grades = [];
+		var myGrade = {};
+		var k = 0;
+		var index = -1;
+		if(item.type === 'group' && item.group.rubric && item.group.rubric.length > 0) { index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + ''); }
+		if(item.grades.length > 0) {
+			grades = item.grades;
+			var len = grades.length;
+			var found = false;
+			while ((k < len) && !found) {
+				if(grades[k].block + '' === blockid) {
+					myGrade = grades[k];
+					found = true;
+				} else {
+					k++;
+				}
+			}
+			if(myGrade.tasks && ((myGrade.tasks.length > 0 && force) || (myGrade.tasks.length === 0)) ) {
+				//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
+				//	myGrade.w = item.group.course.blocks[0].w;
+				//}
+				if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].w) {
+					myGrade.w = item.group.rubric[index].w;
+				}
+				//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
+				//	myGrade.wq = item.group.course.blocks[0].wq;
+				//}
+				if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wq) {
+					myGrade.wq = item.group.rubric[index].wq;
+				}
+				//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
+				//	myGrade.wt = item.group.course.blocks[0].wt;
+				//}
+				if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wt) {
+					myGrade.wt = item.group.rubric[index].wt;
+				}
+				if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].task && item.group.course.blocks[0].task.justDelivery) {
+					var c = 0;
+					while (c < task.length) {
+						task[c].justDelivery = item.group.course.blocks[0].task.justDelivery;
+						c++;
+					}
+				}
+				myGrade.tasks = task;
+				myGrade.track	= 100;
+				item.grades[k] = myGrade;
+				if(item.grades[k].tasktries && item.grades[k].tasktries.length > 0) {
+					item.grades[k].tasktries.push(now);
+				} else {
+					item.grades[k].tasktries = [now];
+				}
+			} else if(!force && myGrade.tasks.length > 0){
+				res.status(406).json({
+					'status': 406,
+					'message': 'Task cannot be replaced (or force by force = true)'
+				});
+				return;
+			}
+		} else {
+			myGrade = {
+				block	: blockid,
+				track	: 100
+			};
+			//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
+			//	myGrade.w = item.group.course.blocks[0].w;
+			//}
+			if(item.type === 'group' && item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].w) {
+				myGrade.w = item.group.rubric[index].w;
+			}
+			//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
+			//	myGrade.wq = item.group.course.blocks[0].wq;
+			//}
+			if(item.type === 'group' && item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wq) {
+				myGrade.wq = item.group.rubric[index].wq;
+			}
+			//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
+			//	myGrade.wt = item.group.course.blocks[0].wt;
+			//}
+			if(item.type === 'group' && item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wt) {
+				myGrade.wt = item.group.rubric[index].wt;
+			}
+			if(item.type === 'group' && item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].task && item.group.course.blocks[0].task.justDelivery) {
+				task.justDelivery = item.group.course.blocks[0].task.justDelivery;
+			}
+			myGrade.tasks = task;
+			item.grades = [myGrade];
+			item.grades.tasktries = [now];
+		}
+		item.newTask = true;
+		item.save()
+			.then(() => {
+				res.status(200).json({
+					'status'				: 200,
+					'message'				: 'task saved'
+				});
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','saveTask -- Saving Roster --');
+			});
+
 	}, //saveTask
 
 	studentTask(req,res) {
@@ -2885,62 +2914,79 @@ module.exports = {
 	}, //saveDate
 
 	async changeInstructor(req,res) {
-		try {
-			var instructor = await User.findOne({name: req.query.instructor}).lean();
-			var group = await Group.findOne({code: req.query.code})
-				.populate('course', 'title');
-			// console.log(group);
-			// return res.status(200).json(group);
-			if(!instructor) {
-				return res.status(404).json({
-					'message': `No instructor ${req.query.instructor} found`
-				});
-			}
-			if(!group || !group.code || !group.instructor) {
-				return res.status(404).json({
-					'message': `No group ${req.query.code} found`
-				});
-			}
-			if(instructor._id +''=== group.instructor._id + '') {
-				return res.status(200).json({
-					'message': `Instructor ${req.query.instructor} ya es instructor del grupo ${req.query.code}`
-				});
-			}
-			var formerInstructor = await User.findById(group.instructor).lean();
-			if(!formerInstructor) {
-				return res.status(406).json({
-					'message': `Hubo un problema ya que el instructor del grupo ${req.query.code} no existe. Favor de revisar`
-				});
-			}
-			// var formerInstructor = Object.assign({},group.instructor);
-			group.instructor = instructor._id;
-			// console.log(group.code, group.name, group.instructor);
-			group.mod.push({
-				by: 'System',
-				when: new Date(),
-				what: 'Change group Instructor'
+		const key_user = res.locals.user;
+		const instance = (key_user.orgUnit.type === 'state') ? key_user.orgUnit.name : key_user.orgUnit.parent;
+		if(!key_user.roles.isRequester && !key_user.roles.isAdmin) {
+			return res.status(StatusCodes.UNAUTHORIZED).json({
+				message: 'No autorizado'
 			});
-			await group.save();
-			let subject = `Se ha creado un grupo y participas como tutor: ${group.code}`;
-			let variables = {
-				'Nombre': instructor.person.name,
-				'confirmation_link':url + '/tutorial',
-				'curso': group.course.title
-			};
-			await mailjet.sendMail(instructor.person.email, instructor.person.name,subject,template_tutor,variables);
-			subject = `Se te ha dado de baja como tutor del grupo: ${group.code}`;
-			variables = {
-				'Nombre': formerInstructor.person.name,
-				'confirmation_link':url + '/tutorial',
-				'curso': group.course.title
-			};
-			await mailjet.sendMail(formerInstructor.person.email, formerInstructor.person.name,subject,template_tutor,variables);
-			return res.status(200).json({
-				'message': `Group ${group.code} has new instructor: ${instructor.name}. Former instructor: ${formerInstructor.name}`
-			});
-		} catch (e) {
-			Err.sendError(res,e,'group_controller','changeInstructor');
 		}
+		const results = await Promise.all([
+			User.findById(req.params.tutorid),
+			Group.findById(req.params.groupid)
+		]).catch((err) => {
+			Err.sendError(res,err,'group_controller','changeinstructor -- Promise All');
+			return;
+		});
+		var [instructor, group] = results;
+		if(!instructor) {
+			return res.status(StatusCodes.OK).json({
+				'message': 'No se encontró al instructor con el id proporcionado'
+			});
+		}
+		if(!group) {
+			return res.status(StatusCodes.OK).json({
+				'message': 'No se encontró grupo con el id proporcionado'
+			});
+		}
+		if(instructor._id +''=== group.instructor._id + '') {
+			return res.status(StatusCodes.OK).json({
+				'message': `Instructor ${instructor.name} ya es instructor del grupo ${group.code}`
+			});
+		}
+		var formerInstructor = await User.findById(group.instructor).lean().catch((err) => {
+			Err.sendError(res,err,'group_controller','changeinstructor -- Searching former instructor');
+			return;
+		});
+		if(!formerInstructor) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				'message': `Hubo un problema ya que el instructor del grupo ${req.query.code} no existe. Favor de revisar`
+			});
+		}
+		if(!instructor.roles.isInstructor) {
+			instructor.isRoles.isInstructor = true;
+			await instructor.save().catch((err) => {
+				Err.sendError(res,err,'group_controller','changeinstructor -- Saving instructor');
+				return;
+			});
+		}
+		// var formerInstructor = Object.assign({},group.instructor);
+		group.instructor = instructor._id;
+		// console.log(group.code, group.name, group.instructor);
+		group.mod.push({
+			by: key_user.name,
+			when: new Date(),
+			what: 'Cambiando tutor'
+		});
+		await group.save().catch((err) => {
+			Err.sendError(res,err,'group_controller','changeinstructor -- Saving group');
+			return;
+		});
+		let subject = `Se ha creado un grupo y participas como tutor: ${group.code}`;
+		let message = `Se ha creado un grupo y participas como tutor: ${group.code}`;
+		await mailjet.sendGenericMail(instructor.person.email, instructor.person.name,subject,message,instance).catch((err) => {
+			Err.sendError(res,err,'group_controller','changeinstructor -- Sending email to instructor');
+			return;
+		});
+		subject = `Se te ha dado de baja como tutor del grupo: ${group.code}`;
+		message = `Se te ha dado de baja como tutor del grupo: ${group.code}. Te agradecemos tu participación.`;
+		await mailjet.sendGenericMail(formerInstructor.person.email, formerInstructor.person.name,subject,message,instance).catch((err) => {
+			Err.sendError(res,err,'group_controller','changeinstructor -- Sending email to former instructor');
+			return;
+		});
+		res.status(StatusCodes.OK).json({
+			'message': `Grupo ${group.code} tiene nuevo tutor: ${instructor.name}. Tutor anterior: ${formerInstructor.name}`
+		});
 	}, //changeInstructor
 
 	tookCertificate(req,res) {
@@ -4732,6 +4778,8 @@ module.exports = {
 			});
 		}
 	}, // rosterMigrateV2
+
+
 
 };
 

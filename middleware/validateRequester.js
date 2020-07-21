@@ -47,6 +47,23 @@ module.exports = {
 			.exists()
 			.withMessage('groupid es requerido. Puede ser el code de grupo también')
 	],
+	validateInstructor:[
+		param('name')
+			.exists()
+			.withMessage('name es requerido y debe ser una cuenta de correo válida')
+	],
+	changeInstructor:[
+		param('groupid')
+			.exists()
+			.withMessage('groupid es requerido')
+			.isMongoId()
+			.withMessage('groupid debe ser un id válido'),
+		param('tutorid')
+			.exists()
+			.withMessage('tutorid es requerido')
+			.isMongoId()
+			.withMessage('tutorid debe ser un id válido')
+	],
 	results(req,res,next) {
 		//console.log(req.headers);
 		const errors = validationResult(req);

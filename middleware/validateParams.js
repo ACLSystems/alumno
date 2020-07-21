@@ -2107,15 +2107,15 @@ module.exports = function(req, res, next) {
 		break;
 
 	case '/api/v1/instructor/group/get':
-		if(!req.query) { // GET
+		if(!req.query && !req.params) { // GET
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give data by query to process'
+				'message': 'Error -: Please, give data by query or params to process'
 			});
-		} else if (!req.query.groupid && !req.query.groupcode) {
+		} else if (!req.query.groupid && !req.params.groupid) {
 			res.status(406).json({
 				'status': 406,
-				'message': 'Error -: Please, give group id or group code by query to process'
+				'message': 'Error -: Please, give group id or group code by query or params to process'
 			});
 		} else {
 			next();
