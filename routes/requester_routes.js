@@ -73,6 +73,25 @@ module.exports = (app) => {
 		Validate.results,
 		GroupController.changeInstructor
 	);
+
+	app.get ('/api/v1/rubric/:groupid',
+		Validate.getRubric,
+		Validate.results,
+		GroupController.getRubric
+	);
+
+	app.patch ('/api/v1/rubric/:groupid',
+		Validate.resetRubric,
+		Validate.results,
+		GroupController.setRubric
+	);
+
+	app.patch ('/api/v1/rubric/:groupid/reset',
+		Validate.resetRubric,
+		Validate.results,
+		GroupController.resetRubric
+	);
+
 	// REQUESTS
 	app.post('/api/v1/requester/request/create',					RequestController.create);
 	app.get ('/api/v1/requester/request/get',							RequestController.get);

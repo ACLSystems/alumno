@@ -38,7 +38,7 @@ const template_user_SPECIAL 	= parseInt(process.env.MJ_TEMPLATE_GROUPREG_SPECIAL
 /** @const {number} - En qué casos aplica el usuario "ESPECIAL" */
 const user_SPECIAL 						= parseInt(process.env.MJ_TEMPLATE_USER_SPECIAL);
 /** @const {number} - plantilla para notificar al tutor sobre la asignación de un grupo */
-const template_tutor 					= parseInt(process.env.MJ_TEMPLATE_TUTOR);
+// const template_tutor 					= parseInt(process.env.MJ_TEMPLATE_TUTOR);
 /** @const {number} - plantilla para notificar mandar aviso a los alumnos de un grupo */
 const template_notGroup 			= parseInt(process.env.MJ_TEMPLATE_NOTGROUP);
 /** @const {number} - plantilla para notificar al admin sobre la creación de un grupo */
@@ -48,9 +48,12 @@ const template_notGroupCreate = parseInt(process.env.MJ_TEMPLATE_NOTGROUPCREATE)
 module.exports = {
 	async create(req,res) {
 		const key_user 	= res.locals.user;
-		var group = await Group.findOne({code: req.body.code});
+		var group = await Group.findOne({code: req.body.code}).catch((err) => {
+			Err.sendError(res,err,'group_controller','create -- Finding Course --');
+			return;
+		});
 		if(group) {
-			console.log(group);
+			// console.log(group);
 			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
 				message: `Grupo con código ${req.body.code} ya existe`
 			});
@@ -70,25 +73,25 @@ module.exports = {
 			// ----
 			// Hay que ver si el instructor es un usuario válido
 			User.findOne({$or:[{_id:group.instructor},{name:group.instructor}]}),
-			orgUnit.find({$or:[{_id:group.orgUnit},{name:group.orgUnit}]})
+			// La orgUnit
+			orgUnit.findOne({$or:[{_id:group.orgUnit},{name:group.orgUnit}]})
 		]).catch((err) => {
-			Err.sendError(res,err,'group_controller','create -- Finding Course --');
+			Err.sendError(res,err,'group_controller','create -- Finding Course, User & OrgUnit --');
 			return;
 		});
-		var [
+		const [
 			course,
 			instructor,
 			ou
 		] = results;
-		// console.log(instructor);
-		if(!instructor) {
-			return res.status(StatusCodes.NOT_FOUND).json({
-				'message': 'No se encuentra al instructor'
-			});
-		}
 		if(!course) {
 			return res.status(StatusCodes.NOT_FOUND).json({
 				'message': 'Error -: Curso -'+ group.course + '- no se encuentra'
+			});
+		}
+		if(!instructor) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'No se encuentra al instructor'
 			});
 		}
 		if(!ou) {
@@ -96,7 +99,12 @@ module.exports = {
 				'message': 'Error -: Plantel -'+ group.orgUnit + '- no se encuentra'
 			});
 		}
-		if(!group.type) group.type = 'tutor';
+		if(course.status !== 'published'){
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'Error -: Curso -'+ group.course + '- debe estar publicado para crear un grupo'
+			});
+		}
+
 		if(!instructor.roles.isInstructor) {
 			// res.status(401).json({
 			// 	'message': 'User has no role of Instructor. Please provide a valid user id with valid role'
@@ -109,11 +117,28 @@ module.exports = {
 			});
 		}
 		group.instructor = instructor._id;
-		if(course.status !== 'published'){
-			return res.status(StatusCodes.NOT_FOUND).json({
-				'message': 'Error -: Curso -'+ group.course + '- debe estar publicado para crear un grupo'
+		group.type = 'tutor';
+		var ouParent;
+		// console.log(ou.type,ou.parent);
+		if(ou.type !== 'state' && ou.parent) {
+			// console.log('Sí pasa el if... y tenemos que buscar el ouParent');
+			ouParent = await orgUnit.findOne({name:ou.parent}).catch((err) => {
+				Err.sendError(res,err,'massiveUser_controller','muir -- Finding OU Parent --');
+				return;
 			});
 		}
+		// console.log(ouParent);
+		var instanceOU = (ou.type === 'state') ? ou.name : ou.parent;
+		var queryOU = (ou.type === 'state') ? {
+			orgUnit: ou._id
+		} : {orgUnit: ouParent._id};
+		// console.log('queryOU');
+		// console.log(queryOU);
+		const Instance = require('../src/instances');
+		const instance = await Instance.findOne(queryOU).catch((err) => {
+			Err.sendError(res,err,'massiveUser_controller','muir -- Finding Instance --');
+			return;
+		});
 		group.org = key_user.org._id;
 		group.own = {
 			user: key_user.name,
@@ -135,16 +160,17 @@ module.exports = {
 		// Agregar la rúbrica recolectada desde los bloques
 		group.rubric = [];
 		if(course.blocks.length > 0) {
-			course.blocks.forEach(function(block) {
-				group.rubric.push({
-					block	: block._id,
-					w			: block.w,
-					wq		: block.wq,
-					wt		: block.wt,
+			group.rubric = course.blocks.map(block => {
+				return {
+					block: block._id,
 					section: block.section,
 					number: block.number,
-					text: ''
-				});
+					title: block.title,
+					type: block.type,
+					w: block.w,
+					wq: block.wq,
+					wt: block.wt
+				};
 			});
 		}
 		//	---------
@@ -156,21 +182,18 @@ module.exports = {
 			return;
 		});
 
-		// Falta cambiar los mensajes por GENERICOS
-		let subject = `Se ha creado un grupo y participas como tutor: ${group.code}`;
-		let variables = {
-			'Nombre': instructor.person.name,
-			'confirmation_link':url + '/tutorial',
-			'curso': group.course.title
-		};
-		if(course.type === 'tutor') {
-			await mailjet.sendMail(instructor.person.email,instructor.person.name,subject,template_tutor,variables);
-		}
+		const urlLink = (instance && instance.backOffice) ? `${instance.backOffice}/#` : url;
+		let subject = `Se ha creado el grupo ${group.code} y participas como tutor`;
+		let message = `<p>Se ha creado el grupo ${group.code} y participas como tutor del curso:</p>
+		<h4 style="color:green">${course.title}</h4>
+		<p>Por favor, ingresa a <a href="${urlLink}/tutorial">${urlLink}/tutorial</a></p>`;
+		await mailjet.sendGenericMail(instructor.person.email,instructor.person.name,subject,message,instanceOU);
 		subject = `Alerta: Se ha generado el grupo ${group.code}`;
-		variables = {
+		let variables = {
 			'portal': portal,
-			'mensaje': `Se ha generado e grupo: ${group.code} ${group.course.title}`
+			'mensaje': `Se ha generado e grupo: ${group.code} ${course.title}`
 		};
+		await mailjet.sendMail(supportEmail, 'Administrador',subject,template_notGroupCreate,variables);
 		var send_group = group.toObject();
 		delete send_group.__v;
 		delete send_group.mod;
@@ -178,7 +201,7 @@ module.exports = {
 		delete send_group.own;
 		delete send_group.admin;
 		delete send_group.rubric;
-		await mailjet.sendMail(supportEmail, 'Administrador',subject,template_notGroupCreate,variables);
+
 		res.status(StatusCodes.OK).json(send_group);
 	}, // create
 
@@ -598,7 +621,7 @@ module.exports = {
 				// 	'confirmation_link':link,
 				// 	'curso': group.course.title
 				// };
-				let message = `<h4>${student.person.name}</h4><p>Has sido inscrito al curso:</p><h3>${group.course.title}</h3><p>Ingresa a la sección "Mis Cursos" en el panel del portal para comenzar tu curso.<p>`;
+				let message = `<p>Has sido inscrito al curso:</p><h3>${group.course.title}</h3><p>Ingresa al panel en la sección "Cursos activos" para comenzar tu curso.<p>`;
 				let instance = (student.orgUnit && student.orgUnit.type && student.orgUnit.type === 'state') ? student.orgUnit.name : student.orgUnit.parent;
 				mailjet.sendGenericMail(student.person.email,student.person.name,subject,message,instance);
 				var not = new Notification({
@@ -1405,6 +1428,7 @@ module.exports = {
 							send_items.push({
 								type				: item.type || 'group',
 								status			: item.status,
+								rosterId 		: item._id,
 								group				: {
 									id				: item.group._id,
 									name			: item.group.name,
@@ -1847,6 +1871,191 @@ module.exports = {
 
 	}, // createAttempt
 
+	async saveTask2(req,res) {
+		// console.log('Sí! saveTask2');
+		const key_user	= res.locals.user;
+		const id				= req.body.id || null;
+		const blockid 	= req.body.blockid || null;
+		var task 			= req.body.task || null;
+		const force			= req.body.force ? true : false;
+		// console.log('User:',key_user.name,key_user._id);
+		// console.log('id:',id);
+		// console.log('blockid',blockid);
+		// console.log('force',force);
+		if(!Array.isArray(task)) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'task debe ser un arreglo'
+			});
+		}
+		if(task.length === 0) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'No hay tareas que procesar'
+			});
+		}
+		if(!id) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'id es requerido y puede ser el rosterid o groupid'
+			});
+		}
+		var item = await Roster.findOne({$or:[
+			{ _id: id },{ student: key_user._id, group: id }
+		]})
+			.populate([{
+				path: 'group',
+				select: 'course rubric',
+				populate: {
+					path: 'course',
+					select: 'blocks',
+					populate: {
+						path: 'blocks',
+						match: { _id: blockid }, // Se trae el bloque por si no hay rúbrica en el grupo
+						select: 'task w wq wt',
+						populate: {
+							path: 'task',
+							select: 'items justDelivery'
+						}
+					}
+				}
+			},{
+				path: 'course',
+				select: 'blocks',
+				populate: {
+					path: 'blocks',
+					match: { _id: blockid },
+					select: 'task w wq wt',
+					populate: {
+						path: 'task',
+						select: 'items justDelivery'
+					}
+				}
+			}])
+			.select('-__v')
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','saveTask -- Finding Roster -- user: ' +
+				key_user.name + ' id: ' + key_user._id + ' id: ' + id + ' blockid: ' + blockid );
+				return;
+			});
+		if(!item) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'No existe roster'
+			});
+		}
+		// const oriTasks = (item.type && item.type === 'public') ?
+		// 	item.course.blocks[0].task.items
+		// 	:
+		// 	item.group.course.blocks[0].task.items;
+		let course = null;
+		if(item.type && item.type === 'public') {
+			course = item.course || null;
+		} else {
+			course = (item.group && item.group.course) ? item.group.course : null;
+		}
+		var oriTasks = [];
+		if(course && course.blocks && course.blocks[0] && course.blocks[0].task && course.blocks[0].task.items) oriTasks = [...course.blocks[0].task.items];
+		if(oriTasks.length > 0) {
+			task.forEach(t => {
+				var oriTask = oriTasks.find(ot => ot.label === t.label);
+				if(oriTask) {
+					t.text = oriTask.text;
+					t.id = oriTask._id; // este es el id del item de la tarea, no el id de la tarea
+				} else {
+					oriTask = oriTasks.find(ot => ot._id + '' === t.id + '');
+					if(oriTask) t.text = oriTask.text;
+				}
+				// ponemos justDelivery si el usuario es público
+				if(item.type && item.type === 'public')	t.justDelivery = true;
+			});
+		}
+		task.sort((a,b) => {
+			let labelA = a.label.toUpperCase();
+			let labelB = b.label.toUpperCase();
+			if(labelA < labelB) return -1;
+			if(labelA > labelB) return 1;
+			return 0;
+		});
+		// console.log('item id:',item._id);
+		// index marca la lección que queremos modificar
+		var index = item.grades.findIndex(i => i.block + '' === blockid + '');
+		// console.log('index:',index);
+		// console.log('item.grades a modificar:');
+		// console.log(item.grades[index]);
+		if(item.grades[index] && item.grades[index].tasks && Array.isArray(item.grades[index].tasks) && item.grades[index].tasks.length > 0 && !force) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'No se puede reemplazar la tarea'
+			});
+		}
+		// La rúbrica la traemos del grupo o del curso directamente
+		const rubric = (item.group && item.group.rubric) ? item.group.rubric : item.course.blocks;
+		// nos aseguramos de meter la rúbrica en el roster, si es que existe alguna
+		if(rubric) {
+			// console.log('Sí hay rúbrica');
+			// ahora traemos el objecto de la rúbrica que corresponde a la lección
+			// r.block si es un grupo
+			// r._id si es del curso
+			const rubricIndex = rubric.findIndex(r => (r.block + '' === blockid + '') || (r._id + '' === blockid + ''));
+			// console.log('rubricIndex:',rubricIndex);
+			if(rubricIndex > -1 && index > -1) {
+				// console.log('Existe index');
+				// console.log('Rubric:');
+				// console.log(rubric[rubricIndex]);
+				// y si encontramos la rúbrica, la colocamos en el roster
+				item.grades[index].w	= rubric[rubricIndex].w;
+				item.grades[index].wq	= rubric[rubricIndex].wq;
+				item.grades[index].wt	= rubric[rubricIndex].wt;
+				if(rubric[rubricIndex].taskJustDelivery) {
+					task.forEach(t => t.justDelivery = true);
+				}
+			}
+			if(rubricIndex > -1 && index === -1) {
+				if(rubric[rubricIndex].taskJustDelivery) {
+					task.forEach(t => t.justDelivery = true);
+				}
+				// console.log('No existe index');
+				// console.log('Rubric:');
+				// console.log(rubric[rubricIndex]);
+				// si no hay roster para la lección entonces creamos uno nuevo
+				var rubricObj = {
+					block: blockid,
+					w: rubric[rubricIndex].w,
+					wq: rubric[rubricIndex].wq,
+					wt: rubric[rubricIndex].wt
+				};
+				if(Array.isArray(item.grades)) {
+					item.grades.push(rubricObj);
+				} else {
+					item.grades = [rubricObj];
+				}
+			}
+		}
+		// calificamos tareas que tengan justDelivery
+		task.forEach(t => {
+			if(t.justDelivery) {
+				t.grade = 100;
+				t.graded = true;
+			}
+		});
+		item.grades[index].tasktries.push(new Date());
+		item.grades[index].tasks = task;
+		item.grades[index].track = 100;
+		item.newTask = true;
+		// console.log('Item listo para guardar');
+		// console.log(item.grades[index]);
+		// console.log(item.__v);
+		await item.save().catch(async (err) => {
+			// console.log(err);
+			if(err.toString().includes('VersionError: No matching document found for id')) {
+				await item.save().catch(err => {
+					Err.sendError(res,err,'group_controller','saveTask -- Saving task -- user: ' +
+						key_user.name + ' id: ' + key_user._id + ' id: ' + id + ' blockid: ' + blockid );
+					return;
+				});
+			}
+		});
+		res.status(StatusCodes.OK).json({
+			message: 'task saved'
+		});
+	}, //saveTask2
+
 	async saveTask(req,res) {
 		const key_user	= res.locals.user;
 		const groupid 	= req.body.groupid;
@@ -1901,11 +2110,15 @@ module.exports = {
 		var myGrade = {};
 		var k = 0;
 		var index = -1;
-		if(item.type === 'group' && item.group.rubric && item.group.rubric.length > 0) { index = item.group.rubric.findIndex(i => i.block + '' === myGrade.block + ''); }
+		if(item.type === 'group' && item.group.rubric && item.group.rubric.length > 0) {
+			index = item.group.rubric.findIndex(i => i.block + '' === blockid + '');
+		}
+		// existe item.grades
 		if(item.grades.length > 0) {
 			grades = item.grades;
 			var len = grades.length;
 			var found = false;
+			// Buscar grade en item.grades
 			while ((k < len) && !found) {
 				if(grades[k].block + '' === blockid) {
 					myGrade = grades[k];
@@ -1914,24 +2127,15 @@ module.exports = {
 					k++;
 				}
 			}
+			// si la lección tiene tasks (ya entregaron tarea), pero tenemos force o no hay tareas
 			if(myGrade.tasks && ((myGrade.tasks.length > 0 && force) || (myGrade.tasks.length === 0)) ) {
-				//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].w) {
-				//	myGrade.w = item.group.course.blocks[0].w;
-				//}
-				if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].w) {
-					myGrade.w = item.group.rubric[index].w;
-				}
-				//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wq) {
-				//	myGrade.wq = item.group.course.blocks[0].wq;
-				//}
-				if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wq) {
-					myGrade.wq = item.group.rubric[index].wq;
-				}
-				//if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].wt) {
-				//	myGrade.wt = item.group.course.blocks[0].wt;
-				//}
-				if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1 && item.group.rubric[index].wt) {
-					myGrade.wt = item.group.rubric[index].wt;
+				// tenemos rúbrica?
+				if(item.group && item.group.rubric && item.group.rubric.length > 0 && index > -1) {
+					if(item.group.rubric[index]) {
+						myGrade.w = item.group.rubric[index].w;
+						myGrade.wq = item.group.rubric[index].wq;
+						myGrade.wt = item.group.rubric[index].wt;
+					}
 				}
 				if(item.group && item.group.course && item.group.course.blocks && item.group.course.blocks[0] && item.group.course.blocks[0].task && item.group.course.blocks[0].task.justDelivery) {
 					var c = 0;
@@ -1986,16 +2190,15 @@ module.exports = {
 			item.grades.tasktries = [now];
 		}
 		item.newTask = true;
-		item.save()
-			.then(() => {
-				res.status(200).json({
-					'status'				: 200,
-					'message'				: 'task saved'
-				});
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'group_controller','saveTask -- Saving Roster --');
-			});
+		await item.save().catch((err) => {
+			Err.sendError(res,err,'group_controller','saveTask -- Saving Roster --');
+			return;
+		});
+		res.status(StatusCodes.OK).json({
+			'status'				: 200,
+			'message'				: 'task saved'
+		});
+
 
 	}, //saveTask
 
@@ -2295,42 +2498,30 @@ module.exports = {
 		const groupid		= req.query.groupid;
 		const rosterid 	= req.query.rosterid;
 		const key_user 	= res.locals.user;
-		var queryFolio = {};
-		var query = {};
-		if(groupid) {
-			queryFolio = {student: key_user._id, group: groupid};
-			query = {student: key_user._id, group: groupid};
-		}
-		if(rosterid) {
-			queryFolio = {student: key_user._id, roster: rosterid};
-			query = {_id: rosterid};
-		}
-		try {
-			var [folio,item] = await Promise.all([
-				Folio.findOne(queryFolio),
-				Roster.findOne(query)
-					.populate([{
-						path: 'group',
-						select: 'course certificateActive beginDate endDate type rubric dates status',
-						populate: {
-							path: 'course',
-							select: 'title blocks duration durationUnits noCertificate',
-							populate: {
-								path: 'blocks',
-								select: 'title section number w wq wt type order',
-								options: {
-									lean: true,
-									sort: {
-										order: 1
-									}
-								}
-							},
-							options: { lean: true }
-						},
-						options: { lean: true }
-					},{
+		const queryFolio = groupid ?
+			{
+				student: key_user._id,
+				group: groupid
+			} : {
+				student: key_user._id,
+				roster: rosterid
+			};
+		const query = groupid ?
+			{
+				student: key_user._id,
+				group: groupid
+			} : {
+				_id: rosterid
+			};
+		var [folio,item] = await Promise.all([
+			Folio.findOne(queryFolio),
+			Roster.findOne(query)
+				.populate([{
+					path: 'group',
+					select: 'course certificateActive beginDate endDate type rubric dates status',
+					populate: {
 						path: 'course',
-						select: 'title blocks duration durationUnits moocPrice noCertificate',
+						select: 'title blocks duration durationUnits noCertificate',
 						populate: {
 							path: 'blocks',
 							select: 'title section number w wq wt type order',
@@ -2342,268 +2533,303 @@ module.exports = {
 							}
 						},
 						options: { lean: true }
-					}])]);
-			if(item) {
-				// let displayGrades = [...item.grades];
-				// console.log(JSON.stringify(displayGrades,null,2));
-				const type = (item.type && item.type === 'public') ? 'public' : 'group';
-				var blocks		= [];
-				const bs 			= (type === 'public' && item.course ) ? item.course.blocks : item.group.course.blocks;
-				var rubric  	= (type === 'group') ? [] : undefined;
-				if(type === 'group' && item.group && item.group.rubric && Array.isArray(item.group.rubric) && item.group.rubric.length > 0) {
-					rubric 	= item.group.rubric;
-				}
-				// ------------
+					},
+					options: { lean: true }
+				},{
+					path: 'course',
+					select: 'title blocks duration durationUnits moocPrice noCertificate',
+					populate: {
+						path: 'blocks',
+						select: 'title section number w wq wt type order',
+						options: {
+							lean: true,
+							sort: {
+								order: 1
+							}
+						}
+					},
+					options: { lean: true }
+				}])])
+			.catch(err => {
+				const message = `myGrades -- finding Grades & folio -- user: ${key_user.name}` + groupid ? ` groupid: ${groupid}` : ` rosterid: ${rosterid}`;
+				Err.sendError(res,err,'group_controller',message);
+				return;
+			});
+		if(!item) {
+			return res.status(StatusCodes.OK).json({
+				message: 'No estás inscrito en este grupo/curso'
+			});
+		}
+		// let displayGrades = [...item.grades];
+		// console.log(JSON.stringify(displayGrades,null,2));
+		const type = (item.type && item.type === 'public') ?
+			'public' :
+			'group';
+		var blocks		= [];
+		const bs 			= (type === 'public' && item.course ) ?
+			item.course.blocks :
+			item.group.course.blocks;
+		var rubric  	= [];
+		if(type === 'group' && item.group && item.group.rubric && Array.isArray(item.group.rubric) && item.group.rubric.length > 0) {
+			rubric 	= item.group.rubric;
+		}
+		if(type === 'public' && item.course && item.course.blocks && item.course.blocks.length > 0) {
+			rubric 	= item.course.blocks;
+		}
 
-				var grades = item.grades;
 
-				// grades.forEach(g => {
-				// 	if(g.block + '' === '5a9d73f66fee79001c6d3b63'){
-				// 		console.log(g);
+		// ------------
+
+		var grades = item.grades;
+
+		// Lograr lo siguiente:
+		// Revisar que grades tenga todos los bloques. Esto lo podríamos asegurar porque "nextBlock" se encarga de cargar TODOS los bloques en grades. Sin embargo, hay que revisar.
+		// ¿Cómo podemos saber si existen TODOS los bloques en grades?
+		// - Número de bloques en curso vs número de bloques en grades
+		// - Revisando uno por uno y comparando id's (funciones some, include)
+		// Revisar que exista RUBRIC en el grupo y reflejarlo en grades. RUBRIC en el grupo llevará la batuta hacia grades. Cualquier cambio en RUBRIC se debe ver reflejado en grades.
+
+		// console.log(`Tamaño de bloques ${bs.length}`);
+		// console.log(`Tamaño de grades ${grades.length}`);
+		// console.log(`Tamaño de rubric ${rubric.length}`);
+
+		// Checar que rubric sea compatible con bloques
+
+		var rubricOk = true;
+		// primer loop
+		if(rubric && rubric.length > 0  && bs.length > 0) {
+			var i=0;
+			rubric.forEach(rub => {
+				// bs.forEach(block => {
+				// 	if(rub.block + '' === block._id + '') {
+				// 		i++;
 				// 	}
 				// });
-
-				// Lograr lo siguiente:
-				// Revisar que grades tenga todos los bloques. Esto lo podríamos asegurar porque "nextBlock" se encarga de cargar TODOS los bloques en grades. Sin embargo, hay que revisar.
-				// ¿Cómo podemos saber si existen TODOS los bloques en grades?
-				// - Número de bloques en curso vs número de bloques en grades
-				// - Revisando uno por uno y comparando id's (funciones some, include)
-				// Revisar que exista RUBRIC en el grupo y reflejarlo en grades. RUBRIC en el grupo llevará la batuta hacia grades. Cualquier cambio en RUBRIC se debe ver reflejado en grades.
-
-				// console.log(`Tamaño de bloques ${bs.length}`);
-				// console.log(`Tamaño de grades ${grades.length}`);
-				// console.log(`Tamaño de rubric ${rubric.length}`);
-
-				// Checar que rubric sea compatible con bloques
-
-				var rubricOk = true;
-				// primer loop
-				if(rubric && rubric.length > 0  && bs.length > 0) {
-					var i=0;
-					rubric.forEach(rub => {
-						// bs.forEach(block => {
-						// 	if(rub.block + '' === block._id + '') {
-						// 		i++;
-						// 	}
-						// });
-						if(bs.some(b => b._id + '' === rub.block + '')) {
-							i++;
-						}
-					});
-					// console.log(i);
-					if(i !== rubric.length) {
-						rubricOk = false;
-					// 	console.log('chin!');
-					// } else {
-					// 	console.log('Vientos! Rubrica está completa');
-					}
+				if(bs.some(b => b._id + '' === rub.block + '')) {
+					i++;
 				}
+			});
+			// console.log(i);
+			if(i !== rubric.length) {
+				rubricOk = false;
+			// 	console.log('chin!');
+			// } else {
+			// 	console.log('Vientos! Rubrica está completa');
+			}
+		}
 
-				// Checar que grades sea compatible con rúbrica
-				// segundo loop
-				var gradesOk = true;
-				if(type=== 'group' && grades.length > 0  && rubric.length > 0) {
-					i=0;
-					grades.forEach(g => {
-						// rubric.forEach(r => {
-						// 	if(r.block + '' === g.block + '') {
-						// 		i++;
-						// 	}
-						// });
-						if(rubric.some(r => r.block + '' === g.block + '')) {
-							i++;
-						}
-					});
-					// console.log(i);
-					if(i !== grades.length) {
-						gradesOk = false;
-					// 	console.log('chin!');
-					// } else {
-					// 	console.log('Vientos! grades está completa');
-					}
+		// Checar que grades sea compatible con rúbrica
+		// segundo loop
+		var gradesOk = true;
+		if(grades.length > 0  && rubric.length > 0) {
+			i=0;
+			grades.forEach(g => {
+				// rubric.forEach(r => {
+				// 	if(r.block + '' === g.block + '') {
+				// 		i++;
+				// 	}
+				// });
+				if(rubric.some(r => r.block + '' === g.block + '')) {
+					i++;
 				}
+			});
+			// console.log(i);
+			if(i !== grades.length) {
+				gradesOk = false;
+			// 	console.log('chin!');
+			// } else {
+			// 	console.log('Vientos! grades está completa');
+			}
+		}
 
-				if(type === 'group' && gradesOk && rubricOk) {
-					// Ya sabemos que todo está completo
-					// ahora la rúbrica manda sobre grades
-					// así que grades recibe los pesos de rúbrica
-					// En teoría son los mismos pesos.
+		if(gradesOk && rubricOk) {
+			// Ya sabemos que todo está completo
+			// ahora la rúbrica manda sobre grades
+			// así que grades recibe los pesos de rúbrica
 
-					// La rúbrica puede cambiar incluso ya comenzadas las actividades
-					// Por lo que es de vital importancia que siempre se lea
-					// correctamente la rúbrica y se plasme en grades.
-					// Tercer loop
-					grades.forEach(g => {
-						const foundR = rubric.find(r => r.block + '' === g.block + '');
-						if(foundR) {
-							g.w = foundR.w;
-							g.wq = foundR.wq;
-							g.wt = foundR.wt;
-						}
-					});
+			// La rúbrica puede cambiar incluso ya comenzadas las actividades
+			// Por lo que es de vital importancia que siempre se lea
+			// correctamente la rúbrica y se plasme en grades.
+			// Tercer loop
+			grades.forEach(g => {
+				const foundR = rubric.find(r => r.block + '' === g.block + '');
+				if(foundR) {
+					g.w = foundR.w;
+					g.wq = foundR.wq;
+					g.wt = foundR.wt;
 				}
+				// checar si hay calificaciones mayores a 100
+				if(g.finalGrade && g.finalGrade > 100) {
+					g.finalGrade = 100;
+				}
+			});
+		}
 
-				// ordenar el arreglo de grades
+		// ordenar el arreglo de grades
 
-				//grades.sort((a,b) => (a.order > b.order) ? 1 : -1);
+		//grades.sort((a,b) => (a.order > b.order) ? 1 : -1);
 
-				item.grades = grades;
-				item.repair = 1;
-				await item.save();
-				item.grades.forEach(grade => {
-					if(grade.wq > 0 || grade.wt > 0 || grade.w > 0) {
-						var i = 0;
-						var block = {};
-						while (i < bs.length) {
-							if(grade.block + '' === bs[i]._id + '') {
-								block = {
-									blockTitle	: bs[i].title,
-									blockSection: bs[i].section,
-									blockNumber	: bs[i].number,
-									blockOrder 	: bs[i].order,
-									blockW			: grade.w,
-									blockType		: bs[i].type,
-									blockId			: bs[i]._id
-								};
-								i = bs.length;
-							} else {
-								i++;
-							}
-						}
-						block.grade = grade.finalGrade;
-						block.track = grade.track;
-						// if(!block.blockTitle) {
-						// 	console.log(grade);
-						// }
-						if(type === 'group' && item.group && item.group.rubric && item.group.rubric.length > 0){
-							let rubricItem = item.group.rubric.find(rItem => rItem.block + ''  === block.blockId + '');
-							if(rubricItem && rubricItem.text) {
-								block.blockRubricText = rubricItem.text;
-							}
-						}
-						// if(block.blockId + '' === '5a9d73f66fee79001c6d3b63') {
-						// 	console.log(grade);
-						// 	console.log(block);
-						// }
-						blocks.push(block);
-					}
-				});
-
-				var send_grade = {
-					name							: key_user.person.fullName,
-					rosterType				: item.type,
-					rosterid					: item._id,
-					status						: item.status,
-					certificateTutor	: item.certificateTutor,
-					finalGrade				: item.finalGrade,
-					minGrade					: item.minGrade,
-					track							: parseInt(item.track) + '%',
-					minTrack					: item.minTrack + '%',
-					pass							: item.pass,
-					passDate					: item.passDate,
-					blocks						: blocks,
-					tookCertificate		: item.tookCertificate
-				};
-				if(type === 'group') {
-					send_grade.openStatus = item.group.status;
-					send_grade.status = item.group.status;
-					send_grade.groupid 	= item.group._id;
-					send_grade.groupType= item.group.type;
-					send_grade.groupCode = item.group.code;
-					send_grade.course		= item.group.course.title;
-					send_grade.courseId	= item.group.course._id;
-					send_grade.courseDuration	= item.group.course.duration;
-					send_grade.courseDurUnits	= units(item.group.course.durationUnits);
-					send_grade.certificateActive = item.group.certificateActive;
-					send_grade.noCertificate = item.group.course.noCertificate || false;
-					send_grade.beginDate= item.group.beginDate;
-					send_grade.endDate	= item.group.endDate;
-					send_grade.beginDateSpa	= dateInSpanish(item.group.beginDate);
-					send_grade.endDateSpa	= dateInSpanish(item.group.endDate);
-				}
-				if(type === 'public') {
-					send_grade.openStatus = item.openStatus;
-					send_grade.status = item.status;
-					send_grade.course		= item.course.title;
-					send_grade.moocPrice = item.course.moocPrice;
-					send_grade.courseId	= item.course._id;
-					send_grade.beginDate= item.createDate;
-					send_grade.endDate	= item.endDate;
-					send_grade.noCertificate = item.course.noCertificate || false;
-					send_grade.beginDateSpa	= dateInSpanish(item.createDate);
-					send_grade.endDateSpa	= dateInSpanish(item.endDate);
-				}
-
-				if(type === 'group' && item.group &&
-					item.group.dates &&
-					Array.isArray(item.group.dates) &&
-					item.group.dates.length > 0
-				) {
-					let findCertificateDate = item.group.dates.find(date => date.type === 'certificate');
-					// esta parte era por si la fecha mínima era la de liberación de constancia
-					//if(findCertificateDate && send_grade.passDate < findCertificateDate.beginDate) {
-					// Y esta es la fecha de liberación de constancia
-					if(findCertificateDate) {
-						send_grade.passDate = findCertificateDate.beginDate;
-					}
-				}
-				if(item.passDate) {
-					send_grade.passDateSpa = dateInSpanish(item.passDate);
-				}
-				if(!folio) {
-					var newFolio = (type === 'group') ?
-						createFolio(key_user._id,item._id,key_user._id, item.group._id) :
-						createFolio(key_user._id,item._id,key_user._id,null);
-					newFolio.assignFolio();
-					await newFolio.save();
-					send_grade.folio	= newFolio.folio.match(/(\d{4})/g).join(' ');
-					send_grade.folioStatus = newFolio.status;
-				} else {
-					send_grade.folio	= folio.folio.match(/(\d{4})/g).join(' ');
-					send_grade.folioStatus = folio.status;
-				}
-				const keys = (type === 'group') ? Object.keys(item.group.course) : Object.keys(item.course);
-				if(type === 'group' && keys.includes('duration')) {
-					send_grade.duration 			= item.group.course.duration;
-					send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
-				} else {
-					send_grade.duration 			= item.course.duration;
-					send_grade.durationUnits	= units(item.course.durationUnits,item.course.duration);
-				}
-				if(item.certificateNumber > 0) {
-					var certificate = '' + item.certificateNumber;
-					send_grade.certificateNumber = certificate.padStart(7, '0');
-				}
-				if(item.pass && item.certificateNumber === 0) {
-					var cert = new Certificate();
-					cert.roster = item._id;
-					var certFound = await Certificate.findOne({roster:cert.roster});
-					if(certFound) {
-						let certificate = '' + certFound.number;
-						send_grade.certificateNumber = certificate.padStart(7, '0');
-						res.status(StatusCodes.OK).json({
-							'message': send_grade
-						});
+		item.grades = grades;
+		// item.repair = 1;
+		await item.save().catch(err => {
+			const message = `myGrades -- Saving grades -- user: ${key_user.name}` + groupid ? ` groupid: ${groupid}` : ` rosterid: ${rosterid}`;
+			Err.sendError(res,err,'group_controller',message);
+			return;
+		});
+		item.grades.forEach(grade => {
+			if(grade.wq > 0 || grade.wt > 0 || grade.w > 0) {
+				var i = 0;
+				var block = {};
+				while (i < bs.length) {
+					if(grade.block + '' === bs[i]._id + '') {
+						block = {
+							blockTitle	: bs[i].title,
+							blockSection: bs[i].section,
+							blockNumber	: bs[i].number,
+							blockOrder 	: bs[i].order,
+							blockW			: grade.w,
+							blockType		: bs[i].type,
+							blockId			: bs[i]._id
+						};
+						i = bs.length;
 					} else {
-						await cert.save();
-						let certificate = '' + cert.number;
-						send_grade.certificateNumber = certificate.padStart(7, '0');
-						res.status(StatusCodes.OK).json({
-							'message': send_grade
-						});
+						i++;
 					}
-				} else {
-					res.status(StatusCodes.OK).json({
-						'message': send_grade
-					});
 				}
-			} else {
+				block.grade = grade.finalGrade;
+				block.track = grade.track;
+				// if(!block.blockTitle) {
+				// 	console.log(grade);
+				// }
+				// if(type === 'group' && item.group && item.group.rubric && item.group.rubric.length > 0){
+				let rubricItem = rubric.find(rItem => rItem.block + ''  === block.blockId + '');
+				if(rubricItem && rubricItem.text) {
+					block.blockRubricText = rubricItem.text;
+				}
+				// }
+				// if(block.blockId + '' === '5a9d73f66fee79001c6d3b63') {
+				// 	console.log(grade);
+				// 	console.log(block);
+				// }
+				blocks.push(block);
+			}
+		});
+
+		var send_grade = {
+			name							: key_user.person.fullName,
+			rosterType				: item.type,
+			rosterid					: item._id,
+			status						: item.status,
+			certificateTutor	: item.certificateTutor,
+			finalGrade				: item.finalGrade,
+			minGrade					: item.minGrade,
+			track							: +item.track + '%',
+			minTrack					: item.minTrack + '%',
+			pass							: item.pass,
+			passDate					: item.passDate,
+			blocks						: blocks,
+			tookCertificate		: item.tookCertificate
+		};
+		if(type === 'group') {
+			send_grade.openStatus = item.group.status;
+			send_grade.status = item.group.status;
+			send_grade.groupid 	= item.group._id;
+			send_grade.groupType= item.group.type;
+			send_grade.groupCode = item.group.code;
+			send_grade.course		= item.group.course.title;
+			send_grade.courseId	= item.group.course._id;
+			send_grade.courseDuration	= item.group.course.duration;
+			send_grade.courseDurUnits	= units(item.group.course.durationUnits);
+			send_grade.certificateActive = item.group.certificateActive;
+			send_grade.noCertificate = item.group.course.noCertificate || false;
+			send_grade.beginDate= item.group.beginDate;
+			send_grade.endDate	= item.group.endDate;
+			send_grade.beginDateSpa	= dateInSpanish(item.group.beginDate);
+			send_grade.endDateSpa	= dateInSpanish(item.group.endDate);
+		}
+		if(type === 'public') {
+			send_grade.openStatus = item.openStatus;
+			send_grade.status = item.status;
+			send_grade.course		= item.course.title;
+			send_grade.moocPrice = item.course.moocPrice;
+			send_grade.courseId	= item.course._id;
+			send_grade.beginDate= item.createDate;
+			send_grade.endDate	= item.endDate;
+			send_grade.noCertificate = item.course.noCertificate || false;
+			send_grade.beginDateSpa	= dateInSpanish(item.createDate);
+			send_grade.endDateSpa	= dateInSpanish(item.endDate);
+		}
+
+		if(type === 'group' && item.group &&
+			item.group.dates &&
+			Array.isArray(item.group.dates) &&
+			item.group.dates.length > 0
+		) {
+			let findCertificateDate = item.group.dates.find(date => date.type === 'certificate');
+			// esta parte era por si la fecha mínima era la de liberación de constancia
+			//if(findCertificateDate && send_grade.passDate < findCertificateDate.beginDate) {
+			// Y esta es la fecha de liberación de constancia
+			if(findCertificateDate) {
+				send_grade.passDate = findCertificateDate.beginDate;
+			}
+		}
+		if(item.passDate) {
+			send_grade.passDateSpa = dateInSpanish(item.passDate);
+		}
+		if(!folio) {
+			var newFolio = (type === 'group') ?
+				createFolio(key_user._id,item._id,key_user._id, item.group._id) :
+				createFolio(key_user._id,item._id,key_user._id,null);
+			newFolio.assignFolio();
+			await newFolio.save();
+			send_grade.folio	= newFolio.folio.match(/(\d{4})/g).join(' ');
+			send_grade.folioStatus = newFolio.status;
+		} else {
+			send_grade.folio	= folio.folio.match(/(\d{4})/g).join(' ');
+			send_grade.folioStatus = folio.status;
+		}
+		const keys = (type === 'group') ? Object.keys(item.group.course) : Object.keys(item.course);
+		if(type === 'group' && keys.includes('duration')) {
+			send_grade.duration 			= item.group.course.duration;
+			send_grade.durationUnits	= units(item.group.course.durationUnits,item.group.course.duration);
+		} else {
+			send_grade.duration 			= item.course.duration;
+			send_grade.durationUnits	= units(item.course.durationUnits,item.course.duration);
+		}
+		if(item.certificateNumber > 0) {
+			var certificate = '' + item.certificateNumber;
+			send_grade.certificateNumber = certificate.padStart(7, '0');
+		}
+		if(item.pass && item.certificateNumber === 0) {
+			var cert = new Certificate();
+			cert.roster = item._id;
+			var certFound = await Certificate.findOne({roster:cert.roster}).catch(err => {
+				const message = `myGrades -- finding cert -- user: ${key_user.name} rosterid: ${item._id}`;
+				Err.sendError(res,err,'group_controller',message);
+				return;
+			});
+			if(certFound) {
+				let certificate = '' + certFound.number;
+				send_grade.certificateNumber = certificate.padStart(7, '0');
 				res.status(StatusCodes.OK).json({
-					'message': 'No estás inscrito en este grupo/curso'
+					'message': send_grade
+				});
+			} else {
+				await cert.save().catch(err => {
+					const message = `myGrades -- Saving cert -- user: ${key_user.name} rosterid: ${item._id}` + ` certid: ${cert._id}`;
+					Err.sendError(res,err,'group_controller',message);
+					return;
+				});
+				let certificate = '' + cert.number;
+				send_grade.certificateNumber = certificate.padStart(7, '0');
+				res.status(StatusCodes.OK).json({
+					'message': send_grade
 				});
 			}
-		} catch (err) {
-			Err.sendError(res,err,'group_controller','mygrades');
+		} else {
+			res.status(StatusCodes.OK).json({
+				'message': send_grade
+			});
 		}
 	}, // myGrades
 
@@ -2954,7 +3180,7 @@ module.exports = {
 			});
 		}
 		if(!instructor.roles.isInstructor) {
-			instructor.isRoles.isInstructor = true;
+			instructor.roles.isInstructor = true;
 			await instructor.save().catch((err) => {
 				Err.sendError(res,err,'group_controller','changeinstructor -- Saving instructor');
 				return;
@@ -3093,7 +3319,7 @@ module.exports = {
 			});
 	}, //getResource
 
-	nextBlock(req,res) {
+	async nextBlock(req,res) {
 		//const key 			= req.headers.key;
 		const groupid 	= req.query.groupid;
 		//const courseid 	= req.query.courseid;
@@ -3108,7 +3334,7 @@ module.exports = {
 			group: groupid
 		};
 		// buscar Roster del alumno
-		Roster.findOne(query)
+		var item = await Roster.findOne(query)
 			.populate([{
 				path: 'group',
 				select: 'course name code admin presentBlockBy beginDate endDate dates lapse lapseBlocks blockDates status',
@@ -3137,541 +3363,531 @@ module.exports = {
 			{
 				path: 'grades.dependencies.dep'
 			}
-			])
-			.then((item) => {
-				var prevblockid = '';
-				var nextblockid = '';
-				// Existe el roster? Si no existe, quiere decir que el alumno no está enrolado a este grupo
-				// o hay un error... posiblemente error de token?
-				if(item) {
-					const studentStatus = item.status;
-					const type = (!item.type || item.type === 'group') ? 'group' : 'public';
-					// Detener el flujo aquí si el curso está inactivo
-
-					if(((!item.type || item.type === 'group') && !item.group.course) || (item.type && item.type === 'public' && !item.course)) {
-						res.status(200).json({
-							'message'	: 'El curso solicitado no está disponible'
-						});
-						return;
-					}
-
-					// Guardamos el bloque como bloque actual, si existe.
-					// Averiguamos si el bloque debe presentarse por fecha y/o por lapso (también fecha)
-					// En todo caso, ambas fechas deben ser menores a la actual.
-					const now				= new Date();
-					var 	ok				= true;
-					var 	cause 		= '';
-					var		causeSP		= '';
-					var 	save 			= false;
-					var blockDates;
-
-					// detener aquí si el curso ya está expirado
-
-					if((item.openStatus && item.openStatus === 'closed') || (type === 'group' && item.group.endDate < now) || (type === 'group' && item.group && item.group.status && item.group.status == 'closed')) {
-						const courseTitle = (type === 'group') ? item.group.course.title : item.course.title;
-						res.status(StatusCodes.OK).json({
-							'message': `El curso ${courseTitle} ya está cerrado`
-						});
-						return;
-					}
-					if(type === 'group' && item.group.status === 'coming') {
-						res.status(StatusCodes.OK).json({
-							'message': `El curso ${item.group.course.title} no ha abierto todavía`
-						});
-						return;
-					}
-
-					//
-					const blocks = (type === 'public') ? item.course.blocks : item.group.course.blocks;
-
-					if(lastid !== 'empty') {
-						let blockExists = blocks.find(block => block._id + '' === lastid);
-						if(blockExists) {
-							item.currentBlock = lastid;
-							save = true;
-						}
-					}
-
-					if(type === 'group' && item.group.blockDates && Array.isArray(item.group.blockDates) && item.group.blockDates.length > 0) {
-						blockDates = item.group.blockDates;
-						let foundBlock = blockDates.find(blockDate => blockDate.block + '' === blockid + '');
-						if(foundBlock && now < foundBlock.date) {
-							ok 		= false;
-							cause = 'This lesson must be presented at ' + foundBlock.date;
-							causeSP = causeSP + ' Esta lección debe presentarse según el calendario ' + foundBlock.date.toString();
-						}
-					} else
-					if(type === 'group' && item.group.presentBlockBy && item.group.presentBlockBy === 'dates'){
-						if(item.group.beginDate && item.group.beginDate > now ) {
-							ok 		= false;
-							cause = 'Course will begin at ' + item.group.beginDate + '. ';
-							causeSP = causeSP + ' El curso comenzará el ' + item.group.beginDate + '. ';
-						} else
-						if(item.group.endDate && item.group.endDate < now) {
-							ok 		= false;
-							cause = 'Course ended at ' + item.group.endDate + '. ';
-							causeSP = causeSP + ' El curso terminó el ' + item.group.endDate + '. ';
-						}
-					}
-
-					var grades = [];
-					var currentBlockGrade = 0;
-					var lastAttempt = 0;
-					var numAttempts = 0;
-					var lastIndex 	= 0;
-					var lastSection = 0;
-					var section 		= 0;
-					var lastTaskDelivered = 0;
-					var nextSection = lastSection + 1;
-					if(item.grades && item.grades.length > 0) {
-						grades = item.grades;
-					}
-					var blocksPresented = 0;
-					var blocksPending 	= 2;
-					if(type === 'group' && item.group.admin && item.group.admin.blocksPending) {
-						blocksPending = item.group.admin.blocksPending;
-					}
-					if(grades.length > 0) {
-						//var myGrade = {};
-						var i = 0;
-						var track 	= 0;
-						//var length 	= grades.length;
-						grades.forEach(function(grade) {
-							if(grade && grade.block && grade.block._id) {
-								if(grade.block._id + '' === lastid + '') {
-									//myGrade = grade.block;
-									lastIndex 	= i;
-									lastSection = grade.block.section;
-									nextSection = grade.block.section + 1;
-								}
-								if(grade.block._id + '' === blockid + '') {
-									currentBlockGrade = grade.maxGradeQ;
-									lastAttempt				= grade.lastAttemptQ;
-									numAttempts				= grade.numAttempts;
-									if(grade.tasktries && grade.tasktries.length > 0) {
-										lastTaskDelivered = grade.tasktries[grade.tasktries.length -1];
-									}
-									track 						= grade.track;
-									section 					= grade.block.section;
-									if(grade.dependencies && grade.dependencies.length > 0) {
-										grade.dependencies.forEach(function(dep) {
-											if(dep.dep.createAttempt && (typeof dep.createAttempt === 'boolean' && !dep.createAttempt)) {
-												ok 			= false;
-												cause		= cause + 'There is a dependency on questionnarie. ';
-												causeSP = causeSP + 'Antes de iniciar esta evaluación, debes presentar la anterior. ';
-											}
-
-											if(dep.dep.saveTask && (typeof dep.saveTask === 'boolean' && !dep.saveTask)) {
-												ok 			= false;
-												cause		= cause + 'There is a dependency on task. ';
-												causeSP = causeSP + 'Antes de iniciar esta tarea, debes presentar la anterior. ';
-											}
-											if(dep.dep.track && (typeof dep.track === 'boolean' && !dep.track)) {
-												ok 			= false;
-												cause		= cause + 'There is a dependency on block. ';
-												causeSP = causeSP + 'Antes de iniciar esta lección, debes presentar la anterior. ';
-											}
-
-										});
-									}
-								}
-							} else {
-								var lastGrade = { block : lastid };
-								if(lastid === 'empty') {
-									lastGrade.track = 0;
-								} else {
-									lastGrade.track = 100;
-								}
-								grades.push(lastGrade);
-							}
-							i++;
-						}); // grades.forEach
-
-						if(lastid !== 'empty' && grades[lastIndex].track !== 100) {
-							grades[lastIndex].track = 100;
-							save 										= true;
-						}
-					} else { // No existe el roster del bloque (aunque sería raro porque ya se debió crear)
-						if(lastid !== 'empty') {
-							grades = [{
-								block: lastid,
-								track: 100
-							}];
-							blocksPresented++;
-							save = true;
-						}
-					}
-					const sectionDisp = section;
-					// validar que exista fecha de inicio para la sección. Si existe mandar mensaje de cuándo empezará
-					if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].beginDate) {
-						const begDate = new Date(item.sections[section].beginDate);
-						const now = new Date();
-						const diff = begDate.getTime() - now.getTime();
-						if(!item.sections[section].viewed && diff > 0) {
-							ok = false;
-							cause = 'Section '+ sectionDisp +' will begin at ' + item.sections[section].beginDate;
-							causeSP = 'La sección '+ sectionDisp +' comenzará el ' + item.sections[section].beginDate;
-						}
-					}
-					if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].endDate && item.sections[section].endDate < now) {
-						if(!item.sections[section].viewed) {
-							ok = false;
-							cause = 'Section '+ sectionDisp +' was closed at ' + item.sections[section].endDate;
-							causeSP = 'La sección '+ sectionDisp +' terminó el ' + item.sections[section].endDate;
-						}
-					}
-
-					if(item.sections) { // existe el arreglo sections?
-						if(item.sections[lastSection]) { // existe el elemento lastSection?
-							if(!item.sections[lastSection].viewed && lastid !== 'empty'){ // si la sección no ha sido vista y mandan el bloque para tracking...
-								item.sections[lastSection].viewed = now;	// entonces registrar la fecha en que se está "viendo" la sección
-								save = true;
-							}
-							if(type === 'group' && item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){ // ahora, si el tipo de presentación de la sección es "lapse"
-								if(item.sections[nextSection] && !item.sections[nextSection].viewed) { // y existe la siguiente sección y no ha sido vista
-									// y existe
-									if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]){
-										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
-									} else if(item.group.lapse){
-										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
-									}
-									if(item.sections[lastSection].endDate){
-										delete item.sections[lastSection].endDate;
-									}
-								}
-								if(!item.sections[nextSection]){
-									item.sections[nextSection] = {};
-									if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]){
-										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
-									} else if(item.group.lapse){
-										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
-									}
-								}
-								save = true;
-							}
-						} else if(lastid !== 'empty'){
-							if(type === 'group' && item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){ // Si el grupo está seteado por lapso
-								if(item.sections[lastSection]){
-									item.sections[lastSection].viewed	= now;
-								} else {
-									item.sections[lastSection] = {
-										viewed : now
-									};
-								}
-								if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]) {
-									if(item.sections[nextSection]){
-										item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
-									} else {
-										item.sections[nextSection] = {
-											beginDate : expiresIn(now, item.group.lapseBlocks[nextSection])
-										};
-									}
-								}
-								save = true;
-							} else {
-								if(item.sections && item.sections.length > 0 && item.sections[lastSection]){
-									item.sections[lastSection].viewed = now;
-									save = true;
-								}	 else if (!item.sections) {
-									item.sections = [];
-									var h = 0;
-									while (h < lastSection) {
-										item.sections.push({});
-									}
-									item.sections[lastSection].viewed = now;
-									save = true;
-								}
-							}
-						}
-					} else if(lastid !== 'empty' && lastSection === 0){
-						item.sections = [];
-						item.sections[lastSection].viewed = now;
-						save = true;
-					}
-					if(save) { // si el tracking ya se registró y/o no hay tracking que guardar, pues para que molestar a MongoDB
-						item.grades = grades;
-						item.save()
-							.catch((err) => {
-								Err.sendError(res,err,'group_controller','nextBlock -- Saving item -- '+ key_user.name);
-							});
-					}
-					if(ok) {
-						var blockIndex 	= blocks.findIndex(blockIndex => blockIndex == blockid + '');
-						if(blockIndex === -1) {
-							res.status(200).json({
-								'message': 'Block not found. Please check groupid/rosterid and blockid. '
-							});
-							return;
-						} else if (blocks.length === 1) {
-							nextblockid = '';
-							prevblockid = '';
-						} else if (blockIndex === 0) {
-							nextblockid = blocks[blockIndex + 1];
-						} else if (blockIndex > 0 && blockIndex < blocks.length - 1) {
-							nextblockid = blocks[blockIndex + 1];
-							prevblockid = blocks[blockIndex - 1];
-						} else if (blockIndex === blocks.length - 1 && blockIndex !== 0) {
-							prevblockid = blocks[blockIndex - 1];
-						}
-						// buscar el bloque solicitado
-						Block.findById(blockid)
-							.populate(
-								[
-									{
-										path: 'questionnarie',
-										match: { isVisible: true },
-										select: 'type begin minimum maxAttempts questions w shuffle show diagnostic'
-									},
-									{
-										path: 'task',
-										match: { isVisible: true, status: 'published' },
-										select: 'items'
-									}
-								]
-							)
-							.then((block) => {
-								if(block) {
-									var send_block = {
-										track							: item.track,
-										finalGrade				: item.finalGrade,
-										blockCode					: block.code,
-										blockType					: block.type,
-										blockTitle				: block.title,
-										blockSection			:	block.section,
-										blockNumber				: block.number,
-										blockContent			:	block.content,
-										blockMedia				: block.media,
-										blockMinimumTime	: block.defaultmin,
-										blockBegin				: block.begin || false,
-										blockTrack				: false,
-										blockCurrentId		:	block._id,
-										blockPrevId				:	prevblockid,
-										blockNextId				:	nextblockid,
-										studentid					: key_user._id,
-										rosterid					: item._id
-									};
-									if(type === 'group') {
-										send_block.courseCode	= item.group.course.code;
-										send_block.courseId		= item.group.course._id;
-										send_block.groupCode	= item.group.code;
-										send_block.groupId 		= item.group._id;
-										send_block.imageSponsor = item.group.course.imageSponsor;
-									} else {
-										send_block.courseCode	= item.course.code;
-										send_block.courseId		= item.course._id;
-										send_block.imageSponsor = item.course.imageSponsor;
-									}
-
-									if(block.type === 'textVideo' && block.begin) {
-										send_block.blockBegin = true;
-									}
-									if(item.sections.length > 0 && item.sections[section] && item.sections[section].viewed) {
-										send_block.blockUnitBeginning = item.sections[section].viewed;
-									}
-									if(track > 0) {
-										send_block.blockTrack = true;
-									}
-									if(block.duration > 0) {
-										send_block.blockDuration = block.duration + block.durationUnits;
-									}
-									if(block.type === 'questionnarie' && block.questionnarie) {
-										send_block.maxGrade			= currentBlockGrade;
-										send_block.attempts			= numAttempts;
-										if(lastAttempt === undefined) {
-											send_block.lastAttempt = 'never';
-										} else {
-											send_block.lastAttempt	= TA.ago(lastAttempt);
-										}
-										const questionnarie 		= block.questionnarie;
-										const questions 				= questionnarie.questions;
-										var send_questionnarie 	= {};
-										var send_questions = [];
-										questions.forEach(function(q) {
-											var send_question = {};
-											// Crear una forma de generar el id de la pregunta y guardarla si esta no existe
-											if(q._id) {
-												send_question.id = q._id;
-											} else {
-												if(type === 'group') {
-													Err.sendError(res,'question without id','group_controller','nextBlock -- Finding question -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid + ' Questionnarie: ' + questionnarie._id);
-												} else {
-													Err.sendError(res,'question without id','group_controller','nextBlock -- Finding question -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' RosterId: ' + rosterid+ ' Block: ' + blockid + ' Questionnarie: ' + questionnarie._id);
-												}
-
-											}
-											if(q.header){
-												send_question.header = q.header;
-											}
-											if(q.footer){
-												send_question.footer = q.footer;
-											}
-											if(q.footerShow) 	{send_question.footerShow = q.footerShow;	}
-											if(q.type) 				{send_question.type 			= q.type;				}
-											if(q.w) 					{send_question.w 					= q.w;					}
-											if(q.label)				{send_question.label 			= q.label;			}
-											if(q.text) 				{send_question.text 			= q.text;				}
-											if(q.help) 				{send_question.help 			= q.help;				}
-											if(q.display)			{send_question.display 		= q.display;		}
-											if(q.group && q.group.length > 0) 	{send_question.group = q.group;}
-											if(q.options && q.options.length > 0) {
-												var options = [];
-												q.options.forEach(function(o) {
-													options.push({
-														name	: o.name,
-														value	: o.value,
-														eval	: o.eval
-													});
-												});
-												send_question.options = options;
-											}
-											var answers = [];
-											var answer = {};
-											if(q.answers && q.answers.length > 0){
-												q.answers.forEach(function(a) {
-													answer = {
-														type	: a.type,
-														index	: a.index,
-														text	: a.text,
-														tf		: a.tf,
-													};
-													if(a.group && a.group.length > 0) {
-														answer.group = a.group;
-													}
-													answers.push(answer);
-												});
-												send_question.answers = answers;
-											}
-											send_question.order = q.order || false;
-											send_questions.push(send_question);
-										});
-										// si está configurado que se vayan en random, ponlas en random
-
-										var send_questions_shuffle = [];
-										if(questionnarie.shuffle && questionnarie.shuffle === true){ send_questions_shuffle = shuffle(send_questions); }
-										else
-										{ send_questions_shuffle = send_questions; }
-
-										// si está configurado para que muestre solo algunas preguntas, se corta el arreglo
-										if(questionnarie.show && questionnarie.show > 0) {
-
-											if(questionnarie.show <= send_questions_shuffle.length){
-												send_questions_shuffle = send_questions_shuffle.slice(0,questionnarie.show);
-											}
-										}
-										send_questionnarie = {
-											id 						: questionnarie._id,
-											type					: questionnarie.type,
-											begin					: questionnarie.begin,
-											minimum				: questionnarie.minimum,
-											maxAttempts		: questionnarie.maxAttempts,
-											//attempts			: numAttempts,
-											//lastGrade			: lastGrade,
-											w							: questionnarie.w,
-											questions			: send_questions_shuffle
-										};
-										if(questionnarie.diagnostic && questionnarie.diagnostic.aspects && questionnarie.diagnostic.aspects.length > 0) {
-											send_questionnarie.diagnostic = questionnarie.diagnostic;
-										}
-										const grades = item.grades;
-										if(Array.isArray(grades) && grades.length > 0) {
-											let grade = grades.find(grade => grade.block._id + '' === blockid);
-											// console.log(grade);
-											if(grade) {
-												send_block.blockGrade = grade.finalGrade;
-												send_block.blockGradedQ = grade.gradedQ;
-											}
-										}
-										send_block.questionnarie = send_questionnarie;
-									}
-									if(block.type === 'task' && block.task) {
-										var task = block.task;
-										var send_items = [];
-										task.items.forEach(function(item) {
-											var send_item={
-												text: item.text,
-												type: item.type
-											};
-											if(item._id){
-												send_item.id = item._id;
-											} else {
-												if(type === 'group') {
-													Err.sendError(res,'task without id','group_controller','nextBlock -- Finding task -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid + ' Questionnarie: ' + task._id);
-												} else {
-													Err.sendError(res,'task without id','group_controller','nextBlock -- Finding task -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' RosterId: ' + rosterid + ' Block: ' + blockid + ' Questionnarie: ' + task._id);
-												}
-
-											}
-											if(item.header) send_item.header	= item.header;
-											if(item.footer) send_item.footer	= item.footer;
-											if(item.label) 	send_item.label		= item.label;
-											if(item.array1) send_item.array1	= item.array1;
-											if(item.array2) send_item.array2	= item.array2;
-											if(item.style)	send_item.style 	= item.style;
-											if(item.files && item.files.length > 0) 	send_item.files 	= item.files;
-											send_items.push(send_item);
-										});
-										send_block.tasks= send_items;
-										if(lastTaskDelivered && lastTaskDelivered > 0) {
-											send_block.lastTaskDelivered 	= TA.ago(lastTaskDelivered);
-											send_block.lastTaskDate 			= lastTaskDelivered;
-										}
-										const grades = item.grades;
-										if(Array.isArray(grades) && grades.length > 0) {
-											let grade = grades.find(grade => grade.block._id + '' === blockid);
-											if(grade) {
-												send_block.blockGrade = grade.finalGrade;
-												send_block.blockGradedT = grade.gradedT;
-											}
-										}
-									}
-									if(studentStatus === 'pending' && blocksPresented > blocksPending) {
-										res.status(200).json({
-											'message': 'Your student status is pending and you can only have -' + blocksPending + '- free blocks'
-										});
-									} else if (studentStatus === 'remove') {
-										res.status(200).json({
-											'message': 'Your student status is remove and you cannot have blocks from this course'
-										});
-									} else {
-										res.status(200).json({
-											'message': send_block
-										});
-									}
-								} else { // if(block)
-									res.status(200).json({
-										'message': 'Block requested is not found'
-									});
-								}
-							}) // then((block))
-							.catch((err) => {
-								if(type === 'group') {
-									Err.sendError(res,err,'group_controller','nextBlock -- Finding Block -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid);
-								} else {
-									Err.sendError(res,err,'group_controller','nextBlock -- Finding Block -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' RosterId: ' + rosterid + ' Block: ' + blockid);
-								}
-
-							});
-					} else { // if(ok)
-						res.status(200).json({
-							'message': 'Block cannot be displayed because: ' + cause,
-							'messageUser': 'El bloque no puede presentarse debido a: ' + causeSP
-						});
-					}
-				} else {
-					res.status(200).json({
-						'status': 200,
-						'message': 'You are not enrolled to this group/course'
-					});
-				}
-			})
-			.catch((err) => {
+			]).catch((err) => {
 				if(groupid) {
 					Err.sendError(res,err,'group_controller','nextBlock -- Finding Roster --',false,false, `User: ${key_user.name} Userid: ${key_user._id} GroupId: ${groupid} BlockId: ${blockid}`);
 				} else {
 					Err.sendError(res,err,'group_controller','nextBlock -- Finding Roster --',false,false, `User: ${key_user.name} Userid: ${key_user._id} RosterId: ${rosterid} BlockId: ${blockid}`);
 				}
-
+				return;
 			});
+		// Existe el roster? Si no existe, quiere decir que el alumno no está enrolado a este grupo
+		// o hay un error... posiblemente error de token?
+		if(!item) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'status': 200,
+				'message': 'You are not enrolled to this group/course'
+			});
+		}
+
+		var prevblockid = '';
+		var nextblockid = '';
+
+		const studentStatus = item.status;
+		const type = (!item.type || item.type === 'group') ? 'group' : 'public';
+		// Detener el flujo aquí si el curso está inactivo
+
+		if(((!item.type || item.type === 'group') && !item.group.course) || (item.type && item.type === 'public' && !item.course)) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message'	: 'El curso solicitado no está disponible'
+			});
+		}
+
+		// Guardamos el bloque como bloque actual, si existe.
+		// Averiguamos si el bloque debe presentarse por fecha y/o por lapso (también fecha)
+		// En todo caso, ambas fechas deben ser menores a la actual.
+		const now				= new Date();
+		var 	ok				= true;
+		var 	cause 		= '';
+		var		causeSP		= '';
+		var 	save 			= false;
+		var blockDates;
+
+		// detener aquí si el curso ya está expirado
+
+		if((item.openStatus && item.openStatus === 'closed') || (type === 'group' && item.group.endDate < now) || (type === 'group' && item.group && item.group.status && item.group.status == 'closed')) {
+			const courseTitle = (type === 'group') ? item.group.course.title : item.course.title;
+			return res.status(StatusCodes.OK).json({
+				'message': `El curso ${courseTitle} ya está cerrado`
+			});
+		}
+		if(type === 'group' && item.group.status === 'coming') {
+			return res.status(StatusCodes.OK).json({
+				'message': `El curso ${item.group.course.title} no ha abierto todavía`
+			});
+		}
+
+		//
+		const blocks = (type === 'public') ? item.course.blocks : item.group.course.blocks;
+
+		if(lastid !== 'empty') {
+			let blockExists = blocks.find(block => block._id + '' === lastid);
+			if(blockExists) {
+				item.currentBlock = lastid;
+				save = true;
+			}
+		}
+
+		if(type === 'group' && item.group.blockDates && Array.isArray(item.group.blockDates) && item.group.blockDates.length > 0) {
+			blockDates = item.group.blockDates;
+			let foundBlock = blockDates.find(blockDate => blockDate.block + '' === blockid + '');
+			if(foundBlock && now < foundBlock.date) {
+				ok 		= false;
+				cause = 'This lesson must be presented at ' + foundBlock.date;
+				causeSP = causeSP + ' Esta lección debe presentarse según el calendario ' + foundBlock.date.toString();
+			}
+		} else
+		if(type === 'group' && item.group.presentBlockBy && item.group.presentBlockBy === 'dates'){
+			if(item.group.beginDate && item.group.beginDate > now ) {
+				ok 		= false;
+				cause = 'Course will begin at ' + item.group.beginDate + '. ';
+				causeSP = causeSP + ' El curso comenzará el ' + item.group.beginDate + '. ';
+			} else
+			if(item.group.endDate && item.group.endDate < now) {
+				ok 		= false;
+				cause = 'Course ended at ' + item.group.endDate + '. ';
+				causeSP = causeSP + ' El curso terminó el ' + item.group.endDate + '. ';
+			}
+		}
+
+		var grades = [];
+		var currentBlockGrade = 0;
+		var lastAttempt = 0;
+		var numAttempts = 0;
+		var lastIndex 	= 0;
+		var lastSection = 0;
+		var section 		= 0;
+		var lastTaskDelivered = 0;
+		var nextSection = lastSection + 1;
+		if(item.grades && item.grades.length > 0) {
+			grades = item.grades;
+		}
+		var blocksPresented = 0;
+		var blocksPending 	= 2;
+		if(type === 'group' && item.group.admin && item.group.admin.blocksPending) {
+			blocksPending = item.group.admin.blocksPending;
+		}
+		if(grades.length > 0) {
+			//var myGrade = {};
+			var i = 0;
+			var track 	= 0;
+			//var length 	= grades.length;
+			grades.forEach(grade => {
+				if(grade && grade.block && grade.block._id) {
+					if(grade.block._id + '' === lastid + '') {
+						//myGrade = grade.block;
+						lastIndex 	= i;
+						lastSection = grade.block.section;
+						nextSection = grade.block.section + 1;
+					}
+					if(grade.block._id + '' === blockid + '') {
+						currentBlockGrade = grade.maxGradeQ;
+						lastAttempt				= grade.lastAttemptQ;
+						numAttempts				= grade.numAttempts;
+						if(grade.tasktries && grade.tasktries.length > 0) {
+							lastTaskDelivered = grade.tasktries[grade.tasktries.length -1];
+						}
+						track 						= grade.track;
+						section 					= grade.block.section;
+						if(grade.dependencies && grade.dependencies.length > 0) {
+							grade.dependencies.forEach(function(dep) {
+								if(dep.dep.createAttempt && (typeof dep.createAttempt === 'boolean' && !dep.createAttempt)) {
+									ok 			= false;
+									cause		= cause + 'There is a dependency on questionnarie. ';
+									causeSP = causeSP + 'Antes de iniciar esta evaluación, debes presentar la anterior. ';
+								}
+
+								if(dep.dep.saveTask && (typeof dep.saveTask === 'boolean' && !dep.saveTask)) {
+									ok 			= false;
+									cause		= cause + 'There is a dependency on task. ';
+									causeSP = causeSP + 'Antes de iniciar esta tarea, debes presentar la anterior. ';
+								}
+								if(dep.dep.track && (typeof dep.track === 'boolean' && !dep.track)) {
+									ok 			= false;
+									cause		= cause + 'There is a dependency on block. ';
+									causeSP = causeSP + 'Antes de iniciar esta lección, debes presentar la anterior. ';
+								}
+
+							});
+						}
+					}
+				} else {
+					var lastGrade = { block : lastid };
+					if(lastid === 'empty') {
+						lastGrade.track = 0;
+					} else {
+						lastGrade.track = 100;
+					}
+					grades.push(lastGrade);
+				}
+				i++;
+			}); // grades.forEach
+
+			if(lastid !== 'empty' && grades[lastIndex].track !== 100) {
+				grades[lastIndex].track = 100;
+				save 										= true;
+			}
+		} else { // No existe el roster del bloque (aunque sería raro porque ya se debió crear)
+			if(lastid !== 'empty') {
+				grades = [{
+					block: lastid,
+					track: 100
+				}];
+				blocksPresented++;
+				save = true;
+			}
+		}
+		const sectionDisp = section;
+		// validar que exista fecha de inicio para la sección. Si existe mandar mensaje de cuándo empezará
+		if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].beginDate) {
+			const begDate = new Date(item.sections[section].beginDate);
+			const now = new Date();
+			const diff = begDate.getTime() - now.getTime();
+			if(!item.sections[section].viewed && diff > 0) {
+				ok = false;
+				cause = 'Section '+ sectionDisp +' will begin at ' + item.sections[section].beginDate;
+				causeSP = 'La sección '+ sectionDisp +' comenzará el ' + item.sections[section].beginDate;
+			}
+		}
+		if(item.sections && item.sections.length > 0 && item.sections[section] && item.sections[section].endDate && item.sections[section].endDate < now) {
+			if(!item.sections[section].viewed) {
+				ok = false;
+				cause = 'Section '+ sectionDisp +' was closed at ' + item.sections[section].endDate;
+				causeSP = 'La sección '+ sectionDisp +' terminó el ' + item.sections[section].endDate;
+			}
+		}
+
+		if(item.sections) { // existe el arreglo sections?
+			if(item.sections[lastSection]) { // existe el elemento lastSection?
+				if(!item.sections[lastSection].viewed && lastid !== 'empty'){ // si la sección no ha sido vista y mandan el bloque para tracking...
+					item.sections[lastSection].viewed = now;	// entonces registrar la fecha en que se está "viendo" la sección
+					save = true;
+				}
+				if(type === 'group' && item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){ // ahora, si el tipo de presentación de la sección es "lapse"
+					if(item.sections[nextSection] && !item.sections[nextSection].viewed) { // y existe la siguiente sección y no ha sido vista
+						// y existe
+						if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]){
+							item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
+						} else if(item.group.lapse){
+							item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
+						}
+						if(item.sections[lastSection].endDate){
+							delete item.sections[lastSection].endDate;
+						}
+					}
+					if(!item.sections[nextSection]){
+						item.sections[nextSection] = {};
+						if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]){
+							item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
+						} else if(item.group.lapse){
+							item.sections[nextSection].beginDate = expiresIn(now, item.group.lapse);
+						}
+					}
+					save = true;
+				}
+			} else if(lastid !== 'empty'){
+				if(type === 'group' && item.group.presentBlockBy && item.group.presentBlockBy === 'lapse'){ // Si el grupo está seteado por lapso
+					if(item.sections[lastSection]){
+						item.sections[lastSection].viewed	= now;
+					} else {
+						item.sections[lastSection] = {
+							viewed : now
+						};
+					}
+					if(item.group && item.group.lapseBlocks.length > 0 && item.group.lapseBlocks[nextSection]) {
+						if(item.sections[nextSection]){
+							item.sections[nextSection].beginDate = expiresIn(now, item.group.lapseBlocks[nextSection]);
+						} else {
+							item.sections[nextSection] = {
+								beginDate : expiresIn(now, item.group.lapseBlocks[nextSection])
+							};
+						}
+					}
+					save = true;
+				} else {
+					if(item.sections && item.sections.length > 0 && item.sections[lastSection]){
+						item.sections[lastSection].viewed = now;
+						save = true;
+					}	 else if (!item.sections) {
+						item.sections = [];
+						var h = 0;
+						while (h < lastSection) {
+							item.sections.push({});
+						}
+						item.sections[lastSection].viewed = now;
+						save = true;
+					}
+				}
+			}
+		} else if(lastid !== 'empty' && lastSection === 0){
+			item.sections = [];
+			item.sections[lastSection].viewed = now;
+			save = true;
+		}
+		if(save) { // si el tracking ya se registró y/o no hay tracking que guardar, pues para que molestar a MongoDB
+			item.grades = grades;
+			delete item.__v;
+			await item.save()
+				.catch((err) => {
+					Err.sendError(res,err,'group_controller','nextBlock -- Saving item -- '+ key_user.name);
+					return;
+				});
+		}
+		if(!ok) {
+			return res.status(StatusCodes.OK).json({
+				'message': 'Block cannot be displayed because: ' + cause,
+				'messageUser': 'El bloque no puede presentarse debido a: ' + causeSP
+			});
+		}
+		var blockIndex 	= blocks.findIndex(blockIndex => blockIndex == blockid + '');
+		if(blockIndex === -1) {
+			return res.status(StatusCodes.OK).json({
+				'message': 'Block not found. Please check groupid/rosterid and blockid. '
+			});
+		} else if (blocks.length === 1) {
+			nextblockid = '';
+			prevblockid = '';
+		} else if (blockIndex === 0) {
+			nextblockid = blocks[blockIndex + 1];
+		} else if (blockIndex > 0 && blockIndex < blocks.length - 1) {
+			nextblockid = blocks[blockIndex + 1];
+			prevblockid = blocks[blockIndex - 1];
+		} else if (blockIndex === blocks.length - 1 && blockIndex !== 0) {
+			prevblockid = blocks[blockIndex - 1];
+		}
+		// buscar el bloque solicitado
+		const block = await Block.findById(blockid)
+			.populate(
+				[
+					{
+						path: 'questionnarie',
+						match: { isVisible: true },
+						select: 'type begin minimum maxAttempts questions w shuffle show diagnostic'
+					},
+					{
+						path: 'task',
+						match: { isVisible: true, status: 'published' },
+						select: 'items'
+					}
+				]
+			).catch((err) => {
+				if(type === 'group') {
+					Err.sendError(res,err,'group_controller','nextBlock -- Finding Block -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid);
+				} else {
+					Err.sendError(res,err,'group_controller','nextBlock -- Finding Block -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' RosterId: ' + rosterid + ' Block: ' + blockid);
+				}
+				return;
+			});
+		if(!block) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'Block requested is not found'
+			});
+		}
+		var send_block = {
+			track							: item.track,
+			finalGrade				: item.finalGrade,
+			blockCode					: block.code,
+			blockType					: block.type,
+			blockTitle				: block.title,
+			blockSection			:	block.section,
+			blockNumber				: block.number,
+			blockContent			:	block.content,
+			blockMedia				: block.media,
+			blockMinimumTime	: block.defaultmin,
+			blockBegin				: block.begin || false,
+			blockTrack				: false,
+			blockCurrentId		:	block._id,
+			blockPrevId				:	prevblockid,
+			blockNextId				:	nextblockid,
+			studentid					: key_user._id,
+			rosterid					: item._id
+		};
+		if(type === 'group') {
+			send_block.courseCode	= item.group.course.code;
+			send_block.courseId		= item.group.course._id;
+			send_block.groupCode	= item.group.code;
+			send_block.groupId 		= item.group._id;
+			send_block.imageSponsor = item.group.course.imageSponsor;
+		} else {
+			send_block.courseCode	= item.course.code;
+			send_block.courseId		= item.course._id;
+			send_block.imageSponsor = item.course.imageSponsor;
+		}
+
+		if(block.type === 'textVideo' && block.begin) {
+			send_block.blockBegin = true;
+		}
+		if(item.sections.length > 0 && item.sections[section] && item.sections[section].viewed) {
+			send_block.blockUnitBeginning = item.sections[section].viewed;
+		}
+		if(track > 0) {
+			send_block.blockTrack = true;
+		}
+		if(block.duration > 0) {
+			send_block.blockDuration = block.duration + block.durationUnits;
+		}
+		if(block.type === 'questionnarie' && block.questionnarie) {
+			send_block.maxGrade			= currentBlockGrade;
+			send_block.attempts			= numAttempts;
+			if(lastAttempt === undefined) {
+				send_block.lastAttempt = 'never';
+			} else {
+				send_block.lastAttempt	= TA.ago(lastAttempt);
+			}
+			const questionnarie 		= block.questionnarie;
+			const questions 				= questionnarie.questions;
+			var send_questionnarie 	= {};
+			var send_questions = [];
+			questions.forEach(function(q) {
+				var send_question = {};
+				// Crear una forma de generar el id de la pregunta y guardarla si esta no existe
+				if(q._id) {
+					send_question.id = q._id;
+				} else {
+					if(type === 'group') {
+						Err.sendError(res,'question without id','group_controller','nextBlock -- Finding question -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid + ' Questionnarie: ' + questionnarie._id);
+					} else {
+						Err.sendError(res,'question without id','group_controller','nextBlock -- Finding question -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' RosterId: ' + rosterid+ ' Block: ' + blockid + ' Questionnarie: ' + questionnarie._id);
+					}
+
+				}
+				if(q.header){
+					send_question.header = q.header;
+				}
+				if(q.footer){
+					send_question.footer = q.footer;
+				}
+				if(q.footerShow) 	{send_question.footerShow = q.footerShow;	}
+				if(q.type) 				{send_question.type 			= q.type;				}
+				if(q.w) 					{send_question.w 					= q.w;					}
+				if(q.label)				{send_question.label 			= q.label;			}
+				if(q.text) 				{send_question.text 			= q.text;				}
+				if(q.help) 				{send_question.help 			= q.help;				}
+				if(q.display)			{send_question.display 		= q.display;		}
+				if(q.group && q.group.length > 0) 	{send_question.group = q.group;}
+				if(q.options && q.options.length > 0) {
+					var options = [];
+					q.options.forEach(function(o) {
+						options.push({
+							name	: o.name,
+							value	: o.value,
+							eval	: o.eval
+						});
+					});
+					send_question.options = options;
+				}
+				var answers = [];
+				var answer = {};
+				if(q.answers && q.answers.length > 0){
+					q.answers.forEach(function(a) {
+						answer = {
+							type	: a.type,
+							index	: a.index,
+							text	: a.text,
+							tf		: a.tf,
+						};
+						if(a.group && a.group.length > 0) {
+							answer.group = a.group;
+						}
+						answers.push(answer);
+					});
+					send_question.answers = answers;
+				}
+				send_question.order = q.order || false;
+				send_questions.push(send_question);
+			});
+			// si está configurado que se vayan en random, ponlas en random
+
+			var send_questions_shuffle = [];
+			if(questionnarie.shuffle && questionnarie.shuffle === true){ send_questions_shuffle = shuffle(send_questions); }
+			else
+			{ send_questions_shuffle = send_questions; }
+
+			// si está configurado para que muestre solo algunas preguntas, se corta el arreglo
+			if(questionnarie.show && questionnarie.show > 0) {
+
+				if(questionnarie.show <= send_questions_shuffle.length){
+					send_questions_shuffle = send_questions_shuffle.slice(0,questionnarie.show);
+				}
+			}
+			send_questionnarie = {
+				id 						: questionnarie._id,
+				type					: questionnarie.type,
+				begin					: questionnarie.begin,
+				minimum				: questionnarie.minimum,
+				maxAttempts		: questionnarie.maxAttempts,
+				//attempts			: numAttempts,
+				//lastGrade			: lastGrade,
+				w							: questionnarie.w,
+				questions			: send_questions_shuffle
+			};
+			if(questionnarie.diagnostic && questionnarie.diagnostic.aspects && questionnarie.diagnostic.aspects.length > 0) {
+				send_questionnarie.diagnostic = questionnarie.diagnostic;
+			}
+			const grades = item.grades;
+			if(Array.isArray(grades) && grades.length > 0) {
+				let grade = grades.find(grade => grade.block._id + '' === blockid);
+				// console.log(grade);
+				if(grade) {
+					send_block.blockGrade = grade.finalGrade;
+					send_block.blockGradedQ = grade.gradedQ;
+				}
+			}
+			send_block.questionnarie = send_questionnarie;
+		}
+		if(block.type === 'task' && block.task) {
+			var task = block.task;
+			var send_items = [];
+			task.items.forEach(item =>  {
+				var send_item={
+					text: item.text,
+					type: item.type
+				};
+				if(item._id){
+					send_item.id = item._id;
+				} else {
+					if(type === 'group') {
+						Err.sendError(res,'task without id','group_controller','nextBlock -- Finding task -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' GroupId: ' + groupid + ' Block: ' + blockid + ' Questionnarie: ' + task._id);
+					} else {
+						Err.sendError(res,'task without id','group_controller','nextBlock -- Finding task -- User: ' + key_user.name + ' Userid: ' + key_user._id + ' RosterId: ' + rosterid + ' Block: ' + blockid + ' Questionnarie: ' + task._id);
+					}
+				}
+				if(item.header) send_item.header	= item.header;
+				if(item.footer) send_item.footer	= item.footer;
+				if(item.label) 	send_item.label		= item.label;
+				if(item.array1) send_item.array1	= item.array1;
+				if(item.array2) send_item.array2	= item.array2;
+				if(item.style)	send_item.style 	= item.style;
+				if(item.files && item.files.length > 0) 	send_item.files 	= item.files;
+				send_items.push(send_item);
+			});
+			send_block.tasks= send_items;
+			if(lastTaskDelivered && lastTaskDelivered > 0) {
+				send_block.lastTaskDelivered 	= TA.ago(lastTaskDelivered);
+				send_block.lastTaskDate 			= lastTaskDelivered;
+			}
+			const grades = item.grades;
+			if(Array.isArray(grades) && grades.length > 0) {
+				let grade = grades.find(grade => grade.block._id + '' === blockid);
+				if(grade) {
+					send_block.blockGrade = grade.finalGrade;
+					send_block.blockGradedT = grade.gradedT;
+				}
+			}
+		}
+		if(studentStatus === 'pending' && blocksPresented > blocksPending) {
+			res.status(StatusCodes.OK).json({
+				'message': 'Your student status is pending and you can only have -' + blocksPending + '- free blocks'
+			});
+		} else if (studentStatus === 'remove') {
+			res.status(StatusCodes.OK).json({
+				'message': 'Your student status is remove and you cannot have blocks from this course'
+			});
+		} else {
+			res.status(StatusCodes.OK).json({
+				'message': send_block
+			});
+		}
 	}, // nextBlock
 
 	usersWOActivity(req,res) {
@@ -3932,93 +4148,166 @@ module.exports = {
 			});
 	}, //setGrade
 
-	setRubric(req,res) {
-		const rubric = req.body.rubric;
-		if(rubric && rubric.length < 0) {
-			res.status(406).json({
-				'status': 406,
-				'message': 'No rubric found. Please provide some rubric'
+	async getRubric(req,res) {
+		const key_user = res.locals.user;
+		if(!key_user.roles.isInstructor && !key_user.roles.isSupervisor && !key_user.roles.isAdmin) {
+			return res.status(StatusCodes.FORBIDDEN).json({
+				message: 'No tienes autorización para realizar esta actividad'
 			});
-			return;
 		}
-		var query = {course: req.body.course};
-		if(req.body.group) {
-			query = {_id: req.body.group};
-		}
-		Group.find(query)
-			.then((groups) => {
-				if(groups && groups.length > 0) {
-					groups.forEach(group => {
-						if(group.rubric && group.rubric.length > 0) {
-							rubric.forEach(r => {
-								var found = false;
-								group.rubric.forEach(rub => {
-									if(rub.block + '' === r.block + '') {
-										rub.w 	= r.w;
-										rub.wq 	= r.wq;
-										rub.wt 	= r.wt;
-										found = true;
-									}
-								});
-								if(!found) {
-									group.rubric.push({
-										w			: r.w,
-										wq		:	r.wq,
-										wt		: r.wt,
-										block	: mongoose.Types.ObjectId(r.block)
-									});
-								}
-							});
-						}
-						group.save()
-							.catch((err) => {
-								Err.sendError(res,err,'group_controller','setRubric -- Saving group -- group: ' + group._id);
-							});
-					});
-					res.status(200).json({
-						'status': 200,
-						'message': 'Rubric set',
-						'groups': groups.length
-					});
-				} else {
-					res.status(200).json({
-						'status': 200,
-						'message': 'No groups found'
-					});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'group_controller','setGrade -- Finding Rosters -- groupid: ' + req.query.groupid + ' blockid: ' + req.query.blockid );
-			});
-	}, //setGrade
-
-	resetRubric(req,res) {
-		Group.findById(req.query.id)
+		var group = await Group.findById(req.params.groupid)
 			.populate({
 				path: 'course',
-				select: 'blocks',
+				select: 'blocks title',
 				populate: {
 					path: 'blocks',
-					select: 'w,wq,wt'
+					select: 'w wq wt section number title type'
 				}
-			})
-			.then(group => {
-				var blocks = group.course.blocks;
-				var rubric = [];
-				if(blocks.length > 0) {
-					blocks.forEach(block => {
-						rubric.push({
-							wq: block.wq,
-							wt: block.wt,
-							w: block.w,
-							block: block._id
-						});
-					});
-					res.status(200).json(rubric);
+			}).catch((err) => {
+				Err.sendError(res,err,'group_controller','getRubric -- Finding group -- groupid: ' + req.params.groupid );
+				return;
+			});
+		if(!group) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: `No existe grupo con id ${req.params.groupid}`
+			});
+		}
+		if(!group.rubric) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: `No existe no existe rúbrica para el grupo con id ${req.params.groupid}`
+			});
+		}
+		var save = false;
+		group.rubric.forEach(r => {
+			const foundBlock = group.course.blocks.find(b => b._id + '' === r.block + '');
+			if(foundBlock && !r.type){
+				r.type = foundBlock.type;
+				save = true;
+			}
+		});
+		if(save) {
+			await group.save().catch((err) => {
+				Err.sendError(res,err,'group_controller','getRubric -- Saving group after get it-- groupid: ' + req.params.groupid);
+				return;
+			});
+		}
+		// console.log(group.course);
+		res.status(StatusCodes.OK).json({
+			group: {
+				code: group.code,
+				name: group.name,
+				_id: group._id
+			},
+			rubric: group.rubric,
+			course: {
+				_id: group.course._id,
+				title: group.course.title,
+				rubric: group.course.blocks
+			}
+		});
+	}, //getRubric
+
+	async setRubric(req,res) {
+		const rubric = req.body;
+		// Revisar Rúbrica
+		if(!rubric || (rubric && rubric.length === 0)) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'No hay rúbrica para proceder'
+			});
+		}
+		var errorDetails = [];
+		rubric.forEach(block => {
+			const properties = Object.keys(block);
+			var foundError = false;
+			if(!properties.includes('block')) foundError.block = 'No existe block';
+			if(!properties.includes('w')) foundError.w = 'No existe Peso del bloque(w)';
+			if(!properties.includes('wq')) foundError.wq = 'No existe Peso del cuestionario(wq)';
+			if(!properties.includes('wt')) foundError.wt = 'No existe Peso de tarea(wq)';
+			if(!properties.includes('section')) foundError.section = 'No existe número de sección (section)';
+			if(!properties.includes('number')) foundError.number = 'No existe número de lección (number)';
+			if(foundError) errorDetails.push(foundError);
+		});
+		if(errorDetails.length > 0) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Error',
+				error: errorDetails
+			});
+		}
+		const group = await Group.findById(req.params.groupid)
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','setGrade -- Finding Rosters -- groupid: ' + req.query.groupid + ' blockid: ' + req.query.blockid );
+				return;
+			});
+		if(!group) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: `No existe grupo con id ${req.params.groupid}`
+			});
+		}
+		group.rubric = [...rubric];
+		await group.save()
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','setRubric -- Saving group -- group: ' + group._id);
+				return;
+			});
+		res.status(200).json({
+			'message': `Rúbrica del grupo ${group.code} actualizada`,
+		});
+
+
+	}, //setRubric
+
+	async resetRubric(req,res) {
+		const key_user = res.locals.user;
+		if(!key_user.roles.isInstructor && !key_user.roles.isSupervisor && !key_user.roles.isAdmin) {
+			return res.status(StatusCodes.FORBIDDEN).json({
+				message: 'No tienes autorización para realizar esta actividad'
+			});
+		}
+
+		var group = await Group.findById(req.params.groupid)
+			.populate({
+				path: 'course',
+				select: 'blocks title',
+				populate: {
+					path: 'blocks',
+					select: 'w wq wt section number title'
 				}
 			}).catch((err) => {
 				Err.sendError(res,err,'group_controller','resetRubric -- Finding group -- groupid: ' + req.query.id );
+				return;
 			});
+		if(!group) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: `No existe grupo con id ${req.params.groupid}`
+			});
+		}
+		if(key_user.roles.isInstructor && !key_user.roles.isSupervisor && !key_user.roles.isAdmin && group.instructor !== key_user._id) {
+			return res.status(StatusCodes.UNAUTHORIZED).json({
+				message: `No eres el instructor del grupo ${req.params.groupid}`
+			});
+		}
+		const blocks = group.course.blocks;
+		if(blocks.length > 0) {
+			group.rubric = blocks.map(block => {
+				return {
+					block: block._id,
+					section: block.section,
+					number: block.number,
+					title: block.title,
+					type: block.type,
+					w: block.w,
+					wq: block.wq,
+					wt: block.wt
+				};
+			});
+			await group.save().catch((err) => {
+				Err.sendError(res,err,'group_controller','resetRubric -- Saving group -- groupid: ' + req.query.id );
+				return;
+			});
+			res.status(StatusCodes.OK).json({
+				message: `Rúbrica del grupo ${group.code} generada a partir del curso -${group.course.title}- (Reset)`
+			});
+		}
 	}, //resetRubric
 
 	async touchGrade(req,res) {

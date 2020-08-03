@@ -450,6 +450,7 @@ module.exports = {
 			user.admin.validationString = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
 			await user.save().catch((err) => {
 				Err.sendError(res,err,'user_controller','muir -- Saving User validation String --');
+				return;
 			});
 			// if(SPECIAL) {
 			// 	var fiscal = new Fiscal({
@@ -480,7 +481,9 @@ module.exports = {
 			// 	'Nombre': user.person.name,
 			// 	'confirmation_link':link,
 			// };
-			const message = `${user.person.name},<br>Bienvenido al sistema Conalep.<br>El administrador te acaba de registrar en este portal, y requiere que realices una validación de tus datos registrados. Por favor, da clic en la siguiente liga y sigue las instrucciones:<br><a href="${link}">link</a><br>Si la liga anterior no funciona, por favor copia y pega la liga en tu navegador.<br>Lo anterior te pedirá que valides tu información y que generes una contraseña.<br>Selecciona una contraseña nueva, escríbela y guárdala en y lugar seguro.<br>El Conalep se reserva el derecho a restringir el uso de la plataforma si no se le da el uso correcto a la misma.<br>En otro correo te llegará información acerca del curso o cursos en el o los que estarás enrolado.`;
+			const message = `<h4>Bienvenido al sistema Conalep</h4>
+			<p style="color:red;">Por favor, lee cuidadósamente las siguientes instrucciones:</p>
+			<p>El administrador te acaba de registrar en este portal, y requiere que realices una validación de tus datos registrados. Por favor, da clic en el siguiente botón y sigue las instrucciones:</p><a href="${link}"><button style="background-color:green;border:none;color:white;padding:10px 20px;text-align=center;text-decoration:none;display:inline-block;font-size:14px;margin: 4px 2px;cursor:pointer;">Validar correo</button></a><p>Si el botón anterior no funciona, por favor copia y pega la siguiente liga en tu navegador.</p>${link}<p>Cuando realices este procedimiento se te pedirá que valides tu información y que generes una contraseña.</p><p>Selecciona una contraseña nueva, escríbela y guárdala en un lugar seguro.</p><p>El Conalep se reserva el derecho a restringir el uso de la plataforma si no se le da el uso correcto a la misma.</p><p>En otro correo te llegará información acerca del curso o cursos en el o los que estarás enrolado.</p>`;
 			await Mailjet.sendGenericMail(user.person.email, user.person.name,subject,message,instanceOU)
 				.catch((err) => {
 					let mailErr = err.toString();

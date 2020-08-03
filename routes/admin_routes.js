@@ -91,4 +91,5 @@ module.exports = (app) => {
 	app.get('/api/v1/admin/instances',
 		InstanceController.list
 	);
+	app.patch('/api/v1/admin/:user/ou/:ou',			UserController.changeOU);
 };

@@ -1038,7 +1038,7 @@ module.exports = function(req, res, next) {
 				'status': 406,
 				'message': 'Error 1780: Please, give data by body to process'
 			});
-		} else if(!req.body.groupid) {
+		} else if(!req.body.id) {
 			res.status(406).json({
 				'status': 406,
 				'message': 'Error 1781: Please, give groupid by body to process'
@@ -2927,7 +2927,7 @@ module.exports = function(req, res, next) {
 			next();
 		}
 		break;
-
+		
 	case '/api/v1/requester/request/setpayment':
 		if(!req.body) {  // POST
 			res.status(406).json({

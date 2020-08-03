@@ -2064,7 +2064,60 @@ module.exports = {
 			isInstructor: user.roles.isInstructor
 		};
 		res.status(StatusCodes.OK).json(user);
-	}
+	}, //validateInstructor
+
+	async changeOU(req,res) {
+		const key_user = res.locals.user;
+		const user = (req.params.user && req.params.user === 'self') ? key_user.name : req.params.user;
+		const ou = req.params.ou;
+		// console.log(ou);
+		if(!key_user.roles.isAdmin) {
+			return res.status(StatusCodes.UNAUTHORIZED).json({
+				message: 'No estás autorizado'
+			});
+		}
+
+		if(!user) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'user es requerido'
+			});
+		}
+		if(!ou) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'ou es requerido'
+			});
+		}
+		const orgUnit = await OrgUnit.findOne({name:ou})
+			.select('_id')
+			.lean()
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','finding orgUnit: ' + ou);
+				return;
+			});
+		// console.log(orgUnit);
+		if(!orgUnit) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: `OU ${ou} no existe`
+			});
+		}
+		const modUser = await User.findOne({name:user}).catch((err) => {
+			Err.sendError(res,err,'user_controller','finding user: ' + user);
+			return;
+		});
+		if(!modUser) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: `User ${user} no existe`
+			});
+		}
+		modUser.orgUnit = orgUnit._id;
+		await modUser.save().catch((err) => {
+			Err.sendError(res,err,'user_controller','saving User: ' + user);
+			return;
+		});
+		res.status(StatusCodes.OK).json({
+			message: 'Usuario modificado'
+		});
+	}, //changeOU
 
 };
 

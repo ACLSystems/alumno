@@ -64,6 +64,20 @@ module.exports = {
 			.isMongoId()
 			.withMessage('tutorid debe ser un id válido')
 	],
+	getRubric: [
+		param('groupid')
+			.exists()
+			.withMessage('groupid es requerido')
+			.isMongoId()
+			.withMessage('groupid debe ser un id válido')
+	],
+	resetRubric: [
+		param('groupid')
+			.exists()
+			.withMessage('groupid es requerido')
+			.isMongoId()
+			.withMessage('groupid debe ser un id válido')
+	],
 	results(req,res,next) {
 		//console.log(req.headers);
 		const errors = validationResult(req);

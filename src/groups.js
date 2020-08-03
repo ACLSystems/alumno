@@ -70,7 +70,12 @@ const RubricSchema = new Schema ({
 	number: {
 		type: Number
 	},
-	text: String
+	title: String,
+	type: String,
+	taskJustDelivery: {
+		type: Boolean,
+		default: false
+	}
 },{ _id: false });
 
 module.exports = RubricSchema;

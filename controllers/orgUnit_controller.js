@@ -290,7 +290,7 @@ module.exports = {
 			});
 		}
 		var sort = req.query.sort ? { longName: req.query.sort } : { name: 1 },
-			skip = req.query.skip || 0,
+			skip = +req.query.skip || 0,
 			limit = req.query.limit ? +req.query.limit : 15,
 			query = req.query.query ? JSON.parse(req.query.query) : {};
 		if(key_user.roles.isSupervisor && !key_user.roles.isAdmin && !key_user.roles.isOrg) {
@@ -301,6 +301,7 @@ module.exports = {
 		const org = await Org.findOne({ name: req.params.org })
 			.catch((err) => {
 				Err.sendError(res,err,'orgUnit_controller','list -- Finding org --');
+				return;
 			});
 		if(!org) {
 			return res.status(StatusCodes.NOT_FOUND).json({
@@ -313,15 +314,17 @@ module.exports = {
 			.skip(skip)
 			.limit(limit)
 			.select('name longName type org parent geometry address')
-			.catch((err) => {
+			.catch(err => {
+				console.log(err);
 				Err.sendError(res,err,'orgUnit_controller','list -- Finding orgUnit --');
+				return;
 			});
 		res.status(StatusCodes.OK).json(ous);
 	}, // list
 
 	async publiclist(req,res) {
 		var sort = req.query.sort ? { longName: req.query.sort } : { longName: 1 },
-			skip = req.query.skip || 0,
+			skip = +req.query.skip || 0,
 			limit = req.query.limit ? +req.query.limit : 15,
 			query = { parent: req.params.parent };
 		const org = await Org.findOne({ name: req.params.org })

@@ -5,8 +5,8 @@ const User					= require('./users');
 const Course				= require('./courses');
 const Group					= require('./groups');
 const Certificate		= require('./certificates');
-const Block 				= require('./blocks');
-const Task 					= require('./tasks');
+// const Block 				= require('./blocks');
+// const Task 					= require('./tasks');
 const Mailjet				= require('../shared/mailjet');
 const DefaultConfig	= require('../src/default');
 const Schema 				= mongoose.Schema;
@@ -210,36 +210,44 @@ const GradesSchema = new Schema ({
 	}
 },{ _id: false });
 
-GradesSchema.pre('save', async function(next) {
-	if(this.tasks && Array.isArray(this.tasks) && this.tasks.length >0) {
-		const task	= await Block.findOne({_id: this.block}).select('task -_id').lean();
-		const oriTasks	= await Task.findOne({_id: task.task}).select('items -_id').lean();
-		this.tasks.forEach(task => {
-			const oriTask = oriTasks.items.find(t => t.label === task.label);
-			if(oriTask){
-				task.text = oriTask.text;
-				task.id		= oriTask._id;
-			} else {
-				const oriTask2 = oriTasks.items.find(t => t._id === task.id);
-				if(oriTask2) {
-					task.text = oriTask.text;
-				}
-			}
-		});
-		this.tasks.sort(function(a,b) {
-			var labelA = a.label.toUpperCase();
-			var labelB = b.label.toUpperCase();
-			if(labelA < labelB) {
-				return -1;
-			}
-			if(labelA > labelB) {
-				return 1;
-			}
-			return 0;
-		});
-	}
-	next();
-});
+// GradesSchema.pre('save', async function(next) {
+// 	if(this.tasks && Array.isArray(this.tasks) && this.tasks.length >0) {
+// 		// console.log('Seguramente aquí estaremos modificando el roster... jejeje');
+// 		const block	= await Block.findOne({_id: this.block})
+// 			.select('task')
+// 			.populate({
+// 				path: 'task',
+// 				select: 'items'
+// 			})
+// 			.lean();
+// 		const oriTasks	= (block && block.task && block.task.items) ? block.task.items : null;
+// 		if(!oriTasks) next();
+// 		this.tasks.forEach(task => {
+// 			const oriTask = oriTasks.find(t => t.label === task.label);
+// 			if(oriTask){
+// 				task.text = oriTask.text;
+// 				task.id		= oriTask._id;
+// 			} else {
+// 				const oriTask2 = oriTasks.find(t => t._id + '' === task.id + '');
+// 				if(oriTask2) {
+// 					task.text = oriTask2.text;
+// 				}
+// 			}
+// 		});
+// 		this.tasks.sort((a,b) => {
+// 			var labelA = a.label.toUpperCase();
+// 			var labelB = b.label.toUpperCase();
+// 			if(labelA < labelB) {
+// 				return -1;
+// 			}
+// 			if(labelA > labelB) {
+// 				return 1;
+// 			}
+// 			return 0;
+// 		});
+// 	}
+// 	next();
+// });
 
 GradesSchema.pre('save', function(next) {
 	if(this.quests.length > 0) {
@@ -260,11 +268,12 @@ GradesSchema.pre('save', function(next) {
 		var tasks = 0;
 		var grades = 0;
 		var graded = true;
-		this.tasks.forEach(function(t) {
+		this.tasks.forEach(t => {
 			tasks++;
-			if(t.justDelivery) {
-				grades = grades + 100;
-			} else if(t.graded) {
+			// if(t.justDelivery) {
+			// 	grades = grades + 100;
+			// } else
+			if(t.graded) {
 				grades = grades + t.grade;
 			}
 			if(t.graded === true) {
@@ -281,11 +290,21 @@ GradesSchema.pre('save', function(next) {
 	var wTotal = this.wq + this.wt;
 	if(wTotal > 0 && this.track === 100){
 		// console.log('Aquí cambiamos el finalGrade');
-		this.finalGrade = (((this.wq * this.maxGradeQ)+(this.wt*this.gradeT))/(wTotal));
+		const finalGrade = (((this.wq * this.maxGradeQ)+(this.wt*this.gradeT))/(wTotal));
+
+		// redondeamos a 5 cífras para evitar decimales no deseados
+		let val = Math.pow(10,5);
+		this.finalGrade = Math.round(finalGrade * val) / val;
+
 	} else if(this.w === 0){
 		// Esta parte es para asegurarnos que no haya calificaciones en donde no debe
 		this.finalGrade = 0;
 	}
+	// Y de cualquier forma, si rebasamos el 100 por los decimales solo le ponemos 100
+	if(this.finalGrade > 100) {
+		this.finalGrade = 100;
+	}
+	// hay un error porque se generan cifras de 100.00000000000001
 	next();
 });
 
@@ -476,7 +495,7 @@ async function() {
 				(a.blockNumber > b.blockNumber) ? 1 : -1) :
 				-1 );
 	item.grades = [...sectionGrades, ...noSectionGrades];
-	console.log(sectionGrades.length,noSectionGrades.length);
+	// console.log(sectionGrades.length,noSectionGrades.length);
 	await item.save();
 };
 
@@ -707,7 +726,12 @@ RosterSchema.pre('save', async function(next) {
 					sec.grades.forEach(g => {
 						g.wPer = sec.wTotal ? g.w / sec.wTotal : 0;
 					});
-					sec.finalGrade = sec.grades.reduce((acc,curr) => acc + curr.finalGrade * curr.wPer,0);
+					let val = Math.pow(10,5);
+					let finalGradeTmp = sec.grades.reduce((acc,curr) => acc + curr.finalGrade * curr.wPer,0);
+					sec.finalGrade = Math.round(finalGradeTmp * val) / val;
+					if(sec.finalGrade > 100) {
+						sec.finalGrade = 100;
+					}
 					let found = item.grades.findIndex(grade => grade.block + '' === sec.block + '');
 					if(found > -1) {
 						item.grades[found].finalGrade = sec.finalGrade;
@@ -719,7 +743,12 @@ RosterSchema.pre('save', async function(next) {
 			// console.log(JSON.stringify(grades2,null,2));
 
 			const wTotal = grades2.reduce((acc,curr) => acc + curr.w,0);
-			const finalGrade = grades2.reduce((acc,curr) => acc + (curr.w / wTotal) * curr.finalGrade,0);
+			let val = Math.pow(10,5);
+			let finalGrade = grades2.reduce((acc,curr) => acc + (curr.w / wTotal) * curr.finalGrade,0);
+			finalGrade = Math.round(finalGrade * val) / val;
+			if(finalGrade > 100) {
+				finalGrade = 100;
+			}
 			// console.log(wTotal, finalGrade);
 			item.finalGrade = finalGrade;
 		}

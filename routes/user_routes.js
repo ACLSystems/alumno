@@ -33,7 +33,7 @@ module.exports = (app) => {
 	app.get ('/api/v1/user/getgrade',						GroupController.getGrade);
 	app.get ('/api/v1/user/nextblock', 					GroupController.nextBlock);
 	app.get ('/api/v1/user/getresource', 				GroupController.getResource);
-	app.put ('/api/v1/user/savetask', 					GroupController.saveTask);
+	app.put ('/api/v1/user/savetask', 					GroupController.saveTask2);
 	app.get ('/api/v1/user/tookcert', 					GroupController.tookCertificate);
 	app.post('/api/v1/user/comment/create', 		DiscussionController.create);
 	app.get ('/api/v1/user/comment/get',				DiscussionController.get);
