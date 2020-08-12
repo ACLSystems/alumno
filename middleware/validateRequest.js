@@ -53,16 +53,19 @@ module.exports = async function(req, res, next) {
 	} catch (err) {
 		if(err.name === 'TokenExpiredError'){
 			var tokenDecoded = jsonwebtoken.decode(token);
-			var userExpired = await Users.findById(tokenDecoded.userid).catch((err) => {
-				Err.sendError(res,err,'Validate Request','-- Finding User Expired: ' + tokenDecoded.sub);
-				return;
-			});
+			var userExpired = await Users.findById(tokenDecoded.userid)
+				.select('-__v')
+				.catch((err) => {
+					Err.sendError(res,err,'Validate Request','-- Finding User Expired: ' + tokenDecoded.sub);
+					return;
+				});
 			if(!userExpired) {
 				return res.status(StatusCodes.UNAUTHORIZED).json({
-					message: 'El token que el usuario proporcionó está expirado y no existe en este sistema'
+					message: 'Token expirado. Favor de iniciar sesión'
 				});
 			}
-			userExpired.admin.tokens = userExpired.admin.tokens.filter(tok => tok !== token );
+			// userExpired.admin.tokens = userExpired.admin.tokens.filter(tok => tok !== token );
+			userExpired.admin.tokens = [];
 			await userExpired.save().catch((err) => {
 				Err.sendError(res,err,'Validate Request','-- Saving User Expired: ' + tokenDecoded.sub);
 				return;

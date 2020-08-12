@@ -44,14 +44,18 @@ module.exports = {
 	validateEmail: [
 		header('content-type','Encabezado incorrecto - solo application/json')
 			.equals('application/json'),
-		body('email').exists().isEmail()
+		body('email')
+			.exists()
+			.withMessage('Se requiere email en el body')
+			.isEmail()
+			.withMessage('Debe ser un correo válido')
 	],
 	passwordRecovery: [
 		header('content-type','Encabezado incorrecto - solo application/json')
 			.equals('application/json'),
 		body('email').exists().isEmail(),
 		body('emailID').exists(),
-		body('password').exists(),
+		// body('password').exists(),
 	],
 	getCertificate: [
 		// header('content-type','Encabezado incorrecto - solo application/json')

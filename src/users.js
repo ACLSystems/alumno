@@ -164,6 +164,11 @@ const RolesSchema = new Schema ({
 		required: true,
 		default: false
 	},
+	isMonitor: {
+		type: Boolean,
+		required: true,
+		default: false
+	},
 	isRequester: {
 		type: Boolean,
 		required: true,
@@ -204,6 +209,11 @@ const AdmUsrSchema = new Schema({
 		type: String,
 		default: ''
 	},
+	// recoverNumber Cadena para validar la pérdidad de password
+	recoverNumber: {
+		type: Number,
+		default: 0
+	},
 	// passwordSaved ???
 	passwordSaved:{
 		type: String,
@@ -226,7 +236,10 @@ const AdmUsrSchema = new Schema({
 	// tokens del usuario
 	tokens: [{
 		type: String
-	}]
+	}],
+	lastLogin: {
+		type: Date
+	}
 },{ _id: false });
 
 // Definir virtuals

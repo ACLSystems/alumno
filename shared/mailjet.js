@@ -1,4 +1,5 @@
 const Default = require('../src/default');
+const Instance = require('../src/instances');
 const mailjet = require ('node-mailjet')
 	.connect(process.env.MJ_APIKEY_PUBLIC, process.env.MJ_APIKEY_PRIVATE);
 const request = mailjet.post('send', {'version': 'v3.1'});
@@ -75,9 +76,14 @@ exports.sendMail = function(toEmail,toName,subject,templateID,variables) {
 
 exports.sendGenericMail =
 async function(toEmail,toName,subject,
-	message,instance) {
+	message,instanceName) {
 	// console.log('Sí! - generic mail');
-	const genericTemplate = await Default.findOne({module: defaultModule, code, instance});
+	const instance = await Instance.getInstance(instanceName,'ouName');
+	if(!instance) {
+		console.log('No hay instancia/OU para enviar correo genérico');
+		return null;
+	}
+	var genericTemplate = await Default.findOne({module: defaultModule, code, instance});
 	if(!genericTemplate) {
 		throw new Error('No existe configuración');
 	}

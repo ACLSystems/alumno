@@ -62,6 +62,10 @@ module.exports = (app) => {
 		GroupController.createRoster
 	);
 
+	app.patch('/api/v1/tr/:username',
+		UserController.resetTokens
+	);
+
 	app.get ('/api/v1/validateinstructor/:name',
 		Validate.validateInstructor,
 		Validate.results,
@@ -90,6 +94,10 @@ module.exports = (app) => {
 		Validate.resetRubric,
 		Validate.results,
 		GroupController.resetRubric
+	);
+
+	app.get ('/api/v1/rubric/:groupid/sync',
+		GroupController.syncRubric
 	);
 
 	// REQUESTS

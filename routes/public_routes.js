@@ -104,7 +104,8 @@ module.exports = (app) => {
 	app.post('/api/user/validateemail',
 		Validate.validateEmail,
 		Validate.results,
-		UserController.validateEmail);
+		UserController.validateEmail
+	);
 
 	/** @api {post} /api/user/passwordrecovery
 		* @apiName Validar cuenta de correo para recuperar password del usuario

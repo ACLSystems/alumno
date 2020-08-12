@@ -2,6 +2,8 @@ const StatusCodes = require('http-status-codes');
 //const jwt 				= require('jwt-simple');
 const jsonwebtoken = require('jsonwebtoken');
 const Users 			= require('../src/users');
+const Orgs 				= require('../src/orgs');
+const OrgUnits 		= require('../src/orgUnits');
 const Session			= require('../src/sessions');
 const Time 				= require('../shared/time');
 const cache 			= require('../src/cache');
@@ -55,20 +57,43 @@ module.exports = {
 			})
 			.populate([{
 				path: 'orgUnit',
-				select: 'name parent type longName',
-				options: { lean: true }
+				select: 'name parent type longName'
 			},{
 				path: 'org',
-				select: 'name longName',
-				options: { lean: true }
-			}]).catch((err) => {
+				select: 'name longName'
+			}])
+			.catch((err) => {
 				Err.sendError(res,err,'auth','login -- Finding User --');
+				return;
 			});
 		if(!user) {
 			return res.status(StatusCodes.NOT_FOUND).json({
 				'message': 'Error: el usuario o el password no son correctos'
 			});
 		}
+		// console.log(user);
+		if(!user.orgUnit.name && checkValidOID(user.orgUnit)) {
+			// console.log(user.orgUnit);
+			const ou = await OrgUnits.findById(user.orgUnit)
+				.select('name parent type longName')
+				.catch((err) => {
+					Err.sendError(res,err,'auth','login -- Finding orgUnit 2nd round --');
+					return;
+				});
+			if(ou) user.orgUnit = ou;
+		}
+		if(!user.org.name && checkValidOID(user.org)) {
+			// console.log(user.orgUnit);
+			const org = await Orgs.findById(user.org)
+				.select('name longName')
+				.catch((err) => {
+					Err.sendError(res,err,'auth','login -- Finding org 2nd round --');
+					return;
+				});
+			if(org) user.orgUnit = org;
+		}
+		// console.log('Aquí está el usuario');
+		// console.log(user);
 		await user.validatePassword(password, async (err, isOk) => {
 			if(!isOk) {
 				return res.status(StatusCodes.UNAUTHORIZED).json({
@@ -88,7 +113,11 @@ module.exports = {
 			});
 			if(validToken) {
 				const tokenDecoded = await jsonwebtoken.decode(validToken);
-				return res.status(StatusCodes.OK).json({
+				if(!tokenDecoded.orgUnit.name || !tokenDecoded.org.name) {
+					// console.log(user.orgUnit);
+					validToken = null;
+				}
+				if(validToken) return res.status(StatusCodes.OK).json({
 					token: validToken,
 					iat: tokenDecoded.iat,
 					exp: tokenDecoded.exp,
@@ -115,6 +144,10 @@ module.exports = {
 				expiresIn: expiresD,
 				algorithm: 'RS256'
 			};
+			// console.log('Payload:');
+			// console.log(payload);
+			// console.log('Options:');
+			// console.log(signOptions);
 			const token = await jsonwebtoken.sign(payload, privateKEY, signOptions);
 			const tokenDecoded = await jsonwebtoken.decode(token);
 			var session = new Session({
@@ -126,6 +159,7 @@ module.exports = {
 			});
 			await session.save().catch((err) => {
 				Err.sendError(res,err,'auth', `login -- Guardando sesión - con usuario ${user.name}`);
+				return;
 			});
 			await cache.hmset('session:id:'+user._id,{
 				token,
@@ -138,6 +172,7 @@ module.exports = {
 				user.admin.tokens = [];
 			}
 			user.admin.tokens.push(token);
+			user.admin.lastLogin = new Date();
 			await user.save().catch((err) => {
 				Err.sendError(res,err,'auth', 'login -- Guardando usuario --');
 			});
@@ -203,4 +238,23 @@ function getToday() {
 	//date = new Date(date);
 	//date = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
 	return date;
+}
+
+function checkValidOID(stringToCheck) {
+	// console.log(stringToCheck);
+	// console.log(typeof stringToCheck);
+	const mongoose = require('mongoose');
+	if(typeof stringToCheck === 'object') {
+		const keys = Object.keys(stringToCheck);
+		// console.log(keys);
+		if(keys.includes('_bsontype') || keys.includes('id')) {
+			stringToCheck += '';
+		} else {
+			return false;
+		}
+	}
+	const ObjectId = mongoose.Types.ObjectId;
+	const regex = /^[a-fA-F0-9]{24}$/g;
+	if(ObjectId.isValid(stringToCheck) && stringToCheck.match(regex)) return true;
+	return false;
 }

@@ -1,26 +1,27 @@
-const generate 						= require('nanoid/generate');
-const bcrypt 							= require('bcryptjs');
-const urlencode 					= require('urlencode');
-const StatusCodes 				= require('http-status-codes');
-const jsonwebtoken 				= require('jsonwebtoken');
-const mongoose 						= require('mongoose');
-const User 								= require('../src/users'											);
-const Org 								= require('../src/orgs'												);
-const OrgUnit 						= require('../src/orgUnits'										);
-const Course 							= require('../src/courses'										);
-const Group 							= require('../src/groups'											);
-const Roster 							= require('../src/roster'											);
-const FiscalContact 			= require('../src/fiscalContacts'							);
-const Discussion 					= require('../src/discussions'								);
-const Follow 							= require('../src/follow'											);
-const Notification 				= require('../src/notifications'							);
-const Err 								= require('../controllers/err500_controller'	);
-const Attempt 						= require('../src/attempts'										);
-const Certificate 				= require('../src/certificates'								);
-const Dependency 	= require('../src/dependencies'							);
-const permissions 				= require('../shared/permissions'							);
-const mailjet							= require('../shared/mailjet'									);
-const version 						= require('../version/version');
+const generate 						= require('nanoid/generate'									);
+const bcrypt 							= require('bcryptjs'												);
+const urlencode 					= require('urlencode'												);
+const StatusCodes 				= require('http-status-codes'								);
+const jsonwebtoken 				= require('jsonwebtoken'										);
+const mongoose 						= require('mongoose'												);
+const User 								= require('../src/users'										);
+const Org 								= require('../src/orgs'											);
+const OrgUnit 						= require('../src/orgUnits'									);
+const Course 							= require('../src/courses'									);
+const Group 							= require('../src/groups'										);
+const Roster 							= require('../src/roster'										);
+const FiscalContact 			= require('../src/fiscalContacts'						);
+const Discussion 					= require('../src/discussions'							);
+const Follow 							= require('../src/follow'										);
+const Notification 				= require('../src/notifications'						);
+const Err 								= require('../controllers/err500_controller');
+const Attempt 						= require('../src/attempts'									);
+const Certificate 				= require('../src/certificates'							);
+const Dependency 					= require('../src/dependencies'							);
+const Instance 						= require('../src/instances'								);
+const permissions 				= require('../shared/permissions'						);
+const mailjet							= require('../shared/mailjet'								);
+const version 						= require('../version/version'							);
 
 /**
 	* CONFIG
@@ -51,17 +52,17 @@ module.exports = {
 			*/
 		if(!req.body.person.name) {
 			res.status(StatusCodes.NOT_ACCEPTABLE).json({
-				'message': `Falta name {string} en la propiedad {person} para ${req.body.name}`
+				message: `Falta name {string} en la propiedad {person} para ${req.body.name}`
 			});
 			return;
 		} else if(!req.body.person.fatherName) {
 			res.status(StatusCodes.NOT_ACCEPTABLE).json({
-				'message': `Falta fatherName {string} en la propiedad {person} para ${req.body.name}`
+				message: `Falta fatherName {string} en la propiedad {person} para ${req.body.name}`
 			});
 			return;
 		} else if(!req.body.person.motherName) {
 			res.status(StatusCodes.NOT_ACCEPTABLE).json({
-				'message': `Falta motherName {string} en la propiedad {person} para ${req.body.name}`
+				message: `Falta motherName {string} en la propiedad {person} para ${req.body.name}`
 			});
 			return;
 		}
@@ -89,14 +90,14 @@ module.exports = {
 				if (!org) {							// si no existe organización le damos el bastonazo
 					res.status(404).json({
 						'status': 404,
-						'message': 'Error: Org -' + userProps.org + '- does not exist'
+						message: 'Error: Org -' + userProps.org + '- does not exist'
 					});
 				} else {				// buscar unidad org
 					OrgUnit.findOne({$or: [{ name: userProps.orgUnit}, {longName: userProps.orgUnit}]})
 						.then((ou) => {
 							if (!ou) {			// si no hay ou, lo mismo
 								res.status(StatusCodes.NOT_FOUND).json({
-									'message': 'Error: OU -' + userProps.orgUnit + '- does not exist'
+									message: 'Error: OU -' + userProps.orgUnit + '- does not exist'
 								});
 							} else {
 								var admin = {
@@ -165,7 +166,7 @@ module.exports = {
 												mailjet.sendMail(user.person.email,user.person.name,subject,templateId,variables)
 													.then(() => {
 														res.status(StatusCodes.CREATED).json({
-															'message': 'Usuario - ' + userProps.name + '- creado',
+															message: 'Usuario - ' + userProps.name + '- creado',
 															'userid': user._id,
 															'uri': link
 														});
@@ -219,14 +220,14 @@ module.exports = {
 															.then(() => {
 																res.status(201).json({
 																	'status': 201,
-																	'message': 'You have already been registered previously. New email for user - ' + userProps.name + '- send. New validation string created',
+																	message: 'You have already been registered previously. New email for user - ' + userProps.name + '- send. New validation string created',
 																	'uri': link
 																});
 															})
 															.catch((err) => {
 																res.status(201).json({
 																	'status': 201,
-																	'message': 'Re-register done, but email was not send'
+																	message: 'Re-register done, but email was not send'
 																});
 																Err.sendError(res,err,'user_controller','register -- Sending Mail --',true);
 															});
@@ -239,7 +240,7 @@ module.exports = {
 													} else {
 														res.status(406).json({
 															'status': 406,
-															'message': 'You have already been registered previously'
+															message: 'You have already been registered previously'
 														});
 													}
 												})
@@ -269,13 +270,13 @@ module.exports = {
 			var user = await User.findOne({name: username}).lean();
 			if(!user) {
 				res.status(200).json({
-					'message': 'No user ' + username + ' found'
+					message: 'No user ' + username + ' found'
 				});
 				return;
 			} else {
 				if(user.admin.isVerified) {
 					res.status(200).json({
-						'message': 'User ' + username + ' is already verified'
+						message: 'User ' + username + ' is already verified'
 					});
 					return;
 				} else {
@@ -288,7 +289,7 @@ module.exports = {
 					const templateId = template_user_admin;
 					mailjet.sendMail(user.person.email,user.person.name,subject,templateId,variables);
 					res.status(200).json({
-						'message': 'Verification email for user ' + username + ' sent'
+						message: 'Verification email for user ' + username + ' sent'
 					});
 				}
 			}
@@ -304,7 +305,7 @@ module.exports = {
 			if(!user) {
 				res.status(200).json({
 					'status': 404,
-					'message': 'No user ' + req.params.name + ' found'
+					message: 'No user ' + req.params.name + ' found'
 				});
 			} else {
 				const redisClient = require('../src/cache');
@@ -355,7 +356,7 @@ module.exports = {
 							.then(() => {
 								res.status(200).json({
 									'status': 200,
-									'message': 'User -' + req.params.name + '- deleted'
+									message: 'User -' + req.params.name + '- deleted'
 								});
 							})
 							.catch((err) => {
@@ -373,107 +374,94 @@ module.exports = {
 
 	}, // delete
 
-	confirm(req,res) {
+	async confirm(req,res) {
 		const email 		= req.body.email;
 		const token 		= req.body.token;
 		const name 			= req.body.name;
 		const fatherName = req.body.fathername;
 		const motherName = req.body.mothername;
-		var password		= 'empty';
-		if(req.body.password) {
-			password  = req.body.password;
-		}
-		User.findOne({name: email})
-			.then((user) => {
-				if(user) {
-					if(token === user.admin.validationString){
-						user.admin.isVerified = true;
-						user.admin.isDataVerified = true;
-						user.admin.validationString = '';
-						user.admin.adminCreate = false;
-						user.admin.passwordSaved = 'saved';
-						if(password !== 'empty'){
-							user.password = password;
-						}
-						if(name && fatherName && motherName) {
-							user.person.name = name;
-							user.person.fatherName = fatherName;
-							user.person.motherName = motherName;
-						}
-						user.save()
-							.then(() => {
-								if(password === 'empty'){
-									res.status(200).json({
-										'status': 200,
-										'message': 'User -'+ user.person.email + '- verified'
-									});
-								} else {
-									res.status(200).json({
-										'status': 200,
-										'message': 'User -'+ user.person.email + '- verified and password changed'
-									});
-								}
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'user_controller','confirmUser -- Saving User Status --');
-							});
-					} else {
-						res.status(406).json({
-							'status': 406,
-							'message': 'Token is not valid. Please verify'
-						});
-					}
-				} else {
-					res.status(404).json({
-						'status': 404,
-						'message': 'Email -'+ email + '- not found'
-					});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'user_controller','confirmUser -- Finding Email --');
+		const password = req.body.password || 'empty';
+		var user = await User.findOne({name: email}).catch((err) => {
+			Err.sendError(res,err,'user_controller','confirmUser -- Finding Email --');
+			return;
+		});
+		if(!user) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'status': 404,
+				message: 'Email -'+ email + '- not found'
 			});
+		}
+		if(user.admin.validationString === '' && user.admin.isVerified && user.admin.isDataVerified){
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Ya has validado antes'
+			});
+		}
+		if(token !== user.admin.validationString){
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Token is not valid. Please verify'
+			});
+		}
+		user.admin.isVerified = true;
+		user.admin.isDataVerified = true;
+		user.admin.validationString = '';
+		user.admin.adminCreate = false;
+		user.admin.passwordSaved = 'saved';
+		if(password !== 'empty'){
+			user.password = password;
+		}
+		if(name && fatherName && motherName) {
+			user.person.name = name;
+			user.person.fatherName = fatherName;
+			user.person.motherName = motherName;
+		}
+		await user.save().catch((err) => {
+			Err.sendError(res,err,'user_controller','confirmUser -- Saving User Status --');
+			return;
+		});
+		if(password === 'empty'){
+			return res.status(StatusCodes.OK).json({
+				message: 'Usuario -'+ user.person.email + '- verificado'
+			});
+		}
+		res.status(StatusCodes.OK).json({
+			message: 'Usuario -'+ user.person.email + '- verificado y password modificado'
+		});
 	},
 
-	getDetailsPublic(req,res) {
-		const username = req.params.name;
-		User.findOne({ name: username })
+	async getDetailsPublic(req,res) {
+		const user = await User.findOne({ name: req.params.name })
 			// .cache({key: 'user:details:' + username})
 			.select('name person orgUnit admin.isVerified')
 			.populate('orgUnit', 'name')
-			.then((user) => {
-				// console.log(user);
-				if (!user) {
-					res.status(200).json({
-						'status': 404,
-						'message': 'User -' + username + '- does not exist'
-					});
-				} else {
-					res.status(200).json({
-						//'status': 200,
-						'validated' : user.admin.isVerified,
-						'user': {
-							email			: user.name,
-							person		: user.person
-						},
-						'ou': {
-							id				: user.orgUnit._id,
-							name			: user.orgUnit.name,
-							longName	: user.orgUnit.longName
-						}
-					});
-				}
-			})
+			.lean()
 			.catch((err) => {
 				Err.sendError(res,err,'user_controller','getDetailsPublic -- Finding Email --');
+				return;
 			});
+		if (!user) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'Usuario -' + user + '- no existe'
+			});
+		}
+		res.status(StatusCodes.OK).json({
+			'validated' : user.admin.isVerified,
+			'user': {
+				email			: user.name,
+				person		: user.person
+			},
+			'ou': {
+				id				: user.orgUnit._id,
+				name			: user.orgUnit.name,
+				longName	: user.orgUnit.longName
+			}
+		});
 	},
 
 	//getDetails(req, res, next) {
-	getDetails(req, res) {
+	async getDetails(req, res) {
 		const key_user = res.locals.user;
 		const username = req.query.name || key_user.name;
-		User.findOne({ name: username })
+		const user = await User.findOne({ name: username })
 			// .cache({key: 'user:details:' + username})
 			.populate('org','name')
 			.populate('orgUnit', 'name')
@@ -486,125 +474,121 @@ module.exports = {
 				}
 			})
 			.lean()
-			.then((user) => {
-				if (!user) {
-					res.status(404).json({
-						'status': 404,
-						'message': 'User -' + username + '- does not exist'
-					});
-				} else {
-					const result = permissions.access(key_user,user,'user');
-					if(result.canRead) {
-						var send_user = {
-							userid	: user._id,
-							name		: user.name,
-							org			: user.org.name,
-							orgid		: user.org._id,
-							orgUnit	: user.orgUnit.name,
-							ouid		: user.orgUnit._id,
-							workShift					: user.workShift,
-							attachedToWShift	: user.attachedToWShift
-						};
-						if(user.person) {
-							send_user.person = {
-								name			: user.person.name,
-								fatherName: user.person.fatherName,
-								motherName: user.person.motherName,
-								email			: user.person.email,
-								birthDate	: user.person.birthDate,
-								mainPhone	: user.person.mainPhone,
-								celPhone	: user.person.celPhone,
-								genre 		: user.person.genre,
-								alias			: user.person.alias
-							};
-						}
-						if(user.student){
-							send_user.student = {
-								id				: user.student.id,
-								career		: user.student.career,
-								term			: user.student.term,
-								isActive	: user.student.isActive,
-								type			: user.student.type,
-								external	: user.student.external,
-								origin		: user.student.origin
-							};
-							if(user.student.external) { send_user.student.external 	= user.student.external;}
-							if(user.student.origin	) { send_user.student.origin 		= user.student.origin;  }
-						}
-						if(user.corporate) {
-							send_user.corporate = {
-								id					: user.corporate.id,
-								isActive		: user.corporate.isActive,
-								type				: user.corporate.type
-							};
-						}
-						if(user.admin) {
-							send_user.admin = {
-								isActive		: user.admin.isActive,
-								isVerified	: user.admin.isVerified,
-								isDataVerified : user.admin.isDataVerified,
-								recoverString: user.admin.recoverString
-							};
-						}
-						if(user.address) {
-							send_user.address = {
-								line1				: user.address.line1,
-								line2				: user.address.line2,
-								postalCode	: user.address.postalCode,
-								locality		: user.address.locality,
-								city				: user.address.city,
-								state				: user.address.state,
-								country			: user.address.country
-							};
-						}
-						if(user.fiscal) {
-							send_user.fiscal = mergeDeep(user.fiscal);
-							if(Array.isArray(user.fiscal) &&
-							user.fiscal.length > 0 &&
-							typeof user.fiscalcurrent === 'number') {
-								if(user.fiscal.length >= user.fiscalcurrent){
-									var temp = JSON.parse(JSON.stringify(send_user.fiscal[user.fiscalcurrent]));
-									temp.fiscalcurrent = true;
-									send_user.fiscal[user.fiscalcurrent] = JSON.parse(JSON.stringify(temp));
-								}
-							}
-						}
-						if(user.geometry) {
-							send_user.geometry = {
-								type				: user.geometry.type,
-								coordinates	: user.geometry.coordinates
-							};
-						}
-						if(user.preferences) {
-							send_user.preferences = {
-								alwaysSendEmail : user.preferences.alwaysSendEmail
-							};
-						} else {
-							send_user.preferences = {
-								alwaysSendEmail : false
-							};
-						}
-						send_user.char1 = user.char1;
-						send_user.char2 = user.char2;
-						send_user.fiscalcurrent = user.fiscalcurrent;
-						res.status(200).json(send_user);
-					} else {
-						res.status(403).json({
-							'status': 403,
-							'message': 'User ' + key_user.name + ' not authorized on user ' + user.name
-						});
-					}
-				}
-			})
 			.catch((err) => {
 				Err.sendError(res,err,'user_controller','getDetails -- Finding User -- user: ' + key_user.name);
+				return;
 			});
+		if(!user) {
+			res.status(StatusCodes.OK).json({
+				'status': 404,
+				message: 'User -' + username + '- does not exist'
+			});
+		}
+		const result = permissions.access(key_user,user,'user');
+		if(!result.canRead) {
+			return res.status(StatusCodes.FORBIDDEN).json({
+				message: 'User ' + key_user.name + ' not authorized on user ' + user.name
+			});
+		}
+		var send_user = {
+			userid	: user._id,
+			name		: user.name,
+			org			: user.org.name,
+			orgid		: user.org._id,
+			orgUnit	: user.orgUnit.name,
+			ouid		: user.orgUnit._id,
+			workShift					: user.workShift,
+			attachedToWShift	: user.attachedToWShift
+		};
+		if(user.person) {
+			send_user.person = {
+				name			: user.person.name,
+				fatherName: user.person.fatherName,
+				motherName: user.person.motherName,
+				email			: user.person.email,
+				birthDate	: user.person.birthDate,
+				mainPhone	: user.person.mainPhone,
+				celPhone	: user.person.celPhone,
+				genre 		: user.person.genre,
+				alias			: user.person.alias
+			};
+		}
+		if(user.student){
+			send_user.student = {
+				id				: user.student.id,
+				career		: user.student.career,
+				term			: user.student.term,
+				isActive	: user.student.isActive,
+				type			: user.student.type,
+				external	: user.student.external,
+				origin		: user.student.origin
+			};
+			if(user.student.external) { send_user.student.external 	= user.student.external;}
+			if(user.student.origin	) { send_user.student.origin 		= user.student.origin;  }
+		}
+		if(user.corporate) {
+			send_user.corporate = {
+				id					: user.corporate.id,
+				isActive		: user.corporate.isActive,
+				type				: user.corporate.type
+			};
+		}
+		if(user.admin) {
+			send_user.admin = {
+				isActive		: user.admin.isActive,
+				isVerified	: user.admin.isVerified,
+				isDataVerified : user.admin.isDataVerified,
+				recoverString: user.admin.recoverString
+			};
+		}
+		if(user.address) {
+			send_user.address = {
+				line1				: user.address.line1,
+				line2				: user.address.line2,
+				postalCode	: user.address.postalCode,
+				locality		: user.address.locality,
+				city				: user.address.city,
+				state				: user.address.state,
+				country			: user.address.country
+			};
+		}
+		if(user.fiscal) {
+			send_user.fiscal = mergeDeep(user.fiscal);
+			if(Array.isArray(user.fiscal) &&
+			user.fiscal.length > 0 &&
+			typeof user.fiscalcurrent === 'number') {
+				if(user.fiscal.length >= user.fiscalcurrent){
+					var temp = JSON.parse(JSON.stringify(send_user.fiscal[user.fiscalcurrent]));
+					temp.fiscalcurrent = true;
+					send_user.fiscal[user.fiscalcurrent] = JSON.parse(JSON.stringify(temp));
+				}
+			}
+		}
+		if(user.geometry) {
+			send_user.geometry = {
+				type				: user.geometry.type,
+				coordinates	: user.geometry.coordinates
+			};
+		}
+		if(user.preferences) {
+			send_user.preferences = {
+				alwaysSendEmail : user.preferences.alwaysSendEmail
+			};
+		} else {
+			send_user.preferences = {
+				alwaysSendEmail : false
+			};
+		}
+		send_user.char1 = user.char1;
+		send_user.char2 = user.char2;
+		send_user.fiscalcurrent = user.fiscalcurrent;
+		res.status(StatusCodes.OK).json(send_user);
 	}, // getDetails
 
-	getDetailsSuper(req, res) {
+	async getDetailsSuper(req, res) {
 		const key_user = res.locals.user;
 		const username = req.query.username;
-		User.findOne({ name: username })
+		const user = await User.findOne({ name: username })
 			// .cache({key: 'user:details:' + username})
 			.populate('org','name')
 			.populate('orgUnit', 'name longName')
@@ -612,207 +596,222 @@ module.exports = {
 			.populate('workShift')
 			.populate('fiscal')
 			.select('-perm -__v -password')
-			.then((user) => {
-				if (!user) {
-					res.status(200).json({
-						'message': 'Error: User -' + username + '- does not exist'
-					});
-				} else {
-					//const result = permissions.access(key_user,user,'user');
-					if(user.admin && user.admin.initialPassword) {
-						user.initialPassword = user.admin.initialPassword;
-					} else {
-						user.initialPassword = 'No initial Password set for user';
-					}
-					res.status(200).json(user);
-				}
-			})
 			.catch((err) => {
 				Err.sendError(res,err,'user_controller','getDetails -- Finding User -- user: ' + key_user.name);
+				return;
 			});
-	}, // getDetails
-
-	getRoles(req, res) {
-		const key_user = res.locals.user;
-		const username = req.query.name;
-		if(key_user.roles.isAdmin || (key_user.roles.isOrg)) {
-			User.findOne({ name: username })
-				.populate('org','name')
-				.populate('orgUnit', 'name longName parent type')
-				.select('name roles')
-				.then((user) => {
-					if (!user) {
-						res.status(404).json({
-							'status': 404,
-							'message': 'User -' + username + '- does not exist'
-						});
-					} else {
-						const result = permissions.access(key_user,user,'user');
-						if(result.canRead) {
-							if(user.orgUnit && user.orgUnit.parent && user.orgUnit.type) {
-								if(user.orgUnit.type === 'campus') {
-									user.orgUnit.state = user.orgUnit.parent;
-								}
-								if(user.orgUnit.type === 'state') {
-									user.orgUnit.state = user.orgUnit.name;
-								}
-								if(user.orgUnit.type === 'org') {
-									user.orgUnit.state = user.orgUnit.name;
-								}
-							}
-							var send_user = {
-								name: user.name,
-								org: user.org.name,
-								orgUnit: {
-									name: user.orgUnit.name,
-									longName: user.orgUnit.longName,
-									_id: user.orgUnit._id,
-									type: user.orgUnit.type,
-									parent: user.orgUnit.parent,
-									state: user.orgUnit.state
-								},
-							};
-							if(user.roles) {
-								if(key_user.roles.isAdmin) {
-									send_user.roles = {
-										isAdmin: user.roles.isAdmin,
-										isBusiness: user.roles.isBusiness,
-										isOrg: user.roles.isOrg,
-										isOrgContent: user.roles.isOrgContent,
-										isAuthor: user.roles.isAuthor,
-										isInstructor: user.roles.isInstructor,
-										isSupervisor: user.roles.isSupervisor,
-										isRequester: user.roles.isRequester,
-										isMoocSupervisor: user.roles.isMoocSupervisor
-									};
-								}	else {
-									send_user.roles = {
-										isOrgContent: user.roles.isOrgContent,
-										isAuthor: user.roles.isAuthor,
-										isInstructor: user.roles.isInstructor,
-										isSupervisor: user.roles.isSupervisor,
-										isRequester: user.roles.isRequester
-									};
-								}
-								res.status(200).json({
-									'status' : 200,
-									'message' : send_user
-								});
-							} else {
-								res.status(404).json({
-									'status': 404,
-									'message': 'Something is wrong: User ' + user.name + ' has no roles (what!!!?). Please check with Administrator'
-								});
-							}
-						} else {
-							res.status(403).json({
-								'status': 403,
-								'message': 'User ' + key_user.name + ' not authorized'
-							});
-						}
-					}
-				})
-				.catch((err) => {
-					Err.sendError(res,err,'user_controller','getDetails -- Finding User --');
-				});
-		} else {
-			res.status(403).json({
-				'status': 403,
-				'message': 'Only admins can view or change roles'
+		if (!user) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'Error: User -' + username + '- does not exist'
 			});
 		}
+		//const result = permissions.access(key_user,user,'user');
+		if(user.admin && user.admin.initialPassword) {
+			user.initialPassword = user.admin.initialPassword;
+		} else {
+			user.initialPassword = 'No initial Password set for user';
+		}
+		res.status(StatusCodes.OK).json(user);
+	}, // getDetails
+
+	async getRoles(req, res) {
+		const key_user = res.locals.user;
+		const username = req.query.name;
+		if(!key_user.roles.isAdmin && !key_user.roles.isOrg) {
+			return res.status(StatusCodes.FORBIDDEN).json({
+				message: 'Only admins can view or change roles'
+			});
+		}
+		const user = await User.findOne({ name: username })
+			.populate('org','name')
+			.populate('orgUnit', 'name longName parent type')
+			.select('name roles')
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','getDetails -- Finding User --');
+				return;
+			});
+		if (!user) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'User -' + username + '- does not exist'
+			});
+		}
+		if(!user.roles) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'Something is wrong: User ' + user.name + ' has no roles (what!!!?). Please check with Administrator'
+			});
+		}
+		const result = permissions.access(key_user,user,'user');
+		if(!result.canRead) {
+			return res.status(StatusCodes.FORBIDDEN).json({
+				message: 'User ' + key_user.name + ' not authorized'
+			});
+		}
+		if(user.orgUnit && user.orgUnit.parent && user.orgUnit.type) {
+			if(user.orgUnit.type === 'campus') {
+				user.orgUnit.state = user.orgUnit.parent;
+			}
+			if(user.orgUnit.type === 'state') {
+				user.orgUnit.state = user.orgUnit.name;
+			}
+			if(user.orgUnit.type === 'org') {
+				user.orgUnit.state = user.orgUnit.name;
+			}
+		}
+		var send_user = {
+			name: user.name,
+			org: user.org.name,
+			orgUnit: {
+				name: user.orgUnit.name,
+				longName: user.orgUnit.longName,
+				_id: user.orgUnit._id,
+				type: user.orgUnit.type,
+				parent: user.orgUnit.parent,
+				state: user.orgUnit.state
+			},
+		};
+		if(key_user.roles.isAdmin) {
+			send_user.roles = {
+				isAdmin: user.roles.isAdmin,
+				isBusiness: user.roles.isBusiness,
+				isOrg: user.roles.isOrg,
+				isOrgContent: user.roles.isOrgContent,
+				isAuthor: user.roles.isAuthor,
+				isInstructor: user.roles.isInstructor,
+				isSupervisor: user.roles.isSupervisor,
+				isRequester: user.roles.isRequester,
+				isMoocSupervisor: user.roles.isMoocSupervisor
+			};
+		}	else {
+			send_user.roles = {
+				isOrgContent: user.roles.isOrgContent,
+				isAuthor: user.roles.isAuthor,
+				isInstructor: user.roles.isInstructor,
+				isSupervisor: user.roles.isSupervisor,
+				isRequester: user.roles.isRequester
+			};
+		}
+		res.status(StatusCodes.OK).json({
+			'message' : send_user
+		});
 	},
 
-	setRoles(req, res) {
+	async setRoles(req, res) {
 		const key_user = res.locals.user;
 		const userProps = req.body;
 		if(key_user.roles.isAdmin || (key_user.roles.isOrg)) {
-			User.findOne({ name: userProps.name })
-				.populate('org','name')
-				.populate('orgUnit', 'name')
-				.then(user => {
-					if (!user) {
-						res.status(404).json({
-							'message': 'User -' + userProps.name + '- does not exist'
-						});
-					} else {
-						if(key_user.org.name === user.org.name && !key_user.roles.isAdmin) {
-							res.status(406).json({
-								'message': 'User ' + key_user.name + ' cannot modify roles for ' + user.name + '. They do not belong the same org.'
-							});
-						} else {
-							if(user.roles) {
-								if(key_user.roles.isAdmin) {
-									if(userProps.roles.isAdmin !== undefined ) { user.roles.isAdmin = userProps.roles.isAdmin; }
-									if(userProps.roles.isOrg !== undefined ) { user.roles.isOrg = userProps.roles.isOrg; }
-									if(userProps.roles.isBusiness !== undefined ) { user.roles.isBusiness = userProps.roles.isBusiness; }
-								}
-								if(userProps.roles.isOrgContent !== undefined ) { user.roles.isOrgContent = userProps.roles.isOrgContent; }
-								if(userProps.roles.isAuthor !== undefined ) { user.roles.isAuthor = userProps.roles.isAuthor; }
-								if(userProps.roles.isInstructor !== undefined ) { user.roles.isInstructor = userProps.roles.isInstructor; }
-								if(userProps.roles.isSupervisor  !== undefined ) { user.roles.isSupervisor = userProps.roles.isSupervisor; }
-								if(userProps.roles.isRequester  !== undefined ) { user.roles.isRequester = userProps.roles.isRequester; }
-								user.save().catch(err => {
-									Err.sendError(res,err,'user_controller','setRoles -- Saving User--');
-								});
-								res.status(200).json({
-									'status': 200,
-									'message': 'Roles for ' + user.name + ' have been modified'
-								});
-							} else {
-								res.status(404).json({
-									'status': 404,
-									'message': 'Something is wrong: User ' + user.name + ' has no roles (what!!!?). Please check with Administrator'
-								});
-							}
-						}
-					}
-				})
-				.catch((err) => {
-					Err.sendError(res,err,'user_controller','setRoles -- Finding User to set--');
-				});
-		} else {
-			res.status(403).json({
-				'status': 403,
-				'message': 'Only admins can view or change roles'
+			return res.status(StatusCodes.FORBIDDEN).json({
+				message: 'Only admins can view or change roles'
 			});
 		}
+		const user = await User.findOne({ name: userProps.name })
+			.populate('org','name')
+			.populate('orgUnit', 'name')
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','setRoles -- Finding User to set--');
+				return;
+			});
+		if (!user) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'User -' + userProps.name + '- does not exist'
+			});
+		}
+		if(key_user.org.name === user.org.name && !key_user.roles.isAdmin) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'User ' + key_user.name + ' cannot modify roles for ' + user.name + '. They do not belong the same org.'
+			});
+		}
+		if(!user.roles) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'Something is wrong: User ' + user.name + ' has no roles (what!!!?). Please check with Administrator'
+			});
+		}
+		if(key_user.roles.isAdmin) {
+			if(userProps.roles.isAdmin !== undefined ) { user.roles.isAdmin = userProps.roles.isAdmin; }
+			if(userProps.roles.isOrg !== undefined ) { user.roles.isOrg = userProps.roles.isOrg; }
+			if(userProps.roles.isBusiness !== undefined ) { user.roles.isBusiness = userProps.roles.isBusiness; }
+		}
+		if(userProps.roles.isOrgContent !== undefined ) { user.roles.isOrgContent = userProps.roles.isOrgContent; }
+		if(userProps.roles.isAuthor !== undefined ) { user.roles.isAuthor = userProps.roles.isAuthor; }
+		if(userProps.roles.isInstructor !== undefined ) { user.roles.isInstructor = userProps.roles.isInstructor; }
+		if(userProps.roles.isSupervisor  !== undefined ) { user.roles.isSupervisor = userProps.roles.isSupervisor; }
+		if(userProps.roles.isRequester  !== undefined ) { user.roles.isRequester = userProps.roles.isRequester; }
+		await user.save().catch(err => {
+			Err.sendError(res,err,'user_controller','setRoles -- Saving User--');
+			return;
+		});
+		res.status(200).json({
+			message: 'Roles for ' + user.name + ' have been modified'
+		});
 	},
 
 	//validateEmail(req, res, next) {
-	validateEmail(req, res) {
+	async validateEmail(req, res) {
 		const email = req.body.email;
-		User.findOne({ 'person.email': email})
-			.then((user) => {
-				if(user) {
-					var emailID = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
-					user.admin.recoverString = emailID;
-					const link = url + '/recover/' + user.admin.recoverString + '/' + user.person.email;
-					let subject = 'Solicitud de recuperación de contraseña';
-					let variables = {
-						Nombre: user.person.name,
-						confirmation_link:link
-					};
-					mailjet.sendMail(user.person.email,user.person.name,subject,template_pass_recovery,variables);
-					user.save();
-					res.status(200).json({
-						'status': 200,
-						'message': 'Email found',
-						'id': emailID,
-						'link': link
-					});
-				} else {
-					res.status(404);
-					res.json({
-						'status': 404,
-						'message': 'Email ' + email + 'does not exist'
-					});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'user_controller','validateEmail -- Finding email --');
+		// console.log(email);
+		// console.log(req.body);
+		const user = await User.findOne({ 'person.email': email}).catch((err) => {
+			Err.sendError(res,err,'user_controller','validateEmail -- Finding email --');
+			return;
+		});
+		if(!user) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'Usuario ' + email + ' no existe'
 			});
+		}
+		// var emailID = generate('1234567890abcdefghijklmnopqrstwxyz', 35);
+		// user.admin.recoverString = emailID;
+		user.admin.recoverNumber = getRandomInt(100000,999999);
+		await user.save().catch(err => {
+			Err.sendError(res,err,'user_controller','validateEmail -- User saving --');
+			return;
+		});
+		const link = `${await Instance.getInstance(user.orgUnit,'URL')}/#/pages/reqrecoverpass/${user.person.email}/${user.admin.recoverNumber}`;
+		let subject = 'Solicitud de recuperación de acceso';
+		let message = `<p>Hemos recibido una solicitud para recuperar acceso al portal de cursos. Para hacerlo ingresa este número:</p>
+		<h1 style="text-align:center;">${getStringFromNumber(user.admin.recoverNumber)}</h1>
+		<h3 style="color:red">Este número es de un sólo uso y no sirve una segunda ocasión.</h3>
+		<p>O, si lo prefieres (y si ya se cerró la página de recuperación de acceso) presiona esta liga:</p>
+		${link}
+		`;
+		if(!link) {
+			return res.status(StatusCodes.OK).json({
+				message: 'No se puede enviar correo'
+			});
+		}
+		await mailjet.sendGenericMail(user.person.email,user.person.name,subject,message,user.orgUnit);
+		res.status(StatusCodes.OK).json({
+			message: 'Email encontrado',
+			'link': link
+		});
 	},
+
+	async resetTokens(req,res) {
+		const key_user = res.locals.user;
+		if(!key_user.roles.isAdmin && !key_user.roles.isSupervisor) {
+			return res.status(StatusCodes.FORBIDDEN).json({
+				message: 'No tienes permisos'
+			});
+		}
+		const user = await User.findOne({name:req.params.username})
+			.select('-__v')
+			.catch(err => {
+				Err.sendError(res,err,'user_controller','resetTokens -- User finding--');
+				return;
+			});
+		if(!user) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: `Usuario -${req.params.username}- no se encuentra`
+			});
+		}
+		user.admin.tokens = [];
+		await user.save().catch(err => {
+			Err.sendError(res,err,'user_controller','resetTokens -- User finding--');
+			return;
+		});
+		res.status(StatusCodes.OK).json({
+			message: `Ya no hay tokens para el usuario ${user.name}`
+		});
+	}, //resetTokens
 
 	async validateEmailWithoutPasswordReset(req, res) {
 		const key_user = res.locals.user;
@@ -840,14 +839,14 @@ module.exports = {
 				await redisClient.hset(hashKey,key,JSON.stringify(user));
 				await redisClient.expire(hashKey, timeToLive);
 				res.status(200).json({
-					'message': 'Email found',
+					message: 'Email found',
 					'id': emailID,
 				});
 			} else {
 				res.status(404);
 				res.json({
 					'status': 404,
-					'message': 'Usuario no existe'
+					message: 'Usuario no existe'
 				});
 			}
 		} catch (err) {
@@ -877,16 +876,16 @@ module.exports = {
 					await redisClient.hset(hashKey,key,JSON.stringify(user));
 					await redisClient.expire(hashKey, timeToLive);
 					res.status(200).json({
-						'message': 'Validación de correo exitoso'
+						message: 'Validación de correo exitoso'
 					});
 				} else {
 					res.status(400).json({
-						'message': 'Código incorrecto. No podemos confirmar el correo electrónico'
+						message: 'Código incorrecto. No podemos confirmar el correo electrónico'
 					});
 				}
 			} else {
 				res.status(404).json({
-					'message': 'Usuario inexistente'
+					message: 'Usuario inexistente'
 				});
 			}
 		} catch (err) {
@@ -920,16 +919,16 @@ module.exports = {
 					await redisClient.hset(hashKey,key,JSON.stringify(user));
 					await redisClient.expire(hashKey, timeToLive);
 					res.status(200).json({
-						'message': `Usuario ${key_user.name} actualizado`
+						message: `Usuario ${key_user.name} actualizado`
 					});
 				} else {
 					res.status(406).json({
-						'message': `Usuario ${key_user.name} ya ha sido actualizado previamente`
+						message: `Usuario ${key_user.name} ya ha sido actualizado previamente`
 					});
 				}
 			} else {
 				res.status(404).json({
-					'message': 'Usuario no encontrado'
+					message: 'Usuario no encontrado'
 				});
 			}
 		} catch (err) {
@@ -938,55 +937,122 @@ module.exports = {
 
 	}, //validateUserMaindata
 
-	passwordRecovery(req, res) {
+	async passwordRecovery(req, res) {
 		const email = req.body.email;
-		const emailID = req.body.emailID;
-		const password = req.body.password;
-		User.findOne({ name: email})
-			.then((user) => {
-				if(user) {
-					if(emailID === user.admin.recoverString) {
-						user.admin.recoverString = '';
-						user.admin.isVerified = true;
-						user.admin.passwordSaved = 'saved';
-						//user.password = encryptPass(password);
-						user.password = password;
-						user.save()
-							.then(() => {
-								res.status(200).json({
-									'status': 200,
-									'message': 'Password recovery sucessfully'
-								});
-								let template_pass_change = parseInt(process.env.MJ_TEMPLATE_PASSCH);
-								let subject = 'Tu contraseña ha sido modificada';
-								let variables = {
-									Nombre: user.person.name
-								};
-								mailjet.sendMail(user.person.email,user.person.name,subject,template_pass_change, variables);
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'user_controller','passwordRecovery -- Saving User --');
-							});
-					} else {
-						res.status(404).json({
-							'status': 404,
-							'message': 'Token ID is not valid and we cannot proceed with password recovery. Please try again.'
-						});
-					}
-				} else {
-					res.status(404);
-					res.json({
-						'status': 404,
-						'message': 'Email ' + email + 'does not exist'
-					});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'user_controller','passwordRecovery -- Finding user --');
+		const emailID = +req.body.emailID;
+		// const password = req.body.password;
+		console.log(email, emailID);
+		var user = await User.findOne({ name: email}).catch((err) => {
+			Err.sendError(res,err,'user_controller','passwordRecovery -- Finding user --');
+			return;
+		});
+		if(!user) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'Correo ' + email + ' no existe'
 			});
+		}
+		console.log(user.admin.recoverNumber);
+		if(user.admin.recoverNumber === 0) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Usuario no ha solicitado recuperación de acceso'
+			});
+		}
+		if(emailID !== user.admin.recoverNumber) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Código no válido'
+			});
+		}
+		user.admin.recoverString = '';
+		user.admin.recoverNumber = 0;
+		user.admin.isVerified = true;
+		user.admin.passwordSaved = 'saved';
+		//user.password = encryptPass(password);
+		const payload = {
+			admin: {
+				isActive : user.admin.isActive,
+				isVerified : user.admin.isVerified,
+				isDataVerified : user.admin.isDataVerified
+			},
+			attachedToWShift: user.attachedToWShift,
+			org: user.org,
+			userid: user._id,
+			person: user.person,
+			orgUnit: user.orgUnit,
+			preferences: user.preferences
+		};
+		const version 	= require('../version/version');
+		var privateKEY  = process.env.PRIV_KEY;
+		var publicKEY  	= process.env.PUB_KEY;
+		const audience 	= process.env.NODE_LIBRETA_URI;
+		const issuer  	= version.vendor;
+
+		if(!privateKEY || !publicKEY) {
+			throw new Error('No hay llaves para generar tokens');
+		}
+
+		// Decodificamos las llaves... vienen en base64
+		var buff = Buffer.from(privateKEY,'base64');
+		privateKEY = buff.toString('utf-8');
+		buff = Buffer.from(publicKEY,'base64');
+		publicKEY = buff.toString('utf-8');
+		// user.password = password;
+		const expiresD = process.env.NODE_EXPIRES || '7d';
+		const signOptions = {
+			issuer,
+			subject: user.name,
+			audience,
+			expiresIn: expiresD,
+			algorithm: 'RS256'
+		};
+		const Session			= require('../src/sessions');
+		const cache 			= require('../src/cache');
+		const token = await jsonwebtoken.sign(payload, privateKEY, signOptions);
+		const tokenDecoded = await jsonwebtoken.decode(token);
+		const urlLogin = '/login';
+		var session = new Session({
+			user: user._id,
+			token,
+			onlyDate: getToday(),
+			date: new Date(),
+			url: urlLogin
+		});
+		await session.save().catch((err) => {
+			Err.sendError(res,err,'auth', `login -- Guardando sesión - con usuario ${user.name}`);
+			return;
+		});
+		await cache.hmset('session:id:'+user._id,{
+			token,
+			url: urlLogin
+		});
+		if(!user.admin.tokens || !Array.isArray(user.admin.tokens)){
+			user.admin.tokens = [];
+		}
+		user.admin.tokens = [token];
+		user.admin.lastLogin = new Date();
+		await cache.set('session:name:'+ user.name + ':' + user.orgUnit.name, 'session:id:'+user._id);
+		cache.expire('session:id:'+user._id,cache.ttlSessions);
+		cache.expire('session:name:'+ user.name + ':' + user.orgUnit.name,cache.ttlSessions);
+		await user.save().catch((err) => {
+			Err.sendError(res,err,'user_controller','passwordRecovery -- Saving User --');
+			return;
+		});
+		let subject = 'Se ha realizado un acceso mediante código';
+		let { ouName, url } = await Instance.getInstance(user.orgUnit,'URL');
+		let message = `
+		<p>Se ha realizado un acceso mediante código con tu cuenta en ${url}</p>
+		<p>Si no has sido tú, contacta a la mesa de servicio</p>`;
+		mailjet.sendGenericMail(user.person.email,user.person.name,subject,message,ouName);
+		res.status(StatusCodes.OK).json({
+			message: 'Acceso correcto',
+			token,
+			iat: tokenDecoded.iat,
+			exp: tokenDecoded.exp,
+			note: 'new token',
+			roles: user.roles
+		});
 	},
 
-	passwordChange(req, res) {
+	async passwordChange(req, res) {
 		const key_user = res.locals.user;
 		// Para el cambio de password necesitamos borrar TODOS los tokens
 		var privateKEY  = process.env.PRIV_KEY;
@@ -1007,8 +1073,8 @@ module.exports = {
 			expiresIn: expiresD,
 			algorithm: 'RS256'
 		};
-		const token = jsonwebtoken.sign(payload, privateKEY, signOptions);
-		const tokenDecoded = jsonwebtoken.decode(token);
+		const token = await jsonwebtoken.sign(payload, privateKEY, signOptions);
+		const tokenDecoded = await jsonwebtoken.decode(token);
 		key_user.admin.passwordSaved = 'saved';
 		key_user.password = req.body.password;
 		key_user.admin.tokens = [];
@@ -1019,24 +1085,28 @@ module.exports = {
 			what: 'Password modificado'
 		};
 		key_user.mod.push(mod);
-		key_user.save()
-			.then (() => {
-				let subject = 'Has modificado tu contraseña';
-				let message = 'Tu contraseña ha sido modificada. Si no fuiste tú, notifícalo a la Mesa de Servicio.';
-				const instance = (key_user.orgUnit && key_user.orgUnit.type && key_user.orgUnit.type === 'state') ?
-					key_user.orgUnit.name :
-					key_user.orgUnit.parent;
-				mailjet.sendGenericMail(key_user.person.email,key_user.person.name,subject,message,instance);
-				res.status(StatusCodes.OK).json({
-					'message': 'Password modificado',
-					token,
-					iat: tokenDecoded.iat,
-					exp: tokenDecoded.exp
-				});
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'user_controller','passwordChange -- Saving User--');
+		await key_user.save().catch((err) => {
+			Err.sendError(res,err,'user_controller','passwordChange -- Saving User--');
+			return;
+		});
+		let subject = 'Has modificado tu contraseña';
+		let message = 'Tu contraseña ha sido modificada. Si no fuiste tú, notifícalo a la Mesa de Servicio.';
+		const instance = await Instance.getInstance(key_user.orgUnit._id,'ouName');
+		if(!instance) {
+			return res.status(StatusCodes.OK).json({
+				message: 'Password modificado. SIN CORREO',
+				token,
+				iat: tokenDecoded.iat,
+				exp: tokenDecoded.exp
 			});
+		}
+		mailjet.sendGenericMail(key_user.person.email,key_user.person.name,subject,message,instance);
+		res.status(StatusCodes.OK).json({
+			message: 'Password modificado',
+			token,
+			iat: tokenDecoded.iat,
+			exp: tokenDecoded.exp
+		});
 	}, //passwordChange
 
 	adminPasswordReset(req, res) {
@@ -1054,7 +1124,7 @@ module.exports = {
 						} else {
 							res.status(200).json({
 								'status': 200,
-								'message': 'Error: User -' + req.body.username + '- does not have initial Password. Password must be present in body'
+								message: 'Error: User -' + req.body.username + '- does not have initial Password. Password must be present in body'
 							});
 							return;
 						}
@@ -1074,7 +1144,7 @@ module.exports = {
 							};
 							res.status(200).json({
 								'status': 200,
-								'message': 'Password for user -' + req.body.username + '- reset by -' + key_user.name + '-'
+								message: 'Password for user -' + req.body.username + '- reset by -' + key_user.name + '-'
 							});
 							mailjet.sendMail(user.person.email,user.person.name,subject,template_adm_pass_change,variables);
 						})
@@ -1084,7 +1154,7 @@ module.exports = {
 				} else {
 					res.status(200).json({
 						'status': 200,
-						'message': 'Error: User -'+ req.body.username +'- not found'
+						message: 'Error: User -'+ req.body.username +'- not found'
 					});
 				}
 			})
@@ -1117,7 +1187,7 @@ module.exports = {
 					user.save()
 						.then((user) => {
 							res.status(200).json({
-								'message': user.name
+								message: user.name
 							});
 							let link = url + '/userconfirm/' + user.admin.validationString + '/' + user.person.email;
 							let templateId = template_user_change;
@@ -1138,7 +1208,7 @@ module.exports = {
 							if(found) {
 								res.status(200).json({
 									'status': 200,
-									'message': 'New user is already exists. This must not proceed'
+									message: 'New user is already exists. This must not proceed'
 								});
 							}
 							//Err.sendError(res,err,'user_controller','passwordChange -- Finding User --');
@@ -1146,7 +1216,7 @@ module.exports = {
 				} else {
 					res.status(200).json({
 						'status': 200,
-						'message': 'User not found'
+						message: 'User not found'
 					});
 				}
 			})
@@ -1168,7 +1238,7 @@ module.exports = {
 				if(user) {
 					if(!user.admin) {
 						res.status(200).json({
-							'message': 'Object inconsistent. Please contact admin: user.admin not found'
+							message: 'Object inconsistent. Please contact admin: user.admin not found'
 						});
 						return;
 					}
@@ -1248,7 +1318,7 @@ module.exports = {
 						if(userProps.fiscal) {
 							if(!userProps.fiscal.tag) {
 								res.status(200).json({
-									'message': 'Tag for fiscal is required. Please provide in fiscal property'
+									message: 'Tag for fiscal is required. Please provide in fiscal property'
 								});
 								return;
 							}
@@ -1296,7 +1366,7 @@ module.exports = {
 											});
 											user.save().then(() => {
 												res.status(200).json({
-													'message': 'User ' + user.name + ' properties modified and Fiscal Contact: ' + fiscal.tag + ' modified'
+													message: 'User ' + user.name + ' properties modified and Fiscal Contact: ' + fiscal.tag + ' modified'
 												});
 											}).catch((err) => {
 												Err.sendError(res,err,'user_controller','modify -- Saving User--');
@@ -1307,13 +1377,13 @@ module.exports = {
 									} else {
 										if(!userProps.fiscal.identification) {
 											res.status(200).json({
-												'message': 'Identification (RFC) is required. Please provide in fiscal property'
+												message: 'Identification (RFC) is required. Please provide in fiscal property'
 											});
 											return;
 										}
 										if(!userProps.fiscal.name) {
 											res.status(200).json({
-												'message': 'Fiscal name is required. Please provide in fiscal property'
+												message: 'Fiscal name is required. Please provide in fiscal property'
 											});
 											return;
 										}
@@ -1354,7 +1424,7 @@ module.exports = {
 												});
 												user.save().then(() => {
 													res.status(200).json({
-														'message': 'User ' + user.name + ' properties modified. Fiscal contact '+ fiscal.tag + ' created/modified'
+														message: 'User ' + user.name + ' properties modified. Fiscal contact '+ fiscal.tag + ' created/modified'
 													});
 												}).catch((err) => {
 													Err.sendError(res,err,'user_controller','modify -- Saving User--');
@@ -1376,7 +1446,7 @@ module.exports = {
 							});
 							user.save().then(() => {
 								res.status(200).json({
-									'message': 'User ' + user.name + ' properties modified'
+									message: 'User ' + user.name + ' properties modified'
 								});
 							}).catch((err) => {
 								Err.sendError(res,err,'user_controller','modify -- Saving User--');
@@ -1385,13 +1455,13 @@ module.exports = {
 					} else {
 						res.status(403);
 						res.json({
-							'message': 'User ' + key_user.name + ' not authorized to modify ' + userProps.name + ' register',
+							message: 'User ' + key_user.name + ' not authorized to modify ' + userProps.name + ' register',
 							'debug': result
 						});
 					}
 				} else {
 					res.status(200).json({
-						'message': 'User ' + userProps.name + ' not found'
+						message: 'User ' + userProps.name + ' not found'
 					});
 				}
 			})
@@ -1436,7 +1506,7 @@ module.exports = {
 					.select('-mod -__v -_id -createNew -create -corporate')
 					.then((fiscals) => {
 						res.status(200).json({
-							'message': fiscals
+							message: fiscals
 						});
 					})
 					.catch((err) => {
@@ -1490,7 +1560,7 @@ module.exports = {
 					});
 					res.status(200).json({
 						'status': 200,
-						'message': message,
+						message: message,
 						'usersCount': usersCount,
 						'users': users_send
 					});
@@ -1525,7 +1595,7 @@ module.exports = {
 									});
 									res.status(200).json({
 										'status': 200,
-										'message': message,
+										message: message,
 										'usersCount': usersCount,
 										'users': send_users
 									});
@@ -1536,14 +1606,14 @@ module.exports = {
 									});
 									res.status(200).json({
 										'status': 200,
-										'message': message,
+										message: message,
 										'usersCount': usersCount,
 										'users': send_users
 									});
 								} else {
 									res.status(200).json({
 										'status': 200,
-										'message': message,
+										message: message,
 										'usersCount': usersCount,
 										'users': users
 									});
@@ -1559,7 +1629,7 @@ module.exports = {
 			} else {
 				res.status(406).json({
 					'status': 406,
-					'message': 'Please provide -org- in params'
+					message: 'Please provide -org- in params'
 				});
 			}
 		}
@@ -1574,7 +1644,7 @@ module.exports = {
 						User.countDocuments({ org: org._id }, function(err,count) {
 							res.status(200).json({
 								'status': 200,
-								'message': count + ' total users found from ' + org.name,
+								message: count + ' total users found from ' + org.name,
 								'count':count
 							});
 						});
@@ -1585,7 +1655,7 @@ module.exports = {
 			} else {
 				res.status(406).json({
 					'status': 406,
-					'message': 'Please provide -org- in params'
+					message: 'Please provide -org- in params'
 				});
 			}
 		}
@@ -1595,7 +1665,7 @@ module.exports = {
 					User.countDocuments({ org: key_user.org._id }, function(err,count) {
 						res.status(200).json({
 							'status': 200,
-							'message': count + ' total users found from ' + org.name,
+							message: count + ' total users found from ' + org.name,
 							'count': count
 						});
 					});
@@ -1847,12 +1917,12 @@ module.exports = {
 					});
 				} else {
 					return res.status(200).json({
-						'message': 'Curso seleccionado no está disponible'
+						message: 'Curso seleccionado no está disponible'
 					});
 				}
 			} else {
 				return res.status(200).json({
-					'message': 'Curso seleccionado no existe'
+					message: 'Curso seleccionado no existe'
 				});
 			}
 		} catch (err) {
@@ -1873,7 +1943,7 @@ module.exports = {
 						.then(() => {
 							res.status(200).json({
 								'status': 200,
-								'message': 'Password encrypted'
+								message: 'Password encrypted'
 							});
 						})
 						.catch((err) => {
@@ -1882,7 +1952,7 @@ module.exports = {
 				} else {
 					res.status(404).json({
 						'status': 404,
-						'message': 'User -' + user + '- not found'
+						message: 'User -' + user + '- not found'
 					});
 				}
 			})
@@ -1905,7 +1975,7 @@ module.exports = {
 				} else {
 					res.status(200).json({
 						'status': 200,
-						'message': 'No users without OU found'
+						message: 'No users without OU found'
 					});
 				}
 			})
@@ -1929,7 +1999,7 @@ module.exports = {
 			});
 		res.status(404).json({
 			'status': 404,
-			'message': 'Validation complete'
+			message: 'Validation complete'
 		});
 	}, // validateUsers
 
@@ -1954,12 +2024,12 @@ module.exports = {
 			});
 			res.status(200).json({
 				'status': 200,
-				'message': 'Users changed'
+				message: 'Users changed'
 			});
 		} else {
 			res.status(200).json({
 				'status': 200,
-				'message': 'No users given'
+				message: 'No users given'
 			});
 		}
 	}, // correctUsers
@@ -1971,13 +2041,13 @@ module.exports = {
 					if(isOk) {
 						res.status(200).json({
 							'status': 200,
-							'message': 'Password valid for user ' + req.body.username,
+							message: 'Password valid for user ' + req.body.username,
 							'pass': 'VALID'
 						});
 					} else {
 						res.status(406).json({
 							'status': 406,
-							'message': 'Error: Password NOT valid for user ' + req.body.username,
+							message: 'Error: Password NOT valid for user ' + req.body.username,
 							'pass': 'ERROR'
 						});
 					}
@@ -2033,7 +2103,7 @@ module.exports = {
 					});
 				} else {
 					res.status(404).json({
-						'message': 'No user found'
+						message: 'No user found'
 					});
 				}
 			}).catch((err) => {
@@ -2188,7 +2258,7 @@ function processError(err,res,controllerMessage) {
 			message = err.error.message;
 		}
 		res.status(err.statusCode).json({
-			'message': messageHeader + message
+			message: messageHeader + message
 		});
 	} else {
 		Err.sendError(res,err,'user_controller',controllerMessage);
@@ -2199,4 +2269,26 @@ function addDays(date, days) {
 	const copy = new Date(Number(date));
 	copy.setDate(date.getDate() + days);
 	return copy;
+}
+
+function getRandomInt(min,max) {
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getStringFromNumber(number) {
+	const upperNumber = Math.floor(number / 1000);
+	const lowerNumber = number - (upperNumber * 1000);
+	const lowerNumString = (lowerNumber + '').padStart(3,'0');
+	return `${upperNumber} ${lowerNumString}`;
+}
+
+function getToday() {
+	const Time 				= require('../shared/time');
+	const now = new Date();
+	let {date} = Time.displayLocalTime(now);
+	//date = new Date(date);
+	//date = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+	return date;
 }

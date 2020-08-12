@@ -4,6 +4,7 @@
 
 const mongoose 		= require('mongoose');
 const User 				= require('../src/users'										);
+const Orgs 				= require('../src/orgs'											);
 const orgUnit 		= require('../src/orgUnits'									);
 const Course 			= require('../src/courses'									);
 const Group 			= require('../src/groups'										);
@@ -59,11 +60,8 @@ module.exports = {
 			});
 		}
 		group = new Group(Object.assign({},req.body));
-		if(!group.instructor) {
-			group.instructor = key_user._id;
-		}
 		const results = await Promise.all([
-			Course.findOne({ _id: group.course })
+			Course.findById(group.course)
 			// Esta parte sirve para recolectar la rúbrica
 				.populate({
 					path: 'blocks',
@@ -72,9 +70,9 @@ module.exports = {
 				}),
 			// ----
 			// Hay que ver si el instructor es un usuario válido
-			User.findOne({$or:[{_id:group.instructor},{name:group.instructor}]}),
+			User.findOne({name:req.body.instructor}),
 			// La orgUnit
-			orgUnit.findOne({$or:[{_id:group.orgUnit},{name:group.orgUnit}]})
+			orgUnit.findById(req.body.orgUnit)
 		]).catch((err) => {
 			Err.sendError(res,err,'group_controller','create -- Finding Course, User & OrgUnit --');
 			return;
@@ -117,6 +115,7 @@ module.exports = {
 			});
 		}
 		group.instructor = instructor._id;
+		group.orgUnit = ou._id;
 		group.type = 'tutor';
 		var ouParent;
 		// console.log(ou.type,ou.parent);
@@ -677,7 +676,7 @@ module.exports = {
 		});
 	}, //createRoster
 
-	notify(req,res) {
+	async notify(req,res) {
 		var query				= {};
 		if(req.body.courseid) {
 			query.course = req.body.courseid;
@@ -691,65 +690,66 @@ module.exports = {
 		const message  	= req.body.message;
 		var find_groups = [];
 		var send_groups = [];
-		Group.find(query)
+		const groups = await Group.find(query)
 			.select('_id name code')
-			.then((groups) => {
-				if(groups && groups.length > 0) {
-					groups.forEach(g => {
-						find_groups.push(g._id);
-						send_groups.push({
-							name: g.name,
-							code: g.code
-						});
-					});
-					Roster.find({group: {$in: find_groups}})
-						.populate([
-							{
-								path: 'student',
-								select: 'person'
-							},
-							{
-								path: 'group',
-								select: 'course code',
-								populate: {
-									path: 'course',
-									select: 'title'
-								}
-							}])
-						.select('student group')
-						.lean()
-						.then((items)  => {
-							if(items.length > 0) {
-								res.status(200).json({
-									'status'	: 20,
-									'message'	: items.length + ' emails are being sending',
-									'groups'	: send_groups
-								});
-								items.forEach(function(roster) {
-									let subject = `Mensaje del curso ${roster.group.course.title}`;
-									let variables = {
-										'Nombre': roster.student.person.name,
-										'curso': roster.group.course.title,
-										'mensaje': message
-									};
-									mailjet.sendMail(roster.student.person.email,roster.student.person.name,subject,template_notGroup,variables);
-								});
-							} else {
-								res.status(200).json({
-									'status'	: 200,
-									'message'	: 'Students not found. Maybe wrong group id?',
-									'query'		: query
-								});
-							}
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'group_controller','notify -- Finding Roster --');
-						});
-				}
-			})
 			.catch((err) => {
 				Err.sendError(res,err,'group_controller','notify -- Finding Groups --');
+				return;
 			});
+		if(groups.length === 0) {
+			res.status(StatusCodes.OK).json({
+				'message'	: 'No se encontraron grupos'
+			});
+			return;
+		}
+		groups.forEach(g => {
+			find_groups.push(g._id);
+			send_groups.push({
+				name: g.name,
+				code: g.code
+			});
+		});
+		const items = await Roster.find({group: {$in: find_groups}})
+			.populate([
+				{
+					path: 'student',
+					select: 'person'
+				},
+				{
+					path: 'group',
+					select: 'course code',
+					populate: {
+						path: 'course',
+						select: 'title'
+					}
+				}])
+			.select('student group')
+			.lean()
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','notify -- Finding Roster --');
+				return;
+			});
+		if(items.length === 0) {
+			res.status(StatusCodes.OK).json({
+				'message'	: 'Students not found. Maybe wrong group id?',
+				'query'		: query
+			});
+			return;
+		}
+		res.status(StatusCodes.OK).json({
+			'message'	: items.length + ' emails are being sending',
+			'groups'	: send_groups
+		});
+		for(let roster of items) {
+			let subject = `Mensaje del curso ${roster.group.course.title}`;
+			let variables = {
+				'Nombre': roster.student.person.name,
+				'curso': roster.group.course.title,
+				'mensaje': message
+			};
+			// falta cambiar a sendmail Genérico
+			await mailjet.sendMail(roster.student.person.email,roster.student.person.name,subject,template_notGroup,variables);
+		}
 	},
 
 	async modifyRosterStatus(req,res) {
@@ -1149,11 +1149,10 @@ module.exports = {
 		const key_user 	= res.locals.user;
 		//let myGroups = await cache.hget('mygroups:' + key_user._id, 'groups');
 		// if(!myGroups) {
-		Roster.find({student: key_user._id})
+		const items = await Roster.find({student: key_user._id})
 			.populate([{
 				path: 'group',
-				model: 'groups',
-				select: 'code name beginDate endDate presentBlockBy lapse status',
+				select: 'course code name beginDate endDate presentBlockBy lapse status instructor',
 				populate: [
 					{
 						path: 'course',
@@ -1168,31 +1167,24 @@ module.exports = {
 				]
 			},{
 				path: 'course',
-				model: 'courses',
 				select: 'title code numBlocks blocks price cost duration durationUnits image'
 			}])
 			.select('type status createDate endDate openStatus track group course finalGrade pass passDate')
 			.lean()
-			.then((items) => {
-				if(items.length > 0) {
-					//cache.hset('mygroups:' + key_user._id, 'groups', JSON.stringify(items));
-					//cache.expire('mygroups:' + key_user._id,cache.ttl);
-					sendGroups(items);
-				} else {
-					res.status(200).json({
-						'message': 'No groups found'
-					});
-				}
-			})
 			.catch((err) => {
 				Err.sendError(res,err,'group_controller','mygroups -- Finding groups through Roster --');
 			});
-		// } else {
-		// 	sendGroups(JSON.parse(myGroups));
-		// }
+		if(items.length === 0) {
+			return res.status(200).json({
+				'message': 'No groups found'
+			});
+		}
+		//cache.hset('mygroups:' + key_user._id, 'groups', JSON.stringify(items));
+		//cache.expire('mygroups:' + key_user._id,cache.ttl);
+		sendGroups(items);
 	}, // mygroups
 
-	myGroup(req,res) {
+	async myGroup(req,res) {
 
 		// async function setCache(group,course,orgUnit,parent,user,vGroup,vCourse,vOrgUnit,vUser) {
 		// 	const key = {
@@ -1228,8 +1220,8 @@ module.exports = {
 			queryFolio = {student: key_user._id, roster: rosterid};
 			query = {_id: rosterid};
 		}
-		Promise.all([
-			Folio.findOne(queryFolio),
+		const [folio,item] = await Promise.all([
+			Folio.findOne(queryFolio).lean(),
 			Roster.findOne(query)
 				.populate([{
 					path: 'group',
@@ -1256,136 +1248,135 @@ module.exports = {
 					}
 				}])
 				.lean()
-		])
-			.then(results => {
-				var [folio,item] = results;
-				if(item) {
-					var course		= (item.type && item.type === 'public') ?
-						JSON.parse(JSON.stringify(item.course)) :
-						JSON.parse(JSON.stringify(item.group.course));
-					var blocks 		= [];
-					if(course && course.blocks && course.blocks.length > 0) {
-						blocks 			= [...course.blocks];
-					}
-					// if((!item.type || item.type === 'group') &&
-					// 	item.group.course.blocks &&
-					// 	item.group.course.blocks.length > 0) {
-					// 	blocks = [...item.group.course.blocks];
-					// }
-					// if(item.type && item.type === 'public' &&
-					// 	item.course.blocks &&
-					// 	item.course.blocks.length > 0) {
-					// 	blocks = [...item.course.blocks];
-					// }
-					var new_blocks	= [];
-					var new_block		= {};
-					blocks.forEach(function(block) {
-						new_block = {
-							id						: block._id,
-							title					: block.title,
-							section 			: block.section,
-							number				: block.number,
-							order 				: block.order,
-							type					: block.type,
-							track					: false,
-							questionnarie : false,
-							task					: false
-						};
-						item.grades.forEach(function(grade) {
-							if(grade.block + '' === block._id + '') {
-								if(grade.track === 100) {
-									new_block.track = true;
-								}
-							}
-						});
-						if(block.number === 0) {
-							if(block.duration) {
-								new_block.duration = block.duration + ' ' + units(block.durationUnits,block.duration);
-							}
-							if(item.sections && item.sections.length > 0 && item.sections[block.section] && !item.sections[block.section].viewed) {
-								if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].beginDate) {
-									const begDate = new Date(new_block.beginDate);
-									const now = new Date();
-									const diff = begDate.getTime() - now.getTime();
-									if(diff > 0) {
-										new_block.beginDate = item.sections[block.section].beginDate;
-									}
-								}
-								if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].endDate) {
-									new_block.endDate = item.sections[block.section].endDate;
-								}
-							}
-						}
-						if(block.questionnarie) {
-							new_block.questionnarie = true;
-						}
-						if(block.task) {
-							new_block.task = true;
-						}
-						new_blocks.push(new_block);
-					});
-					var newFolio;
-					if(!folio) {
-						if(item.type && item.type === 'public') {
-							newFolio = createFolio(key_user._id,item._id,key_user._id,null);
-						} else {
-							newFolio = createFolio(key_user._id,item._id,key_user._id,item.group._id);
-						}
-						newFolio.assignFolio();
-						newFolio.save();
-					}
-					// console.log(folio);
-					// console.log(newFolio);
-					delete course.blocks;
-					var message = {
-						rosterType: item.type,
-						student		: key_user.person.fullName,
-						studentid	: key_user._id,
-						roster		: item._id,
-						currentBlock : item.currentBlock,
-						myStatus	: item.status,
-						folio			: folio ? folio.folio.match(/(\d{4})/g).join(' ') : newFolio.folio.match(/(\d{4})/g).join(' '),
-						folioStatus : folio ? folio.status : newFolio.status,
-						track			: parseInt(item.track) + '%',
-						minGrade	: item.minGrade,
-						minTrack  : item.minTrack,
-						finalGrade: item.finalGrade,
-						courseid	: course._id,
-						blocks		: new_blocks,
-						course 		: course
-					};
-					if(item.type && item.type === 'public') {
-						message.blockNum	= item.course.numBlocks;
-						message.beginDate = item.createDate;
-						message.endDate		= item.endDate;
-						message.openStatus = item.openStatus;
-						message.moocPrice = item.course.moocPrice;
-					} else {
-						message.openStatus = item.group.status;
-						message.groupid		= item.group._id;
-						message.groupCode = item.group.code;
-						message.groupType = item.group.type;
-						message.dates			= item.group.dates;
-						message.blockNum	= item.group.course.numBlocks;
-						message.beginDate = item.group.beginDate;
-						message.endDate		= item.group.endDate;
-						message.instructor = item.group.instructor;
-					}
-					res.status(200).json({
-						'message': message
-					});
-					//setCache(item.group._id,course,item.orgUnit,key_user.orgUnit.parent,key_user._id,item.group.name,item.group.course.title,key_user.orgUnit.name,key_user.name);
-
-				}	else {
-					res.status(200).json({
-						'message': 'Group with id -' + groupid + '- not found'
-					});
-				}
-			})
-			.catch((err) => {
-				Err.sendError(res,err,'group_controller','mygroup -- Finding Roster/Group --');
+		]).catch((err) => {
+			Err.sendError(res,err,'group_controller','mygroup -- Finding Roster/Group --');
+			return;
+		});
+		if(!item) {
+			return res.status(StatusCodes.OK).json({
+				'message': 'Group with id -' + groupid + '- not found'
 			});
+		}
+		var course		= (item.type && item.type === 'public') ?
+			JSON.parse(JSON.stringify(item.course)) :
+			JSON.parse(JSON.stringify(item.group.course));
+		var blocks 		= [];
+		if(course && course.blocks && course.blocks.length > 0) {
+			blocks 			= [...course.blocks];
+		}
+		var new_blocks	= [];
+		var new_block		= {};
+		blocks.forEach(block => {
+			new_block = {
+				id						: block._id,
+				title					: block.title,
+				section 			: block.section,
+				number				: block.number,
+				order 				: block.order,
+				type					: block.type,
+				track					: false,
+				questionnarie : false,
+				task					: false
+			};
+			item.grades.forEach(grade => {
+				if(grade.block + '' === block._id + '') {
+					if(grade.track === 100) {
+						new_block.track = true;
+					}
+				}
+			});
+			if(block.number === 0) {
+				if(block.duration) {
+					new_block.duration = block.duration + ' ' + units(block.durationUnits,block.duration);
+				}
+				if(item.sections && item.sections.length > 0 && item.sections[block.section] && !item.sections[block.section].viewed) {
+					if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].beginDate) {
+						const begDate = new Date(new_block.beginDate);
+						const now = new Date();
+						const diff = begDate.getTime() - now.getTime();
+						if(diff > 0) {
+							new_block.beginDate = item.sections[block.section].beginDate;
+						}
+					}
+					if(item.sections && item.sections.length > 0 && item.sections[block.section] && item.sections[block.section].endDate) {
+						new_block.endDate = item.sections[block.section].endDate;
+					}
+				}
+			}
+			if(block.questionnarie) {
+				new_block.questionnarie = true;
+			}
+			if(block.task) {
+				new_block.task = true;
+			}
+			new_blocks.push(new_block);
+		});
+		var newFolio;
+		if(!folio) {
+			if(item.type && item.type === 'public') {
+				newFolio = createFolio(key_user._id,item._id,key_user._id,null);
+			} else {
+				newFolio = createFolio(key_user._id,item._id,key_user._id,item.group._id);
+			}
+			newFolio.assignFolio();
+			newFolio.save();
+		}
+		// console.log(folio);
+		// console.log(newFolio);
+		delete course.blocks;
+		var message = {
+			rosterType: item.type,
+			student		: key_user.person.fullName,
+			studentid	: key_user._id,
+			roster		: item._id,
+			currentBlock : item.currentBlock,
+			myStatus	: item.status,
+			folio			: folio ? folio.folio.match(/(\d{4})/g).join(' ') : newFolio ? newFolio.folio.match(/(\d{4})/g).join(' ') : null,
+			folioStatus : folio ? folio.status : newFolio ? newFolio.status : null,
+			track			: parseInt(item.track) + '%',
+			minGrade	: item.minGrade,
+			minTrack  : item.minTrack,
+			finalGrade: item.finalGrade,
+			courseid	: course._id,
+			blocks		: new_blocks,
+			course 		: course
+		};
+		if(item.type && item.type === 'public') {
+			message.blockNum	= item.course.numBlocks;
+			message.beginDate = item.createDate;
+			message.endDate		= item.endDate;
+			message.openStatus = item.openStatus;
+			message.moocPrice = item.course.moocPrice;
+		} else {
+			message.openStatus = item.group.status;
+			message.groupid		= item.group._id;
+			message.groupCode = item.group.code;
+			message.groupType = item.group.type;
+			message.dates			= item.group.dates;
+			message.blockNum	= item.group.course.numBlocks;
+			message.beginDate = item.group.beginDate;
+			message.endDate		= item.group.endDate;
+			message.instructor = item.group.instructor;
+		}
+		res.status(StatusCodes.OK).json({
+			'message': message
+		});
+		//setCache(item.group._id,course,item.orgUnit,key_user.orgUnit.parent,key_user._id,item.group.name,item.group.course.title,key_user.orgUnit.name,key_user.name);
 	}, // mygroup
+
+	// async getGroup(req,res) {
+	// 	const key_user 	= res.locals.user;
+	// 	const {isMonitor} = key_user.roles;
+	// 	if(!isMonitor) {
+	// 		return res.status(StatusCodes.UNAUTHORIZED).json({
+	// 			message: 'No estás autorizado'
+	// 		});
+	// 	}
+	// 	const group = await Group.findById(req.params.groupid).catch(err => {
+	// 		Err.sendError(res,err,'group_controller','mygroup -- Finding Roster/Group --');
+	// 		return;
+	// 	});
+	// }, // getGroup
 
 	async getGroups(req,res) {
 		//const key_user	= res.locals.user;
@@ -4531,6 +4522,84 @@ module.exports = {
 			});
 	}, //searchOrphanRoster
 
+	async syncRubric(req,res) {
+		const key_user	= res.locals.user;
+		const {
+			isAdmin,
+			isRequester,
+			isSupervisor
+		} = key_user.roles;
+		if(!isAdmin && !isRequester && !isSupervisor) {
+			return res.status(StatusCodes.FORBIDDEN).json({
+				message: 'No tienes privilegios'
+			});
+		}
+		if(!req.params.groupid) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Falta el groupid'
+			});
+		}
+		const group = await Group.findById(req.params.groupid)
+			.select('roster rubric code')
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','syncRubric -- Finding Group -- user: ' +
+					key_user.name + ' groupid: ' + req.params.groupid );
+				return;
+			});
+		if(!group) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: `Grupo ${req.params.groupid} no se encuentra`
+			});
+		}
+		const rubric = group.rubric;
+		if(!rubric) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: `Grupo ${group.code} no tiene rúbrica`
+			});
+		}
+		const rosters = [...group.roster];
+		if(rosters.length === 0) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: `Grupo ${group.code} no tiene rosters`
+			});
+		}
+		var errorsFound = [];
+		var rostersSynced = [];
+		for(let i=0;i< rosters.length;i++) {
+			var error = false;
+			let roster = await Roster.findById(rosters[i]).catch((err) => {
+				Err.sendError(res,err,'group_controller','syncRubric -- Finding Roster -- user: ' +
+					key_user.name + ' groupid: ' + req.params.groupid  + ' rosterid: ' + rosters[i]);
+				errorsFound.push({roster: rosters[i]});
+				error = true;
+			});
+			if(roster && !error) {
+				for(let r=0;r < rubric.length; r++) {
+					const rub = rubric[r];
+					const blockFound = roster.grades.findIndex(g =>
+						g.block + '' === rub.block + '');
+					if(blockFound > -1) {
+						roster.grades[blockFound].w		= rub.w;
+						roster.grades[blockFound].wq	= rub.wq;
+						roster.grades[blockFound].wt	= rub.wt;
+					}
+				}
+				await roster.save().catch(err => {
+					Err.sendError(res,err,'group_controller','syncRubric -- Finding Roster -- user: ' +
+						key_user.name + ' groupid: ' + req.params.groupid  + ' rosterid: ' + rosters[i]);
+					errorsFound.push({roster: rosters[i]});
+				});
+				rostersSynced.push(rosters[i]);
+			} else {
+				if(!error) errorsFound.push({roster: rosters[i]});
+			}
+		}
+		res.status(StatusCodes.OK).json({
+			message: `Grupo ${group.code} sincronizado`,
+			errors: errorsFound,
+			rosters: `${rosters.length} total, ${rostersSynced.length} modificados`
+		});
+	}, // syncRubric
 
 	repairRoster(req,res) {
 		const key_user	= res.locals.user;
@@ -5161,9 +5230,9 @@ function dateInSpanish(date) {
 
 // varenum - Muestra en el query los valores enum que soporta una propiedad del esquema
 // field -> campo al que se le quieren mostrar los valores enum
-function varenum(field) {
-	return Group.schema.path(field).enumValues;
-}
+// function varenum(field) {
+// 	return Group.schema.path(field).enumValues;
+// }
 
 // suffle - función que desordena un arreglo y lo presenta en forma aleatoria
 // requiere que el arreglo tenga objetos con la propiedad _id definida
