@@ -9,6 +9,7 @@ const Err 			= require('../controllers/err500_controller');
 const Session		= require('../src/sessions'									);
 const Query 		= require('../src/queries'									);
 const TA 				= require('time-ago'												);
+const StatusCodes = require('http-status-codes'							);
 
 module.exports = {
 
@@ -948,120 +949,112 @@ module.exports = {
 		}
 	}, // gradesByGroup
 
-	filesBygroup(req,res) {
-		const groupid = req.query.groupid;
-		Group.findById(groupid)
+	async filesBygroup(req,res) {
+		const group = await Group.findById(req.params.groupid)
 			.populate('course', 'title duration durationUnits')
-			.then((group) => {
-				if(group) {
-					Roster.aggregate()
-						.match({group: mongoose.Types.ObjectId(groupid),report: {$ne:false}})
-						.project({
-							grades:true,
-							student:true
-						})
-						.unwind('grades')
-						.match({
-							'grades.w'	: 10,
-							'grades.wt'	: 1
-						})
-						.project({
-							student	:true,
-							task		: '$grades.tasks'
-						})
-						.unwind('task')
-						.project({
-							student	:true,
-							file		: '$task.content'
-						})
-						.lookup({
-							from				: 'users',
-							localField	: 'student',
-							foreignField: '_id',
-							as					: 'user'
-						})
-						.unwind('user')
-						.project({
-							name 				: '$user.person.name',
-							fatherName 	: '$user.person.fatherName',
-							motherName	: '$user.person.motherName',
-							email				: '$user.person.email',
-							RFC					: '$user.admin.initialPassword',
-							file				: true
-						})
-						.then((items) => {
-							if(items.length > 0 ) {
-								var files = [];
-								items.forEach(function(item) {
-									if(item.file) {
-										files.push(item.file);
-									}
-								});
-								File.find({_id:{$in:files}})
-									.then((filesFound) => {
-										if(filesFound.length > 0) {
-											var results = [];
-											var i = 0;
-											while(i < filesFound.length) {
-												var found = false;
-												var j = 0;
-												while(!found && j < items.length) {
-													if(filesFound[i]._id + '' === items[j].file + '') {
-														found = true;
-														results.push({
-															name				: items[j].name,
-															fatherName	: items[j].fatherName,
-															motherName	: items[j].motherName,
-															RFC					: items[j].RFC,
-															email				: items[j].email,
-															fileName		: filesFound[i].name,
-															fileId			: filesFound[i].filename,
-															filePath		: filesFound[i].path,
-															fileSize		: filesFound[i].size
-														});
-													}
-													j++;
-												}
-												i++;
-											}
-											res.status(200).json({
-												'status'		: 200,
-												'groupCode'	: group.code,
-												'groupName'	: group.name,
-												'count'			: results.length,
-												'message'		: results
-											});
-										} else {
-											res.status(200).json({
-												'status': 200,
-												'message': 'No files found'
-											});
-										}
-									})
-									.catch((err) => {
-										Err.sendError(res,err,'report_controller','filesBygroup -- Finding rosters --');
-									});
-							} else {
-								res.status(200).json({
-									'status': 200,
-									'message': 'No items found'
-								});
-							}
-
-						})
-						.catch((err) => {
-							Err.sendError(res,err,'report_controller','filesBygroup -- Finding rosters --');
-						});
-				} else {
-					res.status(200).json({
-						'status': 200,
-						'message': 'No group found'
-					});
-				}
-			})
 			.catch((err) => {
 				Err.sendError(res,err,'report_controller','filesBygroup -- Finding group --');
+				return;
 			});
+		if(!group) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'No se encontró grupo'
+			});
+		}
+		const items = await Roster.aggregate()
+			.match({
+				group: mongoose.Types.ObjectId(req.params.groupid),
+				report: {
+					$ne:false
+				}
+			})
+			.project({
+				grades:true,
+				student:true
+			})
+			.unwind('grades')
+			.match({ // buscar las tareas por rúbrica
+				'grades.w'	: +req.query.w,
+				'grades.wt'	: +req.query.wt,
+			})
+			.project({
+				student	: true,
+				task		: '$grades.tasks'
+			})
+			.unwind('task')
+			.project({
+				student	:true,
+				file		: '$task.content'
+			})
+			.lookup({
+				from				: 'users',
+				localField	: 'student',
+				foreignField: '_id',
+				as					: 'user'
+			})
+			.unwind('user')
+			.project({
+				name 				: '$user.person.name',
+				fatherName 	: '$user.person.fatherName',
+				motherName	: '$user.person.motherName',
+				email				: '$user.person.email',
+				RFC					: '$user.admin.initialPassword',
+				file				: true
+			}).catch((err) => {
+				Err.sendError(res,err,'report_controller','filesBygroup -- Finding rosters --');
+				return;
+			});
+		if(items.length === 0) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': `No se encontraron rosters para grupo ${group.code}`
+			});
+		}
+		var files = [];
+		items.forEach(function(item) {
+			if(item.file) {
+				files.push(item.file);
+			}
+		});
+		const filesFound = await File.find({_id:{$in:files}})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','filesBygroup -- Finding rosters --');
+				return;
+			});
+		if(filesFound.length === 0) {
+			return res.status(200).json({
+				'message': 'No se encontraron archivos'
+			});
+		}
+		var results = [];
+		var i = 0;
+		while(i < filesFound.length) {
+			var found = false;
+			var j = 0;
+			while(!found && j < items.length) {
+				if(filesFound[i]._id + '' === items[j].file + '') {
+					found = true;
+					results.push({
+						name				: items[j].name,
+						fatherName	: items[j].fatherName,
+						motherName	: items[j].motherName,
+						RFC					: items[j].RFC,
+						email				: items[j].email,
+						fileName		: filesFound[i].name,
+						fileId			: filesFound[i].filename,
+						filePath		: filesFound[i].path,
+						fileSize		: filesFound[i].size
+					});
+				}
+				j++;
+			}
+			i++;
+		}
+		res.status(StatusCodes.OK).json({
+			groupCode	: group.code,
+			groupName	: group.name,
+			count			: results.length,
+			message		: results
+		});
 	}, // filesBygroup
 
 	gradesByCampus(req,res) { // Revisar y rearmar porque no funciona correctamente

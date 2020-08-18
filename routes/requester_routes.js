@@ -34,6 +34,9 @@ module.exports = (app) => {
 		Validate.results,
 		GroupController.get
 	);
+	app.get ('/api/v1/group/:groupid/getfilelist',
+		ReportController.filesBygroup
+	);
 	app.patch ('/api/v1/group/:groupid',
 		Validate.get,
 		Validate.results,

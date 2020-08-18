@@ -4,7 +4,6 @@
 
 const mongoose 		= require('mongoose');
 const User 				= require('../src/users'										);
-const Orgs 				= require('../src/orgs'											);
 const orgUnit 		= require('../src/orgUnits'									);
 const Course 			= require('../src/courses'									);
 const Group 			= require('../src/groups'										);
@@ -284,7 +283,7 @@ module.exports = {
 			});
 		if(!group) {
 			return res.status(StatusCodes.NOT_FOUND).json({
-				message	: 'Grupo' + req.body.groupid + ' no encontrado'
+				message	: 'Grupo' + req.params.groupid + ' no encontrado'
 			});
 		}
 		group = Object.assign(group,req.body);
@@ -4540,7 +4539,7 @@ module.exports = {
 			});
 		}
 		const group = await Group.findById(req.params.groupid)
-			.select('roster rubric code')
+			.select('roster rubric code minGrade minTrack')
 			.catch((err) => {
 				Err.sendError(res,err,'group_controller','syncRubric -- Finding Group -- user: ' +
 					key_user.name + ' groupid: ' + req.params.groupid );
@@ -4568,9 +4567,12 @@ module.exports = {
 		for(let i=0;i< rosters.length;i++) {
 			var error = false;
 			let roster = await Roster.findById(rosters[i]).catch((err) => {
-				Err.sendError(res,err,'group_controller','syncRubric -- Finding Roster -- user: ' +
-					key_user.name + ' groupid: ' + req.params.groupid  + ' rosterid: ' + rosters[i]);
-				errorsFound.push({roster: rosters[i]});
+				// Err.sendError(res,err,'group_controller','syncRubric -- Finding Roster -- user: ' +
+				// 	key_user.name + ' groupid: ' + req.params.groupid  + ' rosterid: ' + rosters[i]);
+				errorsFound.push({
+					roster: rosters[i],
+					err
+				});
 				error = true;
 			});
 			if(roster && !error) {
@@ -4584,14 +4586,23 @@ module.exports = {
 						roster.grades[blockFound].wt	= rub.wt;
 					}
 				}
+				roster.minGrade = group.minGrade;
+				roster.minTrack = group.minTrack;
 				await roster.save().catch(err => {
-					Err.sendError(res,err,'group_controller','syncRubric -- Finding Roster -- user: ' +
-						key_user.name + ' groupid: ' + req.params.groupid  + ' rosterid: ' + rosters[i]);
-					errorsFound.push({roster: rosters[i]});
+					// Err.sendError(res,err,'group_controller','syncRubric -- Finding Roster -- user: ' +
+					// 	key_user.name + ' groupid: ' + req.params.groupid  + ' rosterid: ' + rosters[i]);
+					errorsFound.push({
+						roster: rosters[i],
+						err
+					});
 				});
 				rostersSynced.push(rosters[i]);
 			} else {
-				if(!error) errorsFound.push({roster: rosters[i]});
+				if(!error) errorsFound.push(
+					{
+						roster: rosters[i],
+						err: 'No roster'
+					});
 			}
 		}
 		res.status(StatusCodes.OK).json({

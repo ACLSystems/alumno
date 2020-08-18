@@ -410,7 +410,7 @@ const RosterSchema = new Schema ({
 	},
 	pass: {
 		type: Boolean,
-		defaul: false
+		default: false
 	},
 	passDate: {
 		type: Date
@@ -587,7 +587,7 @@ async function(){
 	}
 
 	item.track = parseInt(track / i);
-	if(!item.pass && (item.finalGrade > item.minGrade && item.track > item.minTrack)) {
+	if(!item.pass && (item.finalGrade >= item.minGrade && item.track >= item.minTrack)) {
 		item.pass 		= true;
 		item.passDate	= now;
 		if(!item.certificateNumber || item.certificateNumber === 0) {
@@ -656,7 +656,6 @@ async function(){
 		}
 	}
 	await this.save();
-	return;
 };
 
 RosterSchema.pre('save', async function(next) {
@@ -756,7 +755,7 @@ RosterSchema.pre('save', async function(next) {
 	}
 
 	item.track = parseInt(track / i);
-	if(!item.pass && (item.finalGrade > item.minGrade && item.track > item.minTrack)) {
+	if(!item.pass && (item.finalGrade >= item.minGrade && item.track >= item.minTrack)) {
 		item.pass 		= true;
 		item.passDate	= now;
 		if(!item.certificateNumber || item.certificateNumber === 0) {
@@ -825,6 +824,10 @@ RosterSchema.pre('save', async function(next) {
 			}
 		}
 	} else {
+		if(item.pass && (item.finalGrade < item.minGrade)) {
+			item.pass = false;
+			item.passDate = null;
+		}
 		next();
 	}
 });
