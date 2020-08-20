@@ -9,6 +9,7 @@ const StatusCodes 				= require('http-status-codes');
 const db 									= require('./src/db'); // eslint-disable-line no-unused-vars
 const cache 							= require('./src/cache'); // eslint-disable-line no-unused-vars
 const FileController 			= require('./controllers/file_controller');
+const CertTemplateController = require('./controllers/certs_controller');
 // const routes 							= require('./routes/routes');
 const publicRoutes				= require('./routes/public_routes');
 const exportRoutes 				= require('./routes/export_routes');
@@ -45,6 +46,9 @@ var upload = multer({
 	}
 });
 
+var storage = multer.memoryStorage();
+var uploadMemory = multer({storage});
+
 app.disable('x-powered-by');
 /** Encabezados CORS */
 app.use(function(req, res, next) {
@@ -75,9 +79,24 @@ app.all	('/api/v1/*', [require('./middleware/validateRequest')]);
 	* API para carga de archivos. Esta ruta usa Multer
  	* por lo que no debe pasar por el bodyParser
 	*/
-app.post('/api/v1/file/upload', upload.single('file'), FileController.upload);
+app.post('/api/v1/file/upload',
+	upload.single('file'),
+	FileController.upload
+);
 
-app.post('/api/v1/user/image', upload.single('file'), FileController.imageUpload);
+app.post('/api/v1/user/image',
+	upload.single('file'),
+	FileController.imageUpload
+);
+
+app.post('/api/v1/certtemp/:instance',
+	uploadMemory.single('file'),
+	CertTemplateController.createCertTemplate
+);
+
+app.get('/api/v1/certtemp/:rosterid',
+	CertTemplateController.getCertTemplate
+);
 
 /**  Para el resto de APIs validaciones del body */
 

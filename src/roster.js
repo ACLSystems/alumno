@@ -442,6 +442,10 @@ const RosterSchema = new Schema ({
 		type: Boolean,
 		default: false
 	},
+	certTemplateDownload: {
+		type: Boolean,
+		default: false
+	},
 	certificateNumber: {
 		type: Number,
 		default: 0
@@ -466,6 +470,10 @@ const RosterSchema = new Schema ({
 		type: String,
 		enum: ['group','public'],
 		default: 'group'
+	},
+	instance: {
+		type: ObjectId,
+		ref: 'instances'
 	}
 });
 

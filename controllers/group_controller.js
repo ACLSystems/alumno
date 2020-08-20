@@ -17,6 +17,7 @@ const Err 				= require('../controllers/err500_controller');
 const mailjet 		= require('../shared/mailjet'								);
 const Notification = require('../src/notifications'						);
 const Attempt 		= require('../src/attempts'									);
+const Instance 		= require('../src/instances'								);
 const TA 					= require('time-ago'												);
 const StatusCodes = require('http-status-codes'								);
 //const cache 			= require('../src/cache'										);
@@ -476,6 +477,7 @@ module.exports = {
 				message: 'Grupo ' + group.name + ' (' + group.code + ') no está activo'
 			});
 		}
+		const instance = Instance.getInstance(group.orgUnit,'instance');
 		var mod = {
 			by: key_user.name,
 			when: date,
@@ -592,7 +594,8 @@ module.exports = {
 					org				: group.org,
 					orgUnit		: group.orgUnit,
 					sections 	: sections,
-					version		: version,		// version 2
+					instance,
+					version,		// version 2
 					admin 		: [{
 						what		: 'Roster creation',
 						who			: key_user.name,

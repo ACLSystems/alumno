@@ -109,7 +109,18 @@ InstanceSchema.static('getInstance', async function(instanceOUName, giveMe) {
 		return null;
 	});
 	if(!instance) return null;
-	return (giveMe === 'combo' && instance.url && instance.url.libreta) ? {ouName: instance.orgUnitName, url: instance.url.libreta } : (giveMe === 'ouName') ? instance.orgUnitName : (giveMe === 'URL' && instance.url && instance.url.libreta) ? instance.url.libreta : instance;
+	return (
+		giveMe === 'combo' && instance.url &&
+		instance.url.libreta) ?
+		{
+			ouName: instance.orgUnitName,
+			url: instance.url.libreta
+		} :
+		(giveMe === 'ouName') ?  instance.orgUnitName :
+			(giveMe === 'URL' && instance.url &&
+			instance.url.libreta) ? instance.url.libreta :
+				(giveMe === 'instance') ? instance._id :
+					instance;
 });
 
 InstanceSchema.index({hostname: 1},{unique: true});

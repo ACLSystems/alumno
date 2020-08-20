@@ -38,7 +38,7 @@ const template_user_admin		= parseInt(process.env.MJ_TEMPLATE_USER_ADMIN);
 /** @const {number} - plantilla para notificación al usuario sobre el cambio de password hecho por el administrador */
 const template_user_change	= parseInt(process.env.MJ_TEMPLATE_USER_CHANGE);
 /** @const {number} - plantilla para recuperación de contraseña */
-const template_pass_recovery	= parseInt(process.env.MJ_TEMPLATE_PASSREC);
+// const template_pass_recovery	= parseInt(process.env.MJ_TEMPLATE_PASSREC);
 /** @const {number} - plantilla notificación al usuario sobre el cambio de correo hecho por el administrador */
 const template_adm_pass_change	= parseInt(process.env.MJ_TEMPLATE_ADM_PASS_CHANGE);
 
@@ -1776,158 +1776,171 @@ module.exports = {
 		const minGrade = 75;
 		const minTrack = 80;
 		const type = 'public';
-		try {
-			// busca roster que ya tenga este curso de tipo público
-			const findRoster = await Roster.findOne({
-				type: 'public',
-				student: key_user._id,
-				course: req.body.courseid
+		// busca roster que ya tenga este curso de tipo público
+		const findRoster = await Roster.findOne({
+			type: 'public',
+			student: key_user._id,
+			course: req.body.courseid
+		}).catch(err => {
+			Err.sendError(res,err,'user_controller','createRoster -- Finding roster --');
+			return;
+		});
+		if(findRoster) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Ya te habías inscrito en este curso previamente'
 			});
-			if(findRoster) {
-				res.status(200).json({
-					message: 'Ya te habías inscrito en este curso previamente'
-				});
-				return;
-			}
-			const course = await Course.findById(req.body.courseid)
-				.populate({
-					path: 'blocks',
-					select: 'section number w wq wt',
-					options: { sort: {order: 1} }
-				})
-				.lean();
-			if(course) {
-				if(course.status === 'published') {
-					var mod = {
-						by: key_user.name,
-						when: date,
-						what: 'Roster created'
-					};
-					const blocks = course.blocks;
-					const deps = await Dependency.find({block: {$in: blocks}});
-					if(deps && deps.length > 0) {
-						deps.forEach(dep => {
-							var foundB = false;
-							var foundOnB = false;
-							var cursor = 0;
-							while(!(foundB && foundOnB) && cursor < blocks.length) {
-								if(dep.block + '' === blocks[cursor]._id + '') {
-									if(!blocks[cursor].dependencies) {
-										blocks[cursor].dependencies = [];
-									}
-									blocks[cursor].dependencies.push({
-										dep: dep._id,
-										createAttempt: false,
-										track: false,
-										saveTask: false
-									});
-									foundB = true;
-								}
-								if(dep.onBlock + '' === blocks[cursor]._id + '') {
-									if(!blocks[cursor].dependencies) {
-										blocks[cursor].dependencies = [];
-									}
-									blocks[cursor].dependencies.push({
-										dep: dep._id
-									});
-									foundOnB = true;
-								}
-								cursor++;
-							}
-						});
-					}
-					var grades = [];
-					var sec = 0;
-					blocks.forEach(block => {
-						grades.push({
-							block: block._id,
-							blockSection: block.section,
-							blockNumber: (block.number === 0) ? 0 : block.number,
-							track: 0,
-							maxGradeQ: 0,
-							gradeT: 0,
-							w: block.w,
-							wq: block.wq,
-							wt: block.wt,
-							dependencies: block.dependencies
-						});
-						if(block.section !== sec) {
-							sec++;
-						}
-					});
-					if(blocks[0].section === 0) {
-						sec++;
-					}
-					var sections = [];
-					var j=0;
-					while(j < sec) {
-						sections.push({});
-						j++;
-					}
-					var new_roster = new Roster({
-						student: key_user._id,
-						grades,type,
-						course: course._id,
-						minGrade,minTrack,
-						org: key_user.org._id,
-						orgUnit: key_user.orgUnit._id,
-						sections,
-						version: rosterVersion,
-						admin: [],
-						mod: [mod],
-						createDate: date,
-						endDate: finishDate
-					});
-					await new_roster.save();
-					let subject = `Te has inscrito al curso ${course.title}`;
-					let variables = {
-						'Nombre': key_user.person.name,
-						'confirmation_link': link,
-						'curso': course.title
-					};
-					await mailjet.sendMail(
-						key_user.person.email,
-						key_user.person.name,
-						subject,
-						template_user_inscr,
-						variables
-					);
-					var notification = new Notification({
-						destination: {
-							kind: 'users',
-							item: key_user._id,
-							role: 'user'
-						},
-						objects: [
-							{
-								kind: 'courses',
-								item: course._id
-							},
-							{
-								kind: 'blocks',
-								item: course.blocks[0]._id
-							}
-						],
-						type: 'system',
-						message: `Te has inscrito al curso ${course.title}`
-					});
-					await notification.save();
-					return res.status(200).json({
-						message: `Te has inscrito al curso ${course.title}`
-					});
-				} else {
-					return res.status(200).json({
-						message: 'Curso seleccionado no está disponible'
-					});
-				}
-			} else {
-				return res.status(200).json({
-					message: 'Curso seleccionado no existe'
-				});
-			}
-		} catch (err) {
-			Err.sendError(res,err,'user_controller','createRoster -- Finding Course --');
 		}
+		const course = await Course.findById(req.body.courseid)
+			.populate({
+				path: 'blocks',
+				select: 'section number w wq wt',
+				options: { sort: {order: 1} }
+			})
+			.lean()
+			.catch(err => {
+				Err.sendError(res,err,'user_controller','createRoster -- Finding course --');
+				return;
+			});
+		if(!course) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'Curso seleccionado no existe'
+			});
+		}
+		if(course.status !== 'published') {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Curso seleccionado no está disponible'
+			});
+		}
+		var mod = {
+			by: key_user.name,
+			when: date,
+			what: 'Roster created'
+		};
+		const blocks = course.blocks;
+		const deps = await Dependency.find({block: {$in: blocks}});
+		if(deps && deps.length > 0) {
+			deps.forEach(dep => {
+				var foundB = false;
+				var foundOnB = false;
+				var cursor = 0;
+				while(!(foundB && foundOnB) && cursor < blocks.length) {
+					if(dep.block + '' === blocks[cursor]._id + '') {
+						if(!blocks[cursor].dependencies) {
+							blocks[cursor].dependencies = [];
+						}
+						blocks[cursor].dependencies.push({
+							dep: dep._id,
+							createAttempt: false,
+							track: false,
+							saveTask: false
+						});
+						foundB = true;
+					}
+					if(dep.onBlock + '' === blocks[cursor]._id + '') {
+						if(!blocks[cursor].dependencies) {
+							blocks[cursor].dependencies = [];
+						}
+						blocks[cursor].dependencies.push({
+							dep: dep._id
+						});
+						foundOnB = true;
+					}
+					cursor++;
+				}
+			});
+		}
+		var grades = [];
+		var sec = 0;
+		blocks.forEach(block => {
+			grades.push({
+				block: block._id,
+				blockSection: block.section,
+				blockNumber: (block.number === 0) ? 0 : block.number,
+				track: 0,
+				maxGradeQ: 0,
+				gradeT: 0,
+				w: block.w,
+				wq: block.wq,
+				wt: block.wt,
+				dependencies: block.dependencies
+			});
+			if(block.section !== sec) {
+				sec++;
+			}
+		});
+		if(blocks[0].section === 0) {
+			sec++;
+		}
+		var sections = [];
+		var j=0;
+		while(j < sec) {
+			sections.push({});
+			j++;
+		}
+		const instance = await Instance.getInstance(key_user.orgUnit._id,'instance').catch(err => {
+			Err.sendError(res,err,'user_controller','createRoster -- Getting instance --');
+			return;
+		});
+		var new_roster = new Roster({
+			student: key_user._id,
+			grades,type,
+			course: course._id,
+			minGrade,minTrack,
+			org: key_user.org._id,
+			orgUnit: key_user.orgUnit._id,
+			sections,
+			version: rosterVersion,
+			admin: [],
+			mod: [mod],
+			createDate: date,
+			endDate: finishDate,
+			instance
+		});
+		await new_roster.save().catch(err => {
+			Err.sendError(res,err,'user_controller','createRoster -- Saving roster --');
+			return;
+		});
+		let subject = `Te has inscrito al curso ${course.title}`;
+		let variables = {
+			'Nombre': key_user.person.name,
+			'confirmation_link': link,
+			'curso': course.title
+		};
+		await mailjet.sendMail(
+			key_user.person.email,
+			key_user.person.name,
+			subject,
+			template_user_inscr,
+			variables
+		).catch(err => {
+			console.log(err);
+		});
+		var notification = new Notification({
+			destination: {
+				kind: 'users',
+				item: key_user._id,
+				role: 'user'
+			},
+			objects: [
+				{
+					kind: 'courses',
+					item: course._id
+				},
+				{
+					kind: 'blocks',
+					item: course.blocks[0]._id
+				}
+			],
+			type: 'system',
+			message: `Te has inscrito al curso ${course.title}`
+		});
+		await notification.save().catch(err => {
+			Err.sendError(res,err,'user_controller','createRoster -- Saving notification --');
+			return;
+		});
+		return res.status(StatusCodes.OK).json({
+			message: `Te has inscrito al curso ${course.title}`
+		});
 	}, //createRosterSelf
 
 	encrypt(req, res){
