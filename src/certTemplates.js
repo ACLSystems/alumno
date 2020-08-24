@@ -94,6 +94,7 @@ const CertTemplateSchema = new Schema({
 		course: OptionsSchema,
 		courseDuration: OptionsSchema,
 		endDate: OptionsSchema,
+		period: OptionsSchema,
 		qr: {
 			enabled: Boolean,
 			url: String,

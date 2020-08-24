@@ -210,10 +210,10 @@ module.exports = {
 		if(req.params.groupid) query = {$or:[{_id:req.params.groupid},{code:req.params.groupid}]};
 		if(req.query.groupid) query = {$or:[{_id:req.query.groupid},{code:req.query.groupid}]};
 		const group = await Group.findOne(query)
-			.select('-org -roster -own -mod -perm -admin -__v')
+			.select('-org -roster -students -own -mod -perm -admin -__v')
 			.populate('course','name code')
 			.populate('instructor', 'person')
-			.populate('students', 'person')
+			// .populate('students', 'person')
 			.populate('orgUnit', 'name parent type longName')
 			.populate('project', 'name')
 			.catch((err) => {
@@ -477,7 +477,6 @@ module.exports = {
 				message: 'Grupo ' + group.name + ' (' + group.code + ') no está activo'
 			});
 		}
-		const instance = Instance.getInstance(group.orgUnit,'instance');
 		var mod = {
 			by: key_user.name,
 			when: date,
@@ -530,8 +529,8 @@ module.exports = {
 		var my_roster 		= [];
 		var new_students	= [];
 		var status				= roster.status || 'pending';
+		var instanceGrl = await Instance.getInstance(group.orgUnit,'instance');
 		for(let s=0; s < students.length;s++) {
-
 			const student = students[s];
 			// }
 			// students.forEach(student => {
@@ -594,7 +593,7 @@ module.exports = {
 					org				: group.org,
 					orgUnit		: group.orgUnit,
 					sections 	: sections,
-					instance,
+					instance	: instanceGrl,
 					version,		// version 2
 					admin 		: [{
 						what		: 'Roster creation',
@@ -2511,7 +2510,7 @@ module.exports = {
 			Roster.findOne(query)
 				.populate([{
 					path: 'group',
-					select: 'course certificateActive beginDate endDate type rubric dates status',
+					select: 'course certificateActive beginDate endDate type rubric dates status presentedEndDate otherEndDate displayGroupPeriodDates',
 					populate: {
 						path: 'course',
 						select: 'title blocks duration durationUnits noCertificate',
@@ -2725,7 +2724,8 @@ module.exports = {
 		};
 		if(type === 'group') {
 			send_grade.openStatus = item.group.status;
-			send_grade.status = item.group.status;
+			send_grade.status = item.status;
+			send_grade.groupStatus = item.group.status;
 			send_grade.groupid 	= item.group._id;
 			send_grade.groupType= item.group.type;
 			send_grade.groupCode = item.group.code;
@@ -2739,6 +2739,9 @@ module.exports = {
 			send_grade.endDate	= item.group.endDate;
 			send_grade.beginDateSpa	= dateInSpanish(item.group.beginDate);
 			send_grade.endDateSpa	= dateInSpanish(item.group.endDate);
+			send_grade.presentedEndDate = item.group.presentedEndDate || 'passDate';
+			send_grade.otherEndDate = item.group.otherEndDate || new Date();
+			send_grade.displayGroupPeriodDates = item.group.displayGroupPeriodDates || false;
 		}
 		if(type === 'public') {
 			send_grade.openStatus = item.openStatus;
@@ -2751,6 +2754,7 @@ module.exports = {
 			send_grade.noCertificate = item.course.noCertificate || false;
 			send_grade.beginDateSpa	= dateInSpanish(item.createDate);
 			send_grade.endDateSpa	= dateInSpanish(item.endDate);
+			send_grade.presentedEndDate = 'passDate';
 		}
 
 		if(type === 'group' && item.group &&

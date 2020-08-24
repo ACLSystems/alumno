@@ -159,7 +159,7 @@ module.exports = {
 		} = key_user.roles;
 		const rosterid = req.params.rosterid;
 		const roster = await Roster.findById(rosterid)
-			.select('status pass finalGrade track minGrade minTrack orgUnit instance')
+			.select('status student pass finalGrade track minGrade minTrack orgUnit instance')
 			.catch(err => {
 				Err.sendError(res,err,'cert_controller',`getCertTemplate -- Finding Roster, rosterid: ${rosterid}` );
 				return;

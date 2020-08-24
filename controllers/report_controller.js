@@ -789,164 +789,180 @@ module.exports = {
 		}
 	}, //publicProgress
 
-	gradesByGroup(req,res) {
+	async gradesByGroup(req,res) {
 		//const key_user  = res.locals.user;
-		var 	groupid				= req.query.groupid || null;
-		if(!groupid) {
-			res.status(400).json({
+		if(!req.query.groupid) {
+			return res.status(StatusCodes.BAD_REQUEST).json({
 				'message': 'Groupid es requerido'
 			});
-		} else {
-			Group.findById(groupid)
-				.populate('course', 'title duration durationUnits')
-				.populate('orgUnit', 'displayRFC')
-				.then((group) => {
-					if(group) {
-						Roster.aggregate()
-							.match({group: mongoose.Types.ObjectId(groupid),report: {$ne:false}})
-							.project('student grades finalGrade track pass passDate -_id certificateNumber')
-							.lookup({
-								from				: 'users',
-								localField	: 'student',
-								foreignField: '_id',
-								as					: 'myUser'
-							})
-							.project({
-								grades			:	1,
-								finalGrade	:	1,
-								track				:	1,
-								pass				:	1,
-								passDate		:	1,
-								certificateNumber : '' + '$certificateNumber',
-								id					: '$myUser._id',
-								name				:	'$myUser.person.name',
-								fatherName	:	'$myUser.person.fatherName',
-								motherName	: '$myUser.person.motherName',
-								email				: '$myUser.person.email',
-								RFC					: {$cond: [group.displayRFC,'$myUser.admin.initialPassword','--']}
-							})
-							.unwind('name')
-							.unwind('fatherName')
-							.unwind('motherName')
-							.unwind('email')
-							.unwind('RFC')
-							.unwind('grades')
-							.unwind('id')
-							.match({$or: [{'grades.wq': {$gt:0}},{'grades.wt': {$gt:0}}]})
-							.lookup({
-								from				: 'blocks',
-								localField	: 'grades.block',
-								foreignField: '_id',
-								as					: 'myBlocks'
-							})
-							.project({
-								finalGrade	:	1,
-								track				:	1,
-								pass				:	1,
-								passDate		:	1,
-								certificateNumber: 1,
-								name				:	1,
-								fatherName	:	1,
-								motherName	:	1,
-								email				:	1,
-								RFC					: 1,
-								id					: 1,
-								blockTitle	:	'$myBlocks.title',
-								blockGrade	:	'$grades.finalGrade',
-								blockPond		:	'$grades.w'
-							})
-							.unwind('blockTitle')
-							.group({
-								_id: {
-									name				: '$name',
-									fatherName	: '$fatherName',
-									motherName	: '$motherName',
-									email				: '$email',
-									RFC 				: '$RFC',
-									id					: '$id',
-									track				: '$track',
-									finalGrade	: '$finalGrade',
-									pass				: '$pass',
-									passDate		: '$passDate',
-									certificateNumber: '$certificateNumber'
-								},
-								grades: {
-									$push: {
-										blockTitle	: '$blockTitle',
-										blockGrade	: '$blockGrade',
-										blockPond		: '$blockPond'
-									}
-								}
-							})
-							.project({
-								id					: '$_id.id',
-								name				: '$_id.name',
-								fatherName	: '$_id.fatherName',
-								motherName	: '$_id.motherName',
-								email				: '$_id.email',
-								RFC					: '$_id.RFC',
-								track				: '$_id.track',
-								finalGrade	: '$_id.finalGrade',
-								pass				: '$_id.pass',
-								passDate		: '$_id.passDate',
-								certificateNumber	: '$_id.certificateNumber'.padStart(7,'0'),
-								grades			: true,
-								_id 				: false
-							})
-							.then((items) => {
-								if(items && items.length > 0 ){
-									items.forEach(i => {
-										let passDate = false;
-										if(group.dates &&
-											Array.isArray(group.dates) &&
-											group.dates.length > 0
-										) {
-											let findCertificateDate = group.dates.find(date => date.type === 'certificate');
-											// esta parte era por si la fecha mínima era la de liberación de constancia
-											//if(findCertificateDate && send_grade.passDate < findCertificateDate.beginDate) {
-											// Y esta es la fecha de liberación de constancia
-											if(findCertificateDate) {
-												passDate = findCertificateDate.beginDate;
-											}
-										}
-										if(i.passDate) {
-											if(passDate) {
-												i.passDate = passDate;
-												i.passDateSpa = dateInSpanish(passDate);
-											} else {
-												i.passDateSpa = dateInSpanish(i.passDate);
-											}
-										}
-									});
-								}
-								res.status(200).json({
-									'group'					: group.name,
-									'groupCode'			: group.code,
-									'displayRFC'		: group.orgUnit.displayRFC,
-									'course'				: group.course.title,
-									'courseDuration': group.course.duration,
-									'courseDurUnits': units(group.course.durationUnits),
-									'beginDate'			: group.beginDate,
-									'endDate'				: group.endDate,
-									'beginDateSpa'	: dateInSpanish(group.beginDate),
-									'endDateSpa'		: dateInSpanish(group.endDate),
-									'number'				: items.length,
-									'roster'				: items
-								});
-							})
-							.catch((err) => {
-								Err.sendError(res,err,'report_controller','gradesByGroup -- Finding roster items --');
-							});
-					} else {
-						res.status(404).json({
-							'message': 'Group no localizado'
-						});
-					}
-				})
-				.catch((err) => {
-					Err.sendError(res,err,'report_controller','gradesByGroup -- Finding group --');
-				});
 		}
+		const group = await Group.findById(req.query.groupid)
+			.populate('course', 'title duration durationUnits')
+			.populate('orgUnit', 'displayRFC')
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','gradesByGroup -- Finding group --');
+				return;
+			});
+		if(!group) {
+			res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'Group no localizado'
+			});
+		}
+		const displayRFC = group.orgUnit.displayRFC || group.displayRFC || false;
+		const items = await Roster.aggregate()
+			.match({group: mongoose.Types.ObjectId(group._id),report: {$ne:false}})
+			// .project('_id student grades finalGrade track pass passDate certificateNumber')
+			.project({
+				rosterid		: '$_id',
+				_id					: 0,
+				student			: 1,
+				grades 			: 1,
+				finalGrade 	: 1,
+				track				: 1,
+				pass 				: 1,
+				passDate 		: 1,
+				certificateNumber : 1
+			})
+			.lookup({
+				from				: 'users',
+				localField	: 'student',
+				foreignField: '_id',
+				as					: 'myUser'
+			})
+			.project({
+				rosterid 		: 1,
+				grades			:	1,
+				finalGrade	:	1,
+				track				:	1,
+				pass				:	1,
+				passDate		:	1,
+				certificateNumber : '' + '$certificateNumber',
+				id					: '$myUser._id',
+				name				:	'$myUser.person.name',
+				fatherName	:	'$myUser.person.fatherName',
+				motherName	: '$myUser.person.motherName',
+				email				: '$myUser.person.email',
+				RFC					: {$cond: [displayRFC,'$myUser.admin.initialPassword','--']}
+			})
+			.unwind('name')
+			.unwind('fatherName')
+			.unwind('motherName')
+			.unwind('email')
+			.unwind('RFC')
+			.unwind('grades')
+			.unwind('id')
+			.match({$or: [{'grades.wq': {$gt:0}},{'grades.wt': {$gt:0}}]})
+			.lookup({
+				from				: 'blocks',
+				localField	: 'grades.block',
+				foreignField: '_id',
+				as					: 'myBlocks'
+			})
+			.project({
+				rosterid 		: 1,
+				finalGrade	:	1,
+				track				:	1,
+				pass				:	1,
+				passDate		:	1,
+				certificateNumber: 1,
+				name				:	1,
+				fatherName	:	1,
+				motherName	:	1,
+				email				:	1,
+				RFC					: 1,
+				id					: 1,
+				blockTitle	:	'$myBlocks.title',
+				blockGrade	:	'$grades.finalGrade',
+				blockPond		:	'$grades.w'
+			})
+			.unwind('blockTitle')
+			.group({
+				_id: {
+					rosterid 		: '$rosterid',
+					name				: '$name',
+					fatherName	: '$fatherName',
+					motherName	: '$motherName',
+					email				: '$email',
+					RFC 				: '$RFC',
+					id					: '$id',
+					track				: '$track',
+					finalGrade	: '$finalGrade',
+					pass				: '$pass',
+					passDate		: '$passDate',
+					certificateNumber: '$certificateNumber'
+				},
+				grades: {
+					$push: {
+						blockTitle	: '$blockTitle',
+						blockGrade	: '$blockGrade',
+						blockPond		: '$blockPond'
+					}
+				}
+			})
+			.project({
+				rosterid 		: '$_id.rosterid',
+				id					: '$_id.id',
+				name				: '$_id.name',
+				fatherName	: '$_id.fatherName',
+				motherName	: '$_id.motherName',
+				email				: '$_id.email',
+				RFC					: '$_id.RFC',
+				track				: '$_id.track',
+				finalGrade	: '$_id.finalGrade',
+				pass				: '$_id.pass',
+				passDate		: '$_id.passDate',
+				certificateNumber	: '$_id.certificateNumber'.padStart(7,'0'),
+				grades			: true,
+				_id 				: false
+			})
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','gradesByGroup -- Finding roster items --');
+				return;
+			});
+		if(items && items.length > 0 ){
+			items.forEach(i => {
+				let passDate = false;
+				if(group.dates &&
+					Array.isArray(group.dates) &&
+					group.dates.length > 0
+				) {
+					let findCertificateDate = group.dates.find(date => date.type === 'certificate');
+					// esta parte era por si la fecha mínima era la de liberación de constancia
+					//if(findCertificateDate && send_grade.passDate < findCertificateDate.beginDate) {
+					// Y esta es la fecha de liberación de constancia
+					if(findCertificateDate) {
+						passDate = findCertificateDate.beginDate;
+					}
+				}
+				if(i.passDate) {
+					if(passDate) {
+						i.passDate = passDate;
+						i.passDateSpa = dateInSpanish(passDate);
+					} else {
+						i.passDateSpa = dateInSpanish(i.passDate);
+					}
+				}
+			});
+		}
+		res.status(StatusCodes.OK).json({
+			group					: group.name,
+			groupid				: group._id,
+			groupCode			: group.code,
+			displayRFC,
+			course				: group.course.title,
+			courseDuration : group.course.duration,
+			courseDurUnits : units(group.course.durationUnits),
+			beginDate			: group.beginDate,
+			endDate				: group.endDate,
+			beginDateSpa	: dateInSpanish(group.beginDate),
+			endDateSpa		: dateInSpanish(group.endDate),
+			otherDateSpa	: group.otherDate ? dateInSpanish(group.otherDate) : dateInSpanish(new Date()),
+			presentedEndDate : group.presentedEndDate || 'passDate',
+			number				: items.length,
+			roster				: items
+		});
+
+
 	}, // gradesByGroup
 
 	async filesBygroup(req,res) {
@@ -1056,6 +1072,96 @@ module.exports = {
 			message		: results
 		});
 	}, // filesBygroup
+
+	async expandedGradesByGroup(req,res) {
+		if(!req.params.groupid) {
+			return res.status(StatusCodes.BAD_REQUEST).json({
+				'message': 'Groupid es requerido'
+			});
+		}
+		const group = await Group.findById(req.params.groupid)
+			.select('_id orgUnit course')
+			.populate('orgUnit', 'displayRFC')
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','questionnariesByGroup -- Finding group --');
+				return;
+			});
+		if(!group) {
+			res.status(StatusCodes.NOT_FOUND).json({
+				'message': 'Group no localizado'
+			});
+		}
+		await group.populate({
+			path: 'course',
+			select: 'blocks',
+			populate: {
+				path: 'blocks',
+				select: 'title',
+				match: {
+					w: {$gt:0},
+					wq: {$gt:0}
+				}
+			}
+		}).execPopulate();
+		const blocks = {};
+		group.course.blocks.forEach(block => {
+			blocks[block._id+''] = block.title;
+		});
+		const displayRFC = group.orgUnit.displayRFC || group.displayRFC || false;
+		const select = displayRFC ? 'person admin.initialPassword' : 'person';
+		var items = await Roster.find({
+			group		: mongoose.Types.ObjectId(req.params.groupid),
+			report	: {$ne:false}
+		})
+			.select('student finalGrade track grades.block grades.w grades.wq grades.finalGrade grades.quests')
+			.populate('student', select)
+			.lean()
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','expandedGradesByGroup -- Finding rosters --');
+				return;
+			});
+		items = items.map(item => {
+			return {
+				grades: item.grades
+					.filter(grade => grade.w && grade.wq)
+					.map(grade => {
+						return {
+							block: blocks[grade.block+''],
+							finalGrade: grade.finalGrade,
+							quests: grade.quests
+						};
+					}),
+				RFC: displayRFC ? item.student.admin.initialPassword : '--',
+				name: item.student.person.name,
+				fatherName: item.student.person.fatherName,
+				motherName: item.student.person.motherName,
+				email: item.student.person.email
+			};
+		});
+		items.forEach(roster => {
+			if(roster.grades.length > 0) {
+				roster.grades.forEach(g => {
+					if(g.quests.length > 0) {
+						g.quests.forEach(q => {
+							var answers = [];
+							if(q.answers.length > 0) {
+								q.answers.forEach(a => {
+									answers.push(a.result.map(r => {
+										return {
+											response: r.responseString,
+											points: a.points
+										};
+									}));
+								});
+							}
+							q.answers = answers;
+						});
+					}
+				});
+			}
+		});
+		res.status(StatusCodes.OK).json(items);
+	}, //expandedGradesByGroup
 
 	gradesByCampus(req,res) { // Revisar y rearmar porque no funciona correctamente
 		const key_user 	= res.locals.user;
@@ -1549,6 +1655,145 @@ module.exports = {
 				Err.sendError(res,err,'report_controller','groupsQuery -- Finding groups --',false,false,'User: -' + key_user.name + '-');
 			});
 	}, // groupsQuery
+
+
+	async accessLog(req,res) { //Descarga de bitácoras de acceso de cada estudiante por grupo
+		const key_user  = res.locals.user;
+		const {
+			isAdmin,
+			isSupervisor,
+			isRequester
+		} = key_user.roles;
+		const groupid = req.params.groupid;
+		const displayRFC = req.query.displayRFC ? true : false;
+		if(!isAdmin && !isSupervisor && !isRequester) {
+			return res.status(StatusCodes.FORBIDDEN).json({
+				message: 'No tienes privilegios'
+			});
+		}
+		if(!groupid) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Hace falta el groupid'
+			});
+		}
+		const select = displayRFC ? 'person admin.initialPassword' : 'person';
+		// console.log(displayRFC);
+		// console.log(select);
+		const group = await Group.findById(groupid)
+			.select('students beginDate endDate')
+			.populate('students', select)
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','accessLog-- Finding group --',false,false,'User: -' + key_user.name + '-');
+				return;
+			});
+		if(!group) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: `No se encontró el grupo ${groupid}`
+			});
+		}
+		// console.log(group);
+		const stus = group.students.map(stu => stu._id);
+		const logs = await Session
+			.find({
+				user:{$in:stus},
+				date: {
+					$gte: group.beginDate,
+					$lte: group.endDate
+				}
+			})
+			.select('user date url')
+			// .limit(10)
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','accessLog-- Finding group --',false,false,'User: -' + key_user.name + '-');
+				return;
+			});
+		var fullLog = [];
+		group.students.forEach(stu => {
+			const log = logs.filter(lo => lo.user + '' === stu.id + '').map(lo => {
+				return displayRFC ? {
+					RFC: stu.admin.initialPassword,
+					name: stu.person.name,
+					fatherName: stu.person.fatherName,
+					motherName: stu.person.motherName,
+					email: stu.person.email,
+					date: dateAndTimeInSpanish(lo.date),
+					url: lo.url
+				} : {
+					name: stu.person.name,
+					fatherName: stu.person.fatherName,
+					motherName: stu.person.motherName,
+					email: stu.person.email,
+					date: dateAndTimeInSpanish(lo.date),
+					url: lo.url
+				};
+			});
+			fullLog.push(log);
+		});
+		res.status(StatusCodes.OK).json([].concat(...fullLog));
+	}, // accessLog
+
+	async discussionLog(req,res) {
+		const key_user  = res.locals.user;
+		const {
+			isAdmin,
+			isSupervisor,
+			isRequester
+		} = key_user.roles;
+		const groupid = req.params.groupid;
+		const displayRFC = req.query.displayRFC ? true : false;
+		if(!isAdmin && !isSupervisor && !isRequester) {
+			return res.status(StatusCodes.FORBIDDEN).json({
+				message: 'No tienes privilegios'
+			});
+		}
+		if(!groupid) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Hace falta el groupid'
+			});
+		}
+
+		const group = await Group.findById(groupid)
+			.select('_id')
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','discussionLog-- Finding group --',false,false,'User: -' + key_user.name + '-');
+				return;
+			});
+		if(!group) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: `No se encontró el grupo ${groupid}`
+			});
+		}
+		const Discussion = require('../src/discussions');
+		const select = displayRFC ? 'person admin.initialPassword' : 'person';
+		var discussions = await Discussion.find({group:groupid,pubtype:'question'})
+			.select('user type text date')
+			.populate('user',select)
+			.catch((err) => {
+				Err.sendError(res,err,'report_controller','discussionLog-- Finding discussions --',false,false,'User: -' + key_user.name + '-');
+				return;
+			});
+		discussions = discussions.map(disc => {
+			return displayRFC ? {
+				RFC: disc.user.admin.initialPassword,
+				name: disc.user.person.name,
+				fatherName: disc.user.person.fatherName,
+				motherName: disc.user.person.motherName,
+				email: disc.user.person.email,
+				date: dateAndTimeInSpanish(disc.date),
+				type: disc.type,
+				text: disc.text
+			} : {
+				name: disc.user.person.name,
+				fatherName: disc.user.person.fatherName,
+				motherName: disc.user.person.motherName,
+				email: disc.user.person.email,
+				date: dateAndTimeInSpanish(disc.date),
+				type: disc.type,
+				text: disc.text
+			};
+		});
+		res.status(StatusCodes.OK).json([].concat(...discussions));
+	}, //discussionLog
 
 	cube(req,res){
 		const key_user  = res.locals.user;
@@ -2437,4 +2682,13 @@ function dateInSpanish(date) {
 		'diciembre'
 	];
 	return day + ' de ' + months[month] + ' de ' + year;
+}
+
+function dateAndTimeInSpanish(date) {
+	const day 	= date.getDate();
+	const month = date.getMonth();
+	const year	= date.getFullYear();
+	const hour	= date.getHours();
+	const minute = date.getMinutes();
+	return `${year}/${(month+1+'').padStart(2,'0')}/${(day+'').padStart(2,'0')} ${(hour+'').padStart(2,'0')}:${(minute+'').padStart(2,'0')}`;
 }

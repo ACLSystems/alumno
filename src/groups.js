@@ -134,6 +134,17 @@ const GroupsSchema = new Schema ({
 	endDate: {
 		type: Date
 	},
+	otherEndDate: {
+		type: Date
+	},
+	presentedEndDate: {
+		type: String,
+		enum: [
+			'endDate',
+			'passDate',
+			'otherEndDate'
+		]
+	},
 	dates: [DatesSchema],
 	lapse: {
 		type: Number,

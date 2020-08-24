@@ -57,4 +57,14 @@ module.exports = (app) => {
 	app.get ('/api/v1/supervisor/user/resendconf', 				UserController.resendConfirmation);
 	app.get ('/api/v1/supervisor/report/publicsumm', 			ReportController.publicSummary);
 	app.get ('/api/v1/supervisor/report/publicpro', 			ReportController.publicProgress);
+
+	app.get ('/api/v1/supervisor/report/:groupid/accesslog',
+		ReportController.accessLog
+	);
+	app.get ('/api/v1/supervisor/report/:groupid/disclog',
+		ReportController.discussionLog
+	);
+	app.get ('/api/v1/supervisor/report/:groupid/expandedgrades',
+		ReportController.expandedGradesByGroup
+	);
 };
