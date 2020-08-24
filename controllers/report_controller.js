@@ -1098,7 +1098,6 @@ module.exports = {
 				path: 'blocks',
 				select: 'title',
 				match: {
-					w: {$gt:0},
 					wq: {$gt:0}
 				}
 			}
@@ -1123,7 +1122,7 @@ module.exports = {
 		items = items.map(item => {
 			return {
 				grades: item.grades
-					.filter(grade => grade.w && grade.wq)
+					.filter(grade => grade.wq)
 					.map(grade => {
 						return {
 							block: blocks[grade.block+''],
