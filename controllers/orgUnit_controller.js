@@ -19,7 +19,7 @@ module.exports = {
 				'message': 'Usuario no está autorizado'
 			});
 		}
-		const org = await Org.findOne({ name: ouProps.org })
+		const org = await Org.findOne({ name: req.body.org })
 			.catch(e => {
 				Err.sendError(res,e,'orgUnit_controller','create -- Finding org --');
 			});
@@ -28,7 +28,6 @@ module.exports = {
 				'message': 'Organización -' + ouProps.org + '- no existe'
 			});
 		}
-		// console.log(org);
 		// ------------
 		if(!ouProps.parent) {
 			ouProps.parent = ouProps.org;
@@ -41,10 +40,9 @@ module.exports = {
 				'message': 'OU padre -' + ouProps.parent + '- no existe'
 			});
 		}
-		if(ouProps.alias) {
-			const temp = ouProps.alias;
-			if(Array.isArray(temp)) {
-				ouProps.alias = [temp];
+		if(req.body.alias) {
+			if(!Array.isArray(req.body.alias)) {
+				ouProps.alias = [req.body.alias];
 			}
 		}
 		var permUsers = [];
@@ -76,7 +74,7 @@ module.exports = {
 		});
 		var permOrgs = [];
 		permOrgs.push({
-			name: ouProps.org,
+			name: req.body.org,
 			canRead: true,
 			canModify: true,
 			canSec: true
@@ -94,8 +92,9 @@ module.exports = {
 			what: 'Creación'
 		});
 		await ouProps.save()
-			.catch((err) => {
-				Err.sendError(res,err,'orgUnit_controller','register -- crendo OU --');
+			.catch(err => {
+				Err.sendError(res,err,'orgUnit_controller','register -- creando OU --');
+				return;
 			});
 		res.status(StatusCodes.CREATED).json(ouProps);
 	}, //register

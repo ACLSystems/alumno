@@ -1381,97 +1381,101 @@ module.exports = {
 
 	async getGroups(req,res) {
 		//const key_user	= res.locals.user;
-		const username  = req.query.username;
-		try {
-			const user = await User.findOne({name: username})
-				.select('name person');
-			if(user) {
-				let populate = [{
-					path: 'group',
-					select: 'course code name beginDate endDate status',
-					populate: {
-						path: 'course',
-						select: 'code title isVisible'
+		const user = await User.findOne({name: req.query.username})
+			.select('name person')
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','getGroups -- Finding user');
+				return;
+			});
+		if(!user) {
+			return res.status(StatusCodes.OK).json({
+				'message': 'Usuario no existe'
+			});
+		}
+		let populate = [{
+			path: 'group',
+			select: 'course code name beginDate endDate status',
+			populate: {
+				path: 'course',
+				select: 'code title isVisible'
+			}
+		},{
+			path: 'course',
+			select: 'code title isVisible'
+		}];
+		if (req.query.active) {
+			populate.match = {
+				status: 'active'
+			};
+		}
+		const items = await Roster.find({student:user._id})
+			.populate(populate)
+			.lean()
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','getGroups -- Finding items');
+				return;
+			});
+		if(items.length === 0 ) {
+			return res.status(StatusCodes.OK).json({
+				'message': `Usuario ${user.person.fullName} -${user._id}- no tiene grupos`
+			});
+		}
+		var send_items = [];
+		items.forEach(function(item) {
+			var beginDate;
+			var endDate;
+			if(item.group){
+				if(item.group.beginDate) {
+					beginDate = new Date(item.group.beginDate);
+				}
+				if(item.group.endDate) {
+					endDate = new Date(item.group.endDate);
+				}
+				send_items.push({
+					type				: item.type || 'group',
+					status			: item.status,
+					rosterId 		: item._id,
+					finalGrade 	: item.finalGrade,
+					track 			: item.track,
+					group				: {
+						id				: item.group._id,
+						name			: item.group.name,
+						code			: item.group.code,
+						status 		: item.group.status,
+						beginDate	: beginDate.toDateString(),
+						endDate		: endDate.toDateString()
+					},
+					course			:	{
+						title			: item.group.course.title,
+						code 			:	item.group.course.code,
+						isVisible : item.group.course.isVisible
 					}
-				},{
-					path: 'course',
-					select: 'code title isVisible'
-				}];
-				if (req.query.active) {
-					populate.match = {
-						status: 'active'
-					};
-				}
-				const items = await Roster.find({student:user._id})
-					.populate(populate)
-					.lean();
-				if(items.length > 0 ) {
-					var send_items = [];
-					items.forEach(function(item) {
-						var beginDate;
-						var endDate;
-						if(item.group){
-							if(item.group.beginDate) {
-								beginDate = new Date(item.group.beginDate);
-							}
-							if(item.group.endDate) {
-								endDate = new Date(item.group.endDate);
-							}
-							send_items.push({
-								type				: item.type || 'group',
-								status			: item.status,
-								rosterId 		: item._id,
-								group				: {
-									id				: item.group._id,
-									name			: item.group.name,
-									code			: item.group.code,
-									status 		: item.group.status,
-									beginDate	: beginDate.toDateString(),
-									endDate		: endDate.toDateString()
-								},
-								course			:	{
-									title			: item.group.course.title,
-									code 			:	item.group.course.code,
-									isVisible : item.group.course.isVisible
-								}
-							});
-						} else if(item.course) {
-							send_items.push({
-								rosterid 		: item._id,
-								type 				: item.type,
-								status			: item.status,
-								course			:	{
-									title			: item.course.title,
-									code 			:	item.course.code,
-									isVisible : item.course.isVisible,
-									beginDate : item.createDate.toDateString(),
-									endDate		: item.endDate.toDateString()
-								}
-							});
-						}
-					});
-					res.status(StatusCodes.OK).json({
-						'message': {
-							'name'	: user.person.fullName,
-							'id'		: user._id,
-							'groups': send_items
-						}
-					});
-				} else {
-					res.status(StatusCodes.OK).json({
-						'message': `Usuario ${user.person.fullName} -${user._id}- no tiene grupos`
-					});
-				}
-			} else {
-				res.status(StatusCodes.OK).json({
-					'message': 'Usuario no existe'
+				});
+			} else if(item.course) {
+				send_items.push({
+					rosterid 		: item._id,
+					type 				: item.type,
+					status			: item.status,
+					finalGrade 	: item.finalGrade,
+					track 			: item.track,
+					course			:	{
+						title			: item.course.title,
+						code 			:	item.course.code,
+						isVisible : item.course.isVisible,
+						beginDate : item.createDate.toDateString(),
+						endDate		: item.endDate.toDateString()
+					}
 				});
 			}
-		} catch (err) {
-			Err.sendError(res,err,'group_controller','getGroups -- Finding User --');
-		}
-
-
+		});
+		res.status(StatusCodes.OK).json({
+			message: {
+				name	: user.person.fullName,
+				email	: user.person.email,
+				id		: user._id,
+				groups: send_items
+			}
+		});
 	}, //getGroups
 
 	getGroupsByRFC(req,res) {
