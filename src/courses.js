@@ -161,7 +161,8 @@ const CoursesSchema = new Schema ({
 		enum: ['new','popular','standard'],
 		default: 'standard'
 	},
-	apiExternal: APIExternalSchema
+	apiExternal: APIExternalSchema,
+	instances: [String]
 });
 
 // Definir virtuals

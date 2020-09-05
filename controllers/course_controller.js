@@ -294,10 +294,14 @@ module.exports = {
 		var query = {};
 		const sort = { priority:1, title: 1};
 		try {
-			const org = await Org.findOne({ name: req.query.org })
+			const org = await Org.findOne({ name: req.param.org })
 				.select('name')
-				.cache({key: 'org:name:' + req.query.org})
-				.lean();
+				.cache({key: 'org:name:' + req.param.org})
+				.lean()
+				.catch(err => {
+					sendError(res,err,'listCoursesPublic -- Finding Org');
+					return;
+				});
 			query.org =  org._id;
 			if(req.query.categories) {
 				query.categories = JSON.parse(req.query.categories);
@@ -315,6 +319,7 @@ module.exports = {
 				query.priority = { priority: req.query.priority };
 			}
 			query.status = 'published';
+			
 			query.isVisible = true;
 			// console.log(query);
 			var courses = await Course.find(query)
@@ -1919,11 +1924,9 @@ function sendError(res, err, section) {
 	logger.error('Course controller -- Section: ' + section + '----');
 	logger.error(err);
 	res.status(500).json({
-		'status': 500,
 		'message': 'Error',
 		'Error': err.message
 	});
-	return;
 }
 
 function parseArray(myarr) {
