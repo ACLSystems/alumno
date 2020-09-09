@@ -841,12 +841,12 @@ module.exports = {
 				select: 'id title type section number duration durationUnits w wq wt isVisible status',
 				options: { sort: {order: 1} }
 			})
-			.select('isVisible')
+			.select('isVisible status')
 			.catch((err) => {
 				sendError(res,err,'getBlocklist -- Searching Course --');
 				return;
 			});
-		if(course) {
+		if(!course) {
 			return res.status(StatusCodes.NOT_FOUND).json({
 				message: 'Curso solicitado no está disponible'
 			});
