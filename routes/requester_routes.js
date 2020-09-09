@@ -81,6 +81,14 @@ module.exports = (app) => {
 		GroupController.changeInstructor
 	);
 
+	app.patch ('/api/v1/group/:groupid/addblockdates',
+		GroupController.addBlockDates
+	);
+
+	app.patch ('/api/v1/group/:groupid/adddates',
+		GroupController.saveDates
+	);
+
 	app.get ('/api/v1/rubric/:groupid',
 		Validate.getRubric,
 		Validate.results,

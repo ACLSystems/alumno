@@ -269,83 +269,63 @@ module.exports = {
 		if(req.query.author) {
 			query.author = { author: req.query.author };
 		}
-		try {
-			var courses = await Course.find(query)
-				.select('-org -own -mod -perm -blocks -resources -currentSection -nextNumber -apiExternal -__v')
-				.sort(sort)
-				.lean();
-			if(courses.length === 0 ) {
-				return res.status(StatusCodes.OK).json({
-					'message': 'No hay cursos registrados'
-				});
-			}
-			return res.status(StatusCodes.OK).json({
-				'message': {
-					'coursesNum': courses.length,
-					'courses': courses
-				}
+		var courses = await Course.find(query)
+			.select('-org -own -mod -perm -blocks -resources -currentSection -nextNumber -apiExternal -__v')
+			.sort(sort)
+			.lean()
+			.catch(err => {
+				sendError(res,err,'listCourses -- Finding Courses');
+				return;
 			});
-		} catch (e) {
-			sendError(res,e,'listCourses -- Finding Course --');
-		}
+		res.status(StatusCodes.OK).json(courses);
 	}, // listCourses
 
 	async listCoursesPublic(req,res) {
 		var query = {};
 		const sort = { priority:1, title: 1};
-		try {
-			const org = await Org.findOne({ name: req.param.org })
-				.select('name')
-				.cache({key: 'org:name:' + req.param.org})
-				.lean()
-				.catch(err => {
-					sendError(res,err,'listCoursesPublic -- Finding Org');
-					return;
-				});
-			query.org =  org._id;
-			if(req.query.categories) {
-				query.categories = JSON.parse(req.query.categories);
-			}
-			if(req.query.keywords) {
-				query.keywords = JSON.parse(req.query.categories);
-			}
-			if(req.query.title) {
-				query.title = { title: { $regex : /req.query.title/i }};
-			}
-			if(req.query.author) {
-				query.author = { author: req.query.author };
-			}
-			if(req.query.priority) {
-				query.priority = { priority: req.query.priority };
-			}
-			query.status = 'published';
-			
-			query.isVisible = true;
-			// console.log(query);
-			var courses = await Course.find(query)
-				.select('code title type level author categories isVisible keywords description image details price cost moocPrice status duration durationUnits defaultDaysDuration order priority apiExternal')
-				// .cache({key: 'course:list:' + JSON.stringify(query)})
-				.sort(sort)
-				.lean();
-			if(courses.length === 0) {
-				return res.status(StatusCodes.OK).json({
-					'message': 'No hay cursos registrados'
-				});
-			}
-			var coursesSend = Array.from(courses);
-			coursesSend.forEach(item => {
-				item.duration = `${item.duration}${item.durationUnits}`;
-				item.id = item._id;
+		if(!req.query.org) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'No se indica la organización'
 			});
-			return res.status(StatusCodes.OK).json({
-				'message': {
-					'coursesNum': coursesSend.length,
-					'courses': coursesSend
-				}
-			});
-		} catch (e) {
-			sendError(res,e,'listCoursesPublic -- Finding User --');
 		}
+		const org = await Org.findOne({ name: req.query.org })
+			.select('name')
+			.cache({key: 'org:name:' + req.query.org})
+			.lean()
+			.catch(err => {
+				sendError(res,err,'listCoursesPublic -- Finding Org');
+				return;
+			});
+		query.org =  org._id;
+		if(req.query.categories) {
+			query.categories = JSON.parse(req.query.categories);
+		}
+		if(req.query.keywords) {
+			query.keywords = JSON.parse(req.query.categories);
+		}
+		if(req.query.title) {
+			query.title = { title: { $regex : /req.query.title/i }};
+		}
+		if(req.query.author) {
+			query.author = { author: req.query.author };
+		}
+		if(req.query.priority) {
+			query.priority = { priority: req.query.priority };
+		}
+		query.status = 'published';
+
+		query.isVisible = true;
+		// console.log(query);
+		var courses = await Course.find(query)
+			.select('code title type level author categories isVisible keywords description image details price cost moocPrice status duration durationUnits defaultDaysDuration order priority apiExternal')
+			// .cache({key: 'course:list:' + JSON.stringify(query)})
+			.sort(sort)
+			.lean()
+			.catch(err => {
+				sendError(res,err,'listCoursesPublic -- Finding Courses');
+				return;
+			});
+		res.status(StatusCodes.OK).json(courses);
 	}, // listCoursesPublic
 
 	createBlock(req,res) {
@@ -845,7 +825,7 @@ module.exports = {
 			});
 	},// getBlocklist
 
-	getBlocklistStudents(req,res) { // trae la lista de bloques para el estudiante. Este API es
+	async getBlocklistStudents(req,res) { // trae la lista de bloques para el estudiante. Este API es
 		// reemplazado por mygroup
 		var query = {
 			isVisible: true
@@ -855,66 +835,55 @@ module.exports = {
 		} else {
 			query._id = req.query.id;
 		}
-		Course.findOne(query)
+		const course = await Course.findOne(query)
 			.populate({
 				path: 'blocks',
 				select: 'id title type section number duration durationUnits w wq wt isVisible status',
 				options: { sort: {order: 1} }
 			})
 			.select('isVisible')
-			.then((course) => {
-				if(course) {
-					if(course.isVisible || course.status === 'published') {
-						const blocks = course.blocks;
-						var send_blocks = [];
-						blocks.forEach(function(block) {
-							if(block.isVisible && block.status === 'published') {
-								var send_block = {};
-								send_block = {
-									id			: block._id,
-									title		: block.title,
-									section	: block.section,
-									number	: block.number,
-									type		: block.type
-								};
-								if(block.duration) {
-									send_block.duration = block.duration + block.durationUnits;
-								}
-								if(block.w) {
-									send_block.w 	= block.w;
-								}
-								if(block.wq) {
-									send_block.wq = block.wq;
-								}
-								if(block.wt) {
-									send_block.wt = block.wt;
-								}
-								send_blocks.push(send_block);
-							}
-						});
-						res.status(200).json({
-							'status': 200,
-							'message': {
-								blockNum: send_blocks.length,
-								blocks	: send_blocks
-							}
-						});
-					} else {
-						res.status(404).json({
-							'status': 404,
-							'message': 'El curso solicitado no está visible o no está disponible por el momento'
-						});
-					}
-				} else {
-					res.status(404).json({
-						'status': 404,
-						'message': 'Curso solicitado no está disponible'
-					});
-				}
-			}) // aqui
 			.catch((err) => {
 				sendError(res,err,'getBlocklist -- Searching Course --');
+				return;
 			});
+		if(course) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'Curso solicitado no está disponible'
+			});
+		}
+		if(!course.isVisible || course.status !== 'published') {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				message: 'El curso solicitado no está visible o no está disponible por el momento'
+			});
+		}
+		const blocks = course.blocks;
+		var send_blocks = [];
+		blocks.forEach(function(block) {
+			if(block.isVisible && block.status === 'published') {
+				var send_block = {};
+				send_block = {
+					id			: block._id,
+					title		: block.title,
+					section	: block.section,
+					number	: block.number,
+					type		: block.type
+				};
+				if(block.duration) {
+					send_block.duration = block.duration + block.durationUnits;
+				}
+				if(block.w) {
+					send_block.w 	= block.w;
+				}
+				if(block.wq) {
+					send_block.wq = block.wq;
+				}
+				if(block.wt) {
+					send_block.wt = block.wt;
+				}
+				send_blocks.push(send_block);
+			}
+		});
+		res.status(StatusCodes.OK).json(send_blocks);
 	},// getBlocklist
 
 	createQuestionnarie(req,res) { // crea un cuestionario asociado a un bloque

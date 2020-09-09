@@ -3122,22 +3122,41 @@ module.exports = {
 			});
 	}, // studentHistoric
 
-	saveDates(req,res) {
-		Group.findById(req.body.groupid)
-			.then(group => {
-				group.dates = req.body.dates;
-				group.save()
-					.then(() => {
-						res.status(200).json({
-							'message': `New dates in group - ${group.name} - ${group.code} - was saved`
-						});
-					})
-					.catch((err) => {
-						Err.sendError(res,err,'group_controller','saveDates -- Saving group --');
-					});
-			}).catch((err) => {
-				Err.sendError(res,err,'group_controller','saveDates -- Finding Group --');
+	async saveDates(req,res) {
+		function validateBlockDate(obj) {
+			if('beginDate' in obj) if('endDate' in obj) if('label' in obj) if('type' in obj) return true;
+			return false;
+		}
+		const key_user = res.locals.user;
+		const {
+			isAdmin,
+			isInstructor,
+			isRequester
+		} = key_user.roles;
+		if(!isAdmin && !isInstructor && !isRequester) {
+			return res.status(StatusCodes.FORBIDDEN).json({
+				message: 'No tienes privilegios'
 			});
+		}
+		if(!req.body.dates.every(validateBlockDate)) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Fechas no formateadas correctamente'
+			});
+		}
+		const group = await Group.findById(req.params.groupid)
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','saveDates -- Finding Group --');
+				return;
+			});
+		group.dates = [...req.body.dates];
+		await group.save()
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','saveDates -- Saving group --');
+				return;
+			});
+		res.status(200).json({
+			message: `Nuevas fechas para el grupo - ${group.name} - ${group.code} - fueron guardadas`
+		});
 	}, //saveDate
 
 	async changeInstructor(req,res) {
@@ -4878,27 +4897,76 @@ module.exports = {
 			});
 	}, //repairTasksInRoster
 
-	addBlockDates(req,res) {
-		Group.findOne({code: req.body.code})
-			.then(group => {
-				if(group){
-					group.blockDates = Array.from(req.body.blockDates);
-					group.save().then(() => {
-						res.status(200).json({
-							'message': 'Grupo guardado`',
-							'groupid': group._id
-						});
-					}).catch((err) => {
-						Err.sendError(res,err,'group_controller','addBlockDates -- Saving Group --');
-					});
-				} else {
-					res.status(404).json({
-						'message': `Grupo ${req.body.code} no encontrado`
-					});
-				}
-			}).catch((err) => {
-				Err.sendError(res,err,'group_controller','addBlockDates -- Finding Group --');
+	async addBlockDates(req,res) {
+		function validateBlockDate(obj) {
+			if('block' in obj) if('date' in obj) return true;
+			return false;
+		}
+		function validateActualDate(date) {
+			const now = new Date();
+			const validatedDate = new Date(date);
+			if(validatedDate.getTime() < now.getTime()) return false;
+			return true;
+		}
+		const key_user	= res.locals.user;
+		const blockDates = [...req.body.blockDates];
+		const {
+			isAdmin,
+			isRequester
+		} = key_user.roles;
+		if(!isAdmin && !isRequester) {
+			return res.status(StatusCodes.FORBIDDEN).json({
+				message: 'No tienes privilegios'
 			});
+		}
+		if(!blockDates || !Array.isArray(blockDates) || blockDates.length === 0) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Nada que procesar'
+			});
+		}
+		if(!blockDates.every(validateBlockDate)) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: 'Fechas no formateadas correctamente'
+			});
+		}
+		const group = await Group.findById(req.params.groupid)
+			.populate('course','blocks')
+			.catch((err) => {
+				Err.sendError(res,err,'group_controller','addBlockDates -- Finding Group --');
+				return;
+			});
+		if(!group) {
+			return res.status(StatusCodes.NOT_FOUND).json({
+				'message': `Grupo ${req.params.groupid} no encontrado`
+			});
+		}
+		if(!group.course.blocks) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: `No se encontraron bloques del curso de este grupo: ${group.code}`
+			});
+		}
+		// console.log(group.course.blocks);
+		const onlyBlocks = blockDates.map(bd => bd.block + '');
+		// console.log(onlyBlocks);
+		if(!onlyBlocks.every(block => group.course.blocks.includes(block))) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: `Algún bloque de las fechas proporcionadas no pertenece al curso del grupo ${group.code}`
+			});
+		}
+		const onlyDates = blockDates.map(bd => bd.date);
+		if(!onlyDates.every(validateActualDate)) {
+			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
+				message: `Alguna fecha de las proporcionada no es válida o es anterior a la fecha actual para el grupo ${group.code}`
+			});
+		}
+		group.blockDates = [...req.body.blockDates];
+		group.save().catch((err) => {
+			Err.sendError(res,err,'group_controller','addBlockDates -- Saving Group --');
+			return;
+		});
+		res.status(StatusCodes.OK).json({
+			'message': `Grupo ${group.code} guardado`
+		});
 	},
 
 	changeCourse(req,res) {
