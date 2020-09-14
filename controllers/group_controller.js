@@ -209,13 +209,15 @@ module.exports = {
 		var query = {};
 		if(req.params.groupid) query = {$or:[{_id:req.params.groupid},{code:req.params.groupid}]};
 		if(req.query.groupid) query = {$or:[{_id:req.query.groupid},{code:req.query.groupid}]};
-		const group = await Group.findOne(query)
+		var group = await Group.findOne(query)
 			.select('-org -roster -students -own -mod -perm -admin -__v')
+			.populate('blockDates.block','section number title')
 			.populate('course','name code')
 			.populate('instructor', 'person')
 			// .populate('students', 'person')
 			.populate('orgUnit', 'name parent type longName')
 			.populate('project', 'name')
+			.lean()
 			.catch((err) => {
 				Err.sendError(res,err,'group_controller','get -- Finding group --');
 				return;
@@ -223,6 +225,17 @@ module.exports = {
 		if(!group) {
 			return res.status(StatusCodes.NOT_FOUND).json({
 				message	: 'Grupo no existe'
+			});
+		}
+		if(group.blockDates && group.blockDates.length > 0) {
+			group.blockDates = group.blockDates.map(blockDate => {
+				return {
+					number : (blockDate.block && blockDate.block.number) ? blockDate.block.number : 0,
+					section: (blockDate.block && blockDate.block.section) ? blockDate.block.section : 0,
+					title: (blockDate.block && blockDate.block.title) ? blockDate.block.title : '',
+					date: blockDate.date,
+					block: blockDate.block._id
+				};
 			});
 		}
 		res.status(StatusCodes.OK).json(group);
