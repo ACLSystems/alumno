@@ -1676,94 +1676,88 @@ module.exports = {
 		}
 	}, // count
 
-	myRoles(req,res) {
+	async myRoles(req,res) {
+		function groupBy(objectArray,property) {
+			return objectArray.reduce((acc,obj) => {
+				let key = obj[property];
+				if(!acc[key]) {
+					acc[key] = [];
+				}
+				acc[key].push(obj);
+				return acc;
+			},{});
+		}
 		const key_user = res.locals.user;
-		var myroles = {
-			isAdmin				: key_user.roles.isAdmin,
-			isBusines			: key_user.roles.isBusiness,
-			isOrg					: key_user.roles.isOrg,
-			isOrgContent	: key_user.roles.isOrgContent,
-			isAuthor			: key_user.roles.isAuthor,
-			isSupervisor	: key_user.roles.isSupervisor,
-			isInstructor	: key_user.roles.isInstructor,
-			isRequester		: key_user.roles.isRequester,
-			isMoocSupervisor: key_user.roles.isMoocSupervisor,
-			isUser				: false
-		};
-		Roster.findOne({student: key_user._id})
+		var myroles = JSON.parse(JSON.stringify(key_user.roles));
+		myroles.isUser = false;
+		const item = await Roster.findOne({student: key_user._id})
 			.select('_id')
 			// .cache({key: 'user:rosterExists:'+ key_user._id})
 			.lean()
-			.then((item) => {
-				if(item) {
-					myroles.isUser 	= true;
-				}
-				const ou = key_user.orgUnit || null;
-				if(ou)	{
-					myroles.ou = {
-						id: ou._id,
-						name: ou.name,
-						longName: ou.longName,
-						parent: ou.parent,
-						type: ou.type,
-						level: ou.level
-					};
-					var query = {};
-					var send_ous = [];
-					if(ou.parent && ou.type) {
-						if(ou.type === 'campus') {
-							myroles.ou.state = ou.parent;
-						}
-						if(ou.type === 'state') {
-							query = {parent:ou.name};
-							myroles.ou.state = ou.name;
-						}
-						if(ou.type === 'org') {
-							query = {type:'campus'};
-							myroles.ou.state = ou.name;
-						}
-						if(ou.type === 'state' || ou.type === 'org'){
-							OrgUnit.find(query)
-								.select('name longName parent')
-								.lean()
-								.then((ous) => {
-									if(ous && ous.length > 0) {
-										ous.forEach(oun => {
-											if(!send_ous[oun.parent]) {
-												send_ous[oun.parent] = [];
-											}
-											send_ous[oun.parent].push({
-												name: oun.name,
-												longName: oun.longName
-											});
-										});
-										res.status(200).json({
-											'status'			: 200,
-											'message'			: myroles,
-											'ous'					: send_ous
-										});
-									}
-								})
-								.catch((err) => {
-									Err.sendError(res,err,'user_controller','myRoles -- Finding Ous --');
-								});
-						} else {
-							res.status(200).json({
-								'status'			: 200,
-								'message'			: myroles
-							});
-						}
-					} else {
-						res.status(200).json({
-							'status'			: 200,
-							'message'			: myroles
-						});
-					}
-				}
-			})
 			.catch((err) => {
 				Err.sendError(res,err,'user_controller','myRoles -- Finding Roster --');
 			});
+		if(item) {
+			myroles.isUser = true;
+		}
+		// console.log(myroles);
+		var ou = key_user.orgUnit || null;
+		if(!ou) {
+			return res.status(StatusCodes.OK).json({
+				'message'			: myroles
+			});
+		}
+		ou.id = ou._id;
+		// console.log(ou);
+		myroles.ou = JSON.parse(JSON.stringify(ou));
+		var query = {};
+		if(!ou.parent || !ou.type) {
+			return res.status(StatusCodes.OK).json({
+				'message'			: myroles
+			});
+		}
+		if(ou.type === 'campus') {
+			myroles.ou.state = ou.parent;
+		}
+		if(ou.type === 'state') {
+			query = {parent:ou.name};
+			myroles.ou.state = ou.name;
+		}
+		if(ou.type === 'org') {
+			query = {type:'campus'};
+			myroles.ou.state = ou.name;
+		}
+		if(ou.type !== 'state' && ou.type !== 'org') {
+			return res.status(StatusCodes.OK).json({
+				'message'			: myroles
+			});
+		}
+		// console.log(query);
+		const ous = await OrgUnit.find(query)
+			.select('name longName parent')
+			.lean()
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','myRoles -- Finding Ous --');
+			});
+		// console.log(ous);
+		var send_ous = [];
+		if(ous.length > 0) {
+			// ous.forEach(oun => {
+			// 	if(!send_ous[oun.parent]) {
+			// 		send_ous[oun.parent] = [];
+			// 	}
+			// 	send_ous[oun.parent].push({
+			// 		name: oun.name,
+			// 		longName: oun.longName
+			// 	});
+			// });
+			send_ous = groupBy(ous, 'parent');
+		}
+		// console.log(send_ous);
+		res.status(StatusCodes.OK).json({
+			message	: myroles,
+			ous			: send_ous
+		});
 	}, // myRoles
 
 	async createRosterSelf(req,res){

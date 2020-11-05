@@ -18,7 +18,7 @@ const CouponNumberSchema = new Schema({
 	}
 });
 
-CouponNumberSchema.plugin(auto,{id: 'number', inc_field: 'number', reference_fields: ['coupon'] });
+CouponNumberSchema.plugin(auto,{id:'numberSeq',inc_field: 'number', reference_fields: ['coupon'] });
 
 CouponNumberSchema.index({number: 1});
 CouponNumberSchema.index({coupon: 1});
