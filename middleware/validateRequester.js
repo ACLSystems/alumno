@@ -78,6 +78,17 @@ module.exports = {
 			.isMongoId()
 			.withMessage('groupid debe ser un id válido')
 	],
+	createCoupon: [
+		body('code')
+			.exists()
+			.withMessage('code es requerido'),
+		body('beginDate')
+			.exists()
+			.withMessage('Fecha de inicio es requerida'),
+		body('endDate')
+			.exists()
+			.withMessage('Fecha de fin es requerida'),
+	],
 	results(req,res,next) {
 		//console.log(req.headers);
 		const errors = validationResult(req);

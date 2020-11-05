@@ -1,6 +1,6 @@
 // Definir requerimientos
 const mongoose 	= require('mongoose');
-
+const mod = require('./modified');
 const Schema 		= mongoose.Schema;
 const ObjectId 	= Schema.Types.ObjectId;
 
@@ -9,15 +9,24 @@ mongoose.plugin(schema => { schema.options.usePushEach = true; });
 // Definir esquema y subesquemas
 
 const CouponSchema = new Schema ({
-	number: {
+	code: {
 		type: String
 	},
-	object: {
-		kind: String,
-		item: {
-			type: ObjectId,
-			refPath: 'object.kind'
-		}
+	org: {
+		type: ObjectId,
+		ref: 'orgs'
+	},
+	orgUnit: {
+		type: ObjectId,
+		ref: 'orgUnits'
+	},
+	item: {
+		type: ObjectId,
+		refPath: 'onModel'
+	},
+	onModel: {
+		type: String,
+		enum: ['courses','groups']
 	},
 	discount: {
 		type: Number,
@@ -27,8 +36,8 @@ const CouponSchema = new Schema ({
 	},
 	status: {
 		type: String,
-		enum: ['current','expired','cancelled'], // Status expired debe ser manejado manualmente durante la consulta del cupón
-		default: 'current'
+		enum: ['draft','current','expired','cancelled'], // Status expired debe ser manejado manualmente durante la consulta del cupón
+		default: 'draft'
 	},
 	quantity:{
 		type: Number,
@@ -42,7 +51,8 @@ const CouponSchema = new Schema ({
 	endDate:{
 		type: Date,
 		default: Date.now
-	}
+	},
+	mod: [mod]
 });
 
 // Definir virtuals
@@ -52,6 +62,13 @@ const CouponSchema = new Schema ({
 // Definir índices
 
 // Compilar esquema
+
+CouponSchema.index({code					: 1, item:1, orgUnit: 1}, {unique:true,sparse:true});
+CouponSchema.index({code					:	1});
+CouponSchema.index({item					:	1},{sparse:true});
+CouponSchema.index({orgUnit				: 1},{sparse: true});
+CouponSchema.index({beginDate			:	-1});
+CouponSchema.index({endDate				:	-1});
 
 const Coupons = mongoose.model('coupons', CouponSchema);
 module.exports = Coupons;

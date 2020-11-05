@@ -3,6 +3,7 @@ const MassUsersController 	= require('../controllers/massiveUsers_Controller'	);
 const GroupController 			= require('../controllers/group_controller'					);
 const ReportController 			= require('../controllers/report_controller'				);
 const RequestController 		= require('../controllers/request_controller'				);
+const CouponController			= require('../controllers/coupon_controller');
 const Validate = require('../middleware/validateRequester');
 
 module.exports = (app) => {
@@ -109,6 +110,20 @@ module.exports = (app) => {
 
 	app.get ('/api/v1/rubric/:groupid/sync',
 		GroupController.syncRubric
+	);
+
+	app.post ('/api/v1/coupon',
+		Validate.createCoupon,
+		Validate.results,
+		CouponController.create
+	);
+
+	app.get ('/api/v1/coupons',
+		CouponController.list
+	);
+
+	app.patch('/api/v1/coupon/:couponid',
+		CouponController.modify
 	);
 
 	// REQUESTS

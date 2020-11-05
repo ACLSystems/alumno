@@ -474,6 +474,14 @@ const RosterSchema = new Schema ({
 	instance: {
 		type: ObjectId,
 		ref: 'instances'
+	},
+	coupon: {
+		type: ObjectId,
+		ref: 'coupons'
+	},
+	couponNumber: {
+		type: ObjectId,
+		ref: 'couponNumbers'
 	}
 });
 
