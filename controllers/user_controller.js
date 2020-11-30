@@ -749,10 +749,12 @@ module.exports = {
 		const email = req.body.email;
 		// console.log(email);
 		// console.log(req.body);
-		const user = await User.findOne({ 'person.email': email}).catch((err) => {
-			Err.sendError(res,err,'user_controller','validateEmail -- Finding email --');
-			return;
-		});
+		const user = await User.findOne({ 'person.email': email})
+			.populate('orgUnit','name parent longName')
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','validateEmail -- Finding email --');
+				return;
+			});
 		if(!user) {
 			return res.status(StatusCodes.NOT_FOUND).json({
 				message: 'Usuario ' + email + ' no existe'
@@ -765,7 +767,9 @@ module.exports = {
 			Err.sendError(res,err,'user_controller','validateEmail -- User saving --');
 			return;
 		});
-		const link = `${await Instance.getInstance(user.orgUnit,'URL')}/#/pages/reqrecoverpass/${user.person.email}/${user.admin.recoverNumber}`;
+		// console.log(user.orgUnit);
+		const urlInstance = await Instance.getInstance(user.orgUnit._id,'URL');
+		const link = `${urlInstance}/#/pages/reqrecoverpass/${user.person.email}/${user.admin.recoverNumber}`;
 		let subject = 'Solicitud de recuperación de acceso';
 		let message = `<p>Hemos recibido una solicitud para recuperar acceso al portal de cursos. Para hacerlo ingresa este número:</p>
 		<h1 style="text-align:center;">${getStringFromNumber(user.admin.recoverNumber)}</h1>
@@ -778,10 +782,10 @@ module.exports = {
 				message: 'No se puede enviar correo'
 			});
 		}
-		await mailjet.sendGenericMail(user.person.email,user.person.name,subject,message,user.orgUnit);
+		await mailjet.sendGenericMail(user.person.email,user.person.name,subject,message,user.orgUnit.name);
 		res.status(StatusCodes.OK).json({
 			message: 'Email encontrado',
-			'link': link
+			// 'link': link
 		});
 	},
 
@@ -941,17 +945,19 @@ module.exports = {
 		const email = req.body.email;
 		const emailID = +req.body.emailID;
 		// const password = req.body.password;
-		console.log(email, emailID);
-		var user = await User.findOne({ name: email}).catch((err) => {
-			Err.sendError(res,err,'user_controller','passwordRecovery -- Finding user --');
-			return;
-		});
+		// console.log(email, emailID);
+		var user = await User.findOne({name: email})
+			.populate('orgUnit','parent name longName')
+			.catch((err) => {
+				Err.sendError(res,err,'user_controller','passwordRecovery -- Finding user --');
+				return;
+			});
 		if(!user) {
 			return res.status(StatusCodes.NOT_FOUND).json({
 				message: 'Correo ' + email + ' no existe'
 			});
 		}
-		console.log(user.admin.recoverNumber);
+		// console.log(user.admin.recoverNumber);
 		if(user.admin.recoverNumber === 0) {
 			return res.status(StatusCodes.NOT_ACCEPTABLE).json({
 				message: 'Usuario no ha solicitado recuperación de acceso'
@@ -977,7 +983,7 @@ module.exports = {
 			org: user.org,
 			userid: user._id,
 			person: user.person,
-			orgUnit: user.orgUnit,
+			orgUnit: user.orgUnit._id,
 			preferences: user.preferences
 		};
 		const version 	= require('../version/version');
@@ -1037,7 +1043,7 @@ module.exports = {
 			return;
 		});
 		let subject = 'Se ha realizado un acceso mediante código';
-		let { ouName, url } = await Instance.getInstance(user.orgUnit,'URL');
+		let { ouName, url } = await Instance.getInstance(user.orgUnit._id,'combo');
 		let message = `
 		<p>Se ha realizado un acceso mediante código con tu cuenta en ${url}</p>
 		<p>Si no has sido tú, contacta a la mesa de servicio</p>`;

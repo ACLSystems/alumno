@@ -83,9 +83,11 @@ async function(toEmail,toName,subject,
 		console.log('No hay instancia/OU para enviar correo genérico');
 		return null;
 	}
-	var genericTemplate = await Default.findOne({module: defaultModule, code, instance});
+	var genericTemplate = await Default.findOne(
+		{module: defaultModule, code, instance});
 	if(!genericTemplate) {
-		throw new Error('No existe configuración');
+		console.log('No existe configuración');
+		return null;
 	}
 	var mail_message = {
 		// 'From': {

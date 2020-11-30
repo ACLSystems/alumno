@@ -82,7 +82,7 @@ const InstanceSchema = new Schema({
 });
 
 InstanceSchema.static('getInstance', async function(instanceOUName, giveMe) {
-	const query = (checkValidOID(instanceOUName)) ?
+	const query = checkValidOID(instanceOUName) ?
 		{_id: instanceOUName} :
 		{ $or : [
 			{name: instanceOUName},
