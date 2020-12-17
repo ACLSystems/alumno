@@ -113,6 +113,10 @@ const CoursesSchema = new Schema ({
 		type: Boolean,
 		default: false
 	},
+	request: {
+		type: String,
+		default: ''
+	},
 	own: OwnerSchema,
 	mod: [ModSchema],
 	perm: PermissionsSchema,
