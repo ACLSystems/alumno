@@ -54,7 +54,7 @@ const ItemSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum: ['file','text','textarea','ddlmmr'],
+		enum: ['file','text','textarea','ddlmmr','ddlmr','ddlm'],
 		required: true
 	},
 	files: {

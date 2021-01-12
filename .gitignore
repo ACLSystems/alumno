@@ -70,6 +70,7 @@ doc/Oferta*
 /*/*_notUse*
 .dockerignore
 Dockerfile
+*.Dockerfile
 docker-compose.yml
 process.yml
 .env
