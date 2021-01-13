@@ -63,7 +63,7 @@ const TasksSchema = new Schema ({
 	},
 	type: {
 		type: String,
-		enum: ['file','text','ddlmmr'],
+		enum: ['file','text','textarea','ddlmmr','ddlmr','ddlm'],
 		default: 'text'
 	},
 	label: {
