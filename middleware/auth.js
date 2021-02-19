@@ -113,7 +113,11 @@ module.exports = {
 			});
 			if(validToken) {
 				const tokenDecoded = await jsonwebtoken.decode(validToken);
-				if(!tokenDecoded.orgUnit.name || !tokenDecoded.org.name) {
+				if(!tokenDecoded ||
+					!tokenDecoded.orgUnit ||
+					!tokenDecoded.orgUnit.name ||
+					!tokenDecoded.org ||
+					!tokenDecoded.org.name) {
 					// console.log(user.orgUnit);
 					validToken = null;
 				}
