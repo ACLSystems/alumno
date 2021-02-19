@@ -3891,6 +3891,7 @@ module.exports = {
 				if(item.array1) send_item.array1	= item.array1;
 				if(item.array2) send_item.array2	= item.array2;
 				if(item.style)	send_item.style 	= item.style;
+				if(item.dd) send_item.dd = item.dd || 'many';
 				if(item.files && item.files.length > 0) 	send_item.files 	= item.files;
 				send_items.push(send_item);
 			});

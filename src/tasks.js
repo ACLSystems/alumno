@@ -60,6 +60,11 @@ const ItemSchema = new Schema ({
 	files: {
 		type: [String]
 	},
+	dd:{
+		type: String,
+		enum: ['one','many','none'],
+		default: 'many'
+	},
 	array1: [String],
 	array2: [String],
 	style: StyleSchema,
