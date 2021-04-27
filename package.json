@@ -62,7 +62,7 @@
     "nanoid": "^2.1.11",
     "node-mailjet": "^3.3.1",
     "randomatic": "^3.1.1",
-    "redis": "^2.8.0",
+    "redis": "^3.1.1",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.9",
     "socket.io": "^2.4.1",
