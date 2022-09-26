@@ -60,7 +60,7 @@
     "mongoose-sequence": "^5.3.0",
     "multer": "^1.4.2",
     "nanoid": "^2.1.11",
-    "node-mailjet": "^3.3.1",
+    "node-mailjet": "^3.4.1",
     "randomatic": "^3.1.1",
     "redis": "^2.8.0",
     "request": "^2.88.2",
