@@ -42,7 +42,7 @@
     "datauri": "^3.0.0",
     "dropbox": "^4.0.30",
     "es6-promise": "^4.2.8",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "express-body-parser-json-error": "^0.1.0",
     "express-route-validator": "^0.2.5",
     "express-validator": "^6.9.2",
